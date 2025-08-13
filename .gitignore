@@ -1,5 +1,5 @@
 .pnpm-store
-dist
+# dist - Commented out to include pre-built files
 out
 out-*
 node_modules
