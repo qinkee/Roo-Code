@@ -52,16 +52,16 @@
 	"main": "./dist/extension.js",
 	"contributes": {
 		"viewsContainers": {
-			"activitybar": [
+			"auxiliarybar": [
 				{
-					"id": "roo-cline-ActivityBar",
+					"id": "roo-cline-Auxiliarybar",
 					"title": "%views.activitybar.title%",
 					"icon": "assets/icons/icon.svg"
 				}
 			]
 		},
 		"views": {
-			"roo-cline-ActivityBar": [
+			"roo-cline-Auxiliarybar": [
 				{
 					"type": "webview",
 					"id": "roo-cline.SidebarProvider",
