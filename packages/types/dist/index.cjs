@@ -1088,7 +1088,8 @@ var commandIds = [
   "importSettings",
   "focusInput",
   "acceptInput",
-  "focusPanel"
+  "focusPanel",
+  "receiveUserInfo"
 ];
 var languages = [
   "ca",
