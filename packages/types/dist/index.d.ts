@@ -31768,6 +31768,9 @@ declare const commandIds: readonly [
 	"focusInput",
 	"acceptInput",
 	"focusPanel",
+	"imPlatform.manageToken",
+	"imPlatform.setToken",
+	"imPlatform.clearToken",
 ]
 type CommandId = (typeof commandIds)[number]
 /**

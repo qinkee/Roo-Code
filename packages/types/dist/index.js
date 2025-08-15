@@ -891,6 +891,9 @@ var commandIds = [
 	"focusInput",
 	"acceptInput",
 	"focusPanel",
+	"imPlatform.manageToken",
+	"imPlatform.setToken",
+	"imPlatform.clearToken",
 ]
 var languages = [
 	"ca",
