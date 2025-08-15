@@ -1085,7 +1085,10 @@ var commandIds = [
   "importSettings",
   "focusInput",
   "acceptInput",
-  "focusPanel"
+  "focusPanel",
+  "imPlatform.manageToken",
+  "imPlatform.setToken",
+  "imPlatform.clearToken"
 ];
 var languages = [
   "ca",

@@ -21,6 +21,7 @@ import { t } from "../../i18n"
 
 import { ClineProvider } from "../../core/webview/ClineProvider"
 import { GlobalFileNames } from "../../shared/globalFileNames"
+import { ImPlatformTokenManager } from "../im-platform/ImPlatformTokenManager"
 import {
 	McpResource,
 	McpResourceResponse,
@@ -157,8 +158,21 @@ export class McpHub {
 		this.watchMcpSettingsFile()
 		this.watchProjectMcpFile().catch(console.error)
 		this.setupWorkspaceFoldersWatcher()
-		this.initializeGlobalMcpServers()
-		this.initializeProjectMcpServers()
+		// Initialize servers asynchronously to avoid blocking
+		this.initializeAllServers().catch((error) => {
+			console.error("[McpHub] Failed to initialize servers:", error)
+		})
+	}
+
+	/**
+	 * Initialize all MCP servers in the correct order
+	 */
+	private async initializeAllServers(): Promise<void> {
+		// Initialize built-in servers first
+		await this.initializeBuiltinServers()
+		// Then initialize user-configured servers
+		await this.initializeGlobalMcpServers()
+		await this.initializeProjectMcpServers()
 	}
 	/**
 	 * Registers a client (e.g., ClineProvider) using this hub.
@@ -570,6 +584,149 @@ export class McpHub {
 		await this.initializeMcpServers("project")
 	}
 
+	// Initialize built-in MCP servers
+	private async initializeBuiltinServers(): Promise<void> {
+		try {
+			// Get the extension path from the provider
+			const provider = this.providerRef.deref()
+			if (!provider) {
+				console.error("[IM Platform MCP] Provider not available")
+				return
+			}
+
+			const extensionPath = provider.context.extensionPath
+			const mcpScriptPath = path.join(extensionPath, "node_modules", "im-platform-mcp", "dist", "index.js")
+
+			console.log(`[IM Platform MCP] Extension path: ${extensionPath}`)
+			console.log(`[IM Platform MCP] MCP script path: ${mcpScriptPath}`)
+
+			// Check if the file exists
+			try {
+				await fs.access(mcpScriptPath)
+				console.log(`[IM Platform MCP] Script file exists at ${mcpScriptPath}`)
+			} catch (error) {
+				console.error(`[IM Platform MCP] Script file not found at ${mcpScriptPath}`)
+				return
+			}
+
+			// Built-in IM Platform configuration
+			const builtinConfig = {
+				"im-platform": {
+					type: "stdio" as const,
+					command: "node",
+					args: [mcpScriptPath],
+					env: {
+						IM_API_BASE_URL: "https://aiim.service.thinkgs.cn/api",
+						IM_DEFAULT_SIMILARITY: "0.8",
+						IM_DEFAULT_LIMIT: "20",
+					},
+					alwaysAllow: [
+						"composite_search",
+						"login",
+						"get_friend_list",
+						"upload_file",
+						"send_private_message",
+						"send_group_message",
+					],
+					timeout: 120,
+					disabled: false,
+				},
+			}
+
+			console.log("[IM Platform MCP] Built-in config prepared:", {
+				command: builtinConfig["im-platform"].command,
+				args: builtinConfig["im-platform"].args,
+				envKeys: Object.keys(builtinConfig["im-platform"].env),
+			})
+
+			// Check if MCP is globally enabled
+			const mcpEnabled = await this.isMcpEnabled()
+			if (!mcpEnabled) {
+				return
+			}
+
+			// Connect to built-in servers
+			for (const [name, config] of Object.entries(builtinConfig)) {
+				try {
+					// Check if user already has a server with the same name
+					const existingConnection = this.findConnection(name)
+					if (!existingConnection) {
+						console.log(`[IM Platform MCP] Initializing built-in server: ${name}`)
+						console.log(`[IM Platform MCP] Config:`, JSON.stringify(config, null, 2))
+
+						// Validate the configuration
+						const validatedConfig = this.validateServerConfig(config, name)
+						await this.connectToServer(name, validatedConfig, "global")
+
+						console.log(`[IM Platform MCP] Successfully connected to ${name}`)
+
+						// 通知WebView服务器列表已更新
+						await this.notifyWebviewOfServerChanges()
+						console.log(`[IM Platform MCP] Notified webview of server changes`)
+					} else {
+						console.log(
+							`[IM Platform MCP] Server ${name} already exists with status: ${existingConnection.server.status}`,
+						)
+						// 如果内置服务器处于断开状态，尝试重新连接
+						if (existingConnection.server.status === "disconnected") {
+							console.log(`[IM Platform MCP] Attempting to reconnect ${name}...`)
+							try {
+								await this.restartConnection(name, "global")
+								console.log(`[IM Platform MCP] Successfully reconnected ${name}`)
+							} catch (reconnectError) {
+								console.error(`[IM Platform MCP] Failed to reconnect ${name}:`, reconnectError)
+							}
+						}
+					}
+				} catch (error) {
+					console.error(`[IM Platform MCP] Failed to initialize ${name}:`, error)
+				}
+			}
+		} catch (error) {
+			console.error("Failed to initialize built-in MCP servers:", error)
+		}
+	}
+
+	/**
+	 * Get IM Platform TokenKey from various sources
+	 * Priority: Environment Variable > VSCode Config > Context State
+	 */
+	private getImPlatformTokenKey(): string | undefined {
+		console.log("[IM Platform MCP] Getting TokenKey...")
+
+		// Option 1: From environment variable
+		// const envTokenKey = process.env.IM_PLATFORM_TOKEN_KEY
+		// if (envTokenKey) {
+		// 	console.log("[IM Platform MCP] TokenKey found in environment variable")
+		// 	return envTokenKey
+		// }
+		// console.log("[IM Platform MCP] No TokenKey in environment variable")
+
+		// Option 2: From VSCode configuration (修正配置名称)
+		const config = vscode.workspace.getConfiguration("roo-cline") // 修正为 roo-cline
+		const configTokenKey = config.get<string>("imPlatformTokenKey")
+		if (configTokenKey) {
+			console.log("[IM Platform MCP] TokenKey found in VSCode configuration")
+			console.log(`[IM Platform MCP] TokenKey value: ***${configTokenKey.slice(-4)}`) // Show last 4 chars for debugging
+			return configTokenKey
+		}
+		console.log("[IM Platform MCP] No TokenKey in VSCode configuration")
+
+		// // Option 3: From context state (for dynamic switching)
+		// const provider = this.providerRef.deref()
+		// if (provider) {
+		// 	const state = provider.getState ? provider.getState() : null
+		// 	if (state && (state as any).imPlatformTokenKey) {
+		// 		console.log("[IM Platform MCP] TokenKey found in context state")
+		// 		return (state as any).imPlatformTokenKey
+		// 	}
+		// }
+		// console.log("[IM Platform MCP] No TokenKey in context state")
+
+		// console.log("[IM Platform MCP] No TokenKey found in any source")
+		return undefined
+	}
+
 	/**
 	 * Creates a placeholder connection for disabled servers or when MCP is globally disabled
 	 * @param name The server name
@@ -655,10 +812,29 @@ export class McpHub {
 			let transport: StdioClientTransport | SSEClientTransport | StreamableHTTPClientTransport
 
 			// Inject variables to the config (environment, magic variables,...)
-			const configInjected = (await injectVariables(config, {
+			let configInjected = (await injectVariables(config, {
 				env: process.env,
 				workspaceFolder: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? "",
 			})) as typeof config
+
+			// Special handling for IM Platform MCP - inject dynamic TokenKey
+			if (name === "im-platform" && configInjected.type === "stdio") {
+				const tokenKey = this.getImPlatformTokenKey()
+				console.log(`[IM Platform MCP] TokenKey ${tokenKey ? "found" : "not found"}`)
+				if (tokenKey) {
+					configInjected = {
+						...configInjected,
+						env: {
+							...configInjected.env,
+							IM_TOKEN_KEY: tokenKey,
+						},
+					}
+					console.log(`[IM Platform MCP] TokenKey injected into environment: ***${tokenKey.slice(-4)}`)
+					console.log(`[IM Platform MCP] Full environment variables:`, Object.keys(configInjected.env || {}))
+				} else {
+					console.warn(`[IM Platform MCP] WARNING: No TokenKey found, MCP will run without authentication`)
+				}
+			}
 
 			if (configInjected.type === "stdio") {
 				// On Windows, wrap commands with cmd.exe to handle non-exe executables like npx.ps1
@@ -677,14 +853,27 @@ export class McpHub {
 						? ["/c", configInjected.command, ...(configInjected.args || [])]
 						: configInjected.args
 
+				const finalEnv = {
+					...getDefaultEnvironment(),
+					...(configInjected.env || {}),
+				}
+
+				// 调试：打印最终的环境变量（仅对 im-platform）
+				if (name === "im-platform") {
+					console.log(`[IM Platform MCP] Final environment variables:`)
+					console.log(`  IM_API_BASE_URL: ${finalEnv.IM_API_BASE_URL}`)
+					console.log(
+						`  IM_TOKEN_KEY: ${finalEnv.IM_TOKEN_KEY ? "***" + finalEnv.IM_TOKEN_KEY.slice(-4) : "NOT SET"}`,
+					)
+					console.log(`  IM_DEFAULT_SIMILARITY: ${finalEnv.IM_DEFAULT_SIMILARITY}`)
+					console.log(`  IM_DEFAULT_LIMIT: ${finalEnv.IM_DEFAULT_LIMIT}`)
+				}
+
 				transport = new StdioClientTransport({
 					command,
 					args,
 					cwd: configInjected.cwd,
-					env: {
-						...getDefaultEnvironment(),
-						...(configInjected.env || {}),
-					},
+					env: finalEnv,
 					stderr: "pipe",
 				})
 
@@ -1039,15 +1228,26 @@ export class McpHub {
 		const currentNames = new Set(currentConnections.map((conn) => conn.server.name))
 		const newNames = new Set(Object.keys(newServers))
 
-		// Delete removed servers
+		// Delete removed servers (but protect built-in servers)
 		for (const name of currentNames) {
 			if (!newNames.has(name)) {
+				// Don't delete built-in servers
+				if (name === "im-platform") {
+					console.log(`[IM Platform MCP] Skipping deletion of built-in server: ${name}`)
+					continue
+				}
 				await this.deleteConnection(name, source)
 			}
 		}
 
 		// Update or add servers
 		for (const [name, config] of Object.entries(newServers)) {
+			// Skip built-in servers to prevent user configs from overriding them
+			if (name === "im-platform" && source === "global") {
+				console.log(`[IM Platform MCP] Skipping user config for built-in server: ${name}`)
+				continue
+			}
+
 			// Only consider connections that match the current source
 			const currentConnection = this.findConnection(name, source)
 
@@ -1190,7 +1390,38 @@ export class McpHub {
 			try {
 				await this.deleteConnection(serverName, connection.server.source)
 				// Parse the config to validate it
-				const parsedConfig = JSON.parse(config)
+				let parsedConfig = JSON.parse(config)
+
+				// Special handling for built-in im-platform server - refresh the config
+				if (serverName === "im-platform") {
+					console.log("[IM Platform MCP] Refreshing built-in server config for restart...")
+					// Get fresh configuration with updated TokenKey
+					const provider = this.providerRef.deref()
+					if (provider) {
+						const extensionPath = provider.context.extensionPath
+						const mcpScriptPath = path.join(
+							extensionPath,
+							"node_modules",
+							"im-platform-mcp",
+							"dist",
+							"index.js",
+						)
+
+						// Rebuild the config with current TokenKey placeholder
+						parsedConfig = {
+							...parsedConfig,
+							args: [mcpScriptPath],
+							env: {
+								IM_API_BASE_URL: "https://aiim.service.thinkgs.cn/api",
+								IM_DEFAULT_SIMILARITY: "0.8",
+								IM_DEFAULT_LIMIT: "20",
+								IM_TOKEN_KEY: "${imPlatformTokenKey}", // This will be replaced with current value in connectToServer
+							},
+						}
+						console.log("[IM Platform MCP] Config refreshed for restart")
+					}
+				}
+
 				try {
 					// Validate the config
 					const validatedConfig = this.validateServerConfig(parsedConfig, serverName)
@@ -1259,14 +1490,20 @@ export class McpHub {
 				}
 			}
 
-			// Clear all existing connections first
+			// Clear all existing connections first (but preserve built-in servers)
 			const existingConnections = [...this.connections]
 			for (const conn of existingConnections) {
+				// Skip built-in servers during refresh
+				if (conn.server.name === "im-platform") {
+					console.log(`[IM Platform MCP] Preserving built-in server during refresh: ${conn.server.name}`)
+					continue
+				}
 				await this.deleteConnection(conn.server.name, conn.server.source)
 			}
 
 			// Re-initialize all servers from scratch
 			// This ensures proper initialization including fetching tools, resources, etc.
+			// Built-in servers are already connected, so they won't be re-initialized
 			await this.initializeMcpServers("global")
 			await this.initializeMcpServers("project")
 
@@ -1492,6 +1729,15 @@ export class McpHub {
 
 	public async deleteServer(serverName: string, source?: "global" | "project"): Promise<void> {
 		try {
+			// Prevent deletion of built-in servers
+			if (serverName === "im-platform") {
+				console.warn(`[IM Platform MCP] Cannot delete built-in server: ${serverName}`)
+				// Instead of deleting, just disconnect it
+				await this.deleteConnection(serverName, source)
+				vscode.window.showWarningMessage("内置的 IM Platform 服务器无法删除，已断开连接。重新加载窗口可恢复。")
+				return
+			}
+
 			// Find the connection to determine if it's a global or project server
 			const connection = this.findConnection(serverName, source)
 			if (!connection) {

@@ -15,6 +15,7 @@ import { handleNewTask } from "./handleTask"
 import { CodeIndexManager } from "../services/code-index/manager"
 import { importSettingsWithFeedback } from "../core/config/importExport"
 import { MdmService } from "../services/mdm/MdmService"
+import { ImPlatformTokenManager } from "../services/im-platform/ImPlatformTokenManager"
 import { t } from "../i18n"
 
 /**
@@ -220,6 +221,26 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		}
 
 		visibleProvider.postMessageToWebview({ type: "acceptInput" })
+	},
+	"imPlatform.manageToken": async () => {
+		const tokenManager = ImPlatformTokenManager.getInstance()
+		await tokenManager.showTokenStatus()
+	},
+	"imPlatform.setToken": async () => {
+		const tokenManager = ImPlatformTokenManager.getInstance()
+		const input = await vscode.window.showInputBox({
+			prompt: "请输入IM Platform TokenKey",
+			password: true,
+			placeHolder: "your-token-key-here",
+		})
+
+		if (input) {
+			await tokenManager.setTokenKey(input)
+		}
+	},
+	"imPlatform.clearToken": async () => {
+		const tokenManager = ImPlatformTokenManager.getInstance()
+		await tokenManager.clearTokenKey()
 	},
 })
 

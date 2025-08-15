@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import { McpHub } from "./McpHub"
 import { ClineProvider } from "../../core/webview/ClineProvider"
+import { ImPlatformTokenManager } from "../im-platform/ImPlatformTokenManager"
 
 /**
  * Singleton manager for MCP server instances.
@@ -39,6 +40,9 @@ export class McpServerManager {
 					this.instance = new McpHub(provider)
 					// Store a unique identifier in global state to track the primary instance
 					await context.globalState.update(this.GLOBAL_STATE_KEY, Date.now().toString())
+
+					// Set McpHub reference in ImPlatformTokenManager
+					ImPlatformTokenManager.getInstance().setMcpHub(this.instance)
 				}
 				return this.instance
 			} finally {

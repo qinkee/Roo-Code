@@ -156,6 +156,22 @@
 				"category": "Terminal"
 			},
 			{
+				"command": "roo-cline.imPlatform.manageToken",
+				"title": "Manage IM Platform Token",
+				"category": "Roo Code",
+				"icon": "$(key)"
+			},
+			{
+				"command": "roo-cline.imPlatform.setToken",
+				"title": "Set IM Platform Token",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.imPlatform.clearToken",
+				"title": "Clear IM Platform Token",
+				"category": "Roo Code"
+			},
+			{
 				"command": "roo-cline.setCustomStoragePath",
 				"title": "%command.setCustomStoragePath.title%",
 				"category": "%configuration.title%"
@@ -391,6 +407,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "%settings.useAgentRules.description%"
+				},
+				"roo-cline.imPlatformTokenKey": {
+					"type": "string",
+					"default": "",
+					"description": "Token key for IM Platform MCP integration. This key will be passed to the im-platform-mcp server for authentication."
 				}
 			}
 		}
@@ -481,7 +502,8 @@
 		"web-tree-sitter": "^0.25.6",
 		"workerpool": "^9.2.0",
 		"yaml": "^2.8.0",
-		"zod": "^3.25.61"
+		"zod": "^3.25.61",
+		"im-platform-mcp": "^4.0.0"
 	},
 	"devDependencies": {
 		"@roo-code/build": "workspace:^",

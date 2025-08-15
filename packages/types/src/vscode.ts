@@ -53,6 +53,10 @@ export const commandIds = [
 	"focusInput",
 	"acceptInput",
 	"focusPanel",
+
+	"imPlatform.manageToken",
+	"imPlatform.setToken",
+	"imPlatform.clearToken",
 ] as const
 
 export type CommandId = (typeof commandIds)[number]
