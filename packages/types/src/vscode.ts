@@ -57,6 +57,7 @@ export const commandIds = [
 	"imPlatform.manageToken",
 	"imPlatform.setToken",
 	"imPlatform.clearToken",
+	"receiveUserInfo",
 ] as const
 
 export type CommandId = (typeof commandIds)[number]

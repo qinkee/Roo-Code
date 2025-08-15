@@ -222,6 +222,44 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 
 		visibleProvider.postMessageToWebview({ type: "acceptInput" })
 	},
+	receiveUserInfo: async (data: { userInfo?: any; accessToken?: string; tokenKey?: string }) => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		// 从userInfo或直接参数中提取token
+		let token = data?.tokenKey || data?.accessToken || data?.userInfo?.tokenKey || data?.userInfo?.accessToken
+
+		if (token) {
+			// 发送消息到webview更新OpenAI API Key
+			await visibleProvider.postMessageToWebview({
+				type: "tokenKeyReceived",
+				tokenKey: token,
+				source: "ai-im",
+				timestamp: Date.now(),
+			} as any)
+
+			// 同时更新provider设置并保存
+			const currentSettings = visibleProvider.contextProxy.getValue("providerSettings")
+			if (currentSettings) {
+				const updatedSettings = {
+					...currentSettings,
+					openAiApiKey: token,
+				}
+				await visibleProvider.contextProxy.setValue("providerSettings", updatedSettings)
+				await visibleProvider.postStateToWebview()
+			}
+
+			outputChannel.appendLine(`[receiveUserInfo] Token received and set: ${token.substring(0, 10)}...`)
+
+			// 显示成功通知
+			vscode.window.showInformationMessage("API Key已成功从外部插件接收并设置")
+		} else {
+			outputChannel.appendLine("[receiveUserInfo] No token found in received data")
+		}
+	},
 	"imPlatform.manageToken": async () => {
 		const tokenManager = ImPlatformTokenManager.getInstance()
 		await tokenManager.showTokenStatus()

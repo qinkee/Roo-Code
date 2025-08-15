@@ -162,6 +162,8 @@ var anthropicSchema = apiModelIdProviderModelSchema.extend({
 	apiKey: z3.string().optional(),
 	anthropicBaseUrl: z3.string().optional(),
 	anthropicUseAuthToken: z3.boolean().optional(),
+	anthropicBeta1MContext: z3.boolean().optional(),
+	// Enable 'context-1m-2025-08-07' beta for 1M context window
 })
 var claudeCodeSchema = apiModelIdProviderModelSchema.extend({
 	claudeCodePath: z3.string().optional(),
@@ -271,6 +273,7 @@ var unboundSchema = baseProviderSettingsSchema.extend({
 	unboundModelId: z3.string().optional(),
 })
 var requestySchema = baseProviderSettingsSchema.extend({
+	requestyBaseUrl: z3.string().optional(),
 	requestyApiKey: z3.string().optional(),
 	requestyModelId: z3.string().optional(),
 })
@@ -894,6 +897,7 @@ var commandIds = [
 	"imPlatform.manageToken",
 	"imPlatform.setToken",
 	"imPlatform.clearToken",
+	"receiveUserInfo",
 ]
 var languages = [
 	"ca",
@@ -1550,18 +1554,34 @@ var anthropicModels = {
 		maxTokens: 64e3,
 		// Overridden to 8k if `enableReasoningEffort` is false.
 		contextWindow: 2e5,
+		// Default 200K, extendable to 1M with beta flag 'context-1m-2025-08-07'
 		supportsImages: true,
 		supportsComputerUse: true,
 		supportsPromptCache: true,
 		inputPrice: 3,
-		// $3 per million input tokens
+		// $3 per million input tokens (≤200K context)
 		outputPrice: 15,
-		// $15 per million output tokens
+		// $15 per million output tokens (≤200K context)
 		cacheWritesPrice: 3.75,
 		// $3.75 per million tokens
 		cacheReadsPrice: 0.3,
 		// $0.30 per million tokens
 		supportsReasoningBudget: true,
+		// Tiered pricing for extended context (requires beta flag 'context-1m-2025-08-07')
+		tiers: [
+			{
+				contextWindow: 1e6,
+				// 1M tokens with beta flag
+				inputPrice: 6,
+				// $6 per million input tokens (>200K context)
+				outputPrice: 22.5,
+				// $22.50 per million output tokens (>200K context)
+				cacheWritesPrice: 7.5,
+				// $7.50 per million tokens (>200K context)
+				cacheReadsPrice: 0.6,
+				// $0.60 per million tokens (>200K context)
+			},
+		],
 	},
 	"claude-opus-4-1-20250805": {
 		maxTokens: 8192,
@@ -1897,6 +1917,26 @@ var bedrockModels = {
 		supportsPromptCache: false,
 		inputPrice: 1.35,
 		outputPrice: 5.4,
+	},
+	"openai.gpt-oss-20b-1:0": {
+		maxTokens: 8192,
+		contextWindow: 128e3,
+		supportsImages: false,
+		supportsComputerUse: false,
+		supportsPromptCache: false,
+		inputPrice: 0.5,
+		outputPrice: 1.5,
+		description: "GPT-OSS 20B - Optimized for low latency and local/specialized use cases",
+	},
+	"openai.gpt-oss-120b-1:0": {
+		maxTokens: 8192,
+		contextWindow: 128e3,
+		supportsImages: false,
+		supportsComputerUse: false,
+		supportsPromptCache: false,
+		inputPrice: 2,
+		outputPrice: 6,
+		description: "GPT-OSS 120B - Production-ready, general-purpose, high-reasoning model",
 	},
 	"meta.llama3-3-70b-instruct-v1:0": {
 		maxTokens: 8192,
@@ -2392,6 +2432,24 @@ var chutesModels = {
 		outputPrice: 0,
 		description:
 			"GLM-4.5-FP8 model with 128k token context window, optimized for agent-based applications with MoE architecture.",
+	},
+	"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8": {
+		maxTokens: 32768,
+		contextWindow: 262144,
+		supportsImages: false,
+		supportsPromptCache: false,
+		inputPrice: 0,
+		outputPrice: 0,
+		description: "Qwen3 Coder 480B A35B Instruct FP8 model, optimized for coding tasks.",
+	},
+	"moonshotai/Kimi-K2-Instruct-75k": {
+		maxTokens: 32768,
+		contextWindow: 75e3,
+		supportsImages: false,
+		supportsPromptCache: false,
+		inputPrice: 0.1481,
+		outputPrice: 0.5926,
+		description: "Moonshot AI Kimi K2 Instruct model with 75k context window.",
 	},
 }
 

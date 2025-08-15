@@ -2580,6 +2580,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<
 				apiKey: z.ZodOptional<z.ZodString>
 				anthropicBaseUrl: z.ZodOptional<z.ZodString>
 				anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>
+				anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>
 			} & {
 				apiProvider: z.ZodLiteral<"anthropic">
 			},
@@ -2603,6 +2604,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<
 				apiKey?: string | undefined
 				anthropicBaseUrl?: string | undefined
 				anthropicUseAuthToken?: boolean | undefined
+				anthropicBeta1MContext?: boolean | undefined
 			},
 			{
 				apiProvider: "anthropic"
@@ -2622,6 +2624,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<
 				apiKey?: string | undefined
 				anthropicBaseUrl?: string | undefined
 				anthropicUseAuthToken?: boolean | undefined
+				anthropicBeta1MContext?: boolean | undefined
 			}
 		>,
 		z.ZodObject<
@@ -4010,6 +4013,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<
 				modelMaxThinkingTokens: z.ZodOptional<z.ZodNumber>
 				verbosity: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>
 			} & {
+				requestyBaseUrl: z.ZodOptional<z.ZodString>
 				requestyApiKey: z.ZodOptional<z.ZodString>
 				requestyModelId: z.ZodOptional<z.ZodString>
 			} & {
@@ -4031,6 +4035,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<
 				modelMaxTokens?: number | undefined
 				modelMaxThinkingTokens?: number | undefined
 				verbosity?: "low" | "medium" | "high" | undefined
+				requestyBaseUrl?: string | undefined
 				requestyApiKey?: string | undefined
 				requestyModelId?: string | undefined
 			},
@@ -4048,6 +4053,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<
 				modelMaxTokens?: number | undefined
 				modelMaxThinkingTokens?: number | undefined
 				verbosity?: "low" | "medium" | "high" | undefined
+				requestyBaseUrl?: string | undefined
 				requestyApiKey?: string | undefined
 				requestyModelId?: string | undefined
 			}
@@ -4828,6 +4834,7 @@ declare const providerSettingsSchema: z.ZodObject<
 		groqApiKey: z.ZodOptional<z.ZodString>
 		xaiApiKey: z.ZodOptional<z.ZodString>
 		fakeAi: z.ZodOptional<z.ZodUnknown>
+		requestyBaseUrl: z.ZodOptional<z.ZodString>
 		requestyApiKey: z.ZodOptional<z.ZodString>
 		requestyModelId: z.ZodOptional<z.ZodString>
 		unboundApiKey: z.ZodOptional<z.ZodString>
@@ -5051,6 +5058,7 @@ declare const providerSettingsSchema: z.ZodObject<
 		apiKey: z.ZodOptional<z.ZodString>
 		anthropicBaseUrl: z.ZodOptional<z.ZodString>
 		anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>
+		anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>
 		apiProvider: z.ZodOptional<
 			z.ZodEnum<
 				[
@@ -5148,6 +5156,7 @@ declare const providerSettingsSchema: z.ZodObject<
 		apiKey?: string | undefined
 		anthropicBaseUrl?: string | undefined
 		anthropicUseAuthToken?: boolean | undefined
+		anthropicBeta1MContext?: boolean | undefined
 		claudeCodePath?: string | undefined
 		claudeCodeMaxOutputTokens?: number | undefined
 		glamaModelId?: string | undefined
@@ -5253,6 +5262,7 @@ declare const providerSettingsSchema: z.ZodObject<
 		moonshotApiKey?: string | undefined
 		unboundApiKey?: string | undefined
 		unboundModelId?: string | undefined
+		requestyBaseUrl?: string | undefined
 		requestyApiKey?: string | undefined
 		requestyModelId?: string | undefined
 		fakeAi?: unknown
@@ -5331,6 +5341,7 @@ declare const providerSettingsSchema: z.ZodObject<
 		apiKey?: string | undefined
 		anthropicBaseUrl?: string | undefined
 		anthropicUseAuthToken?: boolean | undefined
+		anthropicBeta1MContext?: boolean | undefined
 		claudeCodePath?: string | undefined
 		claudeCodeMaxOutputTokens?: number | undefined
 		glamaModelId?: string | undefined
@@ -5436,6 +5447,7 @@ declare const providerSettingsSchema: z.ZodObject<
 		moonshotApiKey?: string | undefined
 		unboundApiKey?: string | undefined
 		unboundModelId?: string | undefined
+		requestyBaseUrl?: string | undefined
 		requestyApiKey?: string | undefined
 		requestyModelId?: string | undefined
 		fakeAi?: unknown
@@ -5499,6 +5511,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<
 		groqApiKey: z.ZodOptional<z.ZodString>
 		xaiApiKey: z.ZodOptional<z.ZodString>
 		fakeAi: z.ZodOptional<z.ZodUnknown>
+		requestyBaseUrl: z.ZodOptional<z.ZodString>
 		requestyApiKey: z.ZodOptional<z.ZodString>
 		requestyModelId: z.ZodOptional<z.ZodString>
 		unboundApiKey: z.ZodOptional<z.ZodString>
@@ -5722,6 +5735,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<
 		apiKey: z.ZodOptional<z.ZodString>
 		anthropicBaseUrl: z.ZodOptional<z.ZodString>
 		anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>
+		anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>
 		apiProvider: z.ZodOptional<
 			z.ZodEnum<
 				[
@@ -5822,6 +5836,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<
 		apiKey?: string | undefined
 		anthropicBaseUrl?: string | undefined
 		anthropicUseAuthToken?: boolean | undefined
+		anthropicBeta1MContext?: boolean | undefined
 		claudeCodePath?: string | undefined
 		claudeCodeMaxOutputTokens?: number | undefined
 		glamaModelId?: string | undefined
@@ -5927,6 +5942,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<
 		moonshotApiKey?: string | undefined
 		unboundApiKey?: string | undefined
 		unboundModelId?: string | undefined
+		requestyBaseUrl?: string | undefined
 		requestyApiKey?: string | undefined
 		requestyModelId?: string | undefined
 		fakeAi?: unknown
@@ -6006,6 +6022,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<
 		apiKey?: string | undefined
 		anthropicBaseUrl?: string | undefined
 		anthropicUseAuthToken?: boolean | undefined
+		anthropicBeta1MContext?: boolean | undefined
 		claudeCodePath?: string | undefined
 		claudeCodeMaxOutputTokens?: number | undefined
 		glamaModelId?: string | undefined
@@ -6111,6 +6128,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<
 		moonshotApiKey?: string | undefined
 		unboundApiKey?: string | undefined
 		unboundModelId?: string | undefined
+		requestyBaseUrl?: string | undefined
 		requestyApiKey?: string | undefined
 		requestyModelId?: string | undefined
 		fakeAi?: unknown
@@ -6159,6 +6177,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<
 					apiKey: z.ZodOptional<z.ZodString>
 					anthropicBaseUrl: z.ZodOptional<z.ZodString>
 					anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>
+					anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>
 				} & {
 					apiProvider: z.ZodLiteral<"anthropic">
 				},
@@ -6182,6 +6201,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<
 					apiKey?: string | undefined
 					anthropicBaseUrl?: string | undefined
 					anthropicUseAuthToken?: boolean | undefined
+					anthropicBeta1MContext?: boolean | undefined
 				},
 				{
 					apiProvider: "anthropic"
@@ -6201,6 +6221,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<
 					apiKey?: string | undefined
 					anthropicBaseUrl?: string | undefined
 					anthropicUseAuthToken?: boolean | undefined
+					anthropicBeta1MContext?: boolean | undefined
 				}
 			>,
 			z.ZodObject<
@@ -7591,6 +7612,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<
 					modelMaxThinkingTokens: z.ZodOptional<z.ZodNumber>
 					verbosity: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>
 				} & {
+					requestyBaseUrl: z.ZodOptional<z.ZodString>
 					requestyApiKey: z.ZodOptional<z.ZodString>
 					requestyModelId: z.ZodOptional<z.ZodString>
 				} & {
@@ -7612,6 +7634,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<
 					modelMaxTokens?: number | undefined
 					modelMaxThinkingTokens?: number | undefined
 					verbosity?: "low" | "medium" | "high" | undefined
+					requestyBaseUrl?: string | undefined
 					requestyApiKey?: string | undefined
 					requestyModelId?: string | undefined
 				},
@@ -7629,6 +7652,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<
 					modelMaxTokens?: number | undefined
 					modelMaxThinkingTokens?: number | undefined
 					verbosity?: "low" | "medium" | "high" | undefined
+					requestyBaseUrl?: string | undefined
 					requestyApiKey?: string | undefined
 					requestyModelId?: string | undefined
 				}
@@ -8409,6 +8433,7 @@ declare const PROVIDER_SETTINGS_KEYS: [
 	"apiKey",
 	"anthropicBaseUrl",
 	"anthropicUseAuthToken",
+	"anthropicBeta1MContext",
 	"claudeCodePath",
 	"claudeCodeMaxOutputTokens",
 	"glamaModelId",
@@ -8472,6 +8497,7 @@ declare const PROVIDER_SETTINGS_KEYS: [
 	"moonshotApiKey",
 	"unboundApiKey",
 	"unboundModelId",
+	"requestyBaseUrl",
 	"requestyApiKey",
 	"requestyModelId",
 	"fakeAi",
@@ -9904,6 +9930,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<
 		groqApiKey: z.ZodOptional<z.ZodString>
 		xaiApiKey: z.ZodOptional<z.ZodString>
 		fakeAi: z.ZodOptional<z.ZodUnknown>
+		requestyBaseUrl: z.ZodOptional<z.ZodString>
 		requestyApiKey: z.ZodOptional<z.ZodString>
 		requestyModelId: z.ZodOptional<z.ZodString>
 		unboundApiKey: z.ZodOptional<z.ZodString>
@@ -10127,6 +10154,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<
 		apiKey: z.ZodOptional<z.ZodString>
 		anthropicBaseUrl: z.ZodOptional<z.ZodString>
 		anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>
+		anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>
 		apiProvider: z.ZodOptional<
 			z.ZodEnum<
 				[
@@ -10928,6 +10956,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<
 		apiKey?: string | undefined
 		anthropicBaseUrl?: string | undefined
 		anthropicUseAuthToken?: boolean | undefined
+		anthropicBeta1MContext?: boolean | undefined
 		claudeCodePath?: string | undefined
 		claudeCodeMaxOutputTokens?: number | undefined
 		glamaModelId?: string | undefined
@@ -11033,6 +11062,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<
 		moonshotApiKey?: string | undefined
 		unboundApiKey?: string | undefined
 		unboundModelId?: string | undefined
+		requestyBaseUrl?: string | undefined
 		requestyApiKey?: string | undefined
 		requestyModelId?: string | undefined
 		fakeAi?: unknown
@@ -11374,6 +11404,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<
 		apiKey?: string | undefined
 		anthropicBaseUrl?: string | undefined
 		anthropicUseAuthToken?: boolean | undefined
+		anthropicBeta1MContext?: boolean | undefined
 		claudeCodePath?: string | undefined
 		claudeCodeMaxOutputTokens?: number | undefined
 		glamaModelId?: string | undefined
@@ -11479,6 +11510,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<
 		moonshotApiKey?: string | undefined
 		unboundApiKey?: string | undefined
 		unboundModelId?: string | undefined
+		requestyBaseUrl?: string | undefined
 		requestyApiKey?: string | undefined
 		requestyModelId?: string | undefined
 		fakeAi?: unknown
@@ -11913,6 +11945,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 								groqApiKey: z.ZodOptional<z.ZodString>
 								xaiApiKey: z.ZodOptional<z.ZodString>
 								fakeAi: z.ZodOptional<z.ZodUnknown>
+								requestyBaseUrl: z.ZodOptional<z.ZodString>
 								requestyApiKey: z.ZodOptional<z.ZodString>
 								requestyModelId: z.ZodOptional<z.ZodString>
 								unboundApiKey: z.ZodOptional<z.ZodString>
@@ -12158,6 +12191,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 								apiKey: z.ZodOptional<z.ZodString>
 								anthropicBaseUrl: z.ZodOptional<z.ZodString>
 								anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>
+								anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>
 								apiProvider: z.ZodOptional<
 									z.ZodEnum<
 										[
@@ -12995,6 +13029,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 								apiKey?: string | undefined
 								anthropicBaseUrl?: string | undefined
 								anthropicUseAuthToken?: boolean | undefined
+								anthropicBeta1MContext?: boolean | undefined
 								claudeCodePath?: string | undefined
 								claudeCodeMaxOutputTokens?: number | undefined
 								glamaModelId?: string | undefined
@@ -13103,6 +13138,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 								moonshotApiKey?: string | undefined
 								unboundApiKey?: string | undefined
 								unboundModelId?: string | undefined
+								requestyBaseUrl?: string | undefined
 								requestyApiKey?: string | undefined
 								requestyModelId?: string | undefined
 								fakeAi?: unknown
@@ -13444,6 +13480,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 								apiKey?: string | undefined
 								anthropicBaseUrl?: string | undefined
 								anthropicUseAuthToken?: boolean | undefined
+								anthropicBeta1MContext?: boolean | undefined
 								claudeCodePath?: string | undefined
 								claudeCodeMaxOutputTokens?: number | undefined
 								glamaModelId?: string | undefined
@@ -13552,6 +13589,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 								moonshotApiKey?: string | undefined
 								unboundApiKey?: string | undefined
 								unboundModelId?: string | undefined
+								requestyBaseUrl?: string | undefined
 								requestyApiKey?: string | undefined
 								requestyModelId?: string | undefined
 								fakeAi?: unknown
@@ -13902,6 +13940,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 							apiKey?: string | undefined
 							anthropicBaseUrl?: string | undefined
 							anthropicUseAuthToken?: boolean | undefined
+							anthropicBeta1MContext?: boolean | undefined
 							claudeCodePath?: string | undefined
 							claudeCodeMaxOutputTokens?: number | undefined
 							glamaModelId?: string | undefined
@@ -14007,6 +14046,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 							moonshotApiKey?: string | undefined
 							unboundApiKey?: string | undefined
 							unboundModelId?: string | undefined
+							requestyBaseUrl?: string | undefined
 							requestyApiKey?: string | undefined
 							requestyModelId?: string | undefined
 							fakeAi?: unknown
@@ -14353,6 +14393,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 							apiKey?: string | undefined
 							anthropicBaseUrl?: string | undefined
 							anthropicUseAuthToken?: boolean | undefined
+							anthropicBeta1MContext?: boolean | undefined
 							claudeCodePath?: string | undefined
 							claudeCodeMaxOutputTokens?: number | undefined
 							glamaModelId?: string | undefined
@@ -14458,6 +14499,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 							moonshotApiKey?: string | undefined
 							unboundApiKey?: string | undefined
 							unboundModelId?: string | undefined
+							requestyBaseUrl?: string | undefined
 							requestyApiKey?: string | undefined
 							requestyModelId?: string | undefined
 							fakeAi?: unknown
@@ -14810,6 +14852,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 						apiKey?: string | undefined
 						anthropicBaseUrl?: string | undefined
 						anthropicUseAuthToken?: boolean | undefined
+						anthropicBeta1MContext?: boolean | undefined
 						claudeCodePath?: string | undefined
 						claudeCodeMaxOutputTokens?: number | undefined
 						glamaModelId?: string | undefined
@@ -14915,6 +14958,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 						moonshotApiKey?: string | undefined
 						unboundApiKey?: string | undefined
 						unboundModelId?: string | undefined
+						requestyBaseUrl?: string | undefined
 						requestyApiKey?: string | undefined
 						requestyModelId?: string | undefined
 						fakeAi?: unknown
@@ -15264,6 +15308,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 						apiKey?: string | undefined
 						anthropicBaseUrl?: string | undefined
 						anthropicUseAuthToken?: boolean | undefined
+						anthropicBeta1MContext?: boolean | undefined
 						claudeCodePath?: string | undefined
 						claudeCodeMaxOutputTokens?: number | undefined
 						glamaModelId?: string | undefined
@@ -15369,6 +15414,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<
 						moonshotApiKey?: string | undefined
 						unboundApiKey?: string | undefined
 						unboundModelId?: string | undefined
+						requestyBaseUrl?: string | undefined
 						requestyApiKey?: string | undefined
 						requestyModelId?: string | undefined
 						fakeAi?: unknown
@@ -15800,6 +15846,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 												groqApiKey: z.ZodOptional<z.ZodString>
 												xaiApiKey: z.ZodOptional<z.ZodString>
 												fakeAi: z.ZodOptional<z.ZodUnknown>
+												requestyBaseUrl: z.ZodOptional<z.ZodString>
 												requestyApiKey: z.ZodOptional<z.ZodString>
 												requestyModelId: z.ZodOptional<z.ZodString>
 												unboundApiKey: z.ZodOptional<z.ZodString>
@@ -16051,6 +16098,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 												apiKey: z.ZodOptional<z.ZodString>
 												anthropicBaseUrl: z.ZodOptional<z.ZodString>
 												anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>
+												anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>
 												apiProvider: z.ZodOptional<
 													z.ZodEnum<
 														[
@@ -16922,6 +16970,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 												apiKey?: string | undefined
 												anthropicBaseUrl?: string | undefined
 												anthropicUseAuthToken?: boolean | undefined
+												anthropicBeta1MContext?: boolean | undefined
 												claudeCodePath?: string | undefined
 												claudeCodeMaxOutputTokens?: number | undefined
 												glamaModelId?: string | undefined
@@ -17035,6 +17084,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 												moonshotApiKey?: string | undefined
 												unboundApiKey?: string | undefined
 												unboundModelId?: string | undefined
+												requestyBaseUrl?: string | undefined
 												requestyApiKey?: string | undefined
 												requestyModelId?: string | undefined
 												fakeAi?: unknown
@@ -17385,6 +17435,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 												apiKey?: string | undefined
 												anthropicBaseUrl?: string | undefined
 												anthropicUseAuthToken?: boolean | undefined
+												anthropicBeta1MContext?: boolean | undefined
 												claudeCodePath?: string | undefined
 												claudeCodeMaxOutputTokens?: number | undefined
 												glamaModelId?: string | undefined
@@ -17498,6 +17549,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 												moonshotApiKey?: string | undefined
 												unboundApiKey?: string | undefined
 												unboundModelId?: string | undefined
+												requestyBaseUrl?: string | undefined
 												requestyApiKey?: string | undefined
 												requestyModelId?: string | undefined
 												fakeAi?: unknown
@@ -17857,6 +17909,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 											apiKey?: string | undefined
 											anthropicBaseUrl?: string | undefined
 											anthropicUseAuthToken?: boolean | undefined
+											anthropicBeta1MContext?: boolean | undefined
 											claudeCodePath?: string | undefined
 											claudeCodeMaxOutputTokens?: number | undefined
 											glamaModelId?: string | undefined
@@ -17970,6 +18023,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 											moonshotApiKey?: string | undefined
 											unboundApiKey?: string | undefined
 											unboundModelId?: string | undefined
+											requestyBaseUrl?: string | undefined
 											requestyApiKey?: string | undefined
 											requestyModelId?: string | undefined
 											fakeAi?: unknown
@@ -18323,6 +18377,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 											apiKey?: string | undefined
 											anthropicBaseUrl?: string | undefined
 											anthropicUseAuthToken?: boolean | undefined
+											anthropicBeta1MContext?: boolean | undefined
 											claudeCodePath?: string | undefined
 											claudeCodeMaxOutputTokens?: number | undefined
 											glamaModelId?: string | undefined
@@ -18436,6 +18491,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 											moonshotApiKey?: string | undefined
 											unboundApiKey?: string | undefined
 											unboundModelId?: string | undefined
+											requestyBaseUrl?: string | undefined
 											requestyApiKey?: string | undefined
 											requestyModelId?: string | undefined
 											fakeAi?: unknown
@@ -18795,6 +18851,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 										apiKey?: string | undefined
 										anthropicBaseUrl?: string | undefined
 										anthropicUseAuthToken?: boolean | undefined
+										anthropicBeta1MContext?: boolean | undefined
 										claudeCodePath?: string | undefined
 										claudeCodeMaxOutputTokens?: number | undefined
 										glamaModelId?: string | undefined
@@ -18908,6 +18965,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 										moonshotApiKey?: string | undefined
 										unboundApiKey?: string | undefined
 										unboundModelId?: string | undefined
+										requestyBaseUrl?: string | undefined
 										requestyApiKey?: string | undefined
 										requestyModelId?: string | undefined
 										fakeAi?: unknown
@@ -19264,6 +19322,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 										apiKey?: string | undefined
 										anthropicBaseUrl?: string | undefined
 										anthropicUseAuthToken?: boolean | undefined
+										anthropicBeta1MContext?: boolean | undefined
 										claudeCodePath?: string | undefined
 										claudeCodeMaxOutputTokens?: number | undefined
 										glamaModelId?: string | undefined
@@ -19377,6 +19436,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 										moonshotApiKey?: string | undefined
 										unboundApiKey?: string | undefined
 										unboundModelId?: string | undefined
+										requestyBaseUrl?: string | undefined
 										requestyApiKey?: string | undefined
 										requestyModelId?: string | undefined
 										fakeAi?: unknown
@@ -19775,6 +19835,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 									apiKey?: string | undefined
 									anthropicBaseUrl?: string | undefined
 									anthropicUseAuthToken?: boolean | undefined
+									anthropicBeta1MContext?: boolean | undefined
 									claudeCodePath?: string | undefined
 									claudeCodeMaxOutputTokens?: number | undefined
 									glamaModelId?: string | undefined
@@ -19888,6 +19949,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 									moonshotApiKey?: string | undefined
 									unboundApiKey?: string | undefined
 									unboundModelId?: string | undefined
+									requestyBaseUrl?: string | undefined
 									requestyApiKey?: string | undefined
 									requestyModelId?: string | undefined
 									fakeAi?: unknown
@@ -20251,6 +20313,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 									apiKey?: string | undefined
 									anthropicBaseUrl?: string | undefined
 									anthropicUseAuthToken?: boolean | undefined
+									anthropicBeta1MContext?: boolean | undefined
 									claudeCodePath?: string | undefined
 									claudeCodeMaxOutputTokens?: number | undefined
 									glamaModelId?: string | undefined
@@ -20364,6 +20427,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<
 									moonshotApiKey?: string | undefined
 									unboundApiKey?: string | undefined
 									unboundModelId?: string | undefined
+									requestyBaseUrl?: string | undefined
 									requestyApiKey?: string | undefined
 									requestyModelId?: string | undefined
 									fakeAi?: unknown
@@ -23148,6 +23212,7 @@ declare const organizationSettingsSchema: z.ZodObject<
 									apiKey: z.ZodOptional<z.ZodString>
 									anthropicBaseUrl: z.ZodOptional<z.ZodString>
 									anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>
+									anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>
 								} & {
 									apiProvider: z.ZodLiteral<"anthropic">
 								},
@@ -23171,6 +23236,7 @@ declare const organizationSettingsSchema: z.ZodObject<
 									apiKey?: string | undefined
 									anthropicBaseUrl?: string | undefined
 									anthropicUseAuthToken?: boolean | undefined
+									anthropicBeta1MContext?: boolean | undefined
 								},
 								{
 									apiProvider: "anthropic"
@@ -23190,6 +23256,7 @@ declare const organizationSettingsSchema: z.ZodObject<
 									apiKey?: string | undefined
 									anthropicBaseUrl?: string | undefined
 									anthropicUseAuthToken?: boolean | undefined
+									anthropicBeta1MContext?: boolean | undefined
 								}
 							>,
 							z.ZodObject<
@@ -24616,6 +24683,7 @@ declare const organizationSettingsSchema: z.ZodObject<
 									modelMaxThinkingTokens: z.ZodOptional<z.ZodNumber>
 									verbosity: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>
 								} & {
+									requestyBaseUrl: z.ZodOptional<z.ZodString>
 									requestyApiKey: z.ZodOptional<z.ZodString>
 									requestyModelId: z.ZodOptional<z.ZodString>
 								} & {
@@ -24637,6 +24705,7 @@ declare const organizationSettingsSchema: z.ZodObject<
 									modelMaxTokens?: number | undefined
 									modelMaxThinkingTokens?: number | undefined
 									verbosity?: "low" | "medium" | "high" | undefined
+									requestyBaseUrl?: string | undefined
 									requestyApiKey?: string | undefined
 									requestyModelId?: string | undefined
 								},
@@ -24654,6 +24723,7 @@ declare const organizationSettingsSchema: z.ZodObject<
 									modelMaxTokens?: number | undefined
 									modelMaxThinkingTokens?: number | undefined
 									verbosity?: "low" | "medium" | "high" | undefined
+									requestyBaseUrl?: string | undefined
 									requestyApiKey?: string | undefined
 									requestyModelId?: string | undefined
 								}
@@ -25511,6 +25581,7 @@ declare const organizationSettingsSchema: z.ZodObject<
 								apiKey?: string | undefined
 								anthropicBaseUrl?: string | undefined
 								anthropicUseAuthToken?: boolean | undefined
+								anthropicBeta1MContext?: boolean | undefined
 						  }
 						| {
 								apiProvider: "claude-code"
@@ -25899,6 +25970,7 @@ declare const organizationSettingsSchema: z.ZodObject<
 								modelMaxTokens?: number | undefined
 								modelMaxThinkingTokens?: number | undefined
 								verbosity?: "low" | "medium" | "high" | undefined
+								requestyBaseUrl?: string | undefined
 								requestyApiKey?: string | undefined
 								requestyModelId?: string | undefined
 						  }
@@ -26210,6 +26282,7 @@ declare const organizationSettingsSchema: z.ZodObject<
 								apiKey?: string | undefined
 								anthropicBaseUrl?: string | undefined
 								anthropicUseAuthToken?: boolean | undefined
+								anthropicBeta1MContext?: boolean | undefined
 						  }
 						| {
 								apiProvider: "claude-code"
@@ -26598,6 +26671,7 @@ declare const organizationSettingsSchema: z.ZodObject<
 								modelMaxTokens?: number | undefined
 								modelMaxThinkingTokens?: number | undefined
 								verbosity?: "low" | "medium" | "high" | undefined
+								requestyBaseUrl?: string | undefined
 								requestyApiKey?: string | undefined
 								requestyModelId?: string | undefined
 						  }
@@ -31771,6 +31845,7 @@ declare const commandIds: readonly [
 	"imPlatform.manageToken",
 	"imPlatform.setToken",
 	"imPlatform.clearToken",
+	"receiveUserInfo",
 ]
 type CommandId = (typeof commandIds)[number]
 /**
@@ -31835,6 +31910,15 @@ declare const anthropicModels: {
 		readonly cacheWritesPrice: 3.75
 		readonly cacheReadsPrice: 0.3
 		readonly supportsReasoningBudget: true
+		readonly tiers: [
+			{
+				readonly contextWindow: 1000000
+				readonly inputPrice: 6
+				readonly outputPrice: 22.5
+				readonly cacheWritesPrice: 7.5
+				readonly cacheReadsPrice: 0.6
+			},
+		]
 	}
 	readonly "claude-opus-4-1-20250805": {
 		readonly maxTokens: 8192
@@ -32140,6 +32224,26 @@ declare const bedrockModels: {
 		readonly inputPrice: 1.35
 		readonly outputPrice: 5.4
 	}
+	readonly "openai.gpt-oss-20b-1:0": {
+		readonly maxTokens: 8192
+		readonly contextWindow: 128000
+		readonly supportsImages: false
+		readonly supportsComputerUse: false
+		readonly supportsPromptCache: false
+		readonly inputPrice: 0.5
+		readonly outputPrice: 1.5
+		readonly description: "GPT-OSS 20B - Optimized for low latency and local/specialized use cases"
+	}
+	readonly "openai.gpt-oss-120b-1:0": {
+		readonly maxTokens: 8192
+		readonly contextWindow: 128000
+		readonly supportsImages: false
+		readonly supportsComputerUse: false
+		readonly supportsPromptCache: false
+		readonly inputPrice: 2
+		readonly outputPrice: 6
+		readonly description: "GPT-OSS 120B - Production-ready, general-purpose, high-reasoning model"
+	}
 	readonly "meta.llama3-3-70b-instruct-v1:0": {
 		readonly maxTokens: 8192
 		readonly contextWindow: 128000
@@ -32387,10 +32491,12 @@ type ChutesModelId =
 	| "Qwen/Qwen3-30B-A3B"
 	| "Qwen/Qwen3-14B"
 	| "Qwen/Qwen3-8B"
+	| "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
 	| "microsoft/MAI-DS-R1-FP8"
 	| "tngtech/DeepSeek-R1T-Chimera"
 	| "zai-org/GLM-4.5-Air"
 	| "zai-org/GLM-4.5-FP8"
+	| "moonshotai/Kimi-K2-Instruct-75k"
 declare const chutesDefaultModelId: ChutesModelId
 declare const chutesModels: {
 	readonly "deepseek-ai/DeepSeek-R1-0528": {
@@ -32618,6 +32724,24 @@ declare const chutesModels: {
 		readonly outputPrice: 0
 		readonly description: "GLM-4.5-FP8 model with 128k token context window, optimized for agent-based applications with MoE architecture."
 	}
+	readonly "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8": {
+		readonly maxTokens: 32768
+		readonly contextWindow: 262144
+		readonly supportsImages: false
+		readonly supportsPromptCache: false
+		readonly inputPrice: 0
+		readonly outputPrice: 0
+		readonly description: "Qwen3 Coder 480B A35B Instruct FP8 model, optimized for coding tasks."
+	}
+	readonly "moonshotai/Kimi-K2-Instruct-75k": {
+		readonly maxTokens: 32768
+		readonly contextWindow: 75000
+		readonly supportsImages: false
+		readonly supportsPromptCache: false
+		readonly inputPrice: 0.1481
+		readonly outputPrice: 0.5926
+		readonly description: "Moonshot AI Kimi K2 Instruct model with 75k context window."
+	}
 }
 
 /**
@@ -32660,6 +32784,15 @@ declare const claudeCodeModels: {
 		readonly outputPrice: 15
 		readonly cacheWritesPrice: 3.75
 		readonly cacheReadsPrice: 0.3
+		readonly tiers: [
+			{
+				readonly contextWindow: 1000000
+				readonly inputPrice: 6
+				readonly outputPrice: 22.5
+				readonly cacheWritesPrice: 7.5
+				readonly cacheReadsPrice: 0.6
+			},
+		]
 	}
 	readonly "claude-opus-4-1-20250805": {
 		readonly supportsImages: false
