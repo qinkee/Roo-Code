@@ -242,15 +242,15 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			} as any)
 
 			// 同时更新provider设置并保存
-			const currentSettings = visibleProvider.contextProxy.getValue("providerSettings")
-			if (currentSettings) {
-				const updatedSettings = {
-					...currentSettings,
-					openAiApiKey: token,
-				}
-				await visibleProvider.contextProxy.setValue("providerSettings", updatedSettings)
-				await visibleProvider.postStateToWebview()
-			}
+			// const currentSettings = visibleProvider.contextProxy.getValue("providerSettings")
+			// if (currentSettings) {
+			// 	const updatedSettings = {
+			// 		...currentSettings,
+			// 		openAiApiKey: token,
+			// 	}
+			// 	await visibleProvider.contextProxy.setValue("providerSettings", updatedSettings)
+			// 	await visibleProvider.postStateToWebview()
+			// }
 
 			outputChannel.appendLine(`[receiveUserInfo] Token received and set: ${token.substring(0, 10)}...`)
 
