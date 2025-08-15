@@ -515,7 +515,7 @@
 		"workerpool": "^9.2.0",
 		"yaml": "^2.8.0",
 		"zod": "^3.25.61",
-		"im-platform-mcp": "^4.0.0"
+		"im-platform-mcp": "^4.1.1"
 	},
 	"devDependencies": {
 		"@roo-code/build": "workspace:^",

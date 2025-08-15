@@ -638,8 +638,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.4
       im-platform-mcp:
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^4.1.1
+        version: 4.1.1
       isbinaryfile:
         specifier: ^5.0.2
         version: 5.0.4
@@ -6247,8 +6247,8 @@ packages:
     resolution: {integrity: sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg==}
     engines: {node: '>= 4'}
 
-  im-platform-mcp@4.0.0:
-    resolution: {integrity: sha512-MwWzzjpHmtk+E7mOXqzmO9cT3iQgwoocP5xiIyOZnoP2VUB128IzC0MaeK0wPkehqp6YVy6USabshWr3tP/DKA==}
+  im-platform-mcp@4.1.1:
+    resolution: {integrity: sha512-YDlifFqBXH3iK5uHysUZY7pD0naGCQhHgGG3RXuEDPQ/PKRhRbOZk17vWrPGwgnXpi+Ld5Rw8swsgd+P5z9LFg==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -16009,7 +16009,7 @@ snapshots:
 
   ignore@7.0.5: {}
 
-  im-platform-mcp@4.0.0:
+  im-platform-mcp@4.1.1:
     dependencies:
       '@modelcontextprotocol/sdk': 0.6.1
       axios: 1.9.0
