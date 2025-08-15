@@ -1,5 +1,9 @@
 {
-	"permissions": {
-		"defaultMode": "acceptEdits"
-	}
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)"
+    ],
+    "defaultMode": "acceptEdits"
+  }
 }

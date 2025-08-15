@@ -57,7 +57,7 @@ import { useOpenRouterModelProviders } from "./useOpenRouterModelProviders"
 import { useLmStudioModels } from "./useLmStudioModels"
 
 export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
-	const provider = apiConfiguration?.apiProvider || "anthropic"
+	const provider = apiConfiguration?.apiProvider || "openai"
 	const openRouterModelId = provider === "openrouter" ? apiConfiguration?.openRouterModelId : undefined
 	const lmStudioModelId = provider === "lmstudio" ? apiConfiguration?.lmStudioModelId : undefined
 
@@ -77,7 +77,7 @@ export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 					openRouterModelProviders: openRouterModelProviders.data,
 					lmStudioModels: lmStudioModels.data,
 				})
-			: { id: anthropicDefaultModelId, info: undefined }
+			: { id: "gpt-4o", info: openAiModelInfoSaneDefaults }
 
 	return {
 		provider,

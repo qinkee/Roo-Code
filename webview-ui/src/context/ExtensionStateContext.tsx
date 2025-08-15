@@ -250,6 +250,12 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		alwaysAllowUpdateTodoList: true,
 		includeDiagnosticMessages: true,
 		maxDiagnosticMessages: 50,
+		// Default API configuration for OpenAI Compatible
+		apiConfiguration: {
+			apiProvider: "openai",
+			openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
+			openAiModelId: "gpt-4o"
+		},
 	})
 
 	const [didHydrateState, setDidHydrateState] = useState(false)
@@ -372,9 +378,37 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					}
 					break
 				}
+				case "tokenKeyReceived": {
+					// Handle token received from external plugin
+					const tokenKey = (message as any).tokenKey
+					const source = (message as any).source
+					if (tokenKey && source === "ai-im") {
+						// Set OpenAI Compatible configuration
+						setApiConfiguration({
+							apiProvider: "openai",
+							openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
+							openAiApiKey: tokenKey,
+							openAiModelId: "gpt-4o" // Default model
+						})
+						// Trigger auto-submit after a short delay to ensure state is updated
+						setTimeout(() => {
+							vscode.postMessage({ 
+								type: "upsertApiConfiguration", 
+								text: "default",
+								apiConfiguration: {
+									apiProvider: "openai",
+									openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
+									openAiApiKey: tokenKey,
+									openAiModelId: "gpt-4o"
+								}
+							})
+						}, 100)
+					}
+					break
+				}
 			}
 		},
-		[setListApiConfigMeta],
+		[setListApiConfigMeta, setApiConfiguration],
 	)
 
 	useEffect(() => {
