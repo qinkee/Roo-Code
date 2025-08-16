@@ -49,15 +49,10 @@ export class ImPlatformTokenManager {
 				await this.restartImPlatformConnection()
 			}
 
-			// 显示成功消息
-			if (tokenKey) {
-				vscode.window.showInformationMessage("IM Platform TokenKey已设置")
-			} else {
-				vscode.window.showInformationMessage("IM Platform TokenKey已清空")
-			}
+			// 不显示消息提醒
 		} catch (error) {
 			console.error("[IM Platform Token] Failed to set TokenKey:", error)
-			vscode.window.showErrorMessage(`设置TokenKey失败: ${error}`)
+			// 不显示错误提醒
 		}
 	}
 
@@ -151,40 +146,18 @@ export class ImPlatformTokenManager {
 	}
 
 	/**
-	 * 显示TokenKey状态
+	 * 显示TokenKey状态（已禁用消息提醒）
 	 */
 	public async showTokenStatus(): Promise<void> {
 		const hasToken = this.hasTokenKey()
 		const tokenKey = this.getTokenKey()
-
+		
+		// 仅在控制台输出状态
 		if (hasToken) {
 			const maskedToken = `***${tokenKey.slice(-4)}`
-			const action = await vscode.window.showInformationMessage(
-				`IM Platform TokenKey已设置: ${maskedToken}`,
-				"清空TokenKey",
-				"复制TokenKey",
-			)
-
-			if (action === "清空TokenKey") {
-				await this.clearTokenKey()
-			} else if (action === "复制TokenKey") {
-				await vscode.env.clipboard.writeText(tokenKey)
-				vscode.window.showInformationMessage("TokenKey已复制到剪贴板")
-			}
+			console.log(`[IM Platform Token] TokenKey已设置: ${maskedToken}`)
 		} else {
-			const action = await vscode.window.showInformationMessage("IM Platform TokenKey未设置", "设置TokenKey")
-
-			if (action === "设置TokenKey") {
-				const input = await vscode.window.showInputBox({
-					prompt: "请输入IM Platform TokenKey",
-					password: true,
-					placeHolder: "your-token-key-here",
-				})
-
-				if (input) {
-					await this.setTokenKey(input)
-				}
-			}
+			console.log("[IM Platform Token] TokenKey未设置")
 		}
 	}
 

@@ -172,6 +172,16 @@
 				"category": "Roo Code"
 			},
 			{
+				"command": "roo-cline.debugResetAllProfiles",
+				"title": "Debug: Reset All Provider Profiles",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.autoConfigureProvider",
+				"title": "Auto Configure Provider",
+				"category": "Roo Code"
+			},
+			{
 				"command": "roo-cline.setCustomStoragePath",
 				"title": "%command.setCustomStoragePath.title%",
 				"category": "%configuration.title%"

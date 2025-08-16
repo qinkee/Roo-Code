@@ -1,2 +1,2 @@
-export declare function getGitSha(): string | undefined
+export declare function getGitSha(): string | undefined;
 //# sourceMappingURL=git.d.ts.map

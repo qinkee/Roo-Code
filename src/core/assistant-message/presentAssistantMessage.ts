@@ -265,6 +265,46 @@ export async function presentAssistantMessage(cline: Task) {
 				progressStatus?: ToolProgressStatus,
 				isProtected?: boolean,
 			) => {
+				// Check if this is an MCP tool request and if auto-approval is enabled
+				if (type === "use_mcp_server" && partialMessage) {
+					try {
+						const mcpRequest = JSON.parse(partialMessage)
+						if (mcpRequest.type === "use_mcp_tool" || mcpRequest.type === "access_mcp_resource") {
+							const provider = cline.providerRef.deref()
+							if (provider) {
+								const state = await provider.getState()
+								const mcpHub = provider.getMcpHub()
+								
+								// Check if global alwaysAllowMcp is true
+								if (state?.alwaysAllowMcp) {
+									// Auto-approve without asking the user
+									await cline.say("tool", partialMessage)
+									return true
+								}
+								
+								// Check if this specific tool/server has auto-approval
+								if (mcpHub && mcpRequest.serverName && mcpRequest.toolName) {
+									const server = mcpHub.getServerByName(mcpRequest.serverName)
+									if (server) {
+										// Check if server has wildcard approval
+										if (server.alwaysAllow?.includes("*")) {
+											await cline.say("tool", partialMessage)
+											return true
+										}
+										// Check if specific tool is approved
+										if (server.alwaysAllow?.includes(mcpRequest.toolName)) {
+											await cline.say("tool", partialMessage)
+											return true
+										}
+									}
+								}
+							}
+						}
+					} catch (e) {
+						// If parsing fails, continue with normal approval flow
+					}
+				}
+
 				const { response, text, images } = await cline.ask(
 					type,
 					partialMessage,

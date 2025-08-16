@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "bundle",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$tsc",
+      "label": "npm: bundle",
+      "detail": "Build the extension"
+    },
+    {
+      "type": "npm",
+      "script": "watch:bundle",
+      "group": "build",
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true,
+      "label": "npm: watch",
+      "detail": "Watch and rebuild on changes"
+    }
+  ]
+}

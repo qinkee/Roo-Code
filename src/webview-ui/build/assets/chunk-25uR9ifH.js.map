@@ -2,8 +2,8 @@
   "version": 3,
   "file": "chunk-25uR9ifH.js",
   "sources": [
-    "../../../../node_modules/.pnpm/@shikijs+langs@3.4.1/node_modules/@shikijs/langs/dist/jinja-html.mjs",
-    "../../../../node_modules/.pnpm/@shikijs+langs@3.4.1/node_modules/@shikijs/langs/dist/jinja.mjs"
+    "../../../../node_modules/.pnpm/@shikijs+langs@3.9.2/node_modules/@shikijs/langs/dist/jinja-html.mjs",
+    "../../../../node_modules/.pnpm/@shikijs+langs@3.9.2/node_modules/@shikijs/langs/dist/jinja.mjs"
   ],
   "sourcesContent": [
     "import html from './html.mjs'\n\nconst lang = Object.freeze(JSON.parse(\"{\\\"displayName\\\":\\\"jinja-html\\\",\\\"firstLineMatch\\\":\\\"^\\\\\\\\{% extends [\\\\\\\"'][^\\\\\\\"']+[\\\\\\\"'] %}\\\",\\\"foldingStartMarker\\\":\\\"(<(?i:(head|table|tr|div|style|script|ul|ol|form|dl))\\\\\\\\b.*?>|\\\\\\\\{%\\\\\\\\s*(block|filter|for|if|macro|raw))\\\",\\\"foldingStopMarker\\\":\\\"(</(?i:(head|table|tr|div|style|script|ul|ol|form|dl))\\\\\\\\b.*?>|\\\\\\\\{%\\\\\\\\s*(end(?:block|filter|for|if|macro|raw))\\\\\\\\s*%})\\\",\\\"name\\\":\\\"jinja-html\\\",\\\"patterns\\\":[{\\\"include\\\":\\\"source.jinja\\\"},{\\\"include\\\":\\\"text.html.basic\\\"}],\\\"scopeName\\\":\\\"text.html.jinja\\\",\\\"embeddedLangs\\\":[\\\"html\\\"]}\"))\n\nexport default [\n...html,\nlang\n]\n",
@@ -15,7 +15,7 @@
     "html",
     "jinja"
   ],
-  "mappings": "2FAEA,MAAMA,EAAO,OAAO,OAAO,KAAK,MAAM,+fAAwiB,CAAC,EAEhkBC,EAAA,CACf,GAAGC,EACHF,CACA,ECLMA,EAAO,OAAO,OAAO,KAAK,MAAM,22JAAs7K,CAAC,EAE98KG,EAAA,CACf,GAAGF,EACHD,CACA",
+  "mappings": "2FAEA,MAAMA,EAAO,OAAO,OAAO,KAAK,MAAM,+fAAwiB,CAAC,EAE/kBC,EAAe,CACf,GAAGC,EACHF,CACA,ECLMA,EAAO,OAAO,OAAO,KAAK,MAAM,22JAAs7K,CAAC,EAE79KG,EAAe,CACf,GAAGF,EACHD,CACA",
   "x_google_ignoreList": [
     0,
     1

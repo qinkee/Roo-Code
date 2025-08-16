@@ -823,7 +823,7 @@ export const webviewMessageHandler = async (
 
 				await openFile(mcpPath)
 			} catch (error) {
-				vscode.window.showErrorMessage(t("mcp:errors.create_json", { error: `${error}` }))
+				// vscode.window.showErrorMessage(t("mcp:errors.create_json", { error: `${error}` }))
 			}
 
 			break

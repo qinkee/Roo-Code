@@ -20177,7 +20177,7 @@ type TerminalActionPromptType = `TERMINAL_${TerminalActionName}`;
 /**
  * Command
  */
-declare const commandIds: readonly ["activationCompleted", "plusButtonClicked", "promptsButtonClicked", "mcpButtonClicked", "historyButtonClicked", "marketplaceButtonClicked", "popoutButtonClicked", "accountButtonClicked", "settingsButtonClicked", "openInNewTab", "showHumanRelayDialog", "registerHumanRelayCallback", "unregisterHumanRelayCallback", "handleHumanRelayResponse", "newTask", "setCustomStoragePath", "importSettings", "focusInput", "acceptInput", "focusPanel", "imPlatform.manageToken", "imPlatform.setToken", "imPlatform.clearToken", "receiveUserInfo"];
+declare const commandIds: readonly ["activationCompleted", "plusButtonClicked", "promptsButtonClicked", "mcpButtonClicked", "historyButtonClicked", "marketplaceButtonClicked", "popoutButtonClicked", "accountButtonClicked", "settingsButtonClicked", "openInNewTab", "showHumanRelayDialog", "registerHumanRelayCallback", "unregisterHumanRelayCallback", "handleHumanRelayResponse", "newTask", "setCustomStoragePath", "importSettings", "focusInput", "acceptInput", "focusPanel", "imPlatform.manageToken", "imPlatform.setToken", "imPlatform.clearToken", "debugResetAllProfiles", "autoConfigureProvider", "receiveUserInfo"];
 type CommandId = (typeof commandIds)[number];
 /**
  * Language
