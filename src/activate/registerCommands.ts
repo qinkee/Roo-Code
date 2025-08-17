@@ -239,7 +239,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				userId: data.userInfo.userId,
 				username: data.userInfo.username,
 				accessToken: data.userInfo.accessToken,
-				tonkenKey: data.userInfo.tonkenKey,
+				tokenKey: data.userInfo.tokenKey,
 				email: data.userInfo.email,
 				status: data.userInfo.status,
 			})
