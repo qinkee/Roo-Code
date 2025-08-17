@@ -1315,7 +1315,7 @@ var EVALS_SETTINGS = {
   // -1 to enable full file reading.
   includeDiagnosticMessages: true,
   maxDiagnosticMessages: 50,
-  language: "en",
+  language: "zh-CN",
   telemetrySetting: "enabled",
   mcpEnabled: false,
   remoteControlEnabled: false,

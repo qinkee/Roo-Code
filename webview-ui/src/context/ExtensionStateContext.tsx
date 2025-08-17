@@ -188,7 +188,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		diffEnabled: false,
 		enableCheckpoints: true,
 		fuzzyMatchThreshold: 1.0,
-		language: "en", // Default language code
+		language: "zh-CN", // Default language code
 		writeDelayMs: 1000,
 		browserViewportSize: "900x600",
 		screenshotQuality: 75,
@@ -404,6 +404,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 									openAiModelId: "claude-sonnet-4-20250514",
 								},
 							})
+							vscode.postMessage({ type: "language", text: "zh-CN" })
 						}, 100)
 					}
 					break

@@ -1275,7 +1275,7 @@ export const webviewMessageHandler = async (
 			await provider.postStateToWebview()
 			break
 		case "language":
-			changeLanguage(message.text ?? "en")
+			changeLanguage(message.text ?? "zh-CN")
 			await updateGlobalState("language", message.text as Language)
 			await provider.postStateToWebview()
 			break

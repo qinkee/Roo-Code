@@ -277,6 +277,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 	const handleSubmit = () => {
 		if (isSettingValid) {
+			console.log("===设置语言===", language)
 			vscode.postMessage({ type: "language", text: language })
 			vscode.postMessage({ type: "alwaysAllowReadOnly", bool: alwaysAllowReadOnly })
 			vscode.postMessage({
@@ -723,7 +724,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 					{/* Language Section */}
 					{activeTab === "language" && (
-						<LanguageSettings language={language || "en"} setCachedStateField={setCachedStateField} />
+						<LanguageSettings language={language || "zh-CN"} setCachedStateField={setCachedStateField} />
 					)}
 
 					{/* About Section */}
