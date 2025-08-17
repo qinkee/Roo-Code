@@ -650,7 +650,7 @@ describe("OpenAICompatibleEmbedder", () => {
 		describe("Azure OpenAI compatibility", () => {
 			const azureUrl =
 				"https://myresource.openai.azure.com/openai/deployments/mymodel/embeddings?api-version=2024-02-01"
-			const baseUrl = "https://api.openai.com/v1"
+			const baseUrl = "https://one.api.mysql.service.thinkgs.cn/v1"
 
 			// Helper to create mock fetch response
 			const createMockResponse = (data: any, status = 200, ok = true) => ({
@@ -684,7 +684,7 @@ describe("OpenAICompatibleEmbedder", () => {
 						true,
 					],
 					["https://myresource.openai.azure.com/openai/deployments/text-embedding-ada-002/embeddings", true],
-					["https://api.openai.com/v1", false],
+					["https://one.api.mysql.service.thinkgs.cn/v1", false],
 					["https://api.example.com", false],
 					["http://localhost:8080", false],
 				])("should detect URL type correctly: %s -> %s", (url, expected) => {
@@ -905,7 +905,7 @@ describe("OpenAICompatibleEmbedder", () => {
 		})
 
 		it("should treat base URLs without endpoint patterns as SDK URLs", async () => {
-			const embedder = new OpenAICompatibleEmbedder("https://api.openai.com/v1", "test-key")
+			const embedder = new OpenAICompatibleEmbedder("https://one.api.mysql.service.thinkgs.cn/v1", "test-key")
 
 			// Mock the OpenAI SDK's embeddings.create method
 			const mockCreate = vitest.fn().mockResolvedValue({

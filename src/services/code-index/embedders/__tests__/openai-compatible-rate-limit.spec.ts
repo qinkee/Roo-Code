@@ -33,7 +33,7 @@ describe("OpenAICompatibleEmbedder - Global Rate Limiting", () => {
 	let mockOpenAIInstance: any
 	let mockEmbeddingsCreate: MockedFunction<any>
 
-	const testBaseUrl = "https://api.openai.com/v1"
+	const testBaseUrl = "https://one.api.mysql.service.thinkgs.cn/v1"
 	const testApiKey = "test-api-key"
 	const testModelId = "text-embedding-3-small"
 

@@ -96,7 +96,7 @@ describe("OpenAiHandler with usage tracking fix", () => {
 		mockOptions = {
 			openAiApiKey: "test-api-key",
 			openAiModelId: "gpt-4",
-			openAiBaseUrl: "https://api.openai.com/v1",
+			openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
 		}
 		handler = new OpenAiHandler(mockOptions)
 		mockCreate.mockClear()

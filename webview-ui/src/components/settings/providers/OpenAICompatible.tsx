@@ -122,7 +122,7 @@ export const OpenAICompatible = ({
 	return (
 		<>
 			<VSCodeTextField
-				value={apiConfiguration?.openAiBaseUrl || "https://one.api.mysql.service.thinkgs.cn/v1"}
+				value={apiConfiguration?.openAiBaseUrl || ""}
 				type="url"
 				onInput={handleInputChange("openAiBaseUrl")}
 				placeholder={t("settings:placeholders.baseUrl")}

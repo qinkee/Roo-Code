@@ -823,7 +823,7 @@ describe("importExport", () => {
 						codebaseIndexEnabled: true,
 						codebaseIndexEmbedderProvider: "openai" as const, // Not openai-compatible
 						codebaseIndexEmbedderModelId: "text-embedding-ada-002",
-						codebaseIndexEmbedderBaseUrl: "https://api.openai.com/v1",
+						codebaseIndexEmbedderBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
 					},
 				}
 
@@ -1036,7 +1036,7 @@ describe("importExport", () => {
 							codebaseIndexEnabled: true,
 							codebaseIndexEmbedderProvider: "openai" as const, // Not openai-compatible
 							codebaseIndexEmbedderModelId: "text-embedding-ada-002",
-							codebaseIndexEmbedderBaseUrl: "https://api.openai.com/v1",
+							codebaseIndexEmbedderBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
 							codebaseIndexEmbedderModelDimension: 1536,
 						},
 					},

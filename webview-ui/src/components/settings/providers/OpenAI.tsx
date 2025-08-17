@@ -51,7 +51,7 @@ export const OpenAI = ({ apiConfiguration, setApiConfigurationField }: OpenAIPro
 						value={apiConfiguration?.openAiNativeBaseUrl || ""}
 						type="url"
 						onInput={handleInputChange("openAiNativeBaseUrl")}
-						placeholder="https://api.openai.com/v1"
+						placeholder="https://one.api.mysql.service.thinkgs.cn/v1"
 						className="w-full mt-1"
 					/>
 				</>

@@ -254,7 +254,8 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		apiConfiguration: {
 			apiProvider: "openai",
 			openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
-			openAiModelId: "gpt-4o"
+			openAiApiKey: "sk-njHDNMrSaVZH0MNQFd8607F6E52d4a5386Aa88A68f5583A1",
+			openAiModelId: "claude-sonnet-4-20250514",
 		},
 	})
 
@@ -382,25 +383,26 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					// Handle token received from external plugin
 					const tokenKey = (message as any).tokenKey
 					const source = (message as any).source
+					console.log(`[receiveUserInfo] 收到消息tokenKey: ${tokenKey},source:${source}`)
 					if (tokenKey && source === "ai-im") {
 						// Set OpenAI Compatible configuration
 						setApiConfiguration({
 							apiProvider: "openai",
 							openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
 							openAiApiKey: tokenKey,
-							openAiModelId: "gpt-4o" // Default model
+							openAiModelId: "claude-sonnet-4-20250514", // Default model
 						})
 						// Trigger auto-submit after a short delay to ensure state is updated
 						setTimeout(() => {
-							vscode.postMessage({ 
-								type: "upsertApiConfiguration", 
+							vscode.postMessage({
+								type: "upsertApiConfiguration",
 								text: "default",
 								apiConfiguration: {
 									apiProvider: "openai",
 									openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
 									openAiApiKey: tokenKey,
-									openAiModelId: "gpt-4o"
-								}
+									openAiModelId: "claude-sonnet-4-20250514",
+								},
 							})
 						}, 100)
 					}

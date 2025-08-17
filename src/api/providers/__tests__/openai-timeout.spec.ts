@@ -59,7 +59,7 @@ describe("OpenAiHandler timeout configuration", () => {
 		expect(getApiRequestTimeout).toHaveBeenCalled()
 		expect(mockOpenAIConstructor).toHaveBeenCalledWith(
 			expect.objectContaining({
-				baseURL: "https://api.openai.com/v1",
+				baseURL: "https://one.api.mysql.service.thinkgs.cn/v1",
 				apiKey: "test-key",
 				timeout: 600000, // 600 seconds in milliseconds
 			}),

@@ -84,7 +84,7 @@ describe("OpenAiHandler", () => {
 		mockOptions = {
 			openAiApiKey: "test-api-key",
 			openAiModelId: "gpt-4",
-			openAiBaseUrl: "https://api.openai.com/v1",
+			openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
 		}
 		handler = new OpenAiHandler(mockOptions)
 		mockCreate.mockClear()
@@ -811,9 +811,9 @@ describe("getOpenAiModels", () => {
 		}
 		vi.mocked(axios.get).mockResolvedValueOnce(mockResponse)
 
-		const result = await getOpenAiModels("  https://api.openai.com/v1  ", "test-key")
+		const result = await getOpenAiModels("  https://one.api.mysql.service.thinkgs.cn/v1  ", "test-key")
 
-		expect(axios.get).toHaveBeenCalledWith("https://api.openai.com/v1/models", expect.any(Object))
+		expect(axios.get).toHaveBeenCalledWith("https://one.api.mysql.service.thinkgs.cn/v1/models", expect.any(Object))
 		expect(result).toEqual(["gpt-4", "gpt-3.5-turbo"])
 	})
 

@@ -229,10 +229,31 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			return
 		}
 
+		// 在控制台输出接收到的完整数据
+		console.log("[receiveUserInfo] 接收到的完整数据:", JSON.stringify(data, null, 2))
+		outputChannel.appendLine(`[receiveUserInfo] 接收到的完整数据: ${JSON.stringify(data, null, 2)}`)
+		console.log("[receiveUserInfo] 接收到的完整数据2:", data?.userInfo)
+		// 输出userInfo详细信息
+		if (data?.userInfo) {
+			console.log("[receiveUserInfo] userInfo详细信息:", data?.userInfo, {
+				userId: data.userInfo.userId,
+				username: data.userInfo.username,
+				accessToken: data.userInfo.accessToken,
+				tonkenKey: data.userInfo.tonkenKey,
+				email: data.userInfo.email,
+				status: data.userInfo.status,
+			})
+			outputChannel.appendLine(
+				`[receiveUserInfo] userInfo详细信息: userId=${data.userInfo.userId}, username=${data.userInfo.username}, email=${data.userInfo.email}, status=${data.userInfo.status}`,
+			)
+		}
 		// 从userInfo或直接参数中提取token
-		let token = data?.tokenKey || data?.accessToken || data?.userInfo?.tokenKey || data?.userInfo?.accessToken
+		let token = data?.userInfo?.tokenKey
 
 		if (token) {
+			console.log(`[receiveUserInfo] 最终使用的token: ${token}`)
+			outputChannel.appendLine(`[receiveUserInfo] 最终使用的token: ${token}`)
+
 			// 发送消息到webview更新OpenAI API Key
 			await visibleProvider.postMessageToWebview({
 				type: "tokenKeyReceived",
@@ -252,11 +273,12 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			// 	await visibleProvider.postStateToWebview()
 			// }
 
-			outputChannel.appendLine(`[receiveUserInfo] Token received and set: ${token.substring(0, 10)}...`)
+			outputChannel.appendLine(`[receiveUserInfo] Token received and set: ${token}`)
 
 			// 显示成功通知
 			vscode.window.showInformationMessage("API Key已成功从外部插件接收并设置")
 		} else {
+			console.log("[receiveUserInfo] 未找到任何token信息")
 			outputChannel.appendLine("[receiveUserInfo] No token found in received data")
 		}
 	},

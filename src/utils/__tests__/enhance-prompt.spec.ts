@@ -15,7 +15,7 @@ describe("enhancePrompt", () => {
 	const mockApiConfig: ProviderSettings = {
 		apiProvider: "openai",
 		openAiApiKey: "test-key",
-		openAiBaseUrl: "https://api.openai.com/v1",
+		openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
 		enableReasoningEffort: false,
 	}
 
