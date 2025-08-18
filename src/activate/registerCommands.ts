@@ -262,11 +262,10 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 	},
 	"imPlatform.manageToken": async () => {
 		const tokenManager = ImPlatformTokenManager.getInstance()
-
 	},
 	"imPlatform.setToken": async () => {
 		outputChannel.appendLine("[imPlatform.setToken] Command started")
-		
+
 		const tokenManager = ImPlatformTokenManager.getInstance()
 		const input = await vscode.window.showInputBox({
 			prompt: "请输入IM Platform TokenKey",
@@ -276,7 +275,6 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 
 		if (input) {
 			await tokenManager.setTokenKey(input)
-
 		} else {
 			outputChannel.appendLine("[imPlatform.setToken] User cancelled input")
 		}
@@ -285,47 +283,35 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		const tokenManager = ImPlatformTokenManager.getInstance()
 		await tokenManager.clearTokenKey()
 	},
-	debugResetAllProfiles: async (skipConfirmation?: boolean) => {
+	debugResetAllProfiles: async () => {
 		try {
-			// 如果不是程序调用（skipConfirmation 不为 true），则显示确认对话框
-			if (!skipConfirmation) {
-				const result = await vscode.window.showWarningMessage(
-					"Warning: This will delete ALL provider profiles and reset to default state. This action cannot be undone. Continue?",
-					{ modal: true },
-					"Yes, Reset All",
-					"Cancel"
-				)
-				
-				if (result !== "Yes, Reset All") {
-					return
-				}
+			// 获取当前可见的 provider 实例
+			const visibleProvider = getVisibleProviderOrLog(outputChannel)
+			if (!visibleProvider) {
+				outputChannel.appendLine("No visible provider found, using default provider")
 			}
-			
-			await provider.providerSettingsManager.resetAllConfigs()
-			
-			// Reinitialize to create default profile
-			await provider.providerSettingsManager.initialize()
-			
-			// Refresh the webview to show the changes
-			provider.postMessageToWebview({ type: "action", action: "refreshState" })
-			
-			if (!skipConfirmation) {
-				await vscode.window.showInformationMessage("All provider profiles have been reset to default state.")
-			}
-			
+
+			const currentProvider = visibleProvider || provider
+
+			// 执行与 resetState() 相同的逻辑，静默执行不显示确认对话框
+			await currentProvider.contextProxy.resetAllState()
+			await currentProvider.providerSettingsManager.resetAllConfigs()
+			await currentProvider.customModesManager.resetCustomModes()
+			await currentProvider.removeClineFromStack()
+			await currentProvider.postStateToWebview()
+			await currentProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+
 			outputChannel.appendLine("Provider profiles reset to default state")
 		} catch (error) {
 			outputChannel.appendLine(`Error resetting provider profiles: ${error}`)
-			if (!skipConfirmation) {
-				await vscode.window.showErrorMessage(`Failed to reset provider profiles: ${error}`)
-			}
-			throw error // Re-throw for programmatic calls
+			await vscode.window.showErrorMessage(`Failed to reset provider profiles: ${error}`)
+			throw error
 		}
 	},
 	autoConfigureProvider: async (token?: string) => {
 		outputChannel.appendLine("[autoConfigureProvider] Command started")
 		const tokenManager = ImPlatformTokenManager.getInstance()
-		
+
 		try {
 			// 获取当前可见的 provider 实例
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
@@ -333,10 +319,12 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				// 如果没有可见的实例，尝试使用传入的 provider
 				outputChannel.appendLine("[autoConfigureProvider] No visible provider found, using default provider")
 			}
-			
+
 			const currentProvider = visibleProvider || provider
-			outputChannel.appendLine(`[autoConfigureProvider] Using provider instance: ${currentProvider ? 'found' : 'not found'}`)
-			
+			outputChannel.appendLine(
+				`[autoConfigureProvider] Using provider instance: ${currentProvider ? "found" : "not found"}`,
+			)
+
 			// 如果没有提供 token，通过输入框获取
 			if (!token) {
 				outputChannel.appendLine("[autoConfigureProvider] No token provided, showing input box")
@@ -345,50 +333,52 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 					password: true,
 					placeHolder: "your-api-token-here",
 				})
-				
+
 				if (!input) {
 					outputChannel.appendLine("[autoConfigureProvider] User cancelled input or provided empty token")
 					vscode.window.showWarningMessage("配置取消：未提供 API Token")
 					return
 				}
-				
+
 				token = input
 				outputChannel.appendLine("[autoConfigureProvider] Token received from input box")
 			}
-			
+
 			outputChannel.appendLine(`[autoConfigureProvider] Processing with token: ${token.substring(0, 10)}...`)
-			
+
 			// Get current state to preserve existing settings
 			outputChannel.appendLine("[autoConfigureProvider] Getting current state...")
 			const currentState = await currentProvider.getState()
-			outputChannel.appendLine(`[autoConfigureProvider] Current state retrieved, apiProvider: ${currentState.apiConfiguration.apiProvider}`)
-			
+			outputChannel.appendLine(
+				`[autoConfigureProvider] Current state retrieved, apiProvider: ${currentState.apiConfiguration.apiProvider}`,
+			)
+
 			// Create the configuration - merge with existing settings
 			const config = {
 				...currentState.apiConfiguration,
-				apiProvider: 'openai' as const,
-				openAiBaseUrl: 'https://one.api.mysql.service.thinkgs.cn/v1',
+				apiProvider: "openai" as const,
+				openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
 				openAiApiKey: token,
-				openAiModelId: 'claude-sonnet-4-20250514',
+				openAiModelId: "claude-sonnet-4-20250514",
 				// Default settings if not already set
 				diffEnabled: currentState.apiConfiguration.diffEnabled ?? true,
 				fuzzyMatchThreshold: currentState.apiConfiguration.fuzzyMatchThreshold ?? 1.0,
 				consecutiveMistakeLimit: currentState.apiConfiguration.consecutiveMistakeLimit ?? 3,
-				todoListEnabled: currentState.apiConfiguration.todoListEnabled ?? true
+				todoListEnabled: currentState.apiConfiguration.todoListEnabled ?? true,
 			}
-			
+
 			outputChannel.appendLine(`[autoConfigureProvider] New config prepared:`)
 			outputChannel.appendLine(`  - apiProvider: ${config.apiProvider}`)
 			outputChannel.appendLine(`  - openAiBaseUrl: ${config.openAiBaseUrl}`)
 			outputChannel.appendLine(`  - openAiModelId: ${config.openAiModelId}`)
 			outputChannel.appendLine(`  - Has API key: ${!!config.openAiApiKey}`)
-			
+
 			outputChannel.appendLine("[autoConfigureProvider] Setting global settings...")
-			
+
 			// Set telemetry, language and auto-approval settings using contextProxy
 			await currentProvider.contextProxy.setValues({
-				telemetrySetting: 'enabled',
-				language: 'zh-CN',
+				telemetrySetting: "enabled",
+				language: "zh-CN",
 				// Auto-approval settings - all enabled for maximum convenience
 				autoApprovalEnabled: true,
 				alwaysAllowReadOnly: true,
@@ -408,30 +398,34 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				alwaysAllowUpdateTodoList: true,
 				followupAutoApproveTimeoutMs: 0,
 				// Allow all commands
-				allowedCommands: ['*'],
+				allowedCommands: ["*"],
 				deniedCommands: [],
 				// Other permission settings
 				preventCompletionWithOpenTodos: false,
 				commandExecutionTimeout: 120000, // 2 minutes
-				commandTimeoutAllowlist: []
+				commandTimeoutAllowlist: [],
 			})
-			
+
 			outputChannel.appendLine("[autoConfigureProvider] Global settings updated")
 			outputChannel.appendLine("[autoConfigureProvider] Calling upsertProviderProfile...")
-			
+
 			// Use upsertProviderProfile - this is what the UI uses and handles all state updates
-			await currentProvider.upsertProviderProfile('default', config, true)
+			await currentProvider.upsertProviderProfile("default", config, true)
 
 			// added by qinkee.同步设置mcp的token,用于设别用户
 			tokenManager.setTokenKey(token)
-			
+
 			outputChannel.appendLine("[autoConfigureProvider] upsertProviderProfile completed")
-			
+
 			// Verify the configuration was applied
 			const newState = await currentProvider.getState()
-			outputChannel.appendLine(`[autoConfigureProvider] Verification - new apiProvider: ${newState.apiConfiguration.apiProvider}`)
-			outputChannel.appendLine(`[autoConfigureProvider] Verification - currentApiConfigName: ${newState.currentApiConfigName}`)
-			
+			outputChannel.appendLine(
+				`[autoConfigureProvider] Verification - new apiProvider: ${newState.apiConfiguration.apiProvider}`,
+			)
+			outputChannel.appendLine(
+				`[autoConfigureProvider] Verification - currentApiConfigName: ${newState.currentApiConfigName}`,
+			)
+
 			outputChannel.appendLine("[autoConfigureProvider] Provider auto-configured successfully")
 		} catch (error) {
 			outputChannel.appendLine(`Error auto-configuring provider: ${error}`)

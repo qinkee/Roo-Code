@@ -151,7 +151,7 @@ export class ImPlatformTokenManager {
 	public async showTokenStatus(): Promise<void> {
 		const hasToken = this.hasTokenKey()
 		const tokenKey = this.getTokenKey()
-		
+
 		// 仅在控制台输出状态
 		if (hasToken) {
 			const maskedToken = `***${tokenKey.slice(-4)}`

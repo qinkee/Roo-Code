@@ -274,14 +274,14 @@ export async function presentAssistantMessage(cline: Task) {
 							if (provider) {
 								const state = await provider.getState()
 								const mcpHub = provider.getMcpHub()
-								
+
 								// Check if global alwaysAllowMcp is true
 								if (state?.alwaysAllowMcp) {
 									// Auto-approve without asking the user
 									await cline.say("tool", partialMessage)
 									return true
 								}
-								
+
 								// Check if this specific tool/server has auto-approval
 								if (mcpHub && mcpRequest.serverName && mcpRequest.toolName) {
 									const server = mcpHub.getServerByName(mcpRequest.serverName)
