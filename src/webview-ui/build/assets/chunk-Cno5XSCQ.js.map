@@ -2,9 +2,9 @@
   "version": 3,
   "file": "chunk-Cno5XSCQ.js",
   "sources": [
-    "../../../../node_modules/.pnpm/@shikijs+langs@3.9.2/node_modules/@shikijs/langs/dist/angular-inline-style.mjs",
-    "../../../../node_modules/.pnpm/@shikijs+langs@3.9.2/node_modules/@shikijs/langs/dist/angular-inline-template.mjs",
-    "../../../../node_modules/.pnpm/@shikijs+langs@3.9.2/node_modules/@shikijs/langs/dist/angular-ts.mjs"
+    "../../../../node_modules/.pnpm/@shikijs+langs@3.4.1/node_modules/@shikijs/langs/dist/angular-inline-style.mjs",
+    "../../../../node_modules/.pnpm/@shikijs+langs@3.4.1/node_modules/@shikijs/langs/dist/angular-inline-template.mjs",
+    "../../../../node_modules/.pnpm/@shikijs+langs@3.4.1/node_modules/@shikijs/langs/dist/angular-ts.mjs"
   ],
   "sourcesContent": [
     "import scss from './scss.mjs'\n\nconst lang = Object.freeze(JSON.parse(\"{\\\"injectTo\\\":[\\\"source.ts.ng\\\"],\\\"injectionSelector\\\":\\\"L:source.ts#meta.decorator.ts -comment\\\",\\\"name\\\":\\\"angular-inline-style\\\",\\\"patterns\\\":[{\\\"include\\\":\\\"#inlineStyles\\\"}],\\\"repository\\\":{\\\"inlineStyles\\\":{\\\"begin\\\":\\\"(styles)\\\\\\\\s*(:)\\\",\\\"beginCaptures\\\":{\\\"1\\\":{\\\"name\\\":\\\"meta.object-literal.key.ts\\\"},\\\"2\\\":{\\\"name\\\":\\\"meta.object-literal.key.ts punctuation.separator.key-value.ts\\\"}},\\\"end\\\":\\\"(?=[,}])\\\",\\\"patterns\\\":[{\\\"include\\\":\\\"#tsParenExpression\\\"},{\\\"include\\\":\\\"#tsBracketExpression\\\"},{\\\"include\\\":\\\"#style\\\"}]},\\\"style\\\":{\\\"begin\\\":\\\"\\\\\\\\s*([\\\\\\\"'`|])\\\",\\\"beginCaptures\\\":{\\\"1\\\":{\\\"name\\\":\\\"string\\\"}},\\\"contentName\\\":\\\"source.css.scss\\\",\\\"end\\\":\\\"\\\\\\\\1\\\",\\\"endCaptures\\\":{\\\"0\\\":{\\\"name\\\":\\\"string\\\"}},\\\"patterns\\\":[{\\\"include\\\":\\\"source.css.scss\\\"}]},\\\"tsBracketExpression\\\":{\\\"begin\\\":\\\"\\\\\\\\G\\\\\\\\s*(\\\\\\\\[)\\\",\\\"beginCaptures\\\":{\\\"1\\\":{\\\"name\\\":\\\"meta.array.literal.ts meta.brace.square.ts\\\"}},\\\"end\\\":\\\"]\\\",\\\"endCaptures\\\":{\\\"0\\\":{\\\"name\\\":\\\"meta.array.literal.ts meta.brace.square.ts\\\"}},\\\"patterns\\\":[{\\\"include\\\":\\\"#style\\\"}]},\\\"tsParenExpression\\\":{\\\"begin\\\":\\\"\\\\\\\\G\\\\\\\\s*(\\\\\\\\()\\\",\\\"beginCaptures\\\":{\\\"1\\\":{\\\"name\\\":\\\"meta.brace.round.ts\\\"}},\\\"end\\\":\\\"\\\\\\\\)\\\",\\\"endCaptures\\\":{\\\"0\\\":{\\\"name\\\":\\\"meta.brace.round.ts\\\"}},\\\"patterns\\\":[{\\\"include\\\":\\\"$self\\\"},{\\\"include\\\":\\\"#tsBracketExpression\\\"},{\\\"include\\\":\\\"#style\\\"}]}},\\\"scopeName\\\":\\\"inline-styles.ng\\\",\\\"embeddedLangs\\\":[\\\"scss\\\"]}\"))\n\nexport default [\n...scss,\nlang\n]\n",
@@ -23,7 +23,7 @@
     "angular_let_declaration",
     "angular_template_blocks"
   ],
-  "mappings": "2LAEA,MAAMA,EAAO,OAAO,OAAO,KAAK,MAAM,6tCAA24C,CAAC,EAEl7CC,EAAe,CACf,GAAGC,EACHF,CACA,ECJMA,EAAO,OAAO,OAAO,KAAK,MAAM,khCAA8pC,CAAC,EAErsCG,EAAe,CACf,GAAGC,EACH,GAAGC,EACHL,CACA,ECFMA,EAAO,OAAO,OAAO,KAAK,MAAM,q6hLAAuy0L,CAAC,EAE900LM,EAAe,CACf,GAAGC,EACH,GAAGN,EACH,GAAGE,EACH,GAAGK,EACH,GAAGH,EACH,GAAGI,EACHT,CACA",
+  "mappings": "2LAEA,MAAMA,EAAO,OAAO,OAAO,KAAK,MAAM,6tCAA24C,CAAC,EAEn6CC,EAAA,CACf,GAAGC,EACHF,CACA,ECJMA,EAAO,OAAO,OAAO,KAAK,MAAM,khCAA8pC,CAAC,EAEtrCG,EAAA,CACf,GAAGC,EACH,GAAGC,EACHL,CACA,ECFMA,EAAO,OAAO,OAAO,KAAK,MAAM,q6hLAAuy0L,CAAC,EAE/z0LM,EAAA,CACf,GAAGC,EACH,GAAGN,EACH,GAAGE,EACH,GAAGK,EACH,GAAGH,EACH,GAAGI,EACHT,CACA",
   "x_google_ignoreList": [
     0,
     1,
