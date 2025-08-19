@@ -592,34 +592,12 @@ export class McpHub {
 	// Initialize built-in MCP servers
 	private async initializeBuiltinServers(): Promise<void> {
 		try {
-			// Get the extension path from the provider
-			const provider = this.providerRef.deref()
-			if (!provider) {
-				console.error("[IM Platform MCP] Provider not available")
-				return
-			}
-
-			const extensionPath = provider.context.extensionPath
-			const mcpScriptPath = path.join(extensionPath, "node_modules", "im-platform-mcp", "dist", "index.js")
-
-			console.log(`[IM Platform MCP] Extension path: ${extensionPath}`)
-			console.log(`[IM Platform MCP] MCP script path: ${mcpScriptPath}`)
-
-			// Check if the file exists
-			try {
-				await fs.access(mcpScriptPath)
-				console.log(`[IM Platform MCP] Script file exists at ${mcpScriptPath}`)
-			} catch (error) {
-				console.error(`[IM Platform MCP] Script file not found at ${mcpScriptPath}`)
-				return
-			}
-
-			// Built-in IM Platform configuration
+			// Built-in IM Platform configuration using npx
 			const builtinConfig = {
 				"im-platform": {
 					type: "stdio" as const,
-					command: "node",
-					args: [mcpScriptPath],
+					command: "npx",
+					args: ["im-platform-mcp"],
 					env: {
 						IM_API_BASE_URL: "https://aiim.service.thinkgs.cn/api",
 						IM_DEFAULT_SIMILARITY: "0.8",
@@ -1393,31 +1371,19 @@ export class McpHub {
 				// Special handling for built-in im-platform server - refresh the config
 				if (serverName === "im-platform") {
 					console.log("[IM Platform MCP] Refreshing built-in server config for restart...")
-					// Get fresh configuration with updated TokenKey
-					const provider = this.providerRef.deref()
-					if (provider) {
-						const extensionPath = provider.context.extensionPath
-						const mcpScriptPath = path.join(
-							extensionPath,
-							"node_modules",
-							"im-platform-mcp",
-							"dist",
-							"index.js",
-						)
-
-						// Rebuild the config with current TokenKey placeholder
-						parsedConfig = {
-							...parsedConfig,
-							args: [mcpScriptPath],
-							env: {
-								IM_API_BASE_URL: "https://aiim.service.thinkgs.cn/api",
-								IM_DEFAULT_SIMILARITY: "0.8",
-								IM_DEFAULT_LIMIT: "20",
-								IM_TOKEN_KEY: "${imPlatformTokenKey}", // This will be replaced with current value in connectToServer
-							},
-						}
-						console.log("[IM Platform MCP] Config refreshed for restart")
+					// Rebuild the config with current TokenKey placeholder using npx
+					parsedConfig = {
+						...parsedConfig,
+						command: "npx",
+						args: ["im-platform-mcp"],
+						env: {
+							IM_API_BASE_URL: "https://aiim.service.thinkgs.cn/api",
+							IM_DEFAULT_SIMILARITY: "0.8",
+							IM_DEFAULT_LIMIT: "20",
+							IM_TOKEN_KEY: "${imPlatformTokenKey}", // This will be replaced with current value in connectToServer
+						},
 					}
+					console.log("[IM Platform MCP] Config refreshed for restart")
 				}
 
 				try {
