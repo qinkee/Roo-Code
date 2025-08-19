@@ -278,7 +278,6 @@ export async function presentAssistantMessage(cline: Task) {
 								// Check if global alwaysAllowMcp is true
 								if (state?.alwaysAllowMcp) {
 									// Auto-approve without asking the user
-									await cline.say("tool", partialMessage)
 									return true
 								}
 
@@ -288,12 +287,10 @@ export async function presentAssistantMessage(cline: Task) {
 									if (server) {
 										// Check if server has wildcard approval
 										if (server.alwaysAllow?.includes("*")) {
-											await cline.say("tool", partialMessage)
 											return true
 										}
 										// Check if specific tool is approved
 										if (server.alwaysAllow?.includes(mcpRequest.toolName)) {
-											await cline.say("tool", partialMessage)
 											return true
 										}
 									}

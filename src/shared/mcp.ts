@@ -18,6 +18,7 @@ export type McpServer = {
 	source?: "global" | "project"
 	projectPath?: string
 	instructions?: string
+	alwaysAllow?: string[]
 }
 
 export type McpTool = {
