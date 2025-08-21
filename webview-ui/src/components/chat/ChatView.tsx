@@ -117,6 +117,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		soundEnabled,
 		soundVolume,
 		cloudIsAuthenticated,
+		cwd,
 	} = useExtensionState()
 
 	const messagesRef = useRef(messages)
@@ -845,6 +846,29 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						)
 					}
 					break
+				case "filesDropped":
+					// Handle files dropped from VSCode explorer
+					if (message.droppedFiles && message.droppedFiles.length > 0) {
+						// Convert file paths to @mentions and add to input
+						const mentions = message.droppedFiles.map(filePath => {
+							// Convert absolute path to relative path if possible
+							const relativePath = cwd && filePath.startsWith(cwd) 
+								? filePath.slice(cwd.length).replace(/^[/\\]/, '')
+								: filePath
+							// Escape spaces in path
+							const escapedPath = relativePath.replace(/ /g, '\\ ')
+							return `@${escapedPath}`
+						}).join(' ')
+						
+						// Add mentions to current input value
+						const currentValue = inputValue || ''
+						const newValue = currentValue + (currentValue && !currentValue.endsWith(' ') ? ' ' : '') + mentions + ' '
+						setInputValue(newValue)
+						
+						// Focus the text area
+						textAreaRef.current?.focus()
+					}
+					break
 				case "invoke":
 					switch (message.invoke!) {
 						case "newChat":
@@ -888,6 +912,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			handleSetChatBoxMessage,
 			handlePrimaryButtonClick,
 			handleSecondaryButtonClick,
+			cwd,
+			inputValue,
+			setInputValue,
 		],
 	)
 

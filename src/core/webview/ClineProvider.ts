@@ -2248,6 +2248,21 @@ export class ClineProvider
 	}
 
 	/**
+	 * Handles files dropped from VSCode explorer
+	 * @param files Array of file paths
+	 */
+	public async handleFilesDropped(files: string[]): Promise<void> {
+		if (!this.view || files.length === 0) {
+			return
+		}
+
+		await this.postMessageToWebview({
+			type: "filesDropped",
+			droppedFiles: files
+		})
+	}
+
+	/**
 	 * Gets the CodeIndexManager for the current active workspace
 	 * @returns CodeIndexManager instance for the current workspace or the default one
 	 */

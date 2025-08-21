@@ -53,6 +53,46 @@ interface ChatTextAreaProps {
 	onCancel?: () => void
 }
 
+// Global drag event listener for debugging
+const useGlobalDragDebug = () => {
+	React.useEffect(() => {
+		const handleGlobalDragOver = (e: DragEvent) => {
+			console.log("Global dragover detected from:", e.target)
+			e.preventDefault()
+		}
+		
+		const handleGlobalDrop = (e: DragEvent) => {
+			console.log("=== Global drop detected ===")
+			console.log("Drop target:", e.target)
+			console.log("Data types:", Array.from(e.dataTransfer?.types || []))
+			
+			// Try to get all possible data
+			if (e.dataTransfer) {
+				Array.from(e.dataTransfer.types).forEach(type => {
+					console.log(`Data for type '${type}':`, e.dataTransfer?.getData(type))
+				})
+			}
+			
+			e.preventDefault()
+		}
+		
+		const handleGlobalDragEnter = (e: DragEvent) => {
+			console.log("Global dragenter detected")
+			e.preventDefault()
+		}
+		
+		document.addEventListener('dragover', handleGlobalDragOver, true)
+		document.addEventListener('drop', handleGlobalDrop, true)
+		document.addEventListener('dragenter', handleGlobalDragEnter, true)
+		
+		return () => {
+			document.removeEventListener('dragover', handleGlobalDragOver, true)
+			document.removeEventListener('drop', handleGlobalDrop, true)
+			document.removeEventListener('dragenter', handleGlobalDragEnter, true)
+		}
+	}, [])
+}
+
 const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 	(
 		{
@@ -76,6 +116,10 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		ref,
 	) => {
 		const { t } = useAppTranslation()
+		
+		// Enable global drag debugging
+		useGlobalDragDebug()
+		
 		const {
 			filePaths,
 			openedTabs,
@@ -774,10 +818,60 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				e.preventDefault()
 				setIsDraggingOver(false)
 
+				console.log("=== handleDrop triggered ===")
+				console.log("Available types:", Array.from(e.dataTransfer.types))
+				console.log("Files count:", e.dataTransfer.files.length)
+
+				// Try various data formats that VSCode might use
 				const textFieldList = e.dataTransfer.getData("text")
-				const textUriList = e.dataTransfer.getData("application/vnd.code.uri-list")
-				// When textFieldList is empty, it may attempt to use textUriList obtained from drag-and-drop tabs; if not empty, it will use textFieldList.
-				const text = textFieldList || textUriList
+				const textUriList = e.dataTransfer.getData("application/vnd.code.uri-list") // VSCode internal
+				const textPlain = e.dataTransfer.getData("text/plain")
+				const codeFiles = e.dataTransfer.getData("CodeFiles") // VSCode's special format
+				const codeEditors = e.dataTransfer.getData("CodeEditors") // VSCode editor drag format
+				const resourceUrls = e.dataTransfer.getData("ResourceURLs") // Main VSCode format for resources
+				const resources = e.dataTransfer.getData("resources") // VSCode internal resources
+				const internalUriList = e.dataTransfer.getData("application/vnd.code.internal.uri-list")
+				
+				// Try additional formats
+				const textHtml = e.dataTransfer.getData("text/html")
+				const textUri = e.dataTransfer.getData("text/uri-list")
+				const downloadUrl = e.dataTransfer.getData("DownloadURL")
+				const symbols = e.dataTransfer.getData("application/vnd.code.symbols")
+				const markers = e.dataTransfer.getData("application/vnd.code.diagnostics")
+				
+				console.log("Data formats:", {
+					textFieldList,
+					textUriList,
+					textPlain,
+					codeFiles,
+					codeEditors,
+					resourceUrls,
+					resources,
+					internalUriList,
+					textHtml,
+					textUri,
+					downloadUrl,
+					symbols,
+					markers,
+					types: Array.from(e.dataTransfer.types)
+				})
+				
+				
+				// Try to get data from various formats
+				let text = textFieldList || textUriList || textPlain || codeFiles || resourceUrls || resources || internalUriList || textUri || textHtml
+				
+				// Handle CodeEditors format specially
+				if (!text && codeEditors) {
+					try {
+						const editorsData = JSON.parse(codeEditors)
+						if (Array.isArray(editorsData) && editorsData.length > 0) {
+							// Extract file paths from editor data
+							text = editorsData.map(editor => editor.resource?.path || editor.resource?.fsPath || "").filter(Boolean).join("\n")
+						}
+					} catch (error) {
+						console.error("Failed to parse CodeEditors data:", error)
+					}
+				}
 				if (text) {
 					// Split text on newlines to handle multiple files
 					const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "")
@@ -818,13 +912,56 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				const files = Array.from(e.dataTransfer.files)
 
 				if (files.length > 0) {
-					const acceptedTypes = ["png", "jpeg", "webp"]
+					const acceptedImageTypes = ["png", "jpeg", "webp"]
 
+					// Separate files into images and non-images
 					const imageFiles = files.filter((file) => {
 						const [type, subtype] = file.type.split("/")
-						return type === "image" && acceptedTypes.includes(subtype)
+						return type === "image" && acceptedImageTypes.includes(subtype)
+					})
+					
+					const nonImageFiles = files.filter((file) => {
+						const [type, subtype] = file.type.split("/")
+						return !(type === "image" && acceptedImageTypes.includes(subtype))
 					})
 
+					// Handle non-image files - convert to @mentions
+					if (nonImageFiles.length > 0) {
+						// Get file paths from the File objects
+						// Note: File.path is a non-standard property but is available in Electron/VSCode
+						const filePaths = nonImageFiles.map(file => {
+							// In VSCode webview context, files have a path property
+							return (file as any).path || file.name
+						})
+						
+						// Process each file path as a mention
+						let newValue = inputValue.slice(0, cursorPosition)
+						let totalLength = 0
+						
+						for (let i = 0; i < filePaths.length; i++) {
+							const filePath = filePaths[i]
+							const mentionText = convertToMentionPath(filePath, cwd)
+							newValue += mentionText
+							totalLength += mentionText.length
+							
+							// Add space after each mention except the last one
+							if (i < filePaths.length - 1) {
+								newValue += " "
+								totalLength += 1
+							}
+						}
+						
+						// Add space after the last mention and append the rest of the input
+						newValue += " " + inputValue.slice(cursorPosition)
+						totalLength += 1
+						
+						setInputValue(newValue)
+						const newCursorPosition = cursorPosition + totalLength
+						setCursorPosition(newCursorPosition)
+						setIntendedCursorPosition(newCursorPosition)
+					}
+
+					// Handle image files
 					if (!shouldDisableImages && imageFiles.length > 0) {
 						const imagePromises = imageFiles.map((file) => {
 							return new Promise<string | null>((resolve) => {
@@ -1169,35 +1306,34 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					"ml-auto",
 					"mr-auto",
 					"box-border",
-				)}>
+				)}
+				onDrop={handleDrop}
+				onDragEnter={(e) => {
+					console.log("Outer container onDragEnter - types:", Array.from(e.dataTransfer.types))
+					e.preventDefault()
+					setIsDraggingOver(true)
+				}}
+				onDragOver={(e) => {
+					e.preventDefault()
+					setIsDraggingOver(true)
+					e.dataTransfer.dropEffect = "copy"
+				}}
+				onDragLeave={(e) => {
+					e.preventDefault()
+					const rect = e.currentTarget.getBoundingClientRect()
+					
+					if (
+						e.clientX <= rect.left ||
+						e.clientX >= rect.right ||
+						e.clientY <= rect.top ||
+						e.clientY >= rect.bottom
+					) {
+						setIsDraggingOver(false)
+					}
+				}}>
 				<div className="relative">
 					<div
-						className={cn("chat-text-area", "relative", "flex", "flex-col", "outline-none")}
-						onDrop={handleDrop}
-						onDragOver={(e) => {
-							// Only allowed to drop images/files on shift key pressed.
-							if (!e.shiftKey) {
-								setIsDraggingOver(false)
-								return
-							}
-
-							e.preventDefault()
-							setIsDraggingOver(true)
-							e.dataTransfer.dropEffect = "copy"
-						}}
-						onDragLeave={(e) => {
-							e.preventDefault()
-							const rect = e.currentTarget.getBoundingClientRect()
-
-							if (
-								e.clientX <= rect.left ||
-								e.clientX >= rect.right ||
-								e.clientY <= rect.top ||
-								e.clientY >= rect.bottom
-							) {
-								setIsDraggingOver(false)
-							}
-						}}>
+						className={cn("chat-text-area", "relative", "flex", "flex-col", "outline-none")}>
 						{showContextMenu && (
 							<div
 								ref={contextMenuContainerRef}

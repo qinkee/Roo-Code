@@ -136,6 +136,12 @@
 				"category": "%configuration.title%"
 			},
 			{
+				"command": "roo-cline.addSelectedFilesToChat",
+				"title": "Add Selected Files to Chat",
+				"category": "%configuration.title%",
+				"enablement": "explorerViewletFocus && filesExplorerFocus"
+			},
+			{
 				"command": "roo-cline.newTask",
 				"title": "%command.newTask.title%",
 				"category": "%configuration.title%"
@@ -212,6 +218,13 @@
 				{
 					"submenu": "roo-cline.contextMenu",
 					"group": "1"
+				}
+			],
+			"explorer/context": [
+				{
+					"command": "roo-cline.addToContext",
+					"group": "2_workspace@1",
+					"when": "explorerResourceIsFolder == false"
 				}
 			],
 			"roo-cline.contextMenu": [

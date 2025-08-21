@@ -176,6 +176,28 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	registerCommands({ context, outputChannel, provider })
 
+	// Add keyboard shortcut support for adding files to context
+	context.subscriptions.push(
+		vscode.commands.registerCommand('roo-cline.addSelectedFilesToChat', async () => {
+			// Get currently selected files in the explorer
+			const selectedUris = await vscode.commands.executeCommand<vscode.Uri[]>('resourceExplorer.selectedResources')
+			if (selectedUris && selectedUris.length > 0 && provider) {
+				const filePaths = selectedUris.map(uri => uri.fsPath)
+				await provider.handleFilesDropped(filePaths)
+			}
+		})
+	)
+
+	// Add a command to handle file drops (can be triggered from explorer context menu)
+	context.subscriptions.push(
+		vscode.commands.registerCommand('roo-cline.dropFiles', async (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			const files = uris ? uris.map(u => u.fsPath) : uri ? [uri.fsPath] : []
+			if (files.length > 0 && provider) {
+				await provider.handleFilesDropped(files)
+			}
+		})
+	)
+
 	/**
 	 * We use the text document content provider API to show the left side for diff
 	 * view by creating a virtual document for the original content. This makes it

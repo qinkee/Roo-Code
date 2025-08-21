@@ -110,6 +110,7 @@ export interface ExtensionMessage {
 		| "singleRouterModelFetchResponse"
 		| "indexingStatusUpdate"
 		| "indexCleared"
+		| "filesDropped"
 		| "codebaseIndexConfig"
 		| "marketplaceInstallResult"
 		| "marketplaceRemoveResult"
@@ -195,6 +196,7 @@ export interface ExtensionMessage {
 	messageTs?: number
 	context?: string
 	commands?: Command[]
+	droppedFiles?: string[] // For filesDropped message type
 }
 
 export type ExtensionState = Pick<

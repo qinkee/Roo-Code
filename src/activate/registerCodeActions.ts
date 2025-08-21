@@ -18,6 +18,20 @@ const registerCodeAction = (context: vscode.ExtensionContext, command: CodeActio
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(getCodeActionCommand(command), async (...args: any[]) => {
+			// Special handling for addToContext from explorer context menu
+			if (command === "addToContext" && args.length > 0 && args[0] && 'fsPath' in args[0]) {
+				// Called from explorer context menu with URI(s)
+				const uris: vscode.Uri[] = args[1] || [args[0]] // args[1] contains all selected files, args[0] is the clicked file
+				const filePaths = uris.map(uri => uri.fsPath)
+				
+				// Send files directly to webview
+				const provider = await ClineProvider.getInstance()
+				if (provider) {
+					await provider.handleFilesDropped(filePaths)
+				}
+				return
+			}
+
 			// Handle both code action and direct command cases.
 			let filePath: string
 			let selectedText: string
