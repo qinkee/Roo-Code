@@ -1220,7 +1220,36 @@ var globalSettingsSchema = import_zod11.z.object({
   profileThresholds: import_zod11.z.record(import_zod11.z.string(), import_zod11.z.number()).optional(),
   hasOpenedModeSelector: import_zod11.z.boolean().optional(),
   lastModeExportPath: import_zod11.z.string().optional(),
-  lastModeImportPath: import_zod11.z.string().optional()
+  lastModeImportPath: import_zod11.z.string().optional(),
+  // IM integration data
+  imContacts: import_zod11.z.object({
+    friends: import_zod11.z.array(import_zod11.z.object({
+      id: import_zod11.z.number(),
+      nickName: import_zod11.z.string(),
+      headImage: import_zod11.z.string(),
+      deleted: import_zod11.z.boolean(),
+      online: import_zod11.z.boolean(),
+      onlineWeb: import_zod11.z.boolean(),
+      onlineApp: import_zod11.z.boolean()
+    })).optional(),
+    groups: import_zod11.z.array(import_zod11.z.object({
+      id: import_zod11.z.number(),
+      name: import_zod11.z.string(),
+      ownerId: import_zod11.z.number(),
+      headImage: import_zod11.z.string(),
+      headImageThumb: import_zod11.z.string(),
+      notice: import_zod11.z.string(),
+      remarkNickName: import_zod11.z.string(),
+      showNickName: import_zod11.z.string(),
+      showGroupName: import_zod11.z.string(),
+      remarkGroupName: import_zod11.z.string(),
+      dissolve: import_zod11.z.boolean(),
+      quit: import_zod11.z.boolean(),
+      isBanned: import_zod11.z.boolean(),
+      reason: import_zod11.z.string()
+    })).optional(),
+    lastUpdated: import_zod11.z.number().optional()
+  }).optional()
 });
 var GLOBAL_SETTINGS_KEYS = globalSettingsSchema.keyof().options;
 var rooCodeSettingsSchema = providerSettingsSchema.merge(globalSettingsSchema);

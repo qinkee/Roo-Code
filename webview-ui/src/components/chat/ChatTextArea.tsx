@@ -32,6 +32,7 @@ import { SlashCommandsPopover } from "./SlashCommandsPopover"
 import { cn } from "@/lib/utils"
 import { usePromptHistory } from "./hooks/usePromptHistory"
 import { EditModeControls } from "./EditModeControls"
+import type { IMContact } from "@/types/im"
 
 interface ChatTextAreaProps {
 	inputValue: string
@@ -291,6 +292,69 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 		const allModes = useMemo(() => getAllModes(customModes), [customModes])
 
+		// State for contacts
+		const [imContacts, setImContacts] = useState<IMContact[]>([])
+
+		// Request contacts from extension
+		useEffect(() => {
+			const handleMessage = (event: MessageEvent) => {
+				const message = event.data
+				if (message.type === "imContactsResponse" && message.contacts) {
+					const contacts: IMContact[] = []
+
+					// Process friends
+					const friends = message.contacts.friends || []
+					friends.forEach((friend: any) => {
+						// 过滤掉已删除的好友
+						if (!friend.deleted) {
+							contacts.push({
+								id: friend.id,
+								name: friend.nickName,
+								nickname: friend.nickName,
+								avatar: friend.headImage,
+								type: "friend" as const,
+								online: friend.online,
+								onlineWeb: friend.onlineWeb,
+								onlineApp: friend.onlineApp,
+								deleted: friend.deleted,
+							})
+						}
+					})
+
+					// Process groups
+					const groups = message.contacts.groups || []
+					groups.forEach((group: any) => {
+						// 过滤掉已退出或已解散的群组
+						if (!group.quit && !group.dissolve) {
+							contacts.push({
+								id: group.id,
+								name: group.showGroupName || group.name,
+								nickname: group.showGroupName,
+								avatar: group.headImage,
+								type: "group" as const,
+								ownerId: group.ownerId,
+								notice: group.notice,
+								dissolve: group.dissolve,
+								quit: group.quit,
+								isBanned: group.isBanned,
+							})
+						}
+					})
+
+					setImContacts(contacts)
+				}
+			}
+
+			window.addEventListener("message", handleMessage)
+
+			// Request contacts when component mounts
+			vscode.postMessage({ type: "getImContacts" })
+
+			return () => {
+				window.removeEventListener("message", handleMessage)
+			}
+		}, [])
+
 		const queryItems = useMemo(() => {
 			return [
 				{ type: ContextMenuOptionType.Problems, value: "problems" },
@@ -319,8 +383,28 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						description: new Date(task.ts).toLocaleString(),
 						timestamp: task.ts,
 					})),
+				// Add contacts from IM system
+				...imContacts.map((contact) => ({
+					type: ContextMenuOptionType.Contacts,
+					value: contact.nickname || contact.name, // 使用联系人名称而不是ID
+					label: contact.nickname || contact.name,
+					description:
+						contact.type === "friend" ? t("chat:contextMenu.friends") : t("chat:contextMenu.groups"),
+					icon: contact.type === "friend" ? "person" : "organization",
+				})),
+				// Add knowledge base from IM system (same data, different presentation)
+				...imContacts.map((contact) => ({
+					type: ContextMenuOptionType.KnowledgeBase,
+					value: contact.nickname || contact.name, // 使用联系人名称而不是ID
+					label: contact.nickname || contact.name,
+					description:
+						contact.type === "friend"
+							? t("chat:contextMenu.friendKnowledgeBase")
+							: t("chat:contextMenu.groupKnowledgeBase"),
+					icon: contact.type === "friend" ? "person" : "organization",
+				})),
 			]
-		}, [filePaths, gitCommits, openedTabs, taskHistory])
+		}, [filePaths, gitCommits, openedTabs, taskHistory, imContacts, t])
 
 		useEffect(() => {
 			const handleClickOutside = (event: MouseEvent) => {
@@ -381,7 +465,9 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					type === ContextMenuOptionType.File ||
 					type === ContextMenuOptionType.Folder ||
 					type === ContextMenuOptionType.Git ||
-					type === ContextMenuOptionType.AiChat
+					type === ContextMenuOptionType.AiChat ||
+					type === ContextMenuOptionType.Contacts ||
+					type === ContextMenuOptionType.KnowledgeBase
 				) {
 					if (!value) {
 						setSelectedType(type)
@@ -418,6 +504,18 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							setInputValue("")
 							setShowContextMenu(false)
 							return
+						}
+					} else if (type === ContextMenuOptionType.Contacts) {
+						// For Contacts, the value is the contact name
+						if (value) {
+							// Insert contact mention in format: @联系人:ContactName
+							insertValue = `联系人:${value}`
+						}
+					} else if (type === ContextMenuOptionType.KnowledgeBase) {
+						// For Knowledge Base, the value is the contact name
+						if (value) {
+							// Insert knowledge base mention in format: @知识库:ContactName
+							insertValue = `知识库:${value}`
 						}
 					}
 

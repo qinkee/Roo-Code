@@ -5,7 +5,8 @@
       "Bash(pnpm bundle:*)",
       "Bash(npm run lint:*)",
       "Bash(npm run:*)",
-      "Bash(pnpm check-types:*)"
+      "Bash(pnpm check-types:*)",
+      "Bash(rm:*)"
     ],
     "defaultMode": "acceptEdits"
   }

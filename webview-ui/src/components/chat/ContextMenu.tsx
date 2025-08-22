@@ -86,7 +86,15 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 							? t("chat:contextMenu.customCommands")
 							: option.label === "Modes"
 								? t("chat:contextMenu.modes")
-								: option.label}
+								: option.label === "Friends"
+									? t("chat:contextMenu.friends")
+									: option.label === "Groups"
+										? t("chat:contextMenu.groups")
+										: option.label === "Friend Knowledge Base"
+											? t("chat:contextMenu.friendKnowledgeBase")
+											: option.label === "Group Knowledge Base"
+												? t("chat:contextMenu.groupKnowledgeBase")
+												: option.label}
 					</span>
 				)
 			case ContextMenuOptionType.Mode:
@@ -203,6 +211,52 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 				} else {
 					return <span>{t("chat:contextMenu.gitCommits")}</span>
 				}
+			case ContextMenuOptionType.Contacts:
+				if (option.value) {
+					return (
+						<div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+							<span style={{ lineHeight: "1.2" }}>{option.label}</span>
+							{option.description && (
+								<span
+									style={{
+										fontSize: "0.85em",
+										opacity: 0.7,
+										whiteSpace: "nowrap",
+										overflow: "hidden",
+										textOverflow: "ellipsis",
+										lineHeight: "1.2",
+									}}>
+									{option.description}
+								</span>
+							)}
+						</div>
+					)
+				} else {
+					return <span>{t("chat:contextMenu.contacts")}</span>
+				}
+			case ContextMenuOptionType.KnowledgeBase:
+				if (option.value) {
+					return (
+						<div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+							<span style={{ lineHeight: "1.2" }}>{option.label}</span>
+							{option.description && (
+								<span
+									style={{
+										fontSize: "0.85em",
+										opacity: 0.7,
+										whiteSpace: "nowrap",
+										overflow: "hidden",
+										textOverflow: "ellipsis",
+										lineHeight: "1.2",
+									}}>
+									{option.description}
+								</span>
+							)}
+						</div>
+					)
+				} else {
+					return <span>{t("chat:contextMenu.knowledgeBase")}</span>
+				}
 			case ContextMenuOptionType.File:
 			case ContextMenuOptionType.OpenedFile:
 			case ContextMenuOptionType.Folder:
@@ -276,6 +330,10 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 				return "git-commit"
 			case ContextMenuOptionType.AiChat:
 				return "comment-discussion"
+			case ContextMenuOptionType.Contacts:
+				return "organization"
+			case ContextMenuOptionType.KnowledgeBase:
+				return "library"
 			case ContextMenuOptionType.NoResults:
 				return "info"
 			default:
@@ -398,7 +456,9 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 							{(option.type === ContextMenuOptionType.File ||
 								option.type === ContextMenuOptionType.Folder ||
 								option.type === ContextMenuOptionType.Git ||
-								option.type === ContextMenuOptionType.AiChat) &&
+								option.type === ContextMenuOptionType.AiChat ||
+								option.type === ContextMenuOptionType.Contacts ||
+								option.type === ContextMenuOptionType.KnowledgeBase) &&
 								!option.value && (
 									<i
 										className="codicon codicon-chevron-right"

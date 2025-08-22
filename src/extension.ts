@@ -31,6 +31,7 @@ import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { isRemoteControlEnabled } from "./utils/remoteControl"
 import { API } from "./extension/api"
+import { VoidBridge } from "./api/void-bridge"
 
 import {
 	handleUri,
@@ -83,6 +84,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Initialize terminal shell execution handlers.
 	TerminalRegistry.initialize()
+
+	// Register void bridge for IM integration
+	VoidBridge.register(context)
 
 	// Get default commands from configuration.
 	const defaultCommands = vscode.workspace.getConfiguration(Package.name).get<string[]>("allowedCommands") || []
@@ -178,24 +182,26 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Add keyboard shortcut support for adding files to context
 	context.subscriptions.push(
-		vscode.commands.registerCommand('roo-cline.addSelectedFilesToChat', async () => {
+		vscode.commands.registerCommand("roo-cline.addSelectedFilesToChat", async () => {
 			// Get currently selected files in the explorer
-			const selectedUris = await vscode.commands.executeCommand<vscode.Uri[]>('resourceExplorer.selectedResources')
+			const selectedUris = await vscode.commands.executeCommand<vscode.Uri[]>(
+				"resourceExplorer.selectedResources",
+			)
 			if (selectedUris && selectedUris.length > 0 && provider) {
-				const filePaths = selectedUris.map(uri => uri.fsPath)
+				const filePaths = selectedUris.map((uri) => uri.fsPath)
 				await provider.handleFilesDropped(filePaths)
 			}
-		})
+		}),
 	)
 
 	// Add a command to handle file drops (can be triggered from explorer context menu)
 	context.subscriptions.push(
-		vscode.commands.registerCommand('roo-cline.dropFiles', async (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			const files = uris ? uris.map(u => u.fsPath) : uri ? [uri.fsPath] : []
+		vscode.commands.registerCommand("roo-cline.dropFiles", async (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			const files = uris ? uris.map((u) => u.fsPath) : uri ? [uri.fsPath] : []
 			if (files.length > 0 && provider) {
 				await provider.handleFilesDropped(files)
 			}
-		})
+		}),
 	)
 
 	/**

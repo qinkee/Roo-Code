@@ -110,6 +110,8 @@ export enum ContextMenuOptionType {
 	Command = "command", // Add command type
 	SectionHeader = "sectionHeader", // Add section header type
 	AiChat = "aiChat", // AI Chat conversations
+	Contacts = "contacts", // IM contacts (friends and groups)
+	KnowledgeBase = "knowledgeBase", // Knowledge base (same data as contacts, different presentation)
 }
 
 export interface ContextMenuQueryItem {
@@ -256,6 +258,80 @@ export function getContextMenuOptions(
 			return chats.length > 0 ? chats : [{ type: ContextMenuOptionType.NoResults }]
 		}
 
+		if (selectedType === ContextMenuOptionType.Contacts) {
+			const contacts = queryItems.filter((item) => item.type === ContextMenuOptionType.Contacts)
+			if (contacts.length === 0) {
+				return [{ type: ContextMenuOptionType.NoResults }]
+			}
+
+			// Group contacts by type
+			const friends = contacts.filter(
+				(item) => item.description?.includes("Friends") || item.description?.includes("好友"),
+			)
+			const groups = contacts.filter(
+				(item) => item.description?.includes("Groups") || item.description?.includes("群组"),
+			)
+
+			const results: ContextMenuQueryItem[] = []
+
+			// Add friends section
+			if (friends.length > 0) {
+				results.push({
+					type: ContextMenuOptionType.SectionHeader,
+					label: "Friends",
+				})
+				results.push(...friends)
+			}
+
+			// Add groups section
+			if (groups.length > 0) {
+				results.push({
+					type: ContextMenuOptionType.SectionHeader,
+					label: "Groups",
+				})
+				results.push(...groups)
+			}
+
+			return results
+		}
+
+		if (selectedType === ContextMenuOptionType.KnowledgeBase) {
+			const knowledgeBase = queryItems.filter((item) => item.type === ContextMenuOptionType.KnowledgeBase)
+			if (knowledgeBase.length === 0) {
+				return [{ type: ContextMenuOptionType.NoResults }]
+			}
+
+			// Group knowledge base by type
+			const friendKb = knowledgeBase.filter(
+				(item) => item.description?.includes("Friend") || item.description?.includes("好友"),
+			)
+			const groupKb = knowledgeBase.filter(
+				(item) => item.description?.includes("Group") || item.description?.includes("群组"),
+			)
+
+			const results: ContextMenuQueryItem[] = []
+
+			// Add friend knowledge base section
+			if (friendKb.length > 0) {
+				results.push({
+					type: ContextMenuOptionType.SectionHeader,
+					label: "Friend Knowledge Base",
+				})
+				results.push(...friendKb)
+			}
+
+			// Add group knowledge base section
+			if (groupKb.length > 0) {
+				results.push({
+					type: ContextMenuOptionType.SectionHeader,
+					label: "Group Knowledge Base",
+				})
+				results.push(...groupKb)
+			}
+
+			return results
+		}
+
 		return [
 			{ type: ContextMenuOptionType.Problems },
 			{ type: ContextMenuOptionType.Terminal },
@@ -264,6 +340,8 @@ export function getContextMenuOptions(
 			{ type: ContextMenuOptionType.File },
 			{ type: ContextMenuOptionType.Git },
 			{ type: ContextMenuOptionType.AiChat },
+			{ type: ContextMenuOptionType.Contacts },
+			{ type: ContextMenuOptionType.KnowledgeBase },
 		]
 	}
 
@@ -292,6 +370,12 @@ export function getContextMenuOptions(
 	}
 	if ("ai".startsWith(lowerQuery) || "chat".startsWith(lowerQuery) || "aichat".startsWith(lowerQuery)) {
 		suggestions.push({ type: ContextMenuOptionType.AiChat })
+	}
+	if ("contacts".startsWith(lowerQuery) || "friends".startsWith(lowerQuery) || "groups".startsWith(lowerQuery)) {
+		suggestions.push({ type: ContextMenuOptionType.Contacts })
+	}
+	if ("knowledgebase".startsWith(lowerQuery) || "knowledge".startsWith(lowerQuery) || "base".startsWith(lowerQuery)) {
+		suggestions.push({ type: ContextMenuOptionType.KnowledgeBase })
 	}
 
 	// Add exact SHA matches to suggestions
@@ -333,6 +417,10 @@ export function getContextMenuOptions(
 
 	const aiChatMatches = matchingItems.filter((item) => item.type === ContextMenuOptionType.AiChat)
 
+	const contactsMatches = matchingItems.filter((item) => item.type === ContextMenuOptionType.Contacts)
+
+	const knowledgeBaseMatches = matchingItems.filter((item) => item.type === ContextMenuOptionType.KnowledgeBase)
+
 	// Convert search results to queryItems format
 	const searchResultItems = dynamicSearchResults.map((result) => {
 		// Ensure paths start with / for consistency
@@ -353,7 +441,15 @@ export function getContextMenuOptions(
 		}
 	})
 
-	const allItems = [...suggestions, ...openedFileMatches, ...searchResultItems, ...gitMatches, ...aiChatMatches]
+	const allItems = [
+		...suggestions,
+		...openedFileMatches,
+		...searchResultItems,
+		...gitMatches,
+		...aiChatMatches,
+		...contactsMatches,
+		...knowledgeBaseMatches,
+	]
 
 	// Remove duplicates - normalize paths by ensuring all have leading slashes
 	const seen = new Set()

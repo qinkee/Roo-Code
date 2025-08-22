@@ -2417,6 +2417,47 @@ export const webviewMessageHandler = async (
 			}
 			break
 		}
+		case "getImContacts": {
+			try {
+				// Get contacts from globalState
+				const imContacts = getGlobalState("imContacts")
+
+				console.log("[WebviewMessageHandler] Getting IM contacts from globalState:", {
+					hasData: !!imContacts,
+					friendsCount: imContacts?.friends?.length || 0,
+					groupsCount: imContacts?.groups?.length || 0,
+					lastUpdated: imContacts?.lastUpdated ? new Date(imContacts.lastUpdated).toISOString() : "never",
+					now: new Date().toISOString(),
+				})
+
+				if (imContacts && (imContacts.friends || imContacts.groups)) {
+					// Always return real data when available, regardless of age
+					await provider.postMessageToWebview({
+						type: "imContactsResponse",
+						contacts: {
+							friends: imContacts.friends || [],
+							groups: imContacts.groups || [],
+						},
+					})
+					console.log("[WebviewMessageHandler] Sent real IM contacts to webview")
+				} else {
+					// Only return empty data if no real data exists
+					console.log("[WebviewMessageHandler] No IM contacts data found, sending empty contacts")
+					await provider.postMessageToWebview({
+						type: "imContactsResponse",
+						contacts: { friends: [], groups: [] },
+					})
+				}
+			} catch (error) {
+				console.error("Error getting IM contacts:", error)
+				// Send empty contacts on error
+				await provider.postMessageToWebview({
+					type: "imContactsResponse",
+					contacts: { friends: [], groups: [] },
+				})
+			}
+			break
+		}
 		case "requestCommands": {
 			try {
 				const { getCommands } = await import("../../services/command/commands")

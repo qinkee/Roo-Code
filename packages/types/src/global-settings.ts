@@ -155,6 +155,46 @@ export const globalSettingsSchema = z.object({
 	hasOpenedModeSelector: z.boolean().optional(),
 	lastModeExportPath: z.string().optional(),
 	lastModeImportPath: z.string().optional(),
+
+	// IM integration data
+	imContacts: z
+		.object({
+			friends: z
+				.array(
+					z.object({
+						id: z.number(),
+						nickName: z.string(),
+						headImage: z.string(),
+						deleted: z.boolean(),
+						online: z.boolean(),
+						onlineWeb: z.boolean(),
+						onlineApp: z.boolean(),
+					}),
+				)
+				.optional(),
+			groups: z
+				.array(
+					z.object({
+						id: z.number(),
+						name: z.string(),
+						ownerId: z.number(),
+						headImage: z.string(),
+						headImageThumb: z.string(),
+						notice: z.string(),
+						remarkNickName: z.string(),
+						showNickName: z.string(),
+						showGroupName: z.string(),
+						remarkGroupName: z.string(),
+						dissolve: z.boolean(),
+						quit: z.boolean(),
+						isBanned: z.boolean(),
+						reason: z.string(),
+					}),
+				)
+				.optional(),
+			lastUpdated: z.number().optional(),
+		})
+		.optional(),
 })
 
 export type GlobalSettings = z.infer<typeof globalSettingsSchema>

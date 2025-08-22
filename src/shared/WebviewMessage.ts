@@ -197,6 +197,8 @@ export interface WebviewMessage {
 		| "fetchMarketplaceData"
 		| "switchTab"
 		| "profileThresholds"
+		| "getImContacts"
+		| "imContactsResponse"
 		| "shareTaskSuccess"
 		| "exportMode"
 		| "exportModeResult"

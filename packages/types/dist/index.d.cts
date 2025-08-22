@@ -6222,6 +6222,134 @@ declare const globalSettingsSchema: z.ZodObject<{
     hasOpenedModeSelector: z.ZodOptional<z.ZodBoolean>;
     lastModeExportPath: z.ZodOptional<z.ZodString>;
     lastModeImportPath: z.ZodOptional<z.ZodString>;
+    imContacts: z.ZodOptional<z.ZodObject<{
+        friends: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            id: z.ZodNumber;
+            nickName: z.ZodString;
+            headImage: z.ZodString;
+            deleted: z.ZodBoolean;
+            online: z.ZodBoolean;
+            onlineWeb: z.ZodBoolean;
+            onlineApp: z.ZodBoolean;
+        }, "strip", z.ZodTypeAny, {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }, {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }>, "many">>;
+        groups: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            id: z.ZodNumber;
+            name: z.ZodString;
+            ownerId: z.ZodNumber;
+            headImage: z.ZodString;
+            headImageThumb: z.ZodString;
+            notice: z.ZodString;
+            remarkNickName: z.ZodString;
+            showNickName: z.ZodString;
+            showGroupName: z.ZodString;
+            remarkGroupName: z.ZodString;
+            dissolve: z.ZodBoolean;
+            quit: z.ZodBoolean;
+            isBanned: z.ZodBoolean;
+            reason: z.ZodString;
+        }, "strip", z.ZodTypeAny, {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }, {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }>, "many">>;
+        lastUpdated: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        groups?: {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
+        lastUpdated?: number | undefined;
+    }, {
+        groups?: {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
+        lastUpdated?: number | undefined;
+    }>>;
 }, "strip", z.ZodTypeAny, {
     diffEnabled?: boolean | undefined;
     fuzzyMatchThreshold?: number | undefined;
@@ -6378,6 +6506,34 @@ declare const globalSettingsSchema: z.ZodObject<{
     hasOpenedModeSelector?: boolean | undefined;
     lastModeExportPath?: string | undefined;
     lastModeImportPath?: string | undefined;
+    imContacts?: {
+        groups?: {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
+        lastUpdated?: number | undefined;
+    } | undefined;
 }, {
     diffEnabled?: boolean | undefined;
     fuzzyMatchThreshold?: number | undefined;
@@ -6534,9 +6690,37 @@ declare const globalSettingsSchema: z.ZodObject<{
     hasOpenedModeSelector?: boolean | undefined;
     lastModeExportPath?: string | undefined;
     lastModeImportPath?: string | undefined;
+    imContacts?: {
+        groups?: {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
+        lastUpdated?: number | undefined;
+    } | undefined;
 }>;
 type GlobalSettings = z.infer<typeof globalSettingsSchema>;
-declare const GLOBAL_SETTINGS_KEYS: ["diffEnabled", "fuzzyMatchThreshold", "rateLimitSeconds", "mode", "language", "customInstructions", "customModes", "currentApiConfigName", "listApiConfigMeta", "pinnedApiConfigs", "lastShownAnnouncementId", "taskHistory", "condensingApiConfigId", "customCondensingPrompt", "autoApprovalEnabled", "alwaysAllowReadOnly", "alwaysAllowReadOnlyOutsideWorkspace", "alwaysAllowWrite", "alwaysAllowWriteOutsideWorkspace", "alwaysAllowWriteProtected", "writeDelayMs", "alwaysAllowBrowser", "alwaysApproveResubmit", "requestDelaySeconds", "alwaysAllowMcp", "alwaysAllowModeSwitch", "alwaysAllowSubtasks", "alwaysAllowExecute", "alwaysAllowFollowupQuestions", "followupAutoApproveTimeoutMs", "alwaysAllowUpdateTodoList", "allowedCommands", "deniedCommands", "commandExecutionTimeout", "commandTimeoutAllowlist", "preventCompletionWithOpenTodos", "allowedMaxRequests", "allowedMaxCost", "autoCondenseContext", "autoCondenseContextPercent", "maxConcurrentFileReads", "includeDiagnosticMessages", "maxDiagnosticMessages", "browserToolEnabled", "browserViewportSize", "screenshotQuality", "remoteBrowserEnabled", "remoteBrowserHost", "cachedChromeHostUrl", "enableCheckpoints", "ttsEnabled", "ttsSpeed", "soundEnabled", "soundVolume", "maxOpenTabsContext", "maxWorkspaceFiles", "showRooIgnoredFiles", "maxReadFileLine", "maxImageFileSize", "maxTotalImageSize", "terminalOutputLineLimit", "terminalOutputCharacterLimit", "terminalShellIntegrationTimeout", "terminalShellIntegrationDisabled", "terminalCommandDelay", "terminalPowershellCounter", "terminalZshClearEolMark", "terminalZshOhMy", "terminalZshP10k", "terminalZdotdir", "terminalCompressProgressBar", "diagnosticsEnabled", "experiments", "codebaseIndexModels", "codebaseIndexConfig", "telemetrySetting", "mcpEnabled", "enableMcpServerCreation", "remoteControlEnabled", "modeApiConfigs", "customModePrompts", "customSupportPrompts", "enhancementApiConfigId", "includeTaskHistoryInEnhance", "historyPreviewCollapsed", "profileThresholds", "hasOpenedModeSelector", "lastModeExportPath", "lastModeImportPath"];
+declare const GLOBAL_SETTINGS_KEYS: ["diffEnabled", "fuzzyMatchThreshold", "rateLimitSeconds", "mode", "language", "customInstructions", "customModes", "currentApiConfigName", "listApiConfigMeta", "pinnedApiConfigs", "lastShownAnnouncementId", "taskHistory", "condensingApiConfigId", "customCondensingPrompt", "autoApprovalEnabled", "alwaysAllowReadOnly", "alwaysAllowReadOnlyOutsideWorkspace", "alwaysAllowWrite", "alwaysAllowWriteOutsideWorkspace", "alwaysAllowWriteProtected", "writeDelayMs", "alwaysAllowBrowser", "alwaysApproveResubmit", "requestDelaySeconds", "alwaysAllowMcp", "alwaysAllowModeSwitch", "alwaysAllowSubtasks", "alwaysAllowExecute", "alwaysAllowFollowupQuestions", "followupAutoApproveTimeoutMs", "alwaysAllowUpdateTodoList", "allowedCommands", "deniedCommands", "commandExecutionTimeout", "commandTimeoutAllowlist", "preventCompletionWithOpenTodos", "allowedMaxRequests", "allowedMaxCost", "autoCondenseContext", "autoCondenseContextPercent", "maxConcurrentFileReads", "includeDiagnosticMessages", "maxDiagnosticMessages", "browserToolEnabled", "browserViewportSize", "screenshotQuality", "remoteBrowserEnabled", "remoteBrowserHost", "cachedChromeHostUrl", "enableCheckpoints", "ttsEnabled", "ttsSpeed", "soundEnabled", "soundVolume", "maxOpenTabsContext", "maxWorkspaceFiles", "showRooIgnoredFiles", "maxReadFileLine", "maxImageFileSize", "maxTotalImageSize", "terminalOutputLineLimit", "terminalOutputCharacterLimit", "terminalShellIntegrationTimeout", "terminalShellIntegrationDisabled", "terminalCommandDelay", "terminalPowershellCounter", "terminalZshClearEolMark", "terminalZshOhMy", "terminalZshP10k", "terminalZdotdir", "terminalCompressProgressBar", "diagnosticsEnabled", "experiments", "codebaseIndexModels", "codebaseIndexConfig", "telemetrySetting", "mcpEnabled", "enableMcpServerCreation", "remoteControlEnabled", "modeApiConfigs", "customModePrompts", "customSupportPrompts", "enhancementApiConfigId", "includeTaskHistoryInEnhance", "historyPreviewCollapsed", "profileThresholds", "hasOpenedModeSelector", "lastModeExportPath", "lastModeImportPath", "imContacts"];
 /**
  * RooCodeSettings
  */
@@ -7078,6 +7262,134 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     hasOpenedModeSelector: z.ZodOptional<z.ZodBoolean>;
     lastModeExportPath: z.ZodOptional<z.ZodString>;
     lastModeImportPath: z.ZodOptional<z.ZodString>;
+    imContacts: z.ZodOptional<z.ZodObject<{
+        friends: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            id: z.ZodNumber;
+            nickName: z.ZodString;
+            headImage: z.ZodString;
+            deleted: z.ZodBoolean;
+            online: z.ZodBoolean;
+            onlineWeb: z.ZodBoolean;
+            onlineApp: z.ZodBoolean;
+        }, "strip", z.ZodTypeAny, {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }, {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }>, "many">>;
+        groups: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            id: z.ZodNumber;
+            name: z.ZodString;
+            ownerId: z.ZodNumber;
+            headImage: z.ZodString;
+            headImageThumb: z.ZodString;
+            notice: z.ZodString;
+            remarkNickName: z.ZodString;
+            showNickName: z.ZodString;
+            showGroupName: z.ZodString;
+            remarkGroupName: z.ZodString;
+            dissolve: z.ZodBoolean;
+            quit: z.ZodBoolean;
+            isBanned: z.ZodBoolean;
+            reason: z.ZodString;
+        }, "strip", z.ZodTypeAny, {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }, {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }>, "many">>;
+        lastUpdated: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        groups?: {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
+        lastUpdated?: number | undefined;
+    }, {
+        groups?: {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
+        lastUpdated?: number | undefined;
+    }>>;
 }, "strip", z.ZodTypeAny, {
     reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -7373,6 +7685,34 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     hasOpenedModeSelector?: boolean | undefined;
     lastModeExportPath?: string | undefined;
     lastModeImportPath?: string | undefined;
+    imContacts?: {
+        groups?: {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
+        lastUpdated?: number | undefined;
+    } | undefined;
 }, {
     reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -7668,6 +8008,34 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     hasOpenedModeSelector?: boolean | undefined;
     lastModeExportPath?: string | undefined;
     lastModeImportPath?: string | undefined;
+    imContacts?: {
+        groups?: {
+            id: number;
+            name: string;
+            headImage: string;
+            ownerId: number;
+            headImageThumb: string;
+            notice: string;
+            remarkNickName: string;
+            showNickName: string;
+            showGroupName: string;
+            remarkGroupName: string;
+            dissolve: boolean;
+            quit: boolean;
+            isBanned: boolean;
+            reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            online: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
+        lastUpdated?: number | undefined;
+    } | undefined;
 }>;
 type RooCodeSettings = GlobalSettings & ProviderSettings;
 /**
@@ -8274,6 +8642,134 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             hasOpenedModeSelector: z.ZodOptional<z.ZodBoolean>;
             lastModeExportPath: z.ZodOptional<z.ZodString>;
             lastModeImportPath: z.ZodOptional<z.ZodString>;
+            imContacts: z.ZodOptional<z.ZodObject<{
+                friends: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                    id: z.ZodNumber;
+                    nickName: z.ZodString;
+                    headImage: z.ZodString;
+                    deleted: z.ZodBoolean;
+                    online: z.ZodBoolean;
+                    onlineWeb: z.ZodBoolean;
+                    onlineApp: z.ZodBoolean;
+                }, "strip", z.ZodTypeAny, {
+                    id: number;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    online: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }, {
+                    id: number;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    online: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }>, "many">>;
+                groups: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                    id: z.ZodNumber;
+                    name: z.ZodString;
+                    ownerId: z.ZodNumber;
+                    headImage: z.ZodString;
+                    headImageThumb: z.ZodString;
+                    notice: z.ZodString;
+                    remarkNickName: z.ZodString;
+                    showNickName: z.ZodString;
+                    showGroupName: z.ZodString;
+                    remarkGroupName: z.ZodString;
+                    dissolve: z.ZodBoolean;
+                    quit: z.ZodBoolean;
+                    isBanned: z.ZodBoolean;
+                    reason: z.ZodString;
+                }, "strip", z.ZodTypeAny, {
+                    id: number;
+                    name: string;
+                    headImage: string;
+                    ownerId: number;
+                    headImageThumb: string;
+                    notice: string;
+                    remarkNickName: string;
+                    showNickName: string;
+                    showGroupName: string;
+                    remarkGroupName: string;
+                    dissolve: boolean;
+                    quit: boolean;
+                    isBanned: boolean;
+                    reason: string;
+                }, {
+                    id: number;
+                    name: string;
+                    headImage: string;
+                    ownerId: number;
+                    headImageThumb: string;
+                    notice: string;
+                    remarkNickName: string;
+                    showNickName: string;
+                    showGroupName: string;
+                    remarkGroupName: string;
+                    dissolve: boolean;
+                    quit: boolean;
+                    isBanned: boolean;
+                    reason: string;
+                }>, "many">>;
+                lastUpdated: z.ZodOptional<z.ZodNumber>;
+            }, "strip", z.ZodTypeAny, {
+                groups?: {
+                    id: number;
+                    name: string;
+                    headImage: string;
+                    ownerId: number;
+                    headImageThumb: string;
+                    notice: string;
+                    remarkNickName: string;
+                    showNickName: string;
+                    showGroupName: string;
+                    remarkGroupName: string;
+                    dissolve: boolean;
+                    quit: boolean;
+                    isBanned: boolean;
+                    reason: string;
+                }[] | undefined;
+                friends?: {
+                    id: number;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    online: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
+                lastUpdated?: number | undefined;
+            }, {
+                groups?: {
+                    id: number;
+                    name: string;
+                    headImage: string;
+                    ownerId: number;
+                    headImageThumb: string;
+                    notice: string;
+                    remarkNickName: string;
+                    showNickName: string;
+                    showGroupName: string;
+                    remarkGroupName: string;
+                    dissolve: boolean;
+                    quit: boolean;
+                    isBanned: boolean;
+                    reason: string;
+                }[] | undefined;
+                friends?: {
+                    id: number;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    online: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
+                lastUpdated?: number | undefined;
+            }>>;
         }, "strip", z.ZodTypeAny, {
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -8569,6 +9065,34 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             hasOpenedModeSelector?: boolean | undefined;
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
+            imContacts?: {
+                groups?: {
+                    id: number;
+                    name: string;
+                    headImage: string;
+                    ownerId: number;
+                    headImageThumb: string;
+                    notice: string;
+                    remarkNickName: string;
+                    showNickName: string;
+                    showGroupName: string;
+                    remarkGroupName: string;
+                    dissolve: boolean;
+                    quit: boolean;
+                    isBanned: boolean;
+                    reason: string;
+                }[] | undefined;
+                friends?: {
+                    id: number;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    online: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
+                lastUpdated?: number | undefined;
+            } | undefined;
         }, {
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -8864,6 +9388,34 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             hasOpenedModeSelector?: boolean | undefined;
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
+            imContacts?: {
+                groups?: {
+                    id: number;
+                    name: string;
+                    headImage: string;
+                    ownerId: number;
+                    headImageThumb: string;
+                    notice: string;
+                    remarkNickName: string;
+                    showNickName: string;
+                    showGroupName: string;
+                    remarkGroupName: string;
+                    dissolve: boolean;
+                    quit: boolean;
+                    isBanned: boolean;
+                    reason: string;
+                }[] | undefined;
+                friends?: {
+                    id: number;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    online: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
+                lastUpdated?: number | undefined;
+            } | undefined;
         }>;
         text: z.ZodString;
         images: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
@@ -9165,6 +9717,34 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             hasOpenedModeSelector?: boolean | undefined;
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
+            imContacts?: {
+                groups?: {
+                    id: number;
+                    name: string;
+                    headImage: string;
+                    ownerId: number;
+                    headImageThumb: string;
+                    notice: string;
+                    remarkNickName: string;
+                    showNickName: string;
+                    showGroupName: string;
+                    remarkGroupName: string;
+                    dissolve: boolean;
+                    quit: boolean;
+                    isBanned: boolean;
+                    reason: string;
+                }[] | undefined;
+                friends?: {
+                    id: number;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    online: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
+                lastUpdated?: number | undefined;
+            } | undefined;
         };
         images?: string[] | undefined;
         newTab?: boolean | undefined;
@@ -9465,6 +10045,34 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             hasOpenedModeSelector?: boolean | undefined;
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
+            imContacts?: {
+                groups?: {
+                    id: number;
+                    name: string;
+                    headImage: string;
+                    ownerId: number;
+                    headImageThumb: string;
+                    notice: string;
+                    remarkNickName: string;
+                    showNickName: string;
+                    showGroupName: string;
+                    remarkGroupName: string;
+                    dissolve: boolean;
+                    quit: boolean;
+                    isBanned: boolean;
+                    reason: string;
+                }[] | undefined;
+                friends?: {
+                    id: number;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    online: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
+                lastUpdated?: number | undefined;
+            } | undefined;
         };
         images?: string[] | undefined;
         newTab?: boolean | undefined;
@@ -9768,6 +10376,34 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             hasOpenedModeSelector?: boolean | undefined;
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
+            imContacts?: {
+                groups?: {
+                    id: number;
+                    name: string;
+                    headImage: string;
+                    ownerId: number;
+                    headImageThumb: string;
+                    notice: string;
+                    remarkNickName: string;
+                    showNickName: string;
+                    showGroupName: string;
+                    remarkGroupName: string;
+                    dissolve: boolean;
+                    quit: boolean;
+                    isBanned: boolean;
+                    reason: string;
+                }[] | undefined;
+                friends?: {
+                    id: number;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    online: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
+                lastUpdated?: number | undefined;
+            } | undefined;
         };
         images?: string[] | undefined;
         newTab?: boolean | undefined;
@@ -10071,6 +10707,34 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             hasOpenedModeSelector?: boolean | undefined;
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
+            imContacts?: {
+                groups?: {
+                    id: number;
+                    name: string;
+                    headImage: string;
+                    ownerId: number;
+                    headImageThumb: string;
+                    notice: string;
+                    remarkNickName: string;
+                    showNickName: string;
+                    showGroupName: string;
+                    remarkGroupName: string;
+                    dissolve: boolean;
+                    quit: boolean;
+                    isBanned: boolean;
+                    reason: string;
+                }[] | undefined;
+                friends?: {
+                    id: number;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    online: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
+                lastUpdated?: number | undefined;
+            } | undefined;
         };
         images?: string[] | undefined;
         newTab?: boolean | undefined;
@@ -10675,6 +11339,134 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 hasOpenedModeSelector: z.ZodOptional<z.ZodBoolean>;
                 lastModeExportPath: z.ZodOptional<z.ZodString>;
                 lastModeImportPath: z.ZodOptional<z.ZodString>;
+                imContacts: z.ZodOptional<z.ZodObject<{
+                    friends: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                        id: z.ZodNumber;
+                        nickName: z.ZodString;
+                        headImage: z.ZodString;
+                        deleted: z.ZodBoolean;
+                        online: z.ZodBoolean;
+                        onlineWeb: z.ZodBoolean;
+                        onlineApp: z.ZodBoolean;
+                    }, "strip", z.ZodTypeAny, {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }, {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }>, "many">>;
+                    groups: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                        id: z.ZodNumber;
+                        name: z.ZodString;
+                        ownerId: z.ZodNumber;
+                        headImage: z.ZodString;
+                        headImageThumb: z.ZodString;
+                        notice: z.ZodString;
+                        remarkNickName: z.ZodString;
+                        showNickName: z.ZodString;
+                        showGroupName: z.ZodString;
+                        remarkGroupName: z.ZodString;
+                        dissolve: z.ZodBoolean;
+                        quit: z.ZodBoolean;
+                        isBanned: z.ZodBoolean;
+                        reason: z.ZodString;
+                    }, "strip", z.ZodTypeAny, {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }, {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }>, "many">>;
+                    lastUpdated: z.ZodOptional<z.ZodNumber>;
+                }, "strip", z.ZodTypeAny, {
+                    groups?: {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
+                    lastUpdated?: number | undefined;
+                }, {
+                    groups?: {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
+                    lastUpdated?: number | undefined;
+                }>>;
             }, "strip", z.ZodTypeAny, {
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -10970,6 +11762,34 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 hasOpenedModeSelector?: boolean | undefined;
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
+                imContacts?: {
+                    groups?: {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
+                    lastUpdated?: number | undefined;
+                } | undefined;
             }, {
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -11265,6 +12085,34 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 hasOpenedModeSelector?: boolean | undefined;
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
+                imContacts?: {
+                    groups?: {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
+                    lastUpdated?: number | undefined;
+                } | undefined;
             }>;
             text: z.ZodString;
             images: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
@@ -11566,6 +12414,34 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 hasOpenedModeSelector?: boolean | undefined;
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
+                imContacts?: {
+                    groups?: {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
+                    lastUpdated?: number | undefined;
+                } | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
@@ -11866,6 +12742,34 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 hasOpenedModeSelector?: boolean | undefined;
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
+                imContacts?: {
+                    groups?: {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
+                    lastUpdated?: number | undefined;
+                } | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
@@ -12169,6 +13073,34 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 hasOpenedModeSelector?: boolean | undefined;
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
+                imContacts?: {
+                    groups?: {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
+                    lastUpdated?: number | undefined;
+                } | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
@@ -12472,6 +13404,34 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 hasOpenedModeSelector?: boolean | undefined;
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
+                imContacts?: {
+                    groups?: {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
+                    lastUpdated?: number | undefined;
+                } | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
@@ -12797,6 +13757,34 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 hasOpenedModeSelector?: boolean | undefined;
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
+                imContacts?: {
+                    groups?: {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
+                    lastUpdated?: number | undefined;
+                } | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
@@ -13111,6 +14099,34 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 hasOpenedModeSelector?: boolean | undefined;
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
+                imContacts?: {
+                    groups?: {
+                        id: number;
+                        name: string;
+                        headImage: string;
+                        ownerId: number;
+                        headImageThumb: string;
+                        notice: string;
+                        remarkNickName: string;
+                        showNickName: string;
+                        showGroupName: string;
+                        remarkGroupName: string;
+                        dissolve: boolean;
+                        quit: boolean;
+                        isBanned: boolean;
+                        reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        online: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
+                    lastUpdated?: number | undefined;
+                } | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
