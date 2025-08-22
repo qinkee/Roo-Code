@@ -380,5 +380,21 @@
 	"queuedMessages": {
 		"title": "队列消息:",
 		"clickToEdit": "点击编辑消息"
+	},
+	"contextMenu": {
+		"problems": "问题",
+		"terminal": "终端",
+		"pasteUrl": "粘贴链接获取内容",
+		"noResults": "未找到结果",
+		"gitCommits": "Git 提交",
+		"addFile": "添加文件",
+		"addFolder": "添加文件夹",
+		"aiChat": "AI对话",
+		"customCommands": "自定义命令",
+		"modes": "模式",
+		"workingChanges": "工作更改",
+		"currentUncommittedChanges": "当前未提交的更改",
+		"commit": "提交",
+		"gitCommitHash": "Git 提交哈希"
 	}
 }

@@ -109,6 +109,7 @@ export enum ContextMenuOptionType {
 	Mode = "mode", // Add mode type
 	Command = "command", // Add command type
 	SectionHeader = "sectionHeader", // Add section header type
+	AiChat = "aiChat", // AI Chat conversations
 }
 
 export interface ContextMenuQueryItem {
@@ -120,6 +121,7 @@ export interface ContextMenuQueryItem {
 	slashCommand?: string
 	secondaryText?: string
 	argumentHint?: string
+	timestamp?: number
 }
 
 export function getContextMenuOptions(
@@ -249,6 +251,11 @@ export function getContextMenuOptions(
 			return commits.length > 0 ? [workingChanges, ...commits] : [workingChanges]
 		}
 
+		if (selectedType === ContextMenuOptionType.AiChat) {
+			const chats = queryItems.filter((item) => item.type === ContextMenuOptionType.AiChat)
+			return chats.length > 0 ? chats : [{ type: ContextMenuOptionType.NoResults }]
+		}
+
 		return [
 			{ type: ContextMenuOptionType.Problems },
 			{ type: ContextMenuOptionType.Terminal },
@@ -256,6 +263,7 @@ export function getContextMenuOptions(
 			{ type: ContextMenuOptionType.Folder },
 			{ type: ContextMenuOptionType.File },
 			{ type: ContextMenuOptionType.Git },
+			{ type: ContextMenuOptionType.AiChat },
 		]
 	}
 
@@ -281,6 +289,9 @@ export function getContextMenuOptions(
 	}
 	if (query.startsWith("http")) {
 		suggestions.push({ type: ContextMenuOptionType.URL, value: query })
+	}
+	if ("ai".startsWith(lowerQuery) || "chat".startsWith(lowerQuery) || "aichat".startsWith(lowerQuery)) {
+		suggestions.push({ type: ContextMenuOptionType.AiChat })
 	}
 
 	// Add exact SHA matches to suggestions
@@ -320,6 +331,8 @@ export function getContextMenuOptions(
 
 	const gitMatches = matchingItems.filter((item) => item.type === ContextMenuOptionType.Git)
 
+	const aiChatMatches = matchingItems.filter((item) => item.type === ContextMenuOptionType.AiChat)
+
 	// Convert search results to queryItems format
 	const searchResultItems = dynamicSearchResults.map((result) => {
 		// Ensure paths start with / for consistency
@@ -340,7 +353,7 @@ export function getContextMenuOptions(
 		}
 	})
 
-	const allItems = [...suggestions, ...openedFileMatches, ...searchResultItems, ...gitMatches]
+	const allItems = [...suggestions, ...openedFileMatches, ...searchResultItems, ...gitMatches, ...aiChatMatches]
 
 	// Remove duplicates - normalize paths by ensuring all have leading slashes
 	const seen = new Set()

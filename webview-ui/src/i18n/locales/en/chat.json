@@ -380,5 +380,21 @@
 	"queuedMessages": {
 		"title": "Queued Messages:",
 		"clickToEdit": "Click to edit message"
+	},
+	"contextMenu": {
+		"problems": "Problems",
+		"terminal": "Terminal",
+		"pasteUrl": "Paste URL to fetch contents",
+		"noResults": "No results found",
+		"gitCommits": "Git Commits",
+		"addFile": "Add File",
+		"addFolder": "Add Folder",
+		"aiChat": "AI Chat",
+		"customCommands": "Custom Commands",
+		"modes": "Modes",
+		"workingChanges": "Working changes",
+		"currentUncommittedChanges": "Current uncommitted changes",
+		"commit": "Commit",
+		"gitCommitHash": "Git commit hash"
 	}
 }

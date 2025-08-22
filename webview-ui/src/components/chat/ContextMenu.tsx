@@ -11,6 +11,7 @@ import {
 	SearchResult,
 } from "@src/utils/context-mentions"
 import { removeLeadingNonAlphanumeric } from "@src/utils/removeLeadingNonAlphanumeric"
+import { useAppTranslation } from "@/i18n/TranslationContext"
 
 interface ContextMenuProps {
 	onSelect: (type: ContextMenuOptionType, value?: string) => void
@@ -41,6 +42,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 }) => {
 	const [materialIconsBaseUri, setMaterialIconsBaseUri] = useState("")
 	const menuRef = useRef<HTMLDivElement>(null)
+	const { t } = useAppTranslation()
 
 	const filteredOptions = useMemo(() => {
 		return getContextMenuOptions(searchQuery, selectedType, queryItems, dynamicSearchResults, modes, commands)
@@ -80,7 +82,11 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 							textTransform: "uppercase",
 							letterSpacing: "0.5px",
 						}}>
-						{option.label}
+						{option.label === "Custom Commands"
+							? t("chat:contextMenu.customCommands")
+							: option.label === "Modes"
+								? t("chat:contextMenu.modes")
+								: option.label}
 					</span>
 				)
 			case ContextMenuOptionType.Mode:
@@ -136,18 +142,47 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 					</div>
 				)
 			case ContextMenuOptionType.Problems:
-				return <span>Problems</span>
+				return <span>{t("chat:contextMenu.problems")}</span>
 			case ContextMenuOptionType.Terminal:
-				return <span>Terminal</span>
+				return <span>{t("chat:contextMenu.terminal")}</span>
 			case ContextMenuOptionType.URL:
-				return <span>Paste URL to fetch contents</span>
+				return <span>{t("chat:contextMenu.pasteUrl")}</span>
 			case ContextMenuOptionType.NoResults:
-				return <span>No results found</span>
-			case ContextMenuOptionType.Git:
+				return <span>{t("chat:contextMenu.noResults")}</span>
+			case ContextMenuOptionType.AiChat:
 				if (option.value) {
 					return (
 						<div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
 							<span style={{ lineHeight: "1.2" }}>{option.label}</span>
+							{option.description && (
+								<span
+									style={{
+										fontSize: "0.85em",
+										opacity: 0.7,
+										whiteSpace: "nowrap",
+										overflow: "hidden",
+										textOverflow: "ellipsis",
+										lineHeight: "1.2",
+									}}>
+									{option.description}
+								</span>
+							)}
+						</div>
+					)
+				} else {
+					return <span>{t("chat:contextMenu.aiChat")}</span>
+				}
+			case ContextMenuOptionType.Git:
+				if (option.value) {
+					return (
+						<div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+							<span style={{ lineHeight: "1.2" }}>
+								{option.label === "Working changes"
+									? t("chat:contextMenu.workingChanges")
+									: option.label?.startsWith("Commit ")
+										? t("chat:contextMenu.commit") + " " + option.label.substring(7)
+										: option.label}
+							</span>
 							<span
 								style={{
 									fontSize: "0.85em",
@@ -157,12 +192,16 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 									textOverflow: "ellipsis",
 									lineHeight: "1.2",
 								}}>
-								{option.description}
+								{option.description === "Current uncommitted changes"
+									? t("chat:contextMenu.currentUncommittedChanges")
+									: option.description === "Git commit hash"
+										? t("chat:contextMenu.gitCommitHash")
+										: option.description}
 							</span>
 						</div>
 					)
 				} else {
-					return <span>Git Commits</span>
+					return <span>{t("chat:contextMenu.gitCommits")}</span>
 				}
 			case ContextMenuOptionType.File:
 			case ContextMenuOptionType.OpenedFile:
@@ -202,7 +241,15 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 						</div>
 					)
 				} else {
-					return <span>Add {option.type === ContextMenuOptionType.File ? "File" : "Folder"}</span>
+					return (
+						<span>
+							{t(
+								option.type === ContextMenuOptionType.File
+									? "chat:contextMenu.addFile"
+									: "chat:contextMenu.addFolder",
+							)}
+						</span>
+					)
 				}
 		}
 	}
@@ -227,6 +274,8 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 				return "link"
 			case ContextMenuOptionType.Git:
 				return "git-commit"
+			case ContextMenuOptionType.AiChat:
+				return "comment-discussion"
 			case ContextMenuOptionType.NoResults:
 				return "info"
 			default:
@@ -348,7 +397,8 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 							</div>
 							{(option.type === ContextMenuOptionType.File ||
 								option.type === ContextMenuOptionType.Folder ||
-								option.type === ContextMenuOptionType.Git) &&
+								option.type === ContextMenuOptionType.Git ||
+								option.type === ContextMenuOptionType.AiChat) &&
 								!option.value && (
 									<i
 										className="codicon codicon-chevron-right"
@@ -367,7 +417,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 							color: "var(--vscode-foreground)",
 							opacity: 0.7,
 						}}>
-						<span>No results found</span>
+						<span>{t("chat:contextMenu.noResults")}</span>
 					</div>
 				)}
 			</div>

@@ -60,35 +60,35 @@ const useGlobalDragDebug = () => {
 			console.log("Global dragover detected from:", e.target)
 			e.preventDefault()
 		}
-		
+
 		const handleGlobalDrop = (e: DragEvent) => {
 			console.log("=== Global drop detected ===")
 			console.log("Drop target:", e.target)
 			console.log("Data types:", Array.from(e.dataTransfer?.types || []))
-			
+
 			// Try to get all possible data
 			if (e.dataTransfer) {
-				Array.from(e.dataTransfer.types).forEach(type => {
+				Array.from(e.dataTransfer.types).forEach((type) => {
 					console.log(`Data for type '${type}':`, e.dataTransfer?.getData(type))
 				})
 			}
-			
+
 			e.preventDefault()
 		}
-		
+
 		const handleGlobalDragEnter = (e: DragEvent) => {
 			console.log("Global dragenter detected")
 			e.preventDefault()
 		}
-		
-		document.addEventListener('dragover', handleGlobalDragOver, true)
-		document.addEventListener('drop', handleGlobalDrop, true)
-		document.addEventListener('dragenter', handleGlobalDragEnter, true)
-		
+
+		document.addEventListener("dragover", handleGlobalDragOver, true)
+		document.addEventListener("drop", handleGlobalDrop, true)
+		document.addEventListener("dragenter", handleGlobalDragEnter, true)
+
 		return () => {
-			document.removeEventListener('dragover', handleGlobalDragOver, true)
-			document.removeEventListener('drop', handleGlobalDrop, true)
-			document.removeEventListener('dragenter', handleGlobalDragEnter, true)
+			document.removeEventListener("dragover", handleGlobalDragOver, true)
+			document.removeEventListener("drop", handleGlobalDrop, true)
+			document.removeEventListener("dragenter", handleGlobalDragEnter, true)
 		}
 	}, [])
 }
@@ -116,10 +116,10 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		ref,
 	) => {
 		const { t } = useAppTranslation()
-		
+
 		// Enable global drag debugging
 		useGlobalDragDebug()
-		
+
 		const {
 			filePaths,
 			openedTabs,
@@ -309,8 +309,18 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						type: path.endsWith("/") ? ContextMenuOptionType.Folder : ContextMenuOptionType.File,
 						value: path,
 					})),
+				// Add task history items for AI Chat
+				...taskHistory
+					.filter((task) => task.id && task.task) // Only include tasks with id and task description
+					.map((task) => ({
+						type: ContextMenuOptionType.AiChat,
+						value: task.id,
+						label: task.task,
+						description: new Date(task.ts).toLocaleString(),
+						timestamp: task.ts,
+					})),
 			]
-		}, [filePaths, gitCommits, openedTabs])
+		}, [filePaths, gitCommits, openedTabs, taskHistory])
 
 		useEffect(() => {
 			const handleClickOutside = (event: MouseEvent) => {
@@ -370,7 +380,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				if (
 					type === ContextMenuOptionType.File ||
 					type === ContextMenuOptionType.Folder ||
-					type === ContextMenuOptionType.Git
+					type === ContextMenuOptionType.Git ||
+					type === ContextMenuOptionType.AiChat
 				) {
 					if (!value) {
 						setSelectedType(type)
@@ -398,6 +409,16 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						insertValue = value || ""
 					} else if (type === ContextMenuOptionType.Command) {
 						insertValue = value ? `/${value}` : ""
+					} else if (type === ContextMenuOptionType.AiChat) {
+						// For AI Chat, the value is the task ID to switch to
+						if (value) {
+							// Send message to switch to selected task
+							vscode.postMessage({ type: "showTaskWithId", text: value })
+							// Clear the input
+							setInputValue("")
+							setShowContextMenu(false)
+							return
+						}
 					}
 
 					// Determine if this is a slash command selection
@@ -831,14 +852,14 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				const resourceUrls = e.dataTransfer.getData("ResourceURLs") // Main VSCode format for resources
 				const resources = e.dataTransfer.getData("resources") // VSCode internal resources
 				const internalUriList = e.dataTransfer.getData("application/vnd.code.internal.uri-list")
-				
+
 				// Try additional formats
 				const textHtml = e.dataTransfer.getData("text/html")
 				const textUri = e.dataTransfer.getData("text/uri-list")
 				const downloadUrl = e.dataTransfer.getData("DownloadURL")
 				const symbols = e.dataTransfer.getData("application/vnd.code.symbols")
 				const markers = e.dataTransfer.getData("application/vnd.code.diagnostics")
-				
+
 				console.log("Data formats:", {
 					textFieldList,
 					textUriList,
@@ -853,20 +874,31 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					downloadUrl,
 					symbols,
 					markers,
-					types: Array.from(e.dataTransfer.types)
+					types: Array.from(e.dataTransfer.types),
 				})
-				
-				
+
 				// Try to get data from various formats
-				let text = textFieldList || textUriList || textPlain || codeFiles || resourceUrls || resources || internalUriList || textUri || textHtml
-				
+				let text =
+					textFieldList ||
+					textUriList ||
+					textPlain ||
+					codeFiles ||
+					resourceUrls ||
+					resources ||
+					internalUriList ||
+					textUri ||
+					textHtml
+
 				// Handle CodeEditors format specially
 				if (!text && codeEditors) {
 					try {
 						const editorsData = JSON.parse(codeEditors)
 						if (Array.isArray(editorsData) && editorsData.length > 0) {
 							// Extract file paths from editor data
-							text = editorsData.map(editor => editor.resource?.path || editor.resource?.fsPath || "").filter(Boolean).join("\n")
+							text = editorsData
+								.map((editor) => editor.resource?.path || editor.resource?.fsPath || "")
+								.filter(Boolean)
+								.join("\n")
 						}
 					} catch (error) {
 						console.error("Failed to parse CodeEditors data:", error)
@@ -919,7 +951,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						const [type, subtype] = file.type.split("/")
 						return type === "image" && acceptedImageTypes.includes(subtype)
 					})
-					
+
 					const nonImageFiles = files.filter((file) => {
 						const [type, subtype] = file.type.split("/")
 						return !(type === "image" && acceptedImageTypes.includes(subtype))
@@ -929,32 +961,32 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					if (nonImageFiles.length > 0) {
 						// Get file paths from the File objects
 						// Note: File.path is a non-standard property but is available in Electron/VSCode
-						const filePaths = nonImageFiles.map(file => {
+						const filePaths = nonImageFiles.map((file) => {
 							// In VSCode webview context, files have a path property
 							return (file as any).path || file.name
 						})
-						
+
 						// Process each file path as a mention
 						let newValue = inputValue.slice(0, cursorPosition)
 						let totalLength = 0
-						
+
 						for (let i = 0; i < filePaths.length; i++) {
 							const filePath = filePaths[i]
 							const mentionText = convertToMentionPath(filePath, cwd)
 							newValue += mentionText
 							totalLength += mentionText.length
-							
+
 							// Add space after each mention except the last one
 							if (i < filePaths.length - 1) {
 								newValue += " "
 								totalLength += 1
 							}
 						}
-						
+
 						// Add space after the last mention and append the rest of the input
 						newValue += " " + inputValue.slice(cursorPosition)
 						totalLength += 1
-						
+
 						setInputValue(newValue)
 						const newCursorPosition = cursorPosition + totalLength
 						setCursorPosition(newCursorPosition)
@@ -1321,7 +1353,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				onDragLeave={(e) => {
 					e.preventDefault()
 					const rect = e.currentTarget.getBoundingClientRect()
-					
+
 					if (
 						e.clientX <= rect.left ||
 						e.clientX >= rect.right ||
@@ -1332,8 +1364,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					}
 				}}>
 				<div className="relative">
-					<div
-						className={cn("chat-text-area", "relative", "flex", "flex-col", "outline-none")}>
+					<div className={cn("chat-text-area", "relative", "flex", "flex-col", "outline-none")}>
 						{showContextMenu && (
 							<div
 								ref={contextMenuContainerRef}
