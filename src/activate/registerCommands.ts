@@ -427,6 +427,19 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			)
 
 			outputChannel.appendLine("[autoConfigureProvider] Provider auto-configured successfully")
+
+			// 设置 lastShownAnnouncementId 为当前版本，避免显示版本更新面板
+			const latestId = currentProvider.latestAnnouncementId
+			outputChannel.appendLine(`[autoConfigureProvider] Setting lastShownAnnouncementId to: ${latestId}`)
+			await currentProvider.contextProxy.setValue("lastShownAnnouncementId", latestId)
+
+			// 验证设置是否成功
+			const storedId = currentProvider.contextProxy.getValue("lastShownAnnouncementId")
+			outputChannel.appendLine(`[autoConfigureProvider] Stored lastShownAnnouncementId: ${storedId}`)
+
+			// 刷新 webview 状态
+			await currentProvider.postStateToWebview()
+			outputChannel.appendLine(`[autoConfigureProvider] Posted updated state to webview`)
 		} catch (error) {
 			outputChannel.appendLine(`Error auto-configuring provider: ${error}`)
 			vscode.window.showErrorMessage(`配置失败: ${error}`)
