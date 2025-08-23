@@ -1,5 +1,6 @@
 import { createMCPServerInstructions } from "./create-mcp-server"
 import { createModeInstructions } from "./create-mode"
+import { USE_IM_INTEGRATION_INSTRUCTIONS } from "./use-im-integration"
 import { McpHub } from "../../../services/mcp/McpHub"
 import { DiffStrategy } from "../../../shared/tools"
 import * as vscode from "vscode"
@@ -17,6 +18,9 @@ export async function fetchInstructions(text: string, detail: InstructionsDetail
 		}
 		case "create_mode": {
 			return await createModeInstructions(detail.context)
+		}
+		case "use_im_integration": {
+			return USE_IM_INTEGRATION_INSTRUCTIONS
 		}
 		default: {
 			return ""

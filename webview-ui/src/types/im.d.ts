@@ -1,7 +1,7 @@
 // IM types for integration with box-im
 
 export interface IMContact {
-	id: number | string // 支持两种类型，便于统一处理
+	id: number
 	name: string
 	nickname?: string
 	avatar?: string

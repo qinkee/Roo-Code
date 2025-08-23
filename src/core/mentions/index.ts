@@ -140,6 +140,12 @@ export async function parseMentions(
 			return `Git commit '${mention}' (see below for commit info)`
 		} else if (mention === "terminal") {
 			return `Terminal Output (see below for output)`
+		} else if (mention.startsWith("联系人:")) {
+			const contactName = mention.substring(4)
+			return `'${contactName}' (将通过IM系统发送消息)`
+		} else if (mention.startsWith("知识库:")) {
+			const kbName = mention.substring(4)
+			return `'${kbName}' (将查询知识库内容)`
 		}
 		return match
 	})
@@ -238,6 +244,12 @@ export async function parseMentions(
 			} catch (error) {
 				parsedText += `\n\n<terminal_output>\nError fetching terminal output: ${error.message}\n</terminal_output>`
 			}
+		} else if (mention.startsWith("联系人:")) {
+			const contactName = mention.substring(4)
+			parsedText += `\n\n<im_contact type="send" name="${contactName}">\n将最终结果通过im-platform MCP工具发送给联系人 ${contactName}。\n使用 use_mcp_tool 调用 im-platform 服务器的 send_message 方法，根据结果类型选择发送文本消息或文件。\n</im_contact>`
+		} else if (mention.startsWith("知识库:")) {
+			const kbName = mention.substring(4)
+			parsedText += `\n\n<knowledge_base name="${kbName}">\n通过im-platform MCP工具查询 ${kbName} 的知识库内容用于增强上下文。\n使用 use_mcp_tool 调用 im-platform 服务器的 search_knowledge_base 方法，将查询结果用于回答用户问题。\n</knowledge_base>`
 		}
 	}
 

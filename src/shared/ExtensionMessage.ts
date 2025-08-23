@@ -122,6 +122,7 @@ export interface ExtensionMessage {
 		| "showEditMessageDialog"
 		| "commands"
 		| "insertTextIntoTextarea"
+		| "imContactsResponse"
 	text?: string
 	payload?: any // Add a generic payload for now, can refine later
 	action?:
@@ -197,6 +198,28 @@ export interface ExtensionMessage {
 	context?: string
 	commands?: Command[]
 	droppedFiles?: string[] // For filesDropped message type
+	contacts?: {
+		friends: Array<{
+			id: number
+			nickName: string
+			headImage?: string
+			online?: boolean
+			onlineWeb?: boolean
+			onlineApp?: boolean
+			deleted?: boolean
+		}>
+		groups: Array<{
+			id: number
+			name: string
+			showGroupName?: string
+			headImage?: string
+			ownerId?: number
+			notice?: string
+			dissolve?: boolean
+			quit?: boolean
+			isBanned?: boolean
+		}>
+	}
 }
 
 export type ExtensionState = Pick<

@@ -7,8 +7,10 @@ export function getFetchInstructionsDescription(enableMcpServerCreation?: boolea
 	const tasks =
 		enableMcpServerCreation !== false
 			? `  create_mcp_server
-  create_mode`
-			: `  create_mode`
+  create_mode
+  use_im_integration`
+			: `  create_mode
+  use_im_integration`
 
 	const example =
 		enableMcpServerCreation !== false

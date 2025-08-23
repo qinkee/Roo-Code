@@ -47,6 +47,8 @@ Mention regex:
 	- The exact word 'problems'.
 	- The exact word 'git-changes'.
     - The exact word 'terminal'.
+    - IM contacts in format '联系人:name' (e.g., '@联系人:张三').
+    - Knowledge base in format '知识库:name' (e.g., '@知识库:技术小组').
   - It ensures that any trailing punctuation marks (such as ',', '.', '!', etc.) are not included in the matched mention, allowing the punctuation to follow the mention naturally in the text.
 
 - **Global Regex**:
@@ -54,7 +56,7 @@ Mention regex:
 
 */
 export const mentionRegex =
-	/(?<!\\)@((?:\/|\w+:\/\/)(?:[^\s\\]|\\ )+?|[a-f0-9]{7,40}\b|problems\b|git-changes\b|terminal\b)(?=[.,;:!?]?(?=[\s\r\n]|$))/
+	/(?<!\\)@((?:\/|\w+:\/\/)(?:[^\s\\]|\\ )+?|[a-f0-9]{7,40}\b|problems\b|git-changes\b|terminal\b|联系人:[^\s,;:!?]+|知识库:[^\s,;:!?]+)(?=[.,;:!?]?(?=[\s\r\n]|$))/
 export const mentionRegexGlobal = new RegExp(mentionRegex.source, "g")
 
 // Regex to match command mentions like /command-name anywhere in text
