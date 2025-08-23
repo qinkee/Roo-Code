@@ -341,6 +341,12 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						}
 					})
 
+					console.log("[ChatTextArea] Received and processed IM contacts:", {
+						friendsCount: friends.filter((f: any) => !f.deleted).length,
+						groupsCount: groups.filter((g: any) => !g.quit && !g.dissolve).length,
+						totalContacts: contacts.length,
+						sampleContact: contacts[0],
+					})
 					setImContacts(contacts)
 				}
 			}
@@ -356,6 +362,32 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		}, [])
 
 		const queryItems = useMemo(() => {
+			const contactItems = imContacts.map((contact) => ({
+				type: ContextMenuOptionType.Contacts,
+				value: contact.nickname || contact.name, // 使用联系人名称而不是ID
+				label: contact.nickname || contact.name,
+				description:
+					contact.type === "friend" ? t("chat:contextMenu.friends") : t("chat:contextMenu.groups"),
+				icon: contact.type === "friend" ? "person" : "organization",
+			}))
+			
+			const knowledgeBaseItems = imContacts.map((contact) => ({
+				type: ContextMenuOptionType.KnowledgeBase,
+				value: contact.nickname || contact.name, // 使用联系人名称而不是ID
+				label: contact.nickname || contact.name,
+				description:
+					contact.type === "friend"
+							? t("chat:contextMenu.friendKnowledgeBase")
+							: t("chat:contextMenu.groupKnowledgeBase"),
+				icon: contact.type === "friend" ? "person" : "organization",
+			}))
+			
+			console.log("[ChatTextArea] Query items updated with contacts:", {
+				contactItemsCount: contactItems.length,
+				sampleContactItem: contactItems[0],
+				knowledgeBaseItemsCount: knowledgeBaseItems.length,
+			})
+			
 			return [
 				{ type: ContextMenuOptionType.Problems, value: "problems" },
 				{ type: ContextMenuOptionType.Terminal, value: "terminal" },
@@ -384,25 +416,9 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						timestamp: task.ts,
 					})),
 				// Add contacts from IM system
-				...imContacts.map((contact) => ({
-					type: ContextMenuOptionType.Contacts,
-					value: contact.nickname || contact.name, // 使用联系人名称而不是ID
-					label: contact.nickname || contact.name,
-					description:
-						contact.type === "friend" ? t("chat:contextMenu.friends") : t("chat:contextMenu.groups"),
-					icon: contact.type === "friend" ? "person" : "organization",
-				})),
+				...contactItems,
 				// Add knowledge base from IM system (same data, different presentation)
-				...imContacts.map((contact) => ({
-					type: ContextMenuOptionType.KnowledgeBase,
-					value: contact.nickname || contact.name, // 使用联系人名称而不是ID
-					label: contact.nickname || contact.name,
-					description:
-						contact.type === "friend"
-							? t("chat:contextMenu.friendKnowledgeBase")
-							: t("chat:contextMenu.groupKnowledgeBase"),
-					icon: contact.type === "friend" ? "person" : "organization",
-				})),
+				...knowledgeBaseItems,
 			]
 		}, [filePaths, gitCommits, openedTabs, taskHistory, imContacts, t])
 

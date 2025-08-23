@@ -397,6 +397,7 @@ export function getContextMenuOptions(
 		}
 	}
 
+
 	const searchableItems = queryItems.map((item) => ({
 		original: item,
 		searchStr: [item.value, item.label, item.description].filter(Boolean).join(" "),
@@ -420,6 +421,19 @@ export function getContextMenuOptions(
 	const contactsMatches = matchingItems.filter((item) => item.type === ContextMenuOptionType.Contacts)
 
 	const knowledgeBaseMatches = matchingItems.filter((item) => item.type === ContextMenuOptionType.KnowledgeBase)
+	
+	// Debug logging for contacts search
+	if (query && (contactsMatches.length > 0 || knowledgeBaseMatches.length > 0 || queryItems.some(item => item.type === ContextMenuOptionType.Contacts))) {
+		console.log("[context-mentions] Contact search debug:", {
+			query,
+			totalQueryItems: queryItems.length,
+			contactsInQueryItems: queryItems.filter(item => item.type === ContextMenuOptionType.Contacts).length,
+			contactsMatches: contactsMatches.length,
+			knowledgeBaseMatches: knowledgeBaseMatches.length,
+			sampleContact: queryItems.find(item => item.type === ContextMenuOptionType.Contacts),
+			searchableItems: searchableItems.slice(0, 3).map(item => item.searchStr),
+		})
+	}
 
 	// Convert search results to queryItems format
 	const searchResultItems = dynamicSearchResults.map((result) => {
@@ -440,6 +454,57 @@ export function getContextMenuOptions(
 			description: displayPath,
 		}
 	})
+
+	// Special handling for empty query - show contacts immediately when @ is typed
+	if (query === "" && selectedType === null) {
+		const allContacts = queryItems.filter((item) => item.type === ContextMenuOptionType.Contacts)
+		
+		if (allContacts.length > 0) {
+			console.log("[context-mentions] Showing all contacts for @ mention:", {
+				contactsCount: allContacts.length
+			})
+			
+			// Group contacts by type
+			const friends = allContacts.filter(
+				(item) => item.description?.includes("Friends") || item.description?.includes("好友")
+			)
+			const groups = allContacts.filter(
+				(item) => item.description?.includes("Groups") || item.description?.includes("群组")
+			)
+			
+			const contactResults: ContextMenuQueryItem[] = []
+			
+			// Add friends section
+			if (friends.length > 0) {
+				contactResults.push({
+					type: ContextMenuOptionType.SectionHeader,
+					label: "Friends",
+				})
+				contactResults.push(...friends)
+			}
+			
+			// Add groups section
+			if (groups.length > 0) {
+				contactResults.push({
+					type: ContextMenuOptionType.SectionHeader,
+					label: "Groups",
+				})
+				contactResults.push(...groups)
+			}
+			
+			// Add other available options at the bottom
+			const otherOptions: ContextMenuQueryItem[] = []
+			if (suggestions.length > 0) {
+				otherOptions.push({
+					type: ContextMenuOptionType.SectionHeader,
+					label: "Other Options",
+				})
+				otherOptions.push(...suggestions)
+			}
+			
+			return [...contactResults, ...otherOptions]
+		}
+	}
 
 	const allItems = [
 		...suggestions,
