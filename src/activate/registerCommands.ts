@@ -359,7 +359,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				apiProvider: "openai" as const,
 				openAiBaseUrl: "https://one.api.mysql.service.thinkgs.cn/v1",
 				openAiApiKey: token,
-				openAiModelId: "claude-sonnet-4-20250514",
+				openAiModelId: "deepseek-reasoner",
 				// Default settings if not already set
 				diffEnabled: currentState.apiConfiguration.diffEnabled ?? true,
 				fuzzyMatchThreshold: currentState.apiConfiguration.fuzzyMatchThreshold ?? 1.0,
