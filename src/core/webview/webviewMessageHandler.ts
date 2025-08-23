@@ -2428,6 +2428,7 @@ export const webviewMessageHandler = async (
 					groupsCount: imContacts?.groups?.length || 0,
 					lastUpdated: imContacts?.lastUpdated ? new Date(imContacts.lastUpdated).toISOString() : "never",
 					now: new Date().toISOString(),
+					imContactsValue: imContacts,
 				})
 
 				if (imContacts && (imContacts.friends || imContacts.groups)) {

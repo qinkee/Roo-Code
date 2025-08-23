@@ -156,7 +156,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 			case ContextMenuOptionType.URL:
 				return <span>{t("chat:contextMenu.pasteUrl")}</span>
 			case ContextMenuOptionType.NoResults:
-				return <span>{t("chat:contextMenu.noResults")}</span>
+				return <span>{option.label || t("chat:contextMenu.noResults")}</span>
 			case ContextMenuOptionType.AiChat:
 				if (option.value) {
 					return (

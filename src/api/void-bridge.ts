@@ -22,11 +22,13 @@ export class VoidBridge {
 					})
 
 					// Update globalState with IM contacts
-					await context.globalState.update("imContacts", {
+					const contactsData = {
 						friends: data.friends || [],
 						groups: data.groups || [],
 						lastUpdated: Date.now(),
-					})
+					}
+					
+					await context.globalState.update("imContacts", contactsData)
 
 					console.log("[VoidBridge] Successfully updated IM contacts in globalState")
 					return { success: true, message: "Contacts updated successfully" }

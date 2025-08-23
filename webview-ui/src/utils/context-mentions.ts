@@ -134,6 +134,7 @@ export function getContextMenuOptions(
 	modes?: ModeConfig[],
 	commands?: Command[],
 ): ContextMenuQueryItem[] {
+	
 	// Handle slash commands for modes and commands
 	// Only process as slash command if the query itself starts with "/" (meaning we're typing a slash command)
 	if (query.startsWith("/")) {
@@ -259,9 +260,25 @@ export function getContextMenuOptions(
 		}
 
 		if (selectedType === ContextMenuOptionType.Contacts) {
+			console.log("[context-mentions] Checking contacts for submenu:", {
+				selectedType,
+				queryItemsLength: queryItems.length,
+				queryItemsTypes: Array.from(new Set(queryItems.map(item => item.type))),
+				queryItemsSample: queryItems.slice(0, 5)
+			})
+			
 			const contacts = queryItems.filter((item) => item.type === ContextMenuOptionType.Contacts)
+			console.log("[context-mentions] Filtered contacts:", {
+				contactsLength: contacts.length,
+				contactsSample: contacts.slice(0, 3)
+			})
+			
 			if (contacts.length === 0) {
-				return [{ type: ContextMenuOptionType.NoResults }]
+				return [{
+					type: ContextMenuOptionType.NoResults,
+					label: "Loading contacts...",
+					value: "loading"
+				}]
 			}
 
 			// Group contacts by type
@@ -298,7 +315,11 @@ export function getContextMenuOptions(
 		if (selectedType === ContextMenuOptionType.KnowledgeBase) {
 			const knowledgeBase = queryItems.filter((item) => item.type === ContextMenuOptionType.KnowledgeBase)
 			if (knowledgeBase.length === 0) {
-				return [{ type: ContextMenuOptionType.NoResults }]
+				return [{
+					type: ContextMenuOptionType.NoResults,
+					label: "Loading knowledge base...",
+					value: "loading"
+				}]
 			}
 
 			// Group knowledge base by type
@@ -422,18 +443,6 @@ export function getContextMenuOptions(
 
 	const knowledgeBaseMatches = matchingItems.filter((item) => item.type === ContextMenuOptionType.KnowledgeBase)
 	
-	// Debug logging for contacts search
-	if (query && (contactsMatches.length > 0 || knowledgeBaseMatches.length > 0 || queryItems.some(item => item.type === ContextMenuOptionType.Contacts))) {
-		console.log("[context-mentions] Contact search debug:", {
-			query,
-			totalQueryItems: queryItems.length,
-			contactsInQueryItems: queryItems.filter(item => item.type === ContextMenuOptionType.Contacts).length,
-			contactsMatches: contactsMatches.length,
-			knowledgeBaseMatches: knowledgeBaseMatches.length,
-			sampleContact: queryItems.find(item => item.type === ContextMenuOptionType.Contacts),
-			searchableItems: searchableItems.slice(0, 3).map(item => item.searchStr),
-		})
-	}
 
 	// Convert search results to queryItems format
 	const searchResultItems = dynamicSearchResults.map((result) => {
@@ -455,56 +464,6 @@ export function getContextMenuOptions(
 		}
 	})
 
-	// Special handling for empty query - show contacts immediately when @ is typed
-	if (query === "" && selectedType === null) {
-		const allContacts = queryItems.filter((item) => item.type === ContextMenuOptionType.Contacts)
-		
-		if (allContacts.length > 0) {
-			console.log("[context-mentions] Showing all contacts for @ mention:", {
-				contactsCount: allContacts.length
-			})
-			
-			// Group contacts by type
-			const friends = allContacts.filter(
-				(item) => item.description?.includes("Friends") || item.description?.includes("好友")
-			)
-			const groups = allContacts.filter(
-				(item) => item.description?.includes("Groups") || item.description?.includes("群组")
-			)
-			
-			const contactResults: ContextMenuQueryItem[] = []
-			
-			// Add friends section
-			if (friends.length > 0) {
-				contactResults.push({
-					type: ContextMenuOptionType.SectionHeader,
-					label: "Friends",
-				})
-				contactResults.push(...friends)
-			}
-			
-			// Add groups section
-			if (groups.length > 0) {
-				contactResults.push({
-					type: ContextMenuOptionType.SectionHeader,
-					label: "Groups",
-				})
-				contactResults.push(...groups)
-			}
-			
-			// Add other available options at the bottom
-			const otherOptions: ContextMenuQueryItem[] = []
-			if (suggestions.length > 0) {
-				otherOptions.push({
-					type: ContextMenuOptionType.SectionHeader,
-					label: "Other Options",
-				})
-				otherOptions.push(...suggestions)
-			}
-			
-			return [...contactResults, ...otherOptions]
-		}
-	}
 
 	const allItems = [
 		...suggestions,

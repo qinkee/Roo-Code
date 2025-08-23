@@ -354,14 +354,28 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			window.addEventListener("message", handleMessage)
 
 			// Request contacts when component mounts
+			console.log("[ChatTextArea] Component mounted, requesting initial contacts")
 			vscode.postMessage({ type: "getImContacts" })
+
+			// Set up periodic refresh every 30 seconds
+			const refreshInterval = setInterval(() => {
+				console.log("[ChatTextArea] Periodic refresh - requesting contacts")
+				vscode.postMessage({ type: "getImContacts" })
+			}, 30000)
 
 			return () => {
 				window.removeEventListener("message", handleMessage)
+				clearInterval(refreshInterval)
 			}
 		}, [])
 
 		const queryItems = useMemo(() => {
+			console.log("[ChatTextArea] Building queryItems with imContacts:", {
+				imContactsLength: imContacts.length,
+				imContactsSample: imContacts[0]
+			})
+			
+			// Store contacts data for submenu, but don't add them to main menu
 			const contactItems = imContacts.map((contact) => ({
 				type: ContextMenuOptionType.Contacts,
 				value: contact.nickname || contact.name, // 使用联系人名称而不是ID
@@ -382,11 +396,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				icon: contact.type === "friend" ? "person" : "organization",
 			}))
 			
-			console.log("[ChatTextArea] Query items updated with contacts:", {
-				contactItemsCount: contactItems.length,
-				sampleContactItem: contactItems[0],
-				knowledgeBaseItemsCount: knowledgeBaseItems.length,
-			})
 			
 			return [
 				{ type: ContextMenuOptionType.Problems, value: "problems" },
@@ -489,6 +498,13 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						setSelectedType(type)
 						setSearchQuery("")
 						setSelectedMenuIndex(0)
+						
+						// Request fresh contacts data when selecting contacts or knowledge base menu
+						if (type === ContextMenuOptionType.Contacts || type === ContextMenuOptionType.KnowledgeBase) {
+							console.log("[ChatTextArea] User selected contacts/knowledge base menu, requesting fresh data")
+							vscode.postMessage({ type: "getImContacts" })
+						}
+						
 						return
 					}
 				}

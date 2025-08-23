@@ -23,7 +23,7 @@ type GlobalStateKey = keyof GlobalState
 type SecretStateKey = keyof SecretState
 type RooCodeSettingsKey = keyof RooCodeSettings
 
-const PASS_THROUGH_STATE_KEYS = ["taskHistory"]
+const PASS_THROUGH_STATE_KEYS = ["taskHistory", "imContacts"]
 
 export const isPassThroughStateKey = (key: string) => PASS_THROUGH_STATE_KEYS.includes(key)
 
@@ -108,6 +108,12 @@ export class ContextProxy {
 	getGlobalState<K extends GlobalStateKey>(key: K, defaultValue?: GlobalState[K]): GlobalState[K] {
 		if (isPassThroughStateKey(key)) {
 			const value = this.originalContext.globalState.get<GlobalState[K]>(key)
+			if (key === "imContacts") {
+				console.log("[ContextProxy] Getting imContacts from globalState:", {
+					hasValue: value !== undefined && value !== null,
+					value: value
+				})
+			}
 			return value === undefined || value === null ? defaultValue : value
 		}
 
