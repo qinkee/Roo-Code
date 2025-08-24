@@ -1,0 +1,27 @@
+--- a/src/core/task/Task.ts
++++ b/src/core/task/Task.ts
+@@ -1873,6 +1873,7 @@ export class Task extends EventEmitter {
+ 						}
+ 					} catch (error) {
+ 						console.error("Error draining stream for usage data:", error)
++						// Continue anyway - we'll update with whatever data we have
+ 					} finally {
+ 						if (bgInputTokens > 0 || bgOutputTokens > 0 || bgCacheWriteTokens > 0 || bgCacheReadTokens > 0) {
+ 							// Final update with accumulated data
+@@ -1890,6 +1891,17 @@ export class Task extends EventEmitter {
+ 				// Start the background task and handle any errors
+ 				drainStreamInBackgroundToFindAllUsage(lastApiReqIndex).catch((error) => {
+ 					console.error("Background usage collection failed:", error)
++					
++					// Ensure we at least update the message to stop the loading state
++					// Even if we couldn't collect usage data, we should mark the request as complete
++					updateApiReqMsg()
++					this.saveClineMessages().then(() => {
++						const apiReqMessage = this.clineMessages[lastApiReqIndex]
++						if (apiReqMessage) {
++							this.updateClineMessage(apiReqMessage)
++						}
++					}).catch(err => console.error("Failed to update message after usage collection error:", err))
+ 				})
+ 			} catch (error) {
+ 				// Abandoned happens when extension is no longer waiting for the

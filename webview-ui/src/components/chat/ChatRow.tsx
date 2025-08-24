@@ -278,19 +278,17 @@ export const ChatRowContent = ({
 					</div>
 				)
 				return [
-					apiReqCancelReason !== null && apiReqCancelReason !== undefined ? (
-						apiReqCancelReason === "user_cancelled" ? (
-							getIconSpan("error", cancelledColor)
-						) : (
-							getIconSpan("error", errorColor)
-						)
-					) : cost !== null && cost !== undefined ? (
-						getIconSpan("check", successColor)
-					) : apiRequestFailedMessage ? (
-						getIconSpan("error", errorColor)
-					) : (
-						<ProgressIndicator />
-					),
+					apiReqCancelReason !== null && apiReqCancelReason !== undefined
+						? apiReqCancelReason === "user_cancelled"
+							? getIconSpan("error", cancelledColor)
+							: getIconSpan("error", errorColor)
+						: cost !== null && cost !== undefined
+							? getIconSpan("check", successColor)
+							: apiRequestFailedMessage
+								? getIconSpan("error", errorColor)
+								: // TODO: 临时注释掉loading动画，因为某些provider不返回usage信息导致一直loading
+									// 原代码: <ProgressIndicator />
+									getIconSpan("check", successColor), // 默认显示成功图标
 					apiReqCancelReason !== null && apiReqCancelReason !== undefined ? (
 						apiReqCancelReason === "user_cancelled" ? (
 							<span style={{ color: normalColor, fontWeight: "bold" }}>
@@ -306,7 +304,9 @@ export const ChatRowContent = ({
 					) : apiRequestFailedMessage ? (
 						<span style={{ color: errorColor, fontWeight: "bold" }}>{t("chat:apiRequest.failed")}</span>
 					) : (
-						<span style={{ color: normalColor, fontWeight: "bold" }}>{t("chat:apiRequest.streaming")}</span>
+						// TODO: 临时修改，不显示streaming状态，因为某些provider不返回usage信息
+						// 原代码: <span style={{ color: normalColor, fontWeight: "bold" }}>{t("chat:apiRequest.streaming")}</span>
+						<span style={{ color: normalColor, fontWeight: "bold" }}>{t("chat:apiRequest.title")}</span>
 					),
 				]
 			case "followup":

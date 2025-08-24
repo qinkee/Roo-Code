@@ -1771,24 +1771,35 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						},
 						messageIndex: number = apiReqIndex,
 					) => {
+						// Always update the message, even with zero tokens, to stop the loading state
+						console.log("[Usage Collection] Updating usage data:", {
+							input: tokens.input,
+							output: tokens.output,
+							cacheWrite: tokens.cacheWrite,
+							cacheRead: tokens.cacheRead,
+							total: tokens.total,
+						})
+
+						// Update the shared variables atomically
+						inputTokens = tokens.input
+						outputTokens = tokens.output
+						cacheWriteTokens = tokens.cacheWrite
+						cacheReadTokens = tokens.cacheRead
+						totalCost = tokens.total
+
+						// Update the API request message with the latest usage data
+						updateApiReqMsg()
+						await this.saveClineMessages()
+
+						// Update the specific message in the webview
+						const apiReqMessage = this.clineMessages[messageIndex]
+						if (apiReqMessage) {
+							await this.updateClineMessage(apiReqMessage)
+							console.log("[Usage Collection] Message updated in webview")
+						}
+
+						// Only capture telemetry if we have actual usage data
 						if (tokens.input > 0 || tokens.output > 0 || tokens.cacheWrite > 0 || tokens.cacheRead > 0) {
-							// Update the shared variables atomically
-							inputTokens = tokens.input
-							outputTokens = tokens.output
-							cacheWriteTokens = tokens.cacheWrite
-							cacheReadTokens = tokens.cacheRead
-							totalCost = tokens.total
-
-							// Update the API request message with the latest usage data
-							updateApiReqMsg()
-							await this.saveClineMessages()
-
-							// Update the specific message in the webview
-							const apiReqMessage = this.clineMessages[messageIndex]
-							if (apiReqMessage) {
-								await this.updateClineMessage(apiReqMessage)
-							}
-
 							// Capture telemetry
 							TelemetryService.instance.captureLlmCompletion(this.taskId, {
 								inputTokens: tokens.input,
@@ -1806,6 +1817,24 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 									),
 							})
 						}
+					}
+
+					// If we already have usage data from the main loop, update immediately
+					// This ensures the UI stops showing loading state as soon as possible
+					let hasInitialUsage =
+						bgInputTokens > 0 || bgOutputTokens > 0 || bgCacheWriteTokens > 0 || bgCacheReadTokens > 0
+					if (hasInitialUsage) {
+						console.log("[Usage Collection] Found initial usage data from main loop, updating immediately")
+						await captureUsageData(
+							{
+								input: bgInputTokens,
+								output: bgOutputTokens,
+								cacheWrite: bgCacheWriteTokens,
+								cacheRead: bgCacheReadTokens,
+								total: bgTotalCost,
+							},
+							lastApiReqIndex,
+						)
 					}
 
 					try {
@@ -1841,14 +1870,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							}
 						}
 
-						if (
-							usageFound ||
-							bgInputTokens > 0 ||
-							bgOutputTokens > 0 ||
-							bgCacheWriteTokens > 0 ||
-							bgCacheReadTokens > 0
-						) {
-							// We have usage data either from a usage chunk or accumulated tokens
+						// Only update if we found new usage data or if we haven't updated yet
+						if (usageFound && !hasInitialUsage) {
+							// Found new usage data in the stream
+							console.log("[Usage Collection] Found additional usage data in stream")
 							await captureUsageData(
 								{
 									input: bgInputTokens,
@@ -1859,20 +1884,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								},
 								lastApiReqIndex,
 							)
-						} else {
-							console.warn(
-								`[Background Usage Collection] Suspicious: request ${apiReqIndex} is complete, but no usage info was found. Model: ${modelId}`,
-							)
-						}
-					} catch (error) {
-						console.error("Error draining stream for usage data:", error)
-						// Still try to capture whatever usage data we have collected so far
-						if (
-							bgInputTokens > 0 ||
-							bgOutputTokens > 0 ||
-							bgCacheWriteTokens > 0 ||
-							bgCacheReadTokens > 0
-						) {
+						} else if (usageFound && hasInitialUsage) {
+							// We found more usage data, update again with the accumulated totals
+							console.log("[Usage Collection] Updating with accumulated usage data")
 							await captureUsageData(
 								{
 									input: bgInputTokens,
@@ -1880,6 +1894,37 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 									cacheWrite: bgCacheWriteTokens,
 									cacheRead: bgCacheReadTokens,
 									total: bgTotalCost,
+								},
+								lastApiReqIndex,
+							)
+						} else if (!hasInitialUsage) {
+							// No usage data found at all
+							console.warn(`[Background Usage Collection] No usage info found for model: ${modelId}`)
+							// Update with zero cost to stop the loading state
+							await captureUsageData(
+								{
+									input: 0,
+									output: 0,
+									cacheWrite: 0,
+									cacheRead: 0,
+									total: 0,
+								},
+								lastApiReqIndex,
+							)
+						}
+						// If hasInitialUsage is true but usageFound is false, we already updated earlier
+					} catch (error) {
+						console.error("Error draining stream for usage data:", error)
+						// If we haven't updated yet and have some data, update now
+						if (!hasInitialUsage) {
+							// Update with whatever data we have (or zeros)
+							await captureUsageData(
+								{
+									input: bgInputTokens || 0,
+									output: bgOutputTokens || 0,
+									cacheWrite: bgCacheWriteTokens || 0,
+									cacheRead: bgCacheReadTokens || 0,
+									total: bgTotalCost || 0,
 								},
 								lastApiReqIndex,
 							)
@@ -1890,6 +1935,18 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				// Start the background task and handle any errors
 				drainStreamInBackgroundToFindAllUsage(lastApiReqIndex).catch((error) => {
 					console.error("Background usage collection failed:", error)
+
+					// Ensure we at least update the message to stop the loading state
+					// Even if we couldn't collect usage data, we should mark the request as complete
+					updateApiReqMsg()
+					this.saveClineMessages()
+						.then(() => {
+							const apiReqMessage = this.clineMessages[lastApiReqIndex]
+							if (apiReqMessage) {
+								this.updateClineMessage(apiReqMessage)
+							}
+						})
+						.catch((err) => console.error("Failed to update message after usage collection error:", err))
 				})
 			} catch (error) {
 				// Abandoned happens when extension is no longer waiting for the
