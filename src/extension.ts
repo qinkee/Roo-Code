@@ -32,6 +32,7 @@ import { autoImportSettings } from "./utils/autoImportSettings"
 import { isRemoteControlEnabled } from "./utils/remoteControl"
 import { API } from "./extension/api"
 import { VoidBridge } from "./api/void-bridge"
+import { TaskHistoryBridge } from "./api/task-history-bridge"
 
 import {
 	handleUri,
@@ -179,6 +180,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	registerCommands({ context, outputChannel, provider })
+
+	// Register task history bridge for void integration
+	TaskHistoryBridge.register(context, provider)
 
 	// Add keyboard shortcut support for adding files to context
 	context.subscriptions.push(
