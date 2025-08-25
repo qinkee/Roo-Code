@@ -11,6 +11,8 @@ export class TaskHistoryBridge {
 	 * Register task history related commands
 	 */
 	static register(context: vscode.ExtensionContext, provider: ClineProvider) {
+		console.log("[TaskHistoryBridge] Registering task history commands...")
+
 		// Command to get task history
 		const getTaskHistoryCommand = vscode.commands.registerCommand(
 			"roo-code.getTaskHistory",
@@ -112,6 +114,10 @@ export class TaskHistoryBridge {
 			notifyTaskHistoryUpdate()
 		})
 
-		console.log("[TaskHistoryBridge] Task history bridge registered successfully")
+		console.log("[TaskHistoryBridge] Task history bridge registered successfully with commands:", [
+			"roo-code.getTaskHistory",
+			"roo-code.activateTask",
+			"roo-code.deleteTask",
+		])
 	}
 }
