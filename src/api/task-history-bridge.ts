@@ -15,7 +15,7 @@ export class TaskHistoryBridge {
 
 		// Command to get task history
 		const getTaskHistoryCommand = vscode.commands.registerCommand(
-			"roo-code.getTaskHistory",
+			"roo-cline.getTaskHistory",
 			async (): Promise<{ tasks: HistoryItem[]; activeTaskId?: string }> => {
 				try {
 					const taskHistory = (context.globalState.get("taskHistory") as HistoryItem[]) || []
@@ -43,28 +43,31 @@ export class TaskHistoryBridge {
 		context.subscriptions.push(getTaskHistoryCommand)
 
 		// Command to activate a specific task
-		const activateTaskCommand = vscode.commands.registerCommand("roo-code.activateTask", async (taskId: string) => {
-			try {
-				console.log("[TaskHistoryBridge] Activating task:", taskId)
-				await provider.showTaskWithId(taskId)
+		const activateTaskCommand = vscode.commands.registerCommand(
+			"roo-cline.activateTask",
+			async (taskId: string) => {
+				try {
+					console.log("[TaskHistoryBridge] Activating task:", taskId)
+					await provider.showTaskWithId(taskId)
 
-				// Notify void about the activation
-				await vscode.commands.executeCommand("void.onTaskActivated", {
-					taskId,
-					previousTaskId: provider.getCurrentCline()?.taskId,
-				})
+					// Notify void about the activation
+					await vscode.commands.executeCommand("void.onTaskActivated", {
+						taskId,
+						previousTaskId: provider.getCurrentCline()?.taskId,
+					})
 
-				return { success: true }
-			} catch (error) {
-				console.error("[TaskHistoryBridge] Error activating task:", error)
-				return { success: false, error: error instanceof Error ? error.message : String(error) }
-			}
-		})
+					return { success: true }
+				} catch (error) {
+					console.error("[TaskHistoryBridge] Error activating task:", error)
+					return { success: false, error: error instanceof Error ? error.message : String(error) }
+				}
+			},
+		)
 
 		context.subscriptions.push(activateTaskCommand)
 
 		// Command to delete a task
-		const deleteTaskCommand = vscode.commands.registerCommand("roo-code.deleteTask", async (taskId: string) => {
+		const deleteTaskCommand = vscode.commands.registerCommand("roo-cline.deleteTask", async (taskId: string) => {
 			try {
 				console.log("[TaskHistoryBridge] Deleting task:", taskId)
 				await provider.deleteTaskWithId(taskId)
@@ -115,9 +118,9 @@ export class TaskHistoryBridge {
 		})
 
 		console.log("[TaskHistoryBridge] Task history bridge registered successfully with commands:", [
-			"roo-code.getTaskHistory",
-			"roo-code.activateTask",
-			"roo-code.deleteTask",
+			"roo-cline.getTaskHistory",
+			"roo-cline.activateTask",
+			"roo-cline.deleteTask",
 		])
 	}
 }

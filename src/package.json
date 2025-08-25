@@ -188,6 +188,21 @@
 				"category": "Roo Code"
 			},
 			{
+				"command": "roo-cline.getTaskHistory",
+				"title": "Get Task History",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.activateTask",
+				"title": "Activate Task",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.deleteTask",
+				"title": "Delete Task",
+				"category": "Roo Code"
+			},
+			{
 				"command": "roo-cline.setCustomStoragePath",
 				"title": "%command.setCustomStoragePath.title%",
 				"category": "%configuration.title%"

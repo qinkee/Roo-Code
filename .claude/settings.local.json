@@ -15,8 +15,20 @@
       "Bash(git checkout:*)",
       "Read(//Users/david/ThinkgsProjects/shadan/void/**)",
       "Read(//Users/david/ThinkgsProjects/shadan/void/**)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/src/view/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Bash(git reset:*)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)"
     ],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "/Users/david/ThinkgsProjects/shadan/void"
+    ]
   }
 }
