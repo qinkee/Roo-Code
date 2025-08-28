@@ -93,6 +93,33 @@ export class TaskHistoryBridge {
 	}
 
 	/**
+	 * Notify void about a newly created task
+	 */
+	static async notifyTaskCreated(historyItem: HistoryItem): Promise<void> {
+		try {
+			// Get current task history
+			const taskHistory = TaskHistoryBridge.getTaskHistory()
+			
+			// Find the new task in history (it should already be there from updateTaskHistory)
+			const taskExists = taskHistory.some(t => t.id === historyItem.id)
+			if (!taskExists) {
+				taskHistory.push(historyItem)
+			}
+			
+			// Notify void about the updated task history
+			await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
+				tasks: taskHistory,
+				activeTaskId: historyItem.id,
+				userId: TaskHistoryBridge.currentUserId,
+			})
+			
+			console.log(`[TaskHistoryBridge] Notified void about new task: ${historyItem.id}`)
+		} catch (error) {
+			console.debug("[TaskHistoryBridge] Could not notify void about new task:", error)
+		}
+	}
+
+	/**
 	 * Register task history related commands
 	 */
 	static register(context: vscode.ExtensionContext, provider: ClineProvider) {

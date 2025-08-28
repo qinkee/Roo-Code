@@ -1002,6 +1002,37 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// messages from previous session).
 		this.clineMessages = []
 		this.apiConversationHistory = []
+		
+		// Create initial task history entry immediately when starting a new task
+		// This ensures the task appears in the UI task list right away
+		try {
+			// Wait for task mode to be initialized
+			await this.taskModeReady
+			
+			const { historyItem } = await taskMetadata({
+				messages: [], // Empty messages for initial creation
+				taskId: this.taskId,
+				taskNumber: this.taskNumber,
+				globalStoragePath: this.globalStoragePath,
+				workspace: this.cwd,
+				mode: this._taskMode || defaultModeSlug,
+			})
+			
+			// Update task history immediately so it appears in the UI
+			const provider = this.providerRef.deref()
+			if (provider) {
+				await provider.updateTaskHistory(historyItem)
+				// Notify TaskHistoryBridge about the new task
+				const TaskHistoryBridge = (await import("../../api/task-history-bridge")).TaskHistoryBridge
+				await TaskHistoryBridge.notifyTaskCreated(historyItem)
+				// Update state to webview to reflect the new task in the list
+				await provider.postStateToWebview()
+			}
+		} catch (error) {
+			console.error("Failed to create initial task history entry:", error)
+			// Continue with task even if history creation fails
+		}
+		
 		await this.providerRef.deref()?.postStateToWebview()
 
 		await this.say("text", task, images)
