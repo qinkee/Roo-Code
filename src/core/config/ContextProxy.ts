@@ -33,15 +33,51 @@ const globalSettingsExportSchema = globalSettingsSchema.omit({
 	currentApiConfigName: true,
 })
 
+// Keys that should always be shared across all users
+const SHARED_STATE_KEYS = [
+	"language",
+	"telemetrySetting",
+	"machineId",
+	"organizationAllowList",
+	"organizationSettingsVersion",
+]
+
+// Keys that should be isolated per user
+const USER_ISOLATED_KEYS = [
+	"taskHistory",
+	"imContacts",
+	"currentApiConfigName",
+	"listApiConfigMeta",
+	"pinnedApiConfigs",
+	"customInstructions",
+	"autoApprovalEnabled",
+	"alwaysAllowReadOnly",
+	"alwaysAllowWrite",
+	"alwaysAllowBrowser",
+	"alwaysAllowMcp",
+	"alwaysAllowExecute",
+	"allowedCommands",
+	"deniedCommands",
+	"modeApiConfigs",
+	"customModes",
+	"customModePrompts",
+	"customSupportPrompts",
+	"codebaseIndexConfig",
+]
+
 export class ContextProxy {
 	private readonly originalContext: vscode.ExtensionContext
+	private readonly userId?: string
+	private readonly statePrefix: string
 
 	private stateCache: GlobalState
 	private secretCache: SecretState
 	private _isInitialized = false
 
-	constructor(context: vscode.ExtensionContext) {
+	constructor(context: vscode.ExtensionContext, userId?: string) {
 		this.originalContext = context
+		this.userId = userId
+		this.statePrefix = userId ? `user_${userId}_` : "default_"
 		this.stateCache = {}
 		this.secretCache = {}
 		this._isInitialized = false
@@ -52,18 +88,45 @@ export class ContextProxy {
 	}
 
 	public async initialize() {
+		// Load state based on user context
 		for (const key of GLOBAL_STATE_KEYS) {
 			try {
-				// Revert to original assignment
-				this.stateCache[key] = this.originalContext.globalState.get(key)
+				if (this.shouldUseUserPrefix(key)) {
+					// Load user-specific value
+					const prefixedKey = this.getPrefixedKey(key)
+					const userValue = this.originalContext.globalState.get(prefixedKey)
+					if (userValue !== undefined) {
+						this.stateCache[key] = userValue
+					} else {
+						// No user-specific value, use default
+						this.stateCache[key] = this.getDefaultValue(key)
+					}
+				} else {
+					// Load shared value
+					this.stateCache[key] = this.originalContext.globalState.get(key)
+				}
 			} catch (error) {
-				logger.error(`Error loading global ${key}: ${error instanceof Error ? error.message : String(error)}`)
+				logger.error(`Error loading ${key}: ${error instanceof Error ? error.message : String(error)}`)
 			}
 		}
 
+		// Load secrets (user-specific)
 		const promises = SECRET_STATE_KEYS.map(async (key) => {
 			try {
-				this.secretCache[key] = await this.originalContext.secrets.get(key)
+				if (this.userId) {
+					// Try user-specific secret first
+					const prefixedKey = this.getPrefixedKey(key)
+					const userSecret = await this.originalContext.secrets.get(prefixedKey)
+					if (userSecret) {
+						this.secretCache[key] = userSecret
+					} else {
+						// Fallback to shared secret for backward compatibility
+						this.secretCache[key] = await this.originalContext.secrets.get(key)
+					}
+				} else {
+					// Default context uses shared secrets
+					this.secretCache[key] = await this.originalContext.secrets.get(key)
+				}
 			} catch (error) {
 				logger.error(`Error loading secret ${key}: ${error instanceof Error ? error.message : String(error)}`)
 			}
@@ -72,6 +135,107 @@ export class ContextProxy {
 		await Promise.all(promises)
 
 		this._isInitialized = true
+	}
+
+	/**
+	 * Load user state from storage
+	 * @returns true if user data exists, false otherwise
+	 */
+	public async loadUserState(): Promise<boolean> {
+		let hasData = false
+
+		for (const key of GLOBAL_STATE_KEYS) {
+			if (this.shouldUseUserPrefix(key)) {
+				const prefixedKey = this.getPrefixedKey(key)
+				const value = this.originalContext.globalState.get(prefixedKey)
+				if (value !== undefined) {
+					this.stateCache[key] = value
+					hasData = true
+				}
+			}
+		}
+
+		return hasData
+	}
+
+	/**
+	 * Save user state to storage
+	 */
+	public async saveUserState(): Promise<void> {
+		const promises: Promise<void>[] = []
+
+		for (const key of GLOBAL_STATE_KEYS) {
+			if (this.shouldUseUserPrefix(key) && this.stateCache[key] !== undefined) {
+				const prefixedKey = this.getPrefixedKey(key)
+				promises.push(this.originalContext.globalState.update(prefixedKey, this.stateCache[key]))
+			}
+		}
+
+		// Save user-specific secrets
+		for (const key of SECRET_STATE_KEYS) {
+			if (this.secretCache[key] !== undefined) {
+				const prefixedKey = this.getPrefixedKey(key)
+				promises.push(this.originalContext.secrets.store(prefixedKey, this.secretCache[key] as string))
+			}
+		}
+
+		await Promise.all(promises)
+	}
+
+	/**
+	 * Reset to default values
+	 */
+	public async resetToDefaults(): Promise<void> {
+		this.stateCache = {}
+		this.secretCache = {}
+
+		// Set default values for important keys
+		for (const key of GLOBAL_STATE_KEYS) {
+			if (this.shouldUseUserPrefix(key)) {
+				this.stateCache[key] = this.getDefaultValue(key)
+			}
+		}
+
+		await this.saveUserState()
+	}
+
+	private shouldUseUserPrefix(key: string): boolean {
+		// Shared keys don't use user prefix
+		if (SHARED_STATE_KEYS.includes(key)) {
+			return false
+		}
+		// User isolated keys always use prefix
+		if (USER_ISOLATED_KEYS.includes(key)) {
+			return true
+		}
+		// Default: use prefix for user context
+		return true
+	}
+
+	private getPrefixedKey(key: string): string {
+		return `${this.statePrefix}${key}`
+	}
+
+	private getDefaultValue(key: string): any {
+		// Return appropriate default values
+		const defaults: Partial<GlobalState> = {
+			taskHistory: [],
+			imContacts: undefined,
+			currentApiConfigName: undefined,
+			listApiConfigMeta: [],
+			pinnedApiConfigs: [],
+			customInstructions: undefined,
+			autoApprovalEnabled: false,
+			alwaysAllowReadOnly: false,
+			alwaysAllowWrite: false,
+			alwaysAllowBrowser: false,
+			alwaysAllowMcp: false,
+			alwaysAllowExecute: false,
+			allowedCommands: [],
+			deniedCommands: [],
+			customModes: [],
+		}
+		return defaults[key as keyof GlobalState]
 	}
 
 	public get extensionUri() {
@@ -107,8 +271,15 @@ export class ContextProxy {
 	getGlobalState<K extends GlobalStateKey>(key: K, defaultValue: GlobalState[K]): GlobalState[K]
 	getGlobalState<K extends GlobalStateKey>(key: K, defaultValue?: GlobalState[K]): GlobalState[K] {
 		if (isPassThroughStateKey(key)) {
-			const value = this.originalContext.globalState.get<GlobalState[K]>(key)
-			return value === undefined || value === null ? defaultValue : value
+			// For pass-through keys, use user prefix if applicable
+			if (this.shouldUseUserPrefix(key)) {
+				const prefixedKey = this.getPrefixedKey(key)
+				const value = this.originalContext.globalState.get<GlobalState[K]>(prefixedKey)
+				return value === undefined || value === null ? defaultValue : value
+			} else {
+				const value = this.originalContext.globalState.get<GlobalState[K]>(key)
+				return value === undefined || value === null ? defaultValue : value
+			}
 		}
 
 		const value = this.stateCache[key]
@@ -116,12 +287,16 @@ export class ContextProxy {
 	}
 
 	updateGlobalState<K extends GlobalStateKey>(key: K, value: GlobalState[K]) {
-		if (isPassThroughStateKey(key)) {
+		// Update cache
+		this.stateCache[key] = value
+
+		// Update storage with appropriate key
+		if (this.shouldUseUserPrefix(key)) {
+			const prefixedKey = this.getPrefixedKey(key)
+			return this.originalContext.globalState.update(prefixedKey, value)
+		} else {
 			return this.originalContext.globalState.update(key, value)
 		}
-
-		this.stateCache[key] = value
-		return this.originalContext.globalState.update(key, value)
 	}
 
 	private getAllGlobalState(): GlobalState {
@@ -141,10 +316,18 @@ export class ContextProxy {
 		// Update cache.
 		this.secretCache[key] = value
 
-		// Write directly to context.
-		return value === undefined
-			? this.originalContext.secrets.delete(key)
-			: this.originalContext.secrets.store(key, value)
+		// Write with user prefix if applicable
+		if (this.userId) {
+			const prefixedKey = this.getPrefixedKey(key)
+			return value === undefined
+				? this.originalContext.secrets.delete(prefixedKey)
+				: this.originalContext.secrets.store(prefixedKey, value)
+		} else {
+			// Default context uses shared secrets
+			return value === undefined
+				? this.originalContext.secrets.delete(key)
+				: this.originalContext.secrets.store(key, value)
+		}
 	}
 
 	/**
@@ -274,7 +457,7 @@ export class ContextProxy {
 
 	/**
 	 * Resets all global state, secrets, and in-memory caches.
-	 * This clears all data from both the in-memory caches and the VSCode storage.
+	 * For user context, only resets user-specific data.
 	 * @returns A promise that resolves when all reset operations are complete
 	 */
 	public async resetAllState() {
@@ -282,13 +465,40 @@ export class ContextProxy {
 		this.stateCache = {}
 		this.secretCache = {}
 
-		await Promise.all([
-			...GLOBAL_STATE_KEYS.map((key) => this.originalContext.globalState.update(key, undefined)),
-			...SECRET_STATE_KEYS.map((key) => this.originalContext.secrets.delete(key)),
-		])
+		if (this.userId) {
+			// For user context, only reset user-specific data
+			const promises: Promise<void>[] = []
 
-		// After resetting, set language back to Chinese as default
-		await this.originalContext.globalState.update("language", "zh-CN")
+			for (const key of GLOBAL_STATE_KEYS) {
+				if (this.shouldUseUserPrefix(key)) {
+					const prefixedKey = this.getPrefixedKey(key)
+					promises.push(this.originalContext.globalState.update(prefixedKey, undefined))
+				}
+			}
+
+			for (const key of SECRET_STATE_KEYS) {
+				const prefixedKey = this.getPrefixedKey(key)
+				promises.push(this.originalContext.secrets.delete(prefixedKey))
+			}
+
+			await Promise.all(promises)
+		} else {
+			// For default context, reset everything
+			await Promise.all([
+				...GLOBAL_STATE_KEYS.map((key) => {
+					if (this.shouldUseUserPrefix(key)) {
+						const prefixedKey = this.getPrefixedKey(key)
+						return this.originalContext.globalState.update(prefixedKey, undefined)
+					} else {
+						return this.originalContext.globalState.update(key, undefined)
+					}
+				}),
+				...SECRET_STATE_KEYS.map((key) => this.originalContext.secrets.delete(key)),
+			])
+
+			// After resetting, set language back to Chinese as default
+			await this.originalContext.globalState.update("language", "zh-CN")
+		}
 
 		await this.initialize()
 	}

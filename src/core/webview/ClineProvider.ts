@@ -2078,6 +2078,39 @@ export class ClineProvider
 
 	// dev
 
+	/**
+	 * Switch to a different context proxy (for user switching)
+	 */
+	async switchContextProxy(newContextProxy: ContextProxy) {
+		console.log("[ClineProvider] Switching context proxy...")
+
+		// Save current task if exists
+		const currentTask = this.getCurrentCline()
+		if (currentTask) {
+			await this.saveTask()
+		}
+
+		// Update context proxy reference
+		// Note: This is a readonly property, so we need to use Object.defineProperty
+		Object.defineProperty(this, "contextProxy", {
+			value: newContextProxy,
+			writable: false,
+			configurable: true,
+		})
+
+		// Note: ProviderSettingsManager and CustomModesManager don't have initialize methods
+		// They manage their own state internally and don't support context switching yet
+		// This is a limitation of the current architecture that needs to be addressed
+
+		// Clear current task stack
+		this.task = undefined
+
+		// Post new state to webview
+		await this.postStateToWebview()
+
+		console.log("[ClineProvider] Context proxy switched successfully")
+	}
+
 	async resetState() {
 		const answer = await vscode.window.showInformationMessage(
 			t("common:confirmation.reset_state"),

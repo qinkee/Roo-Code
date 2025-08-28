@@ -284,7 +284,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		await tokenManager.clearTokenKey()
 	},
 	switchToDefaultConfig: async () => {
-		// 切换到默认配置，但不清空用户的配置
+		// 切换到默认配置，清空显示但保留用户数据
 		// 这用于用户登出后显示欢迎页面
 		try {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
@@ -292,6 +292,11 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 
 			// 清空当前任务，显示欢迎页面
 			await currentProvider.removeClineFromStack()
+
+			// 清空任务历史显示（但不删除存储的数据）
+			// 通过设置空的任务历史到context，让UI不显示任何任务
+			await currentProvider.contextProxy.setValue("taskHistory", [])
+			outputChannel.appendLine("[switchToDefaultConfig] Cleared task history display")
 
 			// 刷新 webview 状态
 			await currentProvider.postStateToWebview()

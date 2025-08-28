@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { TaskHistoryBridge } from "./task-history-bridge"
+import { SECRET_STATE_KEYS } from "@roo-code/types"
 
 /**
  * Bridge for communication between void renderer process and Roo-Code extension
@@ -48,19 +49,128 @@ export class VoidBridge {
 						userName: data.userName,
 					})
 
-					// Store current user ID
+					// Save previous user's data if exists
 					const previousUserId = VoidBridge.currentUserId
+					if (previousUserId) {
+						// Save current IM contacts to user-specific key
+						const currentContacts = context.globalState.get("imContacts")
+						if (currentContacts) {
+							const userKey = VoidBridge.getUserKey("imContacts", previousUserId)
+							await context.globalState.update(userKey, currentContacts)
+						}
+
+						// Save current task history to user-specific key
+						if (VoidBridge.provider) {
+							const currentHistory = VoidBridge.provider.contextProxy.getValue("taskHistory")
+							if (currentHistory) {
+								const historyKey = VoidBridge.getUserKey("taskHistory", previousUserId)
+								await context.globalState.update(historyKey, currentHistory)
+							}
+						}
+
+						// Save current API keys to user-specific secrets
+						console.log(`[VoidBridge] Saving API keys for user ${previousUserId}`)
+						for (const key of SECRET_STATE_KEYS) {
+							try {
+								const value = await context.secrets.get(key)
+								if (value) {
+									const userKey = VoidBridge.getUserKey(key, previousUserId)
+									await context.secrets.store(userKey, value)
+								}
+							} catch (error) {
+								// Silently ignore errors
+							}
+						}
+
+						// Save provider settings
+						if (VoidBridge.provider) {
+							const apiProvider = VoidBridge.provider.contextProxy.getValue("apiProvider")
+							const currentApiConfig = VoidBridge.provider.contextProxy.getValue("currentApiConfigName")
+							if (apiProvider) {
+								const providerKey = VoidBridge.getUserKey("apiProvider", previousUserId)
+								await context.globalState.update(providerKey, apiProvider)
+							}
+							if (currentApiConfig) {
+								const configKey = VoidBridge.getUserKey("currentApiConfigName", previousUserId)
+								await context.globalState.update(configKey, currentApiConfig)
+							}
+						}
+					}
+
+					// Update local tracking
 					VoidBridge.currentUserId = data.userId
-
-					// Persist user ID to globalState
 					await context.globalState.update("lastUserId", data.userId)
-
-					// Sync user ID with TaskHistoryBridge
 					TaskHistoryBridge.setCurrentUserId(data.userId)
+
+					// Restore new user's data
+					const userContactsKey = VoidBridge.getUserKey("imContacts", data.userId)
+					const userContacts = context.globalState.get(userContactsKey)
+					if (userContacts) {
+						await context.globalState.update("imContacts", userContacts)
+						console.log(`[VoidBridge] Restored IM contacts for user ${data.userId}`)
+					} else {
+						await context.globalState.update("imContacts", undefined)
+						console.log(`[VoidBridge] No IM contacts found for user ${data.userId}`)
+					}
+
+					// Restore task history
+					const userHistoryKey = VoidBridge.getUserKey("taskHistory", data.userId)
+					const userHistory = context.globalState.get(userHistoryKey)
+					if (VoidBridge.provider) {
+						await VoidBridge.provider.contextProxy.setValue("taskHistory", userHistory || [])
+						console.log(`[VoidBridge] Restored ${userHistory?.length || 0} tasks for user ${data.userId}`)
+					}
+
+					// Clear current API keys first
+					for (const key of SECRET_STATE_KEYS) {
+						try {
+							await context.secrets.delete(key)
+						} catch (error) {
+							// Silently ignore errors
+						}
+					}
+
+					// Restore user's API keys from user-specific secrets
+					console.log(`[VoidBridge] Restoring API keys for user ${data.userId}`)
+					let hasRestoredKeys = false
+					for (const key of SECRET_STATE_KEYS) {
+						try {
+							const userKey = VoidBridge.getUserKey(key, data.userId)
+							const value = await context.secrets.get(userKey)
+							if (value) {
+								await context.secrets.store(key, value)
+								hasRestoredKeys = true
+							}
+						} catch (error) {
+							// Silently ignore errors
+						}
+					}
+
+					if (hasRestoredKeys) {
+						console.log(`[VoidBridge] Successfully restored API keys for user ${data.userId}`)
+					} else {
+						console.log(`[VoidBridge] No saved API keys found for user ${data.userId}`)
+					}
+
+					// Restore provider settings
+					if (VoidBridge.provider) {
+						const providerKey = VoidBridge.getUserKey("apiProvider", data.userId)
+						const configKey = VoidBridge.getUserKey("currentApiConfigName", data.userId)
+
+						const apiProvider = context.globalState.get(providerKey)
+						const currentApiConfig = context.globalState.get(configKey)
+
+						if (apiProvider) {
+							await VoidBridge.provider.contextProxy.setValue("apiProvider", apiProvider)
+						}
+						if (currentApiConfig) {
+							await VoidBridge.provider.contextProxy.setValue("currentApiConfigName", currentApiConfig)
+						}
+					}
 
 					// Clear webview cache to force reload of user-specific data
 					if (VoidBridge.provider) {
-						// 如果当前有任务打开，先关闭它
+						// Remove current task if any
 						await VoidBridge.provider.removeClineFromStack()
 
 						// Notify webview about user change
@@ -70,7 +180,15 @@ export class VoidBridge {
 							userName: data.userName,
 						})
 
-						// 刷新状态，这会重新加载该用户的任务历史
+						// Send IM contacts to webview
+						if (userContacts) {
+							await VoidBridge.provider.postMessageToWebview({
+								type: "imContactsResponse",
+								contacts: userContacts,
+							})
+						}
+
+						// Refresh state
 						await VoidBridge.provider.postStateToWebview()
 					}
 
@@ -103,19 +221,103 @@ export class VoidBridge {
 						isLoggedOut: data.isLoggedOut,
 					})
 
-					// 清空当前用户ID
+					// Clear local tracking
+					const previousUserId = VoidBridge.currentUserId
 					VoidBridge.currentUserId = undefined
-					await context.globalState.update("lastUserId", undefined)
-
-					// 清空TaskHistoryBridge的用户ID
 					TaskHistoryBridge.setCurrentUserId(undefined)
 
+					// Clear lastUserId from storage
+					await context.globalState.update("lastUserId", undefined)
+
+					// Clear user data from display (but keep in user-specific storage)
+					await context.globalState.update("imContacts", undefined)
+
+					console.log("[VoidBridge] User logout - clearing display data")
+
+					// Save current user's data before logout if user exists
+					if (previousUserId && VoidBridge.provider) {
+						// Save current user's API keys before clearing
+						console.log(`[VoidBridge] Saving API keys for user ${previousUserId} before logout`)
+						for (const key of SECRET_STATE_KEYS) {
+							try {
+								const value = await context.secrets.get(key)
+								if (value) {
+									const userKey = VoidBridge.getUserKey(key, previousUserId)
+									await context.secrets.store(userKey, value)
+								}
+							} catch (error) {
+								// Silently ignore errors
+							}
+						}
+
+						// Save provider settings
+						const apiProvider = VoidBridge.provider.contextProxy.getValue("apiProvider")
+						const currentApiConfig = VoidBridge.provider.contextProxy.getValue("currentApiConfigName")
+						if (apiProvider) {
+							const providerKey = VoidBridge.getUserKey("apiProvider", previousUserId)
+							await context.globalState.update(providerKey, apiProvider)
+						}
+						if (currentApiConfig) {
+							const configKey = VoidBridge.getUserKey("currentApiConfigName", previousUserId)
+							await context.globalState.update(configKey, currentApiConfig)
+						}
+					}
+
+					// Clear all API keys from current use
+					console.log("[VoidBridge] Clearing current API keys...")
+					for (const key of SECRET_STATE_KEYS) {
+						try {
+							await context.secrets.delete(key)
+						} catch (error) {
+							console.debug(`[VoidBridge] Could not clear secret ${key}:`, error)
+						}
+					}
+
 					if (VoidBridge.provider) {
-						// 清空当前任务，显示欢迎页面
+						// Clear provider settings - MUST clear all provider-related state
+						await VoidBridge.provider.contextProxy.setValue("apiProvider", undefined)
+						await VoidBridge.provider.contextProxy.setValue("currentApiConfigName", undefined)
+						await VoidBridge.provider.contextProxy.setValue("listApiConfigMeta", [])
+
+						// Clear all provider configuration fields to ensure no cached values remain
+						const providerFields = [
+							"apiModelId",
+							"apiBaseUrl",
+							"apiModelInfo",
+							"awsRegion",
+							"awsProfile",
+							"vertexProjectId",
+							"vertexRegion",
+							"ollamaModelIds",
+							"lmStudioModelIds",
+							"openAiBaseUrl",
+							"openAiHeaders",
+							"openAiModelIds",
+							"openAiStreamingEnabled",
+							"anthropicBaseUrl",
+							"anthropicHeaders",
+							"vsCodeLmModelSelector",
+						]
+
+						for (const field of providerFields) {
+							await VoidBridge.provider.contextProxy.setValue(field as any, undefined)
+						}
+
+						// Clear task history display
+						await VoidBridge.provider.contextProxy.setValue("taskHistory", [])
+
+						// IMPORTANT: Clear any active task that might be using the old API keys
+						const currentTask = VoidBridge.provider.getCurrentCline()
+						if (currentTask) {
+							// Force abort any running task to prevent it from using old credentials
+							await currentTask.abortTask()
+						}
+
+						// Remove current task
 						await VoidBridge.provider.removeClineFromStack()
 
-						// 重置到默认配置
-						await vscode.commands.executeCommand("roo-cline.switchToDefaultConfig")
+						// Force refresh provider settings to ensure cached values are cleared
+						await VoidBridge.provider.contextProxy.refreshSecrets()
 
 						// 通知 webview 用户已登出
 						await VoidBridge.provider.postMessageToWebview({
@@ -123,8 +325,33 @@ export class VoidBridge {
 							userId: "",
 						})
 
-						// 刷新状态
+						// Send empty IM contacts to webview
+						await VoidBridge.provider.postMessageToWebview({
+							type: "imContactsResponse",
+							contacts: {
+								friends: [],
+								groups: [],
+								lastUpdated: Date.now(),
+							},
+						})
+
+						// Refresh state to show welcome page
 						await VoidBridge.provider.postStateToWebview()
+
+						console.log("[VoidBridge] All API keys, secrets and provider state cleared")
+					}
+
+					// 通知 void 任务历史已清空
+					try {
+						await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
+							tasks: [],
+							activeTaskId: undefined,
+							userId: undefined,
+						})
+						console.log("[VoidBridge] Notified void that task history is cleared")
+					} catch (error) {
+						// void might not be listening, that's ok
+						console.debug("[VoidBridge] Could not notify void about cleared task history:", error)
 					}
 
 					console.log("[VoidBridge] User logout handled, reset to default config and welcome screen")
@@ -176,7 +403,7 @@ export class VoidBridge {
 						console.log(`[VoidBridge] Updated IM contacts for user ${userId}`)
 					}
 
-					// Also update the general key for backward compatibility
+					// Also update the general key for current display
 					await context.globalState.update("imContacts", contactsData)
 
 					console.log("[VoidBridge] Successfully updated IM contacts in globalState")
