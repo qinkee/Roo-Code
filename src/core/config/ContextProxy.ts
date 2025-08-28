@@ -96,7 +96,7 @@ export class ContextProxy {
 					const prefixedKey = this.getPrefixedKey(key)
 					const userValue = this.originalContext.globalState.get(prefixedKey)
 					if (userValue !== undefined) {
-						this.stateCache[key] = userValue
+						this.stateCache[key] = userValue as any
 					} else {
 						// No user-specific value, use default
 						this.stateCache[key] = this.getDefaultValue(key)
@@ -149,7 +149,7 @@ export class ContextProxy {
 				const prefixedKey = this.getPrefixedKey(key)
 				const value = this.originalContext.globalState.get(prefixedKey)
 				if (value !== undefined) {
-					this.stateCache[key] = value
+					this.stateCache[key] = value as any
 					hasData = true
 				}
 			}
@@ -167,7 +167,9 @@ export class ContextProxy {
 		for (const key of GLOBAL_STATE_KEYS) {
 			if (this.shouldUseUserPrefix(key) && this.stateCache[key] !== undefined) {
 				const prefixedKey = this.getPrefixedKey(key)
-				promises.push(this.originalContext.globalState.update(prefixedKey, this.stateCache[key]))
+				promises.push(
+					this.originalContext.globalState.update(prefixedKey, this.stateCache[key]) as Promise<void>,
+				)
 			}
 		}
 
@@ -175,7 +177,9 @@ export class ContextProxy {
 		for (const key of SECRET_STATE_KEYS) {
 			if (this.secretCache[key] !== undefined) {
 				const prefixedKey = this.getPrefixedKey(key)
-				promises.push(this.originalContext.secrets.store(prefixedKey, this.secretCache[key] as string))
+				promises.push(
+					this.originalContext.secrets.store(prefixedKey, this.secretCache[key] as string) as Promise<void>,
+				)
 			}
 		}
 
@@ -223,7 +227,7 @@ export class ContextProxy {
 			imContacts: undefined,
 			currentApiConfigName: undefined,
 			listApiConfigMeta: [],
-			pinnedApiConfigs: [],
+			pinnedApiConfigs: {},
 			customInstructions: undefined,
 			autoApprovalEnabled: false,
 			alwaysAllowReadOnly: false,
@@ -472,13 +476,13 @@ export class ContextProxy {
 			for (const key of GLOBAL_STATE_KEYS) {
 				if (this.shouldUseUserPrefix(key)) {
 					const prefixedKey = this.getPrefixedKey(key)
-					promises.push(this.originalContext.globalState.update(prefixedKey, undefined))
+					promises.push(this.originalContext.globalState.update(prefixedKey, undefined) as Promise<void>)
 				}
 			}
 
 			for (const key of SECRET_STATE_KEYS) {
 				const prefixedKey = this.getPrefixedKey(key)
-				promises.push(this.originalContext.secrets.delete(prefixedKey))
+				promises.push(this.originalContext.secrets.delete(prefixedKey) as Promise<void>)
 			}
 
 			await Promise.all(promises)

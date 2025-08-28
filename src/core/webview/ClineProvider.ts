@@ -2039,11 +2039,11 @@ export class ClineProvider
 
 		// Update both user-specific and general history
 		await TaskHistoryBridge.updateTaskHistory(undefined, history)
-		
+
 		// IMPORTANT: Also update the contextProxy cache so that getState() returns the updated history
 		// This ensures postStateToWebview() sends the correct task history to the UI
 		await this.contextProxy.setValue("taskHistory", history)
-		
+
 		return history
 	}
 
@@ -2089,10 +2089,10 @@ export class ClineProvider
 	async switchContextProxy(newContextProxy: ContextProxy) {
 		console.log("[ClineProvider] Switching context proxy...")
 
-		// Save current task if exists
+		// Remove current task if exists
 		const currentTask = this.getCurrentCline()
 		if (currentTask) {
-			await this.saveTask()
+			// Task will be saved when removed from stack
 		}
 
 		// Update context proxy reference
@@ -2108,7 +2108,9 @@ export class ClineProvider
 		// This is a limitation of the current architecture that needs to be addressed
 
 		// Clear current task stack
-		this.task = undefined
+		while (this.clineStack.length > 0) {
+			await this.removeClineFromStack()
+		}
 
 		// Post new state to webview
 		await this.postStateToWebview()

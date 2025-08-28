@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { TaskHistoryBridge } from "./task-history-bridge"
-import { SECRET_STATE_KEYS } from "@roo-code/types"
+import { SECRET_STATE_KEYS, type ProviderName, type HistoryItem } from "@roo-code/types"
 
 /**
  * Bridge for communication between void renderer process and Roo-Code extension
@@ -115,7 +115,7 @@ export class VoidBridge {
 
 					// Restore task history
 					const userHistoryKey = VoidBridge.getUserKey("taskHistory", data.userId)
-					const userHistory = context.globalState.get(userHistoryKey)
+					const userHistory = context.globalState.get(userHistoryKey) as HistoryItem[] | undefined
 					if (VoidBridge.provider) {
 						await VoidBridge.provider.contextProxy.setValue("taskHistory", userHistory || [])
 						console.log(`[VoidBridge] Restored ${userHistory?.length || 0} tasks for user ${data.userId}`)
@@ -157,8 +157,8 @@ export class VoidBridge {
 						const providerKey = VoidBridge.getUserKey("apiProvider", data.userId)
 						const configKey = VoidBridge.getUserKey("currentApiConfigName", data.userId)
 
-						const apiProvider = context.globalState.get(providerKey)
-						const currentApiConfig = context.globalState.get(configKey)
+						const apiProvider = context.globalState.get(providerKey) as ProviderName | undefined
+						const currentApiConfig = context.globalState.get(configKey) as string | undefined
 
 						if (apiProvider) {
 							await VoidBridge.provider.contextProxy.setValue("apiProvider", apiProvider)
@@ -184,7 +184,25 @@ export class VoidBridge {
 						if (userContacts) {
 							await VoidBridge.provider.postMessageToWebview({
 								type: "imContactsResponse",
-								contacts: userContacts,
+								contacts: userContacts as {
+									friends: Array<{
+										id: number
+										nickName: string
+										headImage?: string
+										online?: boolean
+										onlineWeb?: boolean
+										onlineApp?: boolean
+										deleted?: boolean
+									}>
+									groups: Array<{
+										id: number
+										name: string
+										showGroupName?: string
+										headImage?: string
+										ownerId?: number
+										notice?: string
+									}>
+								},
 							})
 						}
 
@@ -331,7 +349,6 @@ export class VoidBridge {
 							contacts: {
 								friends: [],
 								groups: [],
-								lastUpdated: Date.now(),
 							},
 						})
 
