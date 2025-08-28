@@ -2039,6 +2039,11 @@ export class ClineProvider
 
 		// Update both user-specific and general history
 		await TaskHistoryBridge.updateTaskHistory(undefined, history)
+		
+		// IMPORTANT: Also update the contextProxy cache so that getState() returns the updated history
+		// This ensures postStateToWebview() sends the correct task history to the UI
+		await this.contextProxy.setValue("taskHistory", history)
+		
 		return history
 	}
 
