@@ -28,7 +28,8 @@
       "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
       "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
       "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git push:*)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
