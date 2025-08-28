@@ -319,16 +319,7 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 												isCurrentModel &&
 													"bg-vscode-list-activeSelectionBackground text-vscode-list-activeSelectionForeground",
 											)}>
-											<div className="flex flex-col min-w-0 flex-1">
-												<span className="truncate font-medium">{model.id}</span>
-												{model.contextWindow && (
-													<span className="text-xs opacity-70 truncate">
-														{t("chat:modelSelector.contextWindow", {
-															tokens: model.contextWindow.toLocaleString(),
-														})}
-													</span>
-												)}
-											</div>
+											<span className="truncate font-medium flex-1">{model.id}</span>
 											{isCurrentModel && (
 												<div className="size-5 p-1 flex items-center justify-center">
 													<span className="codicon codicon-check text-xs" />
