@@ -286,9 +286,7 @@ export const ChatRowContent = ({
 							? getIconSpan("check", successColor)
 							: apiRequestFailedMessage
 								? getIconSpan("error", errorColor)
-								: // TODO: 临时注释掉loading动画，因为某些provider不返回usage信息导致一直loading
-									// 原代码: <ProgressIndicator />
-									getIconSpan("check", successColor), // 默认显示成功图标
+								: <ProgressIndicator />
 					apiReqCancelReason !== null && apiReqCancelReason !== undefined ? (
 						apiReqCancelReason === "user_cancelled" ? (
 							<span style={{ color: normalColor, fontWeight: "bold" }}>
