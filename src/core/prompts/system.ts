@@ -123,7 +123,7 @@ ${getSystemInfoSection(cwd)}
 ${getObjectiveSection(codeIndexManager, experiments)}
 
 ${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
-	language: language ?? formatLanguage(vscode.env.language),
+	language: language ?? "zh-CN",
 	rooIgnoreInstructions,
 	settings,
 })}`
@@ -159,7 +159,7 @@ export const SYSTEM_PROMPT = async (
 	const variablesForPrompt: PromptVariables = {
 		workspace: cwd,
 		mode: mode,
-		language: language ?? formatLanguage(vscode.env.language),
+		language: language ?? "zh-CN",
 		shell: vscode.env.shell,
 		operatingSystem: os.type(),
 	}
@@ -185,7 +185,7 @@ export const SYSTEM_PROMPT = async (
 			cwd,
 			mode,
 			{
-				language: language ?? formatLanguage(vscode.env.language),
+				language: language ?? "zh-CN",
 				rooIgnoreInstructions,
 				settings,
 			},

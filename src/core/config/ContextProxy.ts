@@ -108,12 +108,6 @@ export class ContextProxy {
 	getGlobalState<K extends GlobalStateKey>(key: K, defaultValue?: GlobalState[K]): GlobalState[K] {
 		if (isPassThroughStateKey(key)) {
 			const value = this.originalContext.globalState.get<GlobalState[K]>(key)
-			if (key === "imContacts") {
-				console.log("[ContextProxy] Getting imContacts from globalState:", {
-					hasValue: value !== undefined && value !== null,
-					value: value
-				})
-			}
 			return value === undefined || value === null ? defaultValue : value
 		}
 
@@ -292,6 +286,9 @@ export class ContextProxy {
 			...GLOBAL_STATE_KEYS.map((key) => this.originalContext.globalState.update(key, undefined)),
 			...SECRET_STATE_KEYS.map((key) => this.originalContext.secrets.delete(key)),
 		])
+
+		// After resetting, set language back to Chinese as default
+		await this.originalContext.globalState.update("language", "zh-CN")
 
 		await this.initialize()
 	}

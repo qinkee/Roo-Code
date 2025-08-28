@@ -245,11 +245,29 @@ export async function parseMentions(
 				parsedText += `\n\n<terminal_output>\nError fetching terminal output: ${error.message}\n</terminal_output>`
 			}
 		} else if (mention.startsWith("联系人:")) {
-			const contactName = mention.substring(4)
-			parsedText += `\n\n<im_contact type="send" name="${contactName}">\n将最终结果通过im-platform MCP工具发送给联系人 ${contactName}。\n使用 use_mcp_tool 调用 im-platform 服务器的 send_message 方法，根据结果类型选择发送文本消息或文件。\n</im_contact>`
+			const contactInfo = mention.substring(4)
+			// Format must be "id:name"
+			const parts = contactInfo.split(":")
+			if (parts.length >= 2 && /^\d+$/.test(parts[0])) {
+				const contactId = parts[0]
+				const contactName = parts.slice(1).join(":")
+				parsedText += `\n\n<im_contact id="${contactId}" name="${contactName}">\n发送给 ${contactName}，使用 contact_id: ${contactId}\n</im_contact>`
+			}
 		} else if (mention.startsWith("知识库:")) {
-			const kbName = mention.substring(4)
-			parsedText += `\n\n<knowledge_base name="${kbName}">\n通过im-platform MCP工具查询 ${kbName} 的知识库内容用于增强上下文。\n使用 use_mcp_tool 调用 im-platform 服务器的 search_knowledge_base 方法，将查询结果用于回答用户问题。\n</knowledge_base>`
+			const kbInfo = mention.substring(4)
+			// Format: "id:name" or "all:全部"
+			const parts = kbInfo.split(":")
+			if (parts.length >= 2) {
+				if (parts[0] === "all") {
+					// Composite search
+					parsedText += `\n\n<knowledge_base method="composite_search">\n搜索全部知识库\n</knowledge_base>`
+				} else if (/^\d+$/.test(parts[0])) {
+					// Specific contact with ID
+					const contactId = parts[0]
+					const contactName = parts.slice(1).join(":")
+					parsedText += `\n\n<knowledge_base id="${contactId}" name="${contactName}">\n搜索 ${contactName} 的知识库，使用 contact_id: ${contactId}\n</knowledge_base>`
+				}
+			}
 		}
 	}
 

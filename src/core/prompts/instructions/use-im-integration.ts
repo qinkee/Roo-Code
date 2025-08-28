@@ -27,22 +27,35 @@ Roo-Code 支持与 IM（即时通讯）系统的深度集成，允许你通过 @
 - 避免发送敏感信息
 
 ### 2. @知识库:name
-当用户消息中包含 \`@知识库:name\` 时，表示需要查询指定联系人或群组的知识库内容。
+当用户消息中包含 \`@知识库:name\` 时，表示需要查询知识库内容。系统会根据不同的查询范围使用不同的搜索方法：
+
+**查询类型和对应的MCP方法：**
+- \`@知识库:全部\` - 使用 \`composite_search\` 搜索所有知识库内容
+- \`@知识库:好友名称\` - 使用 \`search_private_chat\` 搜索指定好友的私聊记录
+- \`@知识库:群组名称\` - 使用 \`search_specific_group\` 搜索指定群组的群聊记录
 
 **使用示例：**
-- \`@知识库:技术小组 如何配置Docker环境？\`
-- \`@知识库:张三 之前是如何解决这个Bug的？\`
+- \`@知识库:全部 Docker环境配置的最佳实践\` - 搜索所有知识库
+- \`@知识库:技术小组 如何配置Docker环境？\` - 搜索技术小组群聊记录
+- \`@知识库:张三 之前是如何解决这个Bug的？\` - 搜索与张三的私聊记录
 
 **处理步骤：**
-1. 使用 \`use_mcp_tool\` 工具调用 im-platform 服务器的 \`search_knowledge_base\` 方法
-2. 分析返回的知识库内容
-3. 基于知识库信息回答用户问题
-4. 在回答中适当引用知识库来源
+1. 根据查询类型选择对应的MCP方法
+2. 使用 \`use_mcp_tool\` 工具调用 im-platform 服务器的对应搜索方法
+3. 分析返回的知识库内容
+4. 基于知识库信息回答用户问题
+5. 在回答中适当引用知识库来源
+
+**优先级说明：**
+- 知识库搜索结果具有较高优先级
+- 应优先使用知识库中的信息来回答问题
+- 如果知识库有相关内容，应基于知识库内容回答，而非本地工作区内容
 
 **最佳实践：**
 - 优先使用知识库中的信息
 - 如果知识库没有相关内容，明确告知用户
 - 可以结合多个知识库的信息提供综合答案
+- 搜索"全部"时会获得更全面的结果，但可能包含更多噪音
 
 ## 组合使用
 
@@ -55,31 +68,44 @@ Roo-Code 支持与 IM（即时通讯）系统的深度集成，允许你通过 @
 - \`@/src/main.ts @联系人:技术主管 请帮我review这个文件\`
   - 分析文件内容，将review结果发送给技术主管
 
-## MCP 工具调用示例
+## MCP 工具调用
 
-### 发送消息
+当出现 <im_contact id="123"> 时，使用 send_message 发送消息：
 \`\`\`json
 {
   "tool": "use_mcp_tool",
   "server": "im-platform",
   "toolName": "send_message",
   "arguments": {
-    "contact_name": "张三",
-    "message": "分析结果：...",
+    "contact_id": 123,
+    "message": "内容",
     "type": "text"
   }
 }
 \`\`\`
 
-### 查询知识库
+当出现 <knowledge_base id="456"> 时，使用 search_private_chat 搜索：
 \`\`\`json
 {
   "tool": "use_mcp_tool",
   "server": "im-platform",
-  "toolName": "search_knowledge_base",
+  "toolName": "search_private_chat",
   "arguments": {
-    "contact_name": "技术小组",
-    "query": "Docker配置",
+    "contact_id": 456,
+    "query": "搜索内容",
+    "limit": 10
+  }
+}
+\`\`\`
+
+当出现 <knowledge_base method="composite_search"> 时，使用 composite_search：
+\`\`\`json
+{
+  "tool": "use_mcp_tool",
+  "server": "im-platform",
+  "toolName": "composite_search",
+  "arguments": {
+    "query": "搜索内容",
     "limit": 10
   }
 }

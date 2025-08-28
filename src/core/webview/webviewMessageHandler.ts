@@ -2419,8 +2419,31 @@ export const webviewMessageHandler = async (
 		}
 		case "getImContacts": {
 			try {
-				// Get contacts from globalState
-				const imContacts = getGlobalState("imContacts")
+				// First try to get current user ID from void
+				let imContacts: any = null
+				try {
+					const userInfo = await vscode.commands.executeCommand<{ userId?: string }>(
+						"roo-cline.getCurrentUser",
+					)
+					if (userInfo?.userId) {
+						// Try to get user-specific contacts
+						const userKey = `user_${userInfo.userId}_imContacts`
+						const userContacts = provider.context.globalState.get(userKey)
+						if (userContacts) {
+							imContacts = userContacts
+							console.log(
+								`[WebviewMessageHandler] Got user-specific contacts for user ${userInfo.userId}`,
+							)
+						}
+					}
+				} catch {
+					// Ignore error if command doesn't exist
+				}
+
+				// Fallback to general contacts
+				if (!imContacts) {
+					imContacts = getGlobalState("imContacts")
+				}
 
 				console.log("[WebviewMessageHandler] Getting IM contacts from globalState:", {
 					hasData: !!imContacts,

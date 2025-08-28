@@ -283,6 +283,28 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		const tokenManager = ImPlatformTokenManager.getInstance()
 		await tokenManager.clearTokenKey()
 	},
+	switchToDefaultConfig: async () => {
+		// 切换到默认配置，但不清空用户的配置
+		// 这用于用户登出后显示欢迎页面
+		try {
+			const visibleProvider = getVisibleProviderOrLog(outputChannel)
+			const currentProvider = visibleProvider || provider
+
+			// 清空当前任务，显示欢迎页面
+			await currentProvider.removeClineFromStack()
+
+			// 刷新 webview 状态
+			await currentProvider.postStateToWebview()
+
+			outputChannel.appendLine("[switchToDefaultConfig] Successfully switched to welcome screen")
+			return { success: true }
+		} catch (error) {
+			outputChannel.appendLine(
+				`[switchToDefaultConfig] Failed to switch to default: ${error instanceof Error ? error.message : String(error)}`,
+			)
+			return { success: false, error: error instanceof Error ? error.message : String(error) }
+		}
+	},
 	debugResetAllProfiles: async () => {
 		try {
 			// 获取当前可见的 provider 实例

@@ -134,7 +134,6 @@ export function getContextMenuOptions(
 	modes?: ModeConfig[],
 	commands?: Command[],
 ): ContextMenuQueryItem[] {
-	
 	// Handle slash commands for modes and commands
 	// Only process as slash command if the query itself starts with "/" (meaning we're typing a slash command)
 	if (query.startsWith("/")) {
@@ -263,22 +262,24 @@ export function getContextMenuOptions(
 			console.log("[context-mentions] Checking contacts for submenu:", {
 				selectedType,
 				queryItemsLength: queryItems.length,
-				queryItemsTypes: Array.from(new Set(queryItems.map(item => item.type))),
-				queryItemsSample: queryItems.slice(0, 5)
+				queryItemsTypes: Array.from(new Set(queryItems.map((item) => item.type))),
+				queryItemsSample: queryItems.slice(0, 5),
 			})
-			
+
 			const contacts = queryItems.filter((item) => item.type === ContextMenuOptionType.Contacts)
 			console.log("[context-mentions] Filtered contacts:", {
 				contactsLength: contacts.length,
-				contactsSample: contacts.slice(0, 3)
+				contactsSample: contacts.slice(0, 3),
 			})
-			
+
 			if (contacts.length === 0) {
-				return [{
-					type: ContextMenuOptionType.NoResults,
-					label: "Loading contacts...",
-					value: "loading"
-				}]
+				return [
+					{
+						type: ContextMenuOptionType.NoResults,
+						label: "Loading contacts...",
+						value: "loading",
+					},
+				]
 			}
 
 			// Group contacts by type
@@ -315,12 +316,25 @@ export function getContextMenuOptions(
 		if (selectedType === ContextMenuOptionType.KnowledgeBase) {
 			const knowledgeBase = queryItems.filter((item) => item.type === ContextMenuOptionType.KnowledgeBase)
 			if (knowledgeBase.length === 0) {
-				return [{
-					type: ContextMenuOptionType.NoResults,
-					label: "Loading knowledge base...",
-					value: "loading"
-				}]
+				return [
+					{
+						type: ContextMenuOptionType.NoResults,
+						label: "Loading knowledge base...",
+						value: "loading",
+					},
+				]
 			}
+
+			const results: ContextMenuQueryItem[] = []
+
+			// Add "全部" (All) option at the top (no ID for composite search)
+			results.push({
+				type: ContextMenuOptionType.KnowledgeBase,
+				value: "all:全部", // Special format for all/composite search
+				label: "全部",
+				description: "Search all knowledge base",
+				icon: "search",
+			})
 
 			// Group knowledge base by type
 			const friendKb = knowledgeBase.filter(
@@ -329,8 +343,6 @@ export function getContextMenuOptions(
 			const groupKb = knowledgeBase.filter(
 				(item) => item.description?.includes("Group") || item.description?.includes("群组"),
 			)
-
-			const results: ContextMenuQueryItem[] = []
 
 			// Add friend knowledge base section
 			if (friendKb.length > 0) {
@@ -418,7 +430,6 @@ export function getContextMenuOptions(
 		}
 	}
 
-
 	const searchableItems = queryItems.map((item) => ({
 		original: item,
 		searchStr: [item.value, item.label, item.description].filter(Boolean).join(" "),
@@ -442,7 +453,6 @@ export function getContextMenuOptions(
 	const contactsMatches = matchingItems.filter((item) => item.type === ContextMenuOptionType.Contacts)
 
 	const knowledgeBaseMatches = matchingItems.filter((item) => item.type === ContextMenuOptionType.KnowledgeBase)
-	
 
 	// Convert search results to queryItems format
 	const searchResultItems = dynamicSearchResults.map((result) => {
@@ -463,7 +473,6 @@ export function getContextMenuOptions(
 			description: displayPath,
 		}
 	})
-
 
 	const allItems = [
 		...suggestions,

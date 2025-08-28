@@ -221,7 +221,8 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 	const modeDetails = await getFullModeDetails(currentMode, customModes, customModePrompts, {
 		cwd: cline.cwd,
 		globalCustomInstructions,
-		language: language ?? formatLanguage(vscode.env.language),
+		// Default to Chinese if language is not set
+		language: language ?? "zh-CN",
 	})
 
 	details += `\n\n# Current Mode\n`

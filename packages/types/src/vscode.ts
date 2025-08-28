@@ -59,6 +59,7 @@ export const commandIds = [
 	"imPlatform.clearToken",
 	"debugResetAllProfiles",
 	"autoConfigureProvider",
+	"switchToDefaultConfig",
 	"receiveUserInfo",
 ] as const
 

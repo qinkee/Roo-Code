@@ -80,8 +80,15 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Initialize MDM service
 	const mdmService = await MdmService.createInstance(cloudLogger)
 
-	// Initialize i18n for internationalization support.
-	initializeI18n(context.globalState.get("language") ?? formatLanguage(vscode.env.language))
+	// Initialize i18n for internationalization support - default to Chinese
+	const storedLanguage = context.globalState.get<string>("language")
+	const defaultLanguage = "zh-CN" // Default to Chinese
+	const systemLanguage = formatLanguage(vscode.env.language)
+
+	// Use stored language if exists, otherwise use Chinese as default
+	// Only fall back to system language if it's also Chinese
+	const languageToUse = storedLanguage ?? (systemLanguage.startsWith("zh") ? systemLanguage : defaultLanguage)
+	initializeI18n(languageToUse)
 
 	// Initialize terminal shell execution handlers.
 	TerminalRegistry.initialize()
@@ -180,6 +187,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	registerCommands({ context, outputChannel, provider })
+
+	// Set provider for VoidBridge
+	VoidBridge.setProvider(provider)
 
 	// Register task history bridge for void integration
 	TaskHistoryBridge.register(context, provider)

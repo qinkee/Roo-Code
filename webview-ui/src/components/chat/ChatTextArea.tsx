@@ -372,31 +372,29 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const queryItems = useMemo(() => {
 			console.log("[ChatTextArea] Building queryItems with imContacts:", {
 				imContactsLength: imContacts.length,
-				imContactsSample: imContacts[0]
+				imContactsSample: imContacts[0],
 			})
-			
+
 			// Store contacts data for submenu, but don't add them to main menu
 			const contactItems = imContacts.map((contact) => ({
 				type: ContextMenuOptionType.Contacts,
-				value: contact.nickname || contact.name, // 使用联系人名称而不是ID
+				value: `${contact.id}:${contact.nickname || contact.name}`, // 包含ID和名称
 				label: contact.nickname || contact.name,
-				description:
-					contact.type === "friend" ? t("chat:contextMenu.friends") : t("chat:contextMenu.groups"),
+				description: contact.type === "friend" ? t("chat:contextMenu.friends") : t("chat:contextMenu.groups"),
 				icon: contact.type === "friend" ? "person" : "organization",
 			}))
-			
+
 			const knowledgeBaseItems = imContacts.map((contact) => ({
 				type: ContextMenuOptionType.KnowledgeBase,
-				value: contact.nickname || contact.name, // 使用联系人名称而不是ID
+				value: `${contact.id}:${contact.nickname || contact.name}`, // 包含ID和名称
 				label: contact.nickname || contact.name,
 				description:
 					contact.type === "friend"
-							? t("chat:contextMenu.friendKnowledgeBase")
-							: t("chat:contextMenu.groupKnowledgeBase"),
+						? t("chat:contextMenu.friendKnowledgeBase")
+						: t("chat:contextMenu.groupKnowledgeBase"),
 				icon: contact.type === "friend" ? "person" : "organization",
 			}))
-			
-			
+
 			return [
 				{ type: ContextMenuOptionType.Problems, value: "problems" },
 				{ type: ContextMenuOptionType.Terminal, value: "terminal" },
@@ -498,13 +496,15 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						setSelectedType(type)
 						setSearchQuery("")
 						setSelectedMenuIndex(0)
-						
+
 						// Request fresh contacts data when selecting contacts or knowledge base menu
 						if (type === ContextMenuOptionType.Contacts || type === ContextMenuOptionType.KnowledgeBase) {
-							console.log("[ChatTextArea] User selected contacts/knowledge base menu, requesting fresh data")
+							console.log(
+								"[ChatTextArea] User selected contacts/knowledge base menu, requesting fresh data",
+							)
 							vscode.postMessage({ type: "getImContacts" })
 						}
-						
+
 						return
 					}
 				}
@@ -538,15 +538,15 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							return
 						}
 					} else if (type === ContextMenuOptionType.Contacts) {
-						// For Contacts, the value is the contact name
+						// For Contacts, the value format is "id:name"
 						if (value) {
-							// Insert contact mention in format: @联系人:ContactName
+							// Insert contact mention in format: @联系人:id:name
 							insertValue = `联系人:${value}`
 						}
 					} else if (type === ContextMenuOptionType.KnowledgeBase) {
-						// For Knowledge Base, the value is the contact name
+						// For Knowledge Base, the value format is "id:name" or "all:全部"
 						if (value) {
-							// Insert knowledge base mention in format: @知识库:ContactName
+							// Insert knowledge base mention in format: @知识库:id:name or @知识库:all:全部
 							insertValue = `知识库:${value}`
 						}
 					}

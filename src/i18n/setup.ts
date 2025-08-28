@@ -59,10 +59,10 @@ if (!isTestEnv) {
 	}
 }
 
-// Initialize i18next with configuration
+// Initialize i18next with configuration - default to Chinese
 i18next.init({
-	lng: "en",
-	fallbackLng: "en",
+	lng: "zh-CN", // Default to Chinese
+	fallbackLng: "zh-CN", // Fallback to Chinese as well
 	debug: false,
 	resources: translations,
 	interpolation: {

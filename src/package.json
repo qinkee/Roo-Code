@@ -226,6 +226,41 @@
 				"command": "roo-cline.receiveUserInfo",
 				"title": "Receive User Info from External Plugin",
 				"category": "%configuration.title%"
+			},
+			{
+				"command": "roo-cline.onUserSwitch",
+				"title": "Handle User Switch",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.onUserLogout",
+				"title": "Handle User Logout",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.updateImContacts",
+				"title": "Update IM Contacts",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.getImContacts",
+				"title": "Get IM Contacts",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.getCurrentUser",
+				"title": "Get Current User",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.updateTaskUserId",
+				"title": "Update Task User ID",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.switchToDefaultConfig",
+				"title": "Switch to Default Config",
+				"category": "Roo Code"
 			}
 		],
 		"menus": {

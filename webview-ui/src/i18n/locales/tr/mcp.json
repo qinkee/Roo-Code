@@ -6,7 +6,7 @@
 	"instructions": "Talimatlar",
 	"enableToggle": {
 		"title": "MCP Sunucularını Etkinleştir",
-		"description": "Bunu AÇ, böylece Roo bağlı MCP sunucularından araçlar kullanabilir. Roo'ya daha fazla yetenek kazandırır. Ekstra araçları kullanmayacaksan, API token maliyetini azaltmak için bunu KAPAT."
+		"description": "Bunu AÇ, böylece ShadanAI bağlı MCP sunucularından araçlar kullanabilir. Roo'ya daha fazla yetenek kazandırır. Ekstra araçları kullanmayacaksan, API token maliyetini azaltmak için bunu KAPAT."
 	},
 	"enableServerCreation": {
 		"title": "MCP Sunucu Oluşturmayı Etkinleştir",

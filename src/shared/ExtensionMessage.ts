@@ -123,6 +123,8 @@ export interface ExtensionMessage {
 		| "commands"
 		| "insertTextIntoTextarea"
 		| "imContactsResponse"
+		| "userSwitched"
+		| "userLoggedOut"
 	text?: string
 	payload?: any // Add a generic payload for now, can refine later
 	action?:
@@ -220,6 +222,8 @@ export interface ExtensionMessage {
 			isBanned?: boolean
 		}>
 	}
+	userId?: string
+	userName?: string
 }
 
 export type ExtensionState = Pick<

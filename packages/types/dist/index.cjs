@@ -1094,6 +1094,7 @@ var commandIds = [
   "imPlatform.clearToken",
   "debugResetAllProfiles",
   "autoConfigureProvider",
+  "switchToDefaultConfig",
   "receiveUserInfo"
 ];
 var languages = [
