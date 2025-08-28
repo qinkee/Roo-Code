@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react"
+import React, { useState, useMemo, useCallback, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { useRooPortal } from "@/components/ui/hooks/useRooPortal"
 import { Popover, PopoverContent, PopoverTrigger, StandardTooltip } from "@/components/ui"
@@ -41,11 +41,64 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 	const { t } = useAppTranslation()
 	const [open, setOpen] = useState(false)
 	const [searchValue, setSearchValue] = useState("")
+	const [dynamicModels, setDynamicModels] = useState<Array<{ id: string; contextWindow?: number }>>([])
 	const portalContainer = useRooPortal("roo-portal")
 
 	const { apiConfiguration, setApiConfiguration, currentApiConfigName } = useExtensionState()
 
 	const { provider, id: currentModelId } = useSelectedModel(apiConfiguration)
+
+	// Fetch dynamic models for OpenAI-compatible and Ollama providers
+	useEffect(() => {
+		if (!open) return
+		
+		if (provider === "openai") {
+			// Request OpenAI models when dropdown opens
+			const baseUrl = apiConfiguration?.openAiBaseUrl || ""
+			const apiKey = apiConfiguration?.openAiApiKey || ""
+			const headers = apiConfiguration?.openAiHeaders || undefined
+			
+			if (baseUrl && apiKey) {
+				vscode.postMessage({
+					type: "requestOpenAiModels",
+					values: {
+						baseUrl,
+						apiKey,
+						openAiHeaders: headers
+					}
+				})
+			}
+		} else if (provider === "ollama") {
+			// Request Ollama models
+			vscode.postMessage({ type: "requestOllamaModels" })
+		}
+	}, [provider, open, apiConfiguration])
+
+	// Listen for model responses
+	useEffect(() => {
+		const handleMessage = (event: MessageEvent) => {
+			const message = event.data
+			
+			if (message.type === "openAiModels" && message.openAiModels) {
+				// Convert the models object to array format
+				const modelsArray = Object.entries(message.openAiModels as Record<string, any>).map(([id, info]: [string, any]) => ({
+					id,
+					contextWindow: info.contextWindow || info.context_window || 0,
+				}))
+				setDynamicModels(modelsArray)
+			} else if (message.type === "ollamaModels" && message.ollamaModels) {
+				// Convert Ollama models to array format
+				const modelsArray = Object.entries(message.ollamaModels as Record<string, any>).map(([id, info]: [string, any]) => ({
+					id,
+					contextWindow: info.contextWindow || 0,
+				}))
+				setDynamicModels(modelsArray)
+			}
+		}
+
+		window.addEventListener("message", handleMessage)
+		return () => window.removeEventListener("message", handleMessage)
+	}, [])
 
 	// Get available models based on provider
 	const availableModels = useMemo(() => {
@@ -115,6 +168,7 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 					models = internationalZAiModels
 				}
 				break
+			case "openai":
 			case "openrouter":
 			case "ollama":
 			case "lmstudio":
@@ -123,8 +177,15 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 			case "requesty":
 			case "litellm":
 			case "huggingface":
-				// These providers have dynamic models
-				return []
+			case "human-relay":
+			case "fake-ai":
+				// These providers have dynamic models - return fetched models
+				return dynamicModels.map(model => ({
+					id: model.id,
+					contextWindow: model.contextWindow || 0,
+					supportsPromptCache: false,
+					maxTokens: null,
+				}))
 			default:
 				return []
 		}
@@ -133,7 +194,7 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 		return Object.entries(models)
 			.map(([id, info]) => ({ id, ...info }))
 			.sort((a, b) => a.id.localeCompare(b.id))
-	}, [provider, apiConfiguration])
+	}, [provider, apiConfiguration, dynamicModels])
 
 	// Filter models based on search
 	const filteredModels = useMemo(() => {
@@ -146,32 +207,37 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 	// Handle model selection
 	const handleSelect = useCallback(
 		(modelId: string) => {
-			// Update the API configuration with new model
-			setApiConfiguration({
-				...apiConfiguration,
-				apiModelId: modelId,
-			})
+			let updateValues: any = { ...apiConfiguration }
+			
+			// Update the appropriate model field based on provider
+			if (provider === "openai") {
+				updateValues.openAiModelId = modelId
+			} else if (provider === "ollama") {
+				updateValues.ollamaModelId = modelId
+			} else {
+				updateValues.apiModelId = modelId
+			}
+
+			// Update the API configuration
+			setApiConfiguration(updateValues)
 
 			// Send message to save the configuration
 			vscode.postMessage({
 				type: "upsertApiConfiguration",
 				text: currentApiConfigName,
-				values: {
-					...apiConfiguration,
-					apiModelId: modelId,
-				},
+				values: updateValues,
 			})
 
 			setOpen(false)
 			setSearchValue("")
 		},
-		[apiConfiguration, currentApiConfigName, setApiConfiguration],
+		[apiConfiguration, currentApiConfigName, setApiConfiguration, provider],
 	)
 
-	// If provider doesn't have static models, don't render selector
-	if (availableModels.length === 0) {
-		return null
-	}
+	// For debugging: always show the selector even if no models available
+	// if (availableModels.length === 0) {
+	// 	return null
+	// }
 
 	// Get display name for current model
 	const currentModelName = currentModelId || t("chat:modelSelector.noModel")
