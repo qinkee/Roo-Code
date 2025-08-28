@@ -286,7 +286,7 @@ export const ChatRowContent = ({
 							? getIconSpan("check", successColor)
 							: apiRequestFailedMessage
 								? getIconSpan("error", errorColor)
-								: <ProgressIndicator />
+								: <ProgressIndicator />,
 					apiReqCancelReason !== null && apiReqCancelReason !== undefined ? (
 						apiReqCancelReason === "user_cancelled" ? (
 							<span style={{ color: normalColor, fontWeight: "bold" }}>
