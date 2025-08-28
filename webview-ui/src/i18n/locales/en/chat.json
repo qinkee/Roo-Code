@@ -28,6 +28,12 @@
 	},
 	"unpin": "Unpin",
 	"pin": "Pin",
+	"modelSelector": {
+		"title": "Quick Model Switch",
+		"noModel": "No model selected",
+		"contextWindow": "{{tokens}} tokens",
+		"currentProfile": "Profile: {{profile}}"
+	},
 	"retry": {
 		"title": "Retry",
 		"tooltip": "Try the operation again"

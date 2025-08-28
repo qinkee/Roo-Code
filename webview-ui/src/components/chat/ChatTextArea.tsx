@@ -24,6 +24,7 @@ import { StandardTooltip } from "@/components/ui"
 import Thumbnails from "../common/Thumbnails"
 import ModeSelector from "./ModeSelector"
 import { ApiConfigSelector } from "./ApiConfigSelector"
+import { ModelSelector } from "./ModelSelector"
 import { MAX_IMAGES_PER_MESSAGE } from "./ChatView"
 import ContextMenu from "./ContextMenu"
 import { VolumeX, Image, WandSparkles, SendHorizontal } from "lucide-react"
@@ -1256,6 +1257,11 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							</button>
 						</StandardTooltip>
 					)}
+					<ModelSelector
+						disabled={selectApiConfigDisabled}
+						title={t("chat:modelSelector.title")}
+						triggerClassName="mr-1"
+					/>
 					<SlashCommandsPopover />
 					<IndexingStatusBadge />
 					<StandardTooltip content={t("chat:addImages")}>
