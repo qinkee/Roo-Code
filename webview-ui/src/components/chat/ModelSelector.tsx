@@ -80,10 +80,11 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 			const message = event.data
 			
 			if (message.type === "openAiModels" && message.openAiModels) {
-				// Convert the models object to array format
-				const modelsArray = Object.entries(message.openAiModels as Record<string, any>).map(([id, info]: [string, any]) => ({
-					id,
-					contextWindow: info.contextWindow || info.context_window || 0,
+				// OpenAI models come as an array of model IDs
+				const modelIds = message.openAiModels as string[]
+				const modelsArray = modelIds.map((modelId: string) => ({
+					id: modelId,
+					contextWindow: 0, // We don't have context window info from the API
 				}))
 				setDynamicModels(modelsArray)
 			} else if (message.type === "ollamaModels" && message.ollamaModels) {
