@@ -29,7 +29,11 @@
       "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
       "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
       "Bash(cat:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm run check-types:*)",
+      "Bash(pnpm run lint:*)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [

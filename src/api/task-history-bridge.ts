@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import { HistoryItem, RooCodeEventName } from "@roo-code/types"
 import { ClineProvider } from "../core/webview/ClineProvider"
+import { RedisSyncService } from "../services/RedisSyncService"
 
 /**
  * Bridge for task history synchronization between Roo-Code and void
@@ -9,6 +10,7 @@ import { ClineProvider } from "../core/webview/ClineProvider"
 export class TaskHistoryBridge {
 	private static currentUserId: string | undefined = undefined
 	private static extensionContext: vscode.ExtensionContext | undefined = undefined
+	private static redis = RedisSyncService.getInstance()
 
 	/**
 	 * Get storage key with user prefix
@@ -43,7 +45,7 @@ export class TaskHistoryBridge {
 	/**
 	 * Get task history for current or specific user
 	 */
-	static getTaskHistory(context?: vscode.ExtensionContext, userId?: string): HistoryItem[] {
+	static async getTaskHistory(context?: vscode.ExtensionContext, userId?: string): Promise<HistoryItem[]> {
 		const ctx = context || TaskHistoryBridge.extensionContext
 		if (!ctx) {
 			console.error("[TaskHistoryBridge] Extension context not available")
@@ -54,9 +56,18 @@ export class TaskHistoryBridge {
 		if (effectiveUserId) {
 			const userKey = TaskHistoryBridge.getUserKey("taskHistory", effectiveUserId)
 			const userHistory = ctx.globalState.get(userKey) as HistoryItem[] | undefined
-			if (userHistory) {
+			if (userHistory && userHistory.length > 0) {
 				console.log(`[TaskHistoryBridge] Retrieved ${userHistory.length} tasks for user ${effectiveUserId}`)
 				return userHistory
+			}
+			
+			// Try to restore from Redis if local is empty
+			const redisHistory = await TaskHistoryBridge.redis.get(`roo:${effectiveUserId}:tasks`)
+			if (redisHistory && Array.isArray(redisHistory)) {
+				// Save to local storage
+				await ctx.globalState.update(userKey, redisHistory)
+				console.log(`[TaskHistoryBridge] Restored ${redisHistory.length} tasks from Redis for user ${effectiveUserId}`)
+				return redisHistory
 			}
 		}
 
@@ -89,6 +100,10 @@ export class TaskHistoryBridge {
 			const userKey = TaskHistoryBridge.getUserKey("taskHistory")
 			await ctx.globalState.update(userKey, history)
 			console.log(`[TaskHistoryBridge] Updated task history for user ${TaskHistoryBridge.currentUserId}`)
+			
+			// Async sync to Redis (only keep recent 50 tasks)
+			const recentHistory = history.slice(0, 50)
+			TaskHistoryBridge.redis.set(`roo:${TaskHistoryBridge.currentUserId}:tasks`, recentHistory)
 		}
 	}
 
@@ -98,7 +113,7 @@ export class TaskHistoryBridge {
 	static async notifyTaskCreated(historyItem: HistoryItem): Promise<void> {
 		try {
 			// Get current task history
-			const taskHistory = TaskHistoryBridge.getTaskHistory()
+			const taskHistory = await TaskHistoryBridge.getTaskHistory()
 			
 			// Find the new task in history (it should already be there from updateTaskHistory)
 			const taskExists = taskHistory.some(t => t.id === historyItem.id)
@@ -133,7 +148,7 @@ export class TaskHistoryBridge {
 			"roo-cline.getTaskHistory",
 			async (data?: { userId?: string }): Promise<{ tasks: HistoryItem[]; activeTaskId?: string }> => {
 				try {
-					const taskHistory = TaskHistoryBridge.getTaskHistory(context, data?.userId)
+					const taskHistory = await TaskHistoryBridge.getTaskHistory(context, data?.userId)
 					const currentTaskId = provider.getCurrentCline()?.taskId
 
 					console.log("[TaskHistoryBridge] Getting task history:", {
@@ -215,7 +230,7 @@ export class TaskHistoryBridge {
 					TaskHistoryBridge.setCurrentUserId(userId)
 
 					// Get all task history
-					const taskHistory = TaskHistoryBridge.getTaskHistory(context)
+					const taskHistory = await TaskHistoryBridge.getTaskHistory(context)
 
 					// If pattern is "*", update all tasks
 					if (pattern === "*") {

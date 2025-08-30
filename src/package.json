@@ -497,6 +497,44 @@
 					"type": "string",
 					"default": "",
 					"description": "Token key for IM Platform MCP integration. This key will be passed to the im-platform-mcp server for authentication."
+				},
+				"roo-cline.redis": {
+					"type": "object",
+					"default": {
+						"enabled": true,
+						"host": "localhost",
+						"port": 6379,
+						"password": "",
+						"database": 0
+					},
+					"properties": {
+						"enabled": {
+							"type": "boolean",
+							"default": true,
+							"description": "Enable Redis sync for cross-instance data sharing"
+						},
+						"host": {
+							"type": "string",
+							"default": "localhost",
+							"description": "Redis server host"
+						},
+						"port": {
+							"type": "number",
+							"default": 6379,
+							"description": "Redis server port"
+						},
+						"password": {
+							"type": "string",
+							"default": "",
+							"description": "Redis server password (leave empty if no password)"
+						},
+						"database": {
+							"type": "number",
+							"default": 0,
+							"description": "Redis database number (0-15)"
+						}
+					},
+					"description": "Redis configuration for data synchronization"
 				}
 			}
 		}
@@ -551,6 +589,7 @@
 		"gray-matter": "^4.0.3",
 		"i18next": "^25.0.0",
 		"ignore": "^7.0.3",
+		"im-platform-mcp": "^4.1.1",
 		"isbinaryfile": "^5.0.2",
 		"lodash.debounce": "^4.0.8",
 		"mammoth": "^1.9.1",
@@ -569,6 +608,7 @@
 		"puppeteer-chromium-resolver": "^24.0.0",
 		"puppeteer-core": "^23.4.0",
 		"reconnecting-eventsource": "^1.6.4",
+		"redis": "^5.5.5",
 		"sanitize-filename": "^1.6.3",
 		"say": "^0.16.0",
 		"serialize-error": "^12.0.0",
@@ -587,8 +627,7 @@
 		"web-tree-sitter": "^0.25.6",
 		"workerpool": "^9.2.0",
 		"yaml": "^2.8.0",
-		"zod": "^3.25.61",
-		"im-platform-mcp": "^4.1.1"
+		"zod": "^3.25.61"
 	},
 	"devDependencies": {
 		"@roo-code/build": "workspace:^",

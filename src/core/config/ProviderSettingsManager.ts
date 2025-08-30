@@ -13,6 +13,7 @@ import {
 import { TelemetryService } from "@roo-code/telemetry"
 
 import { Mode, modes } from "../../shared/modes"
+import { RedisSyncService } from "../../services/RedisSyncService"
 
 export interface SyncCloudProfilesResult {
 	hasChanges: boolean
@@ -41,6 +42,8 @@ export type ProviderProfiles = z.infer<typeof providerProfilesSchema>
 export class ProviderSettingsManager {
 	private static readonly SCOPE_PREFIX = "roo_cline_config_"
 	private readonly defaultConfigId = this.generateId()
+	private readonly redis = RedisSyncService.getInstance()
+	private userId?: string
 
 	private readonly defaultModeApiConfigs: Record<string, string> = Object.fromEntries(
 		modes.map((mode) => [mode.slug, this.defaultConfigId]),
@@ -61,8 +64,9 @@ export class ProviderSettingsManager {
 
 	private readonly context: ExtensionContext
 
-	constructor(context: ExtensionContext) {
+	constructor(context: ExtensionContext, userId?: string) {
 		this.context = context
+		this.userId = userId
 
 		// TODO: We really shouldn't have async methods in the constructor.
 		this.initialize().catch(console.error)
@@ -487,7 +491,19 @@ export class ProviderSettingsManager {
 
 	private async load(): Promise<ProviderProfiles> {
 		try {
-			const content = await this.context.secrets.get(this.secretsKey)
+			// Priority: local storage
+			let content = await this.context.secrets.get(this.secretsKey)
+
+			// If not found locally and we have a userId, try Redis
+			if (!content && this.userId) {
+				const redisData = await this.redis.get(`roo:${this.userId}:provider`)
+				if (redisData) {
+					// Restore from Redis to local storage
+					content = typeof redisData === 'string' ? redisData : JSON.stringify(redisData)
+					await this.context.secrets.store(this.secretsKey, content)
+					console.log(`[Redis] Restored provider config from Redis for user ${this.userId}`)
+				}
+			}
 
 			if (!content) {
 				return this.defaultProviderProfiles
@@ -527,7 +543,15 @@ export class ProviderSettingsManager {
 
 	private async store(providerProfiles: ProviderProfiles) {
 		try {
-			await this.context.secrets.store(this.secretsKey, JSON.stringify(providerProfiles, null, 2))
+			const data = JSON.stringify(providerProfiles, null, 2)
+			
+			// Store locally
+			await this.context.secrets.store(this.secretsKey, data)
+			
+			// Async sync to Redis (non-blocking)
+			if (this.userId) {
+				this.redis.set(`roo:${this.userId}:provider`, providerProfiles)
+			}
 		} catch (error) {
 			throw new Error(`Failed to write provider profiles to secrets: ${error}`)
 		}

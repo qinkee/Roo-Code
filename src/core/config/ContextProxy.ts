@@ -18,6 +18,7 @@ import {
 import { TelemetryService } from "@roo-code/telemetry"
 
 import { logger } from "../../utils/logging"
+import { RedisSyncService } from "../../services/RedisSyncService"
 
 type GlobalStateKey = keyof GlobalState
 type SecretStateKey = keyof SecretState
@@ -69,6 +70,7 @@ export class ContextProxy {
 	private readonly originalContext: vscode.ExtensionContext
 	private readonly userId?: string
 	private readonly statePrefix: string
+	private readonly redis = RedisSyncService.getInstance()
 
 	private stateCache: GlobalState
 	private secretCache: SecretState
@@ -135,6 +137,34 @@ export class ContextProxy {
 		await Promise.all(promises)
 
 		this._isInitialized = true
+		
+		// Try to restore from Redis (async, non-blocking)
+		if (this.userId) {
+			this.tryRestoreFromRedis()
+		}
+	}
+	
+	private async tryRestoreFromRedis() {
+		// Only restore important data if not already present
+		const keysToRestore = ['taskHistory', 'customInstructions']
+		
+		for (const key of keysToRestore) {
+			if (!this.stateCache[key as keyof GlobalState]) {
+				try {
+					const value = await this.redis.get(`roo:${this.userId}:${key}`)
+					if (value) {
+						this.stateCache[key as keyof GlobalState] = value
+						// Write back to local storage
+						const prefixedKey = this.getPrefixedKey(key)
+						await this.originalContext.globalState.update(prefixedKey, value)
+						logger.info(`[Redis] Restored ${key} from Redis for user ${this.userId}`)
+					}
+				} catch (error) {
+					// Silently ignore Redis errors
+					logger.debug(`[Redis] Failed to restore ${key}: ${error}`)
+				}
+			}
+		}
 	}
 
 	/**
@@ -295,12 +325,26 @@ export class ContextProxy {
 		this.stateCache[key] = value
 
 		// Update storage with appropriate key
+		let updatePromise: Thenable<void>
 		if (this.shouldUseUserPrefix(key)) {
 			const prefixedKey = this.getPrefixedKey(key)
-			return this.originalContext.globalState.update(prefixedKey, value)
+			updatePromise = this.originalContext.globalState.update(prefixedKey, value)
 		} else {
-			return this.originalContext.globalState.update(key, value)
+			updatePromise = this.originalContext.globalState.update(key, value)
 		}
+		
+		// Async sync to Redis (non-blocking)
+		if (this.userId && this.shouldSyncToRedis(key as string)) {
+			this.redis.set(`roo:${this.userId}:${key as string}`, value)
+		}
+		
+		return updatePromise
+	}
+	
+	private shouldSyncToRedis(key: string): boolean {
+		// Only sync important data to Redis
+		const syncKeys = ['taskHistory', 'customInstructions', 'pinnedApiConfigs']
+		return syncKeys.includes(key)
 	}
 
 	private getAllGlobalState(): GlobalState {

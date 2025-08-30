@@ -33,6 +33,7 @@ import { isRemoteControlEnabled } from "./utils/remoteControl"
 import { API } from "./extension/api"
 import { VoidBridge } from "./api/void-bridge"
 import { TaskHistoryBridge } from "./api/task-history-bridge"
+import { RedisSyncService } from "./services/RedisSyncService"
 
 import {
 	handleUri,
@@ -92,6 +93,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Initialize terminal shell execution handlers.
 	TerminalRegistry.initialize()
+	
+	// Initialize Redis sync service
+	const redisSync = RedisSyncService.getInstance()
+	redisSync.startHealthCheck()
+	outputChannel.appendLine("[Redis] Sync service initialized")
 
 	// Register void bridge for IM integration
 	VoidBridge.register(context)
@@ -321,6 +327,11 @@ export async function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated.
 export async function deactivate() {
 	outputChannel.appendLine(`${Package.name} extension deactivated`)
+	
+	// Cleanup Redis connection
+	const redisSync = RedisSyncService.getInstance()
+	await redisSync.disconnect()
+	outputChannel.appendLine("[Redis] Sync service disconnected")
 
 	const bridgeService = UnifiedBridgeService.getInstance()
 
