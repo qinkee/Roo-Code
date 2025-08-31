@@ -51,21 +51,21 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 	// Fetch dynamic models for OpenAI-compatible and Ollama providers
 	useEffect(() => {
 		if (!open) return
-		
+
 		if (provider === "openai") {
 			// Request OpenAI models when dropdown opens
 			const baseUrl = apiConfiguration?.openAiBaseUrl || ""
 			const apiKey = apiConfiguration?.openAiApiKey || ""
 			const headers = apiConfiguration?.openAiHeaders || undefined
-			
+
 			if (baseUrl && apiKey) {
 				vscode.postMessage({
 					type: "requestOpenAiModels",
 					values: {
 						baseUrl,
 						apiKey,
-						openAiHeaders: headers
-					}
+						openAiHeaders: headers,
+					},
 				})
 			}
 		} else if (provider === "ollama") {
@@ -78,7 +78,7 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 	useEffect(() => {
 		const handleMessage = (event: MessageEvent) => {
 			const message = event.data
-			
+
 			if (message.type === "openAiModels" && message.openAiModels) {
 				// OpenAI models come as an array of model IDs
 				const modelIds = message.openAiModels as string[]
@@ -89,10 +89,12 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 				setDynamicModels(modelsArray)
 			} else if (message.type === "ollamaModels" && message.ollamaModels) {
 				// Convert Ollama models to array format
-				const modelsArray = Object.entries(message.ollamaModels as Record<string, any>).map(([id, info]: [string, any]) => ({
-					id,
-					contextWindow: info.contextWindow || 0,
-				}))
+				const modelsArray = Object.entries(message.ollamaModels as Record<string, any>).map(
+					([id, info]: [string, any]) => ({
+						id,
+						contextWindow: info.contextWindow || 0,
+					}),
+				)
 				setDynamicModels(modelsArray)
 			}
 		}
@@ -181,7 +183,7 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 			case "human-relay":
 			case "fake-ai":
 				// These providers have dynamic models - return fetched models
-				return dynamicModels.map(model => ({
+				return dynamicModels.map((model) => ({
 					id: model.id,
 					contextWindow: model.contextWindow || 0,
 					supportsPromptCache: false,
@@ -208,8 +210,8 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 	// Handle model selection
 	const handleSelect = useCallback(
 		(modelId: string) => {
-			let updateValues: any = { ...apiConfiguration }
-			
+			const updateValues: any = { ...apiConfiguration }
+
 			// Update the appropriate model field based on provider
 			if (provider === "openai") {
 				updateValues.openAiModelId = modelId
@@ -226,7 +228,7 @@ export const ModelSelector = ({ disabled = false, title = "", triggerClassName =
 			vscode.postMessage({
 				type: "upsertApiConfiguration",
 				text: currentApiConfigName,
-				values: updateValues,
+				apiConfiguration: updateValues,
 			})
 
 			setOpen(false)
