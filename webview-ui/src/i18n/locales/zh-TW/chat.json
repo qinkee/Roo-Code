@@ -123,7 +123,29 @@
 		"settings": "模式設定",
 		"description": "專門量身打造 ShadanAI 行為的角色。",
 		"searchPlaceholder": "搜尋模式...",
-		"noResults": "沒有找到結果"
+		"noResults": "沒有找到結果",
+		"presetModes": {
+			"architect": {
+				"name": "🏗️ 架構師",
+				"description": "在實施前進行規劃和設計"
+			},
+			"code": {
+				"name": "💻 編碼",
+				"description": "編寫、修改和重構程式碼"
+			},
+			"ask": {
+				"name": "❓ 問答",
+				"description": "獲取答案和解釋"
+			},
+			"debug": {
+				"name": "🪲 除錯",
+				"description": "診斷並修復軟體問題"
+			},
+			"orchestrator": {
+				"name": "🪃 協調器",
+				"description": "跨多個模式協調任務"
+			}
+		}
 	},
 	"enhancePromptDescription": "「強化提示詞」按鈕可透過提供額外內容、說明或改寫來協助改善您的提示詞。請試著在這裡輸入提示詞，然後再次點選按鈕，以了解其運作方式。",
 	"addImages": "新增圖片到訊息中",

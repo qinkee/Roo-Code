@@ -60,11 +60,26 @@ export const ModeSelector = ({
 	// Get all modes including custom modes and merge custom prompt descriptions
 	const modes = React.useMemo(() => {
 		const allModes = getAllModes(customModes)
-		return allModes.map((mode) => ({
-			...mode,
-			description: customModePrompts?.[mode.slug]?.description ?? mode.description,
-		}))
-	}, [customModes, customModePrompts])
+		return allModes.map((mode) => {
+			// Check if this is a preset mode
+			const isPresetMode = ["architect", "code", "ask", "debug", "orchestrator"].includes(mode.slug)
+
+			// Use translated name and description for preset modes
+			const translatedName = isPresetMode
+				? t(`chat:modeSelector.presetModes.${mode.slug}.name` as any) || mode.name
+				: mode.name
+
+			const translatedDescription = isPresetMode
+				? t(`chat:modeSelector.presetModes.${mode.slug}.description` as any) || mode.description
+				: (customModePrompts?.[mode.slug]?.description ?? mode.description)
+
+			return {
+				...mode,
+				name: translatedName,
+				description: translatedDescription,
+			}
+		})
+	}, [customModes, customModePrompts, t])
 
 	// Find the selected mode
 	const selectedMode = React.useMemo(() => modes.find((mode) => mode.slug === value), [modes, value])

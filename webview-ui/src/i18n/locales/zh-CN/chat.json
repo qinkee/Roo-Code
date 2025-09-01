@@ -127,7 +127,29 @@
 		"settings": "模式设置",
 		"description": "专门定制ShadanAI行为的角色。",
 		"searchPlaceholder": "搜索模式...",
-		"noResults": "未找到结果"
+		"noResults": "未找到结果",
+		"presetModes": {
+			"architect": {
+				"name": "🏗️ 架构师",
+				"description": "在实施前进行规划和设计"
+			},
+			"code": {
+				"name": "💻 编码",
+				"description": "编写、修改和重构代码"
+			},
+			"ask": {
+				"name": "❓ 问答",
+				"description": "获取答案和解释"
+			},
+			"debug": {
+				"name": "🪲 调试",
+				"description": "诊断并修复软件问题"
+			},
+			"orchestrator": {
+				"name": "🪃 协调器",
+				"description": "跨多个模式协调任务"
+			}
+		}
 	},
 	"errorReadingFile": "读取文件时出错:",
 	"noValidImages": "没有处理有效图片",

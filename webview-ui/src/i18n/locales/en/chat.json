@@ -129,7 +129,29 @@
 		"settings": "Mode Settings",
 		"description": "Specialized personas that tailor ShadanAI's behavior.",
 		"searchPlaceholder": "Search modes...",
-		"noResults": "No results found"
+		"noResults": "No results found",
+		"presetModes": {
+			"architect": {
+				"name": "🏗️ Architect",
+				"description": "Plan and design before implementation"
+			},
+			"code": {
+				"name": "💻 Code",
+				"description": "Write, modify, and refactor code"
+			},
+			"ask": {
+				"name": "❓ Ask",
+				"description": "Get answers and explanations"
+			},
+			"debug": {
+				"name": "🪲 Debug",
+				"description": "Diagnose and fix software issues"
+			},
+			"orchestrator": {
+				"name": "🪃 Orchestrator",
+				"description": "Coordinate tasks across multiple modes"
+			}
+		}
 	},
 	"enhancePromptDescription": "The 'Enhance Prompt' button helps improve your prompt by providing additional context, clarification, or rephrasing. Try typing a prompt in here and clicking the button again to see how it works.",
 	"addImages": "Add images to message",
