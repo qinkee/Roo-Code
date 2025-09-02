@@ -850,21 +850,25 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					// Handle files dropped from VSCode explorer
 					if (message.droppedFiles && message.droppedFiles.length > 0) {
 						// Convert file paths to @mentions and add to input
-						const mentions = message.droppedFiles.map(filePath => {
-							// Convert absolute path to relative path if possible
-							const relativePath = cwd && filePath.startsWith(cwd) 
-								? filePath.slice(cwd.length).replace(/^[/\\]/, '')
-								: filePath
-							// Escape spaces in path
-							const escapedPath = relativePath.replace(/ /g, '\\ ')
-							return `@${escapedPath}`
-						}).join(' ')
-						
+						const mentions = message.droppedFiles
+							.map((filePath) => {
+								// Convert absolute path to relative path if possible
+								const relativePath =
+									cwd && filePath.startsWith(cwd)
+										? filePath.slice(cwd.length).replace(/^[/\\]/, "")
+										: filePath
+								// Escape spaces in path
+								const escapedPath = relativePath.replace(/ /g, "\\ ")
+								return `@${escapedPath}`
+							})
+							.join(" ")
+
 						// Add mentions to current input value
-						const currentValue = inputValue || ''
-						const newValue = currentValue + (currentValue && !currentValue.endsWith(' ') ? ' ' : '') + mentions + ' '
+						const currentValue = inputValue || ""
+						const newValue =
+							currentValue + (currentValue && !currentValue.endsWith(" ") ? " " : "") + mentions + " "
 						setInputValue(newValue)
-						
+
 						// Focus the text area
 						textAreaRef.current?.focus()
 					}
@@ -1648,7 +1652,21 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						followUpData = JSON.parse(lastMessage.text || "{}") as FollowUpData
 					} catch (error) {
 						console.error("Failed to parse follow-up data:", error)
-						return
+						// 如果解析失败，尝试将纯文本转换为follow-up格式
+						const text = lastMessage.text || ""
+						if (text.trim()) {
+							// 将纯文本包装成单个建议，符合SuggestionItem接口
+							followUpData = {
+								suggest: [
+									{
+										answer: text.trim(),
+									},
+								],
+							}
+						} else {
+							// 如果没有有效文本，跳过自动审批
+							return
+						}
 					}
 
 					if (followUpData && followUpData.suggest && followUpData.suggest.length > 0) {
