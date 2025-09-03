@@ -502,9 +502,9 @@
 					"type": "object",
 					"default": {
 						"enabled": true,
-						"host": "localhost",
-						"port": 6379,
-						"password": "",
+						"host": "192.168.10.254",
+						"port": 30611,
+						"password": "p2@mR4RVeYQcWutx",
 						"database": 0
 					},
 					"properties": {
@@ -515,17 +515,17 @@
 						},
 						"host": {
 							"type": "string",
-							"default": "localhost",
-							"description": "Redis server host"
+							"default": "192.168.10.254",
+							"description": "Redis server host (IP address or domain name)"
 						},
 						"port": {
 							"type": "number",
-							"default": 6379,
+							"default": 30611,
 							"description": "Redis server port"
 						},
 						"password": {
 							"type": "string",
-							"default": "",
+							"default": "p2@mR4RVeYQcWutx",
 							"description": "Redis server password (leave empty if no password)"
 						},
 						"database": {

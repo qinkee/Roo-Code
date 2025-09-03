@@ -19,6 +19,13 @@ export class VoidBridge {
 	}
 
 	/**
+	 * Get the current user ID
+	 */
+	static getCurrentUserId(): string | undefined {
+		return VoidBridge.currentUserId
+	}
+
+	/**
 	 * Get storage key with user prefix
 	 */
 	private static getUserKey(baseKey: string, userId?: string): string {
@@ -172,6 +179,12 @@ export class VoidBridge {
 					if (VoidBridge.provider) {
 						// Remove current task if any
 						await VoidBridge.provider.removeClineFromStack()
+
+						// Update CustomModesManager with new userId
+						if (VoidBridge.provider.customModesManager) {
+							VoidBridge.provider.customModesManager.setUserId(data.userId)
+							console.log(`[VoidBridge] Updated CustomModesManager userId to ${data.userId}`)
+						}
 
 						// Notify webview about user change
 						await VoidBridge.provider.postMessageToWebview({

@@ -148,8 +148,17 @@ export class ClineProvider
 
 		this.providerSettingsManager = new ProviderSettingsManager(this.context)
 
+		// Initialize CustomModesManager first, then update userId when VoidBridge is available
 		this.customModesManager = new CustomModesManager(this.context, async () => {
 			await this.postStateToWebview()
+		})
+
+		// Import VoidBridge and update userId after initialization
+		import("../../api/void-bridge").then(({ VoidBridge }) => {
+			const currentUserId = VoidBridge.getCurrentUserId()
+			if (currentUserId && this.customModesManager) {
+				this.customModesManager.setUserId(currentUserId)
+			}
 		})
 
 		// Initialize MCP Hub through the singleton manager
@@ -1041,7 +1050,7 @@ export class ClineProvider
 
 			try {
 				// Update the task history with the new mode first
-				const history = await TaskHistoryBridge.getTaskHistory() ?? []
+				const history = (await TaskHistoryBridge.getTaskHistory()) ?? []
 				const taskHistoryItem = history.find((item) => item.id === cline.taskId)
 				if (taskHistoryItem) {
 					taskHistoryItem.mode = newMode
@@ -1382,7 +1391,7 @@ export class ClineProvider
 		uiMessagesFilePath: string
 		apiConversationHistory: Anthropic.MessageParam[]
 	}> {
-		const history = await TaskHistoryBridge.getTaskHistory() ?? []
+		const history = (await TaskHistoryBridge.getTaskHistory()) ?? []
 		const historyItem = history.find((item) => item.id === id)
 
 		if (historyItem) {
@@ -1492,7 +1501,7 @@ export class ClineProvider
 	}
 
 	async deleteTaskFromState(id: string) {
-		const taskHistory = await TaskHistoryBridge.getTaskHistory() ?? []
+		const taskHistory = (await TaskHistoryBridge.getTaskHistory()) ?? []
 		const updatedTaskHistory = taskHistory.filter((task) => task.id !== id)
 		await TaskHistoryBridge.updateTaskHistory(undefined, updatedTaskHistory)
 		await this.postStateToWebview()
@@ -2028,7 +2037,7 @@ export class ClineProvider
 
 	async updateTaskHistory(item: HistoryItem): Promise<HistoryItem[]> {
 		// Get user-specific task history using TaskHistoryBridge
-		const history = await TaskHistoryBridge.getTaskHistory() || []
+		const history = (await TaskHistoryBridge.getTaskHistory()) || []
 		const existingItemIndex = history.findIndex((h) => h.id === item.id)
 
 		if (existingItemIndex !== -1) {

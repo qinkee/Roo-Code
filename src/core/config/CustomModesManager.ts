@@ -15,6 +15,7 @@ import { logger } from "../../utils/logging"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { ensureSettingsDirectoryExists } from "../../utils/globalContext"
 import { t } from "../../i18n"
+import { RedisSyncService } from "../../services/RedisSyncService"
 
 const ROOMODES_FILENAME = ".roomodes"
 
@@ -24,7 +25,15 @@ interface RuleFile {
 	content: string
 }
 
-interface ExportedModeConfig extends ModeConfig {
+// Extended ModeConfig with user-specific properties
+export interface UserModeConfig extends ModeConfig {
+	userId?: string // User ID for isolation
+	modeType?: "system" | "user" // Type of mode
+	createdAt?: string // Creation timestamp
+	updatedAt?: string // Last update timestamp
+}
+
+interface ExportedModeConfig extends UserModeConfig {
 	rulesFiles?: RuleFile[]
 }
 
@@ -49,16 +58,24 @@ export class CustomModesManager {
 	private disposables: vscode.Disposable[] = []
 	private isWriting = false
 	private writeQueue: Array<() => Promise<void>> = []
-	private cachedModes: ModeConfig[] | null = null
+	private cachedModes: UserModeConfig[] | null = null
 	private cachedAt: number = 0
+	private redis = RedisSyncService.getInstance()
+	private currentUserId?: string
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
 		private readonly onUpdate: () => Promise<void>,
+		userId?: string,
 	) {
+		this.currentUserId = userId
+		logger.info(`[CustomModesManager] Initialized with userId: ${userId || "undefined"}`)
+
 		this.watchCustomModesFiles().catch((error) => {
 			console.error("[CustomModesManager] Failed to setup file watchers:", error)
 		})
+		// Sync modes to Redis on startup
+		this.syncModesToRedis().catch(console.error)
 	}
 
 	private async queueWrite(operation: () => Promise<void>): Promise<void> {
@@ -352,54 +369,6 @@ export class CustomModesManager {
 		}
 	}
 
-	public async getCustomModes(): Promise<ModeConfig[]> {
-		// Check if we have a valid cached result.
-		const now = Date.now()
-
-		if (this.cachedModes && now - this.cachedAt < CustomModesManager.cacheTTL) {
-			return this.cachedModes
-		}
-
-		// Get modes from settings file.
-		const settingsPath = await this.getCustomModesFilePath()
-		const settingsModes = await this.loadModesFromFile(settingsPath)
-
-		// Get modes from .roomodes if it exists.
-		const roomodesPath = await this.getWorkspaceRoomodes()
-		const roomodesModes = roomodesPath ? await this.loadModesFromFile(roomodesPath) : []
-
-		// Create maps to store modes by source.
-		const projectModes = new Map<string, ModeConfig>()
-		const globalModes = new Map<string, ModeConfig>()
-
-		// Add project modes (they take precedence).
-		for (const mode of roomodesModes) {
-			projectModes.set(mode.slug, { ...mode, source: "project" as const })
-		}
-
-		// Add global modes.
-		for (const mode of settingsModes) {
-			if (!projectModes.has(mode.slug)) {
-				globalModes.set(mode.slug, { ...mode, source: "global" as const })
-			}
-		}
-
-		// Combine modes in the correct order: project modes first, then global modes.
-		const mergedModes = [
-			...roomodesModes.map((mode) => ({ ...mode, source: "project" as const })),
-			...settingsModes
-				.filter((mode) => !projectModes.has(mode.slug))
-				.map((mode) => ({ ...mode, source: "global" as const })),
-		]
-
-		await this.context.globalState.update("customModes", mergedModes)
-
-		this.cachedModes = mergedModes
-		this.cachedAt = now
-
-		return mergedModes
-	}
-
 	public async updateCustomMode(slug: string, config: ModeConfig): Promise<void> {
 		try {
 			// Validate the mode configuration before saving
@@ -439,9 +408,28 @@ export class CustomModesManager {
 
 			await this.queueWrite(async () => {
 				// Ensure source is set correctly based on target file.
-				const modeWithSource = {
+				// Add user-specific properties for user-created modes
+				const now = new Date().toISOString()
+				const modeWithSource: UserModeConfig = {
 					...config,
 					source: isProjectMode ? ("project" as const) : ("global" as const),
+					userId: this.currentUserId,
+					modeType: "user", // User-created modes are always 'user' type
+					updatedAt: now,
+				}
+
+				logger.info(
+					`[CustomModesManager] Updating mode ${slug} with userId: ${this.currentUserId || "undefined"}`,
+				)
+
+				// If it's a new mode (not found in existing modes), set createdAt
+				const existingModes = await this.getCustomModes()
+				const existingMode = existingModes.find((m) => m.slug === slug)
+				if (!existingMode) {
+					modeWithSource.createdAt = now
+				} else if (existingMode.createdAt) {
+					// Preserve existing createdAt
+					modeWithSource.createdAt = existingMode.createdAt
 				}
 
 				await this.updateModesInFile(targetPath, (modes) => {
@@ -502,6 +490,9 @@ export class CustomModesManager {
 		await this.context.globalState.update("customModes", mergedModes)
 
 		this.clearCache()
+
+		// Sync modes to Redis after refresh
+		await this.syncModesToRedis()
 
 		await this.onUpdate()
 	}
@@ -1000,6 +991,207 @@ export class CustomModesManager {
 	private clearCache(): void {
 		this.cachedModes = null
 		this.cachedAt = 0
+	}
+
+	/**
+	 * Set or update the current user ID
+	 */
+	public setUserId(userId: string | undefined): void {
+		logger.info(
+			`[CustomModesManager] Setting userId from ${this.currentUserId || "undefined"} to ${userId || "undefined"}`,
+		)
+		this.currentUserId = userId
+		// Clear cache when user changes
+		this.cachedModes = null
+		this.cachedAt = 0
+		// Sync modes for new user
+		this.syncModesToRedis().catch(console.error)
+	}
+
+	/**
+	 * Get the Redis key for storing user modes
+	 */
+	private getUserModesRedisKey(userId?: string): string {
+		// 使用实际的用户 ID，如果没有则不存储
+		const id = userId || this.currentUserId
+		if (!id || id === "default") {
+			// 如果没有有效的用户 ID，返回空以避免存储
+			return ""
+		}
+		// 使用与任务一致的 key 格式: roo:{userId}:modes
+		return `roo:${id}:modes`
+	}
+
+	/**
+	 * Sync modes to Redis for cross-instance access
+	 */
+	private async syncModesToRedis(): Promise<void> {
+		try {
+			// 必须有有效的用户ID才能同步
+			if (!this.currentUserId || this.currentUserId === "default") {
+				logger.debug("[CustomModesManager] No valid user ID for Redis sync")
+				return
+			}
+
+			const modes = await this.internalGetCustomModes()
+			const redisKey = this.getUserModesRedisKey(this.currentUserId)
+
+			// 如果没有有效的 key，不进行存储
+			if (!redisKey) {
+				return
+			}
+
+			const userModes = modes.filter((m) => {
+				const userMode = m as UserModeConfig
+				// 包含系统模式和属于当前用户的模式
+				return (
+					userMode.modeType === "system" ||
+					userMode.userId === this.currentUserId ||
+					(!userMode.userId && userMode.modeType === "user")
+				) // 兼容没有userId的用户模式
+			})
+
+			const systemModesCount = userModes.filter((m) => m.modeType === "system").length
+			const userModesCount = userModes.filter((m) => m.modeType === "user").length
+
+			await this.redis.set(redisKey, userModes)
+			logger.info(
+				`[CustomModesManager] Synced ${userModes.length} modes to Redis for user ${this.currentUserId} (${systemModesCount} system, ${userModesCount} user)`,
+			)
+		} catch (error) {
+			logger.error("[CustomModesManager] Failed to sync modes to Redis:", error)
+		}
+	}
+
+	/**
+	 * Get modes from Redis for a specific user
+	 */
+	public async getModesFromRedis(userId: string): Promise<UserModeConfig[]> {
+		try {
+			if (!userId || userId === "default") {
+				return []
+			}
+			const redisKey = this.getUserModesRedisKey(userId)
+			if (!redisKey) {
+				return []
+			}
+			const modes = await this.redis.get(redisKey)
+			return modes || []
+		} catch (error) {
+			logger.error("[CustomModesManager] Failed to get modes from Redis:", error)
+			return []
+		}
+	}
+
+	/**
+	 * Get all system modes (built-in modes from the extension)
+	 */
+	public async getSystemModes(): Promise<UserModeConfig[]> {
+		const { modes: builtInModes } = await import("../../shared/modes")
+		return builtInModes.map((mode) => ({
+			...mode,
+			modeType: "system" as const,
+			source: "global" as const,
+		}))
+	}
+
+	/**
+	 * Get user-specific custom modes
+	 */
+	public async getUserModes(userId?: string): Promise<UserModeConfig[]> {
+		const targetUserId = userId || this.currentUserId
+		if (!targetUserId) return []
+
+		const allModes = await this.internalGetCustomModes()
+		return allModes.filter((mode) => {
+			const userMode = mode as UserModeConfig
+			return userMode.userId === targetUserId && userMode.modeType === "user"
+		})
+	}
+
+	/**
+	 * Internal method to get modes without triggering sync
+	 */
+	private async internalGetCustomModes(): Promise<UserModeConfig[]> {
+		// Check if we have a valid cached result.
+		const now = Date.now()
+
+		if (this.cachedModes && now - this.cachedAt < CustomModesManager.cacheTTL) {
+			return this.cachedModes
+		}
+
+		// Get modes from settings file.
+		const settingsPath = await this.getCustomModesFilePath()
+		const settingsModes = await this.loadModesFromFile(settingsPath)
+
+		// Get modes from .roomodes if it exists.
+		const roomodesPath = await this.getWorkspaceRoomodes()
+		const roomodesModes = roomodesPath ? await this.loadModesFromFile(roomodesPath) : []
+
+		// Get system modes
+		const systemModes = await this.getSystemModes()
+
+		// Create maps to store modes by source.
+		const projectModes = new Map<string, UserModeConfig>()
+		const globalModes = new Map<string, UserModeConfig>()
+		const systemModesMap = new Map<string, UserModeConfig>()
+
+		// Add system modes first (lowest priority)
+		for (const mode of systemModes) {
+			systemModesMap.set(mode.slug, mode)
+		}
+
+		// Add project modes (they take precedence).
+		for (const mode of roomodesModes) {
+			const userMode: UserModeConfig = {
+				...mode,
+				source: "project" as const,
+				userId: this.currentUserId,
+				modeType: "user" as const,
+				updatedAt: new Date().toISOString(),
+			}
+			projectModes.set(mode.slug, userMode)
+		}
+
+		// Add global modes.
+		for (const mode of settingsModes) {
+			if (!projectModes.has(mode.slug)) {
+				const userMode: UserModeConfig = {
+					...mode,
+					source: "global" as const,
+					userId: this.currentUserId,
+					modeType: "user" as const,
+					updatedAt: new Date().toISOString(),
+				}
+				globalModes.set(mode.slug, userMode)
+			}
+		}
+
+		// Combine modes in the correct order: project modes first, then global modes, then system modes.
+		const mergedModes: UserModeConfig[] = [
+			...Array.from(projectModes.values()),
+			...Array.from(globalModes.values()),
+			...Array.from(systemModesMap.values()).filter(
+				(sysMode) => !projectModes.has(sysMode.slug) && !globalModes.has(sysMode.slug),
+			),
+		]
+
+		await this.context.globalState.update("customModes", mergedModes)
+
+		this.cachedModes = mergedModes
+		this.cachedAt = now
+
+		return mergedModes
+	}
+
+	/**
+	 * Public method to get custom modes with Redis sync
+	 */
+	public async getCustomModes(): Promise<UserModeConfig[]> {
+		const modes = await this.internalGetCustomModes()
+		// Sync to Redis after getting modes
+		await this.syncModesToRedis()
+		return modes
 	}
 
 	dispose(): void {

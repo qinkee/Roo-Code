@@ -1688,8 +1688,8 @@ export const webviewMessageHandler = async (
 						const changedSettings = existingMode
 							? Object.keys(message.modeConfig).filter(
 									(key) =>
-										JSON.stringify((existingMode as Record<string, unknown>)[key]) !==
-										JSON.stringify((message.modeConfig as Record<string, unknown>)[key]),
+										JSON.stringify((existingMode as any)[key]) !==
+										JSON.stringify((message.modeConfig as any)[key]),
 								)
 							: []
 
