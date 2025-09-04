@@ -196,7 +196,7 @@ export class CustomModesManager {
 		}
 	}
 
-	private async loadModesFromFile(filePath: string): Promise<ModeConfig[]> {
+	private async loadModesFromFile(filePath: string): Promise<UserModeConfig[]> {
 		try {
 			const content = await fs.readFile(filePath, "utf-8")
 			const settings = this.parseYamlSafely(content, filePath)
@@ -227,8 +227,21 @@ export class CustomModesManager {
 			const isRoomodes = filePath.endsWith(ROOMODES_FILENAME)
 			const source = isRoomodes ? ("project" as const) : ("global" as const)
 
-			// Add source to each mode
-			return result.data.customModes.map((mode) => ({ ...mode, source }))
+			// Add source to each mode and preserve existing user properties
+			return result.data.customModes.map((mode: any) => {
+				const userMode: UserModeConfig = {
+					...mode,
+					source,
+					// Preserve existing userId if present, otherwise don't set it
+					userId: mode.userId,
+					// Preserve existing modeType if present, default to "user"
+					modeType: mode.modeType || "user",
+					// Preserve timestamps
+					createdAt: mode.createdAt,
+					updatedAt: mode.updatedAt,
+				}
+				return userMode
+			})
 		} catch (error) {
 			// Only log if the error wasn't already handled in parseYamlSafely
 			if (!(error as any).alreadyHandled) {
@@ -239,9 +252,12 @@ export class CustomModesManager {
 		}
 	}
 
-	private async mergeCustomModes(projectModes: ModeConfig[], globalModes: ModeConfig[]): Promise<ModeConfig[]> {
+	private async mergeCustomModes(
+		projectModes: UserModeConfig[],
+		globalModes: UserModeConfig[],
+	): Promise<UserModeConfig[]> {
 		const slugs = new Set<string>()
-		const merged: ModeConfig[] = []
+		const merged: UserModeConfig[] = []
 
 		// Add project mode (takes precedence)
 		for (const mode of projectModes) {
@@ -448,7 +464,10 @@ export class CustomModesManager {
 		}
 	}
 
-	private async updateModesInFile(filePath: string, operation: (modes: ModeConfig[]) => ModeConfig[]): Promise<void> {
+	private async updateModesInFile(
+		filePath: string,
+		operation: (modes: UserModeConfig[]) => UserModeConfig[],
+	): Promise<void> {
 		let content = "{}"
 
 		try {
@@ -1142,26 +1161,33 @@ export class CustomModesManager {
 		}
 
 		// Add project modes (they take precedence).
+		// Only include modes that belong to the current user or have no userId (shared modes)
 		for (const mode of roomodesModes) {
-			const userMode: UserModeConfig = {
-				...mode,
-				source: "project" as const,
-				userId: this.currentUserId,
-				modeType: "user" as const,
-				updatedAt: new Date().toISOString(),
+			// Include mode if it belongs to current user or has no userId (shared)
+			if (!mode.userId || mode.userId === this.currentUserId) {
+				const userMode: UserModeConfig = {
+					...mode,
+					source: "project" as const,
+					// Keep the original userId or set to current user if not present
+					userId: mode.userId || this.currentUserId,
+					modeType: mode.modeType || "user",
+					updatedAt: mode.updatedAt || new Date().toISOString(),
+				}
+				projectModes.set(mode.slug, userMode)
 			}
-			projectModes.set(mode.slug, userMode)
 		}
 
 		// Add global modes.
 		for (const mode of settingsModes) {
-			if (!projectModes.has(mode.slug)) {
+			// Include mode if it belongs to current user or has no userId (shared) and not already in project
+			if ((!mode.userId || mode.userId === this.currentUserId) && !projectModes.has(mode.slug)) {
 				const userMode: UserModeConfig = {
 					...mode,
 					source: "global" as const,
-					userId: this.currentUserId,
-					modeType: "user" as const,
-					updatedAt: new Date().toISOString(),
+					// Keep the original userId or set to current user if not present
+					userId: mode.userId || this.currentUserId,
+					modeType: mode.modeType || "user",
+					updatedAt: mode.updatedAt || new Date().toISOString(),
 				}
 				globalModes.set(mode.slug, userMode)
 			}
