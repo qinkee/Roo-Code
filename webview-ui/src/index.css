@@ -241,24 +241,34 @@ body:focus-within .code-block-scrollable {
 	transition: none;
 }
 
+.scrollable::-webkit-scrollbar {
+	width: 8px !important;
+	height: 8px !important;
+}
+
+.scrollable::-webkit-scrollbar-track {
+	border-radius: 4px !important;
+	background: transparent !important;
+}
+
 .scrollable::-webkit-scrollbar-corner {
 	background-color: transparent !important;
 }
 
 .scrollable::-webkit-scrollbar-thumb {
-	background-color: transparent;
-	border-color: inherit;
-	border-right-style: inset;
-	border-right-width: calc(100vw + 100vh);
-	border-radius: unset !important;
+	border-radius: 4px !important;
+	background: hsla(0, 0%, 73%, 0.5) !important;
+	border-right-style: unset !important;
+	border-right-width: unset !important;
+	border-color: unset !important;
 }
 
 .scrollable::-webkit-scrollbar-thumb:hover {
-	border-color: var(--vscode-scrollbarSlider-hoverBackground);
+	background: hsla(0, 0%, 60%, 0.7) !important;
 }
 
 .scrollable::-webkit-scrollbar-thumb:active {
-	border-color: var(--vscode-scrollbarSlider-activeBackground);
+	background: hsla(0, 0%, 50%, 0.8) !important;
 }
 
 /**
@@ -479,3 +489,8 @@ input[cmdk-input]:focus {
 	transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 	transition-duration: 150ms;
 }
+
+/* 
+ * Box-IM compatible scrollbar styles applied to .scrollable class
+ * This ensures chat message containers and overflow areas use consistent styling
+ */

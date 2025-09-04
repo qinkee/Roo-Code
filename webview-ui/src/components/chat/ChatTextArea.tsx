@@ -1316,19 +1316,23 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						"font-vscode-font-family",
 						"text-vscode-editor-font-size",
 						"leading-vscode-editor-line-height",
-						isFocused
-							? "border border-vscode-focusBorder outline outline-vscode-focusBorder"
-							: isDraggingOver
-								? "border-2 border-dashed border-vscode-focusBorder"
-								: "border border-transparent",
+						// 使用相同的渐变边框样式
+						"border-2",
 						isEditMode ? "pt-1.5 pb-10 px-2" : "py-1.5 px-2",
 						"px-[8px]",
 						"pr-9",
 						"z-10",
 						"forced-color-adjust-none",
+						"rounded",
 					)}
 					style={{
 						color: "transparent",
+						borderImage: isFocused
+							? "linear-gradient(90deg, #a855f7, #ec4899, #22d3ee) 1"
+							: isDraggingOver
+								? "linear-gradient(90deg, rgba(168,85,247,0.8), rgba(236,72,153,0.8), rgba(34,211,238,0.8)) 1"
+								: "linear-gradient(90deg, rgba(168,85,247,0.5), rgba(236,72,153,0.5), rgba(34,211,238,0.5)) 1",
+						boxShadow: isFocused ? "0 0 0 1px rgba(168,85,247,0.3), 0 0 20px rgba(168,85,247,0.2)" : "none",
 					}}
 				/>
 				<DynamicTextArea
@@ -1371,16 +1375,11 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						"leading-vscode-editor-line-height",
 						"cursor-text",
 						isEditMode ? "pt-1.5 pb-10 px-2" : "py-1.5 px-2",
-						isFocused
-							? "border border-vscode-focusBorder outline outline-vscode-focusBorder"
-							: isDraggingOver
-								? "border-2 border-dashed border-vscode-focusBorder"
-								: "border border-transparent",
-						isDraggingOver
-							? "bg-[color-mix(in_srgb,var(--vscode-input-background)_95%,var(--vscode-focusBorder))]"
-							: "bg-vscode-input-background",
-						"transition-background-color duration-150 ease-in-out",
-						"will-change-background-color",
+						// 始终显示渐变边框，参考logo主题色（紫色->粉色->青蓝色）
+						"border-2",
+						"bg-vscode-input-background",
+						"transition-all duration-200 ease-in-out",
+						"will-change-border-color",
 						"min-h-[90px]",
 						"box-border",
 						"rounded",
@@ -1393,6 +1392,14 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						"scrollbar-none",
 						"scrollbar-hide",
 					)}
+					style={{
+						borderImage: isFocused
+							? "linear-gradient(90deg, #a855f7, #ec4899, #22d3ee) 1"
+							: isDraggingOver
+								? "linear-gradient(90deg, rgba(168,85,247,0.8), rgba(236,72,153,0.8), rgba(34,211,238,0.8)) 1"
+								: "linear-gradient(90deg, rgba(168,85,247,0.5), rgba(236,72,153,0.5), rgba(34,211,238,0.5)) 1",
+						boxShadow: isFocused ? "0 0 0 1px rgba(168,85,247,0.3), 0 0 20px rgba(168,85,247,0.2)" : "none",
+					}}
 					onScroll={() => updateHighlights()}
 				/>
 
