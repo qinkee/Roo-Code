@@ -68,7 +68,12 @@ const TaskHeader = ({
 	const hasTodos = todos && Array.isArray(todos) && todos.length > 0
 
 	return (
-		<div className="pt-2 pb-0 px-3 bg-gradient-to-r from-vscode-sideBar-background/30 to-vscode-editor-background/50 border-l-2 border-vscode-focusBorder/40 shadow-sm relative">
+		<div
+			className="pt-2 pb-0 px-3 bg-gradient-to-r from-vscode-sideBar-background/30 to-vscode-editor-background/50 shadow-sm relative"
+			style={{
+				borderLeft: "3px solid transparent",
+				borderImage: "linear-gradient(180deg, #a855f7, #ec4899, #22d3ee) 1",
+			}}>
 			<div
 				className={cn(
 					"px-2.5 pt-2.5 pb-2 flex flex-col gap-1.5 relative z-1 cursor-pointer",
