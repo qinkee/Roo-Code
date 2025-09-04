@@ -4324,8 +4324,8 @@ body:focus-within .code-block-scrollable {
 	transition: none;
 }
 .scrollable::-webkit-scrollbar {
-	width: 8px !important;
-	height: 8px !important;
+	width: 6px !important;
+	height: 6px !important;
 }
 .scrollable::-webkit-scrollbar-track {
 	background: 0 0 !important;

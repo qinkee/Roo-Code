@@ -71,7 +71,7 @@ const TaskHeader = ({
 		<div
 			className="pt-2 pb-0 px-3 bg-gradient-to-r from-vscode-sideBar-background/30 to-vscode-editor-background/50 shadow-sm relative"
 			style={{
-				borderLeft: "3px solid transparent",
+				borderLeft: "2px solid transparent",
 				borderImage: "linear-gradient(180deg, #a855f7, #ec4899, #22d3ee) 1",
 			}}>
 			<div
