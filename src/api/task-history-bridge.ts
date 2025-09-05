@@ -44,34 +44,69 @@ export class TaskHistoryBridge {
 
 	/**
 	 * Get task history for current or specific user
+	 * @param forceRefresh If true, will read directly from storage without any caching
 	 */
-	static async getTaskHistory(context?: vscode.ExtensionContext, userId?: string): Promise<HistoryItem[]> {
-		const ctx = context || TaskHistoryBridge.extensionContext
+	static async getTaskHistory(
+		context?: vscode.ExtensionContext | boolean,
+		userIdOrForceRefresh?: string | boolean,
+	): Promise<HistoryItem[]> {
+		// Handle overloaded parameters
+		let ctx: vscode.ExtensionContext | undefined
+		let userId: string | undefined
+		let forceRefresh = false
+
+		if (typeof context === "boolean") {
+			// Called as getTaskHistory(forceRefresh)
+			ctx = TaskHistoryBridge.extensionContext
+			forceRefresh = context
+			userId = undefined
+		} else if (typeof userIdOrForceRefresh === "boolean") {
+			// Called as getTaskHistory(context, forceRefresh)
+			ctx = context || TaskHistoryBridge.extensionContext
+			forceRefresh = userIdOrForceRefresh
+			userId = undefined
+		} else {
+			// Called as getTaskHistory(context?, userId?)
+			ctx = context || TaskHistoryBridge.extensionContext
+			userId = userIdOrForceRefresh
+			forceRefresh = false
+		}
+
 		if (!ctx) {
 			console.error("[TaskHistoryBridge] Extension context not available")
 			return []
 		}
 		// Try user-specific key first
 		const effectiveUserId = userId || TaskHistoryBridge.currentUserId
+		console.log(
+			`[TaskHistoryBridge] Getting task history - effectiveUserId: ${effectiveUserId}, currentUserId: ${TaskHistoryBridge.currentUserId}`,
+		)
+
 		if (effectiveUserId) {
 			const userKey = TaskHistoryBridge.getUserKey("taskHistory", effectiveUserId)
+			console.log(`[TaskHistoryBridge] Trying user-specific key: ${userKey}`)
+
 			const userHistory = ctx.globalState.get(userKey) as HistoryItem[] | undefined
 			if (userHistory && userHistory.length > 0) {
 				console.log(`[TaskHistoryBridge] Retrieved ${userHistory.length} tasks for user ${effectiveUserId}`)
 				return userHistory
 			}
-			
+
+			console.log(`[TaskHistoryBridge] No user-specific history found, trying Redis...`)
 			// Try to restore from Redis if local is empty
 			const redisHistory = await TaskHistoryBridge.redis.get(`roo:${effectiveUserId}:tasks`)
 			if (redisHistory && Array.isArray(redisHistory)) {
 				// Save to local storage
 				await ctx.globalState.update(userKey, redisHistory)
-				console.log(`[TaskHistoryBridge] Restored ${redisHistory.length} tasks from Redis for user ${effectiveUserId}`)
+				console.log(
+					`[TaskHistoryBridge] Restored ${redisHistory.length} tasks from Redis for user ${effectiveUserId}`,
+				)
 				return redisHistory
 			}
 		}
 
 		// Fallback to general task history
+		console.log(`[TaskHistoryBridge] Falling back to general storage...`)
 		const generalHistory = (ctx.globalState.get("taskHistory") as HistoryItem[]) || []
 		console.log(`[TaskHistoryBridge] Retrieved ${generalHistory.length} tasks from general storage`)
 		return generalHistory
@@ -92,6 +127,10 @@ export class TaskHistoryBridge {
 			return
 		}
 
+		console.log(
+			`[TaskHistoryBridge] Updating task history with ${history.length} tasks for user ${TaskHistoryBridge.currentUserId || "unknown"}`,
+		)
+
 		// Always update general history for backward compatibility
 		await ctx.globalState.update("taskHistory", history)
 
@@ -99,11 +138,15 @@ export class TaskHistoryBridge {
 		if (TaskHistoryBridge.currentUserId) {
 			const userKey = TaskHistoryBridge.getUserKey("taskHistory")
 			await ctx.globalState.update(userKey, history)
-			console.log(`[TaskHistoryBridge] Updated task history for user ${TaskHistoryBridge.currentUserId}`)
-			
+			console.log(
+				`[TaskHistoryBridge] Updated task history for user ${TaskHistoryBridge.currentUserId}: ${history.length} tasks`,
+			)
+
 			// Async sync to Redis (only keep recent 50 tasks)
 			const recentHistory = history.slice(0, 50)
 			TaskHistoryBridge.redis.set(`roo:${TaskHistoryBridge.currentUserId}:tasks`, recentHistory)
+		} else {
+			console.warn("[TaskHistoryBridge] No currentUserId available, only updated general history")
 		}
 	}
 
@@ -114,20 +157,20 @@ export class TaskHistoryBridge {
 		try {
 			// Get current task history
 			const taskHistory = await TaskHistoryBridge.getTaskHistory()
-			
+
 			// Find the new task in history (it should already be there from updateTaskHistory)
-			const taskExists = taskHistory.some(t => t.id === historyItem.id)
+			const taskExists = taskHistory.some((t) => t.id === historyItem.id)
 			if (!taskExists) {
 				taskHistory.push(historyItem)
 			}
-			
+
 			// Notify void about the updated task history
 			await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
 				tasks: taskHistory,
 				activeTaskId: historyItem.id,
 				userId: TaskHistoryBridge.currentUserId,
 			})
-			
+
 			console.log(`[TaskHistoryBridge] Notified void about new task: ${historyItem.id}`)
 		} catch (error) {
 			console.debug("[TaskHistoryBridge] Could not notify void about new task:", error)
@@ -201,13 +244,23 @@ export class TaskHistoryBridge {
 		const deleteTaskCommand = vscode.commands.registerCommand("roo-cline.deleteTask", async (taskId: string) => {
 			try {
 				console.log("[TaskHistoryBridge] Deleting task:", taskId)
+
+				// Get the task history BEFORE deletion to calculate the updated list
+				const beforeHistory = await TaskHistoryBridge.getTaskHistory(context)
+				console.log("[TaskHistoryBridge] Tasks before delete:", beforeHistory?.length ?? 0)
+
+				// Delete the task
 				await provider.deleteTaskWithId(taskId)
 
-				// Notify void about the update with user-specific task history
-				const taskHistory = TaskHistoryBridge.getTaskHistory(context)
+				// Manually filter out the deleted task to get the correct updated list
+				const updatedHistory = beforeHistory.filter((task) => task.id !== taskId)
+				console.log("[TaskHistoryBridge] Tasks after delete:", updatedHistory.length, "tasks")
+
+				// Send the manually calculated updated list
 				await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
-					tasks: taskHistory,
+					tasks: updatedHistory,
 					activeTaskId: provider.getCurrentCline()?.taskId,
+					userId: TaskHistoryBridge.currentUserId,
 				})
 
 				return { success: true }
@@ -258,7 +311,7 @@ export class TaskHistoryBridge {
 		// Helper function to notify void when task history changes
 		const notifyTaskHistoryUpdate = async () => {
 			try {
-				const taskHistory = TaskHistoryBridge.getTaskHistory(context)
+				const taskHistory = await TaskHistoryBridge.getTaskHistory(context)
 				const currentTaskId = provider.getCurrentCline()?.taskId
 
 				await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {

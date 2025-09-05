@@ -443,7 +443,8 @@ export const webviewMessageHandler = async (
 			provider.condenseTaskContext(message.text!)
 			break
 		case "deleteTaskWithId":
-			provider.deleteTaskWithId(message.text!)
+			// Use the command instead of directly calling the method to ensure proper event notification
+			await vscode.commands.executeCommand("roo-cline.deleteTask", message.text!)
 			break
 		case "deleteMultipleTasksWithIds": {
 			const ids = message.ids
@@ -461,7 +462,8 @@ export const webviewMessageHandler = async (
 
 					const batchPromises = batch.map(async (id) => {
 						try {
-							await provider.deleteTaskWithId(id)
+							// Use the command to ensure proper event notification
+							await vscode.commands.executeCommand("roo-cline.deleteTask", id)
 							return { id, success: true }
 						} catch (error) {
 							// Keep error logging for debugging purposes

@@ -69,7 +69,7 @@ const TaskHeader = ({
 
 	return (
 		<div
-			className="pt-2 pb-0 px-3 bg-gradient-to-r from-vscode-sideBar-background/30 to-vscode-editor-background/50 shadow-sm relative"
+			className="pt-2 pb-0 bg-gradient-to-r from-vscode-sideBar-background/30 to-vscode-editor-background/50 shadow-sm relative"
 			style={{
 				borderLeft: "2px solid transparent",
 				borderImage: "linear-gradient(180deg, #a855f7, #ec4899, #22d3ee) 1",
@@ -126,51 +126,61 @@ const TaskHeader = ({
 					</div>
 				</div>
 				{!isTaskExpanded && contextWindow > 0 && (
-					<div className="flex items-center gap-2 text-sm" onClick={(e) => e.stopPropagation()}>
-						<StandardTooltip
-							content={
-								<div className="space-y-1">
-									<div>
-										{t("chat:tokenProgress.tokensUsed", {
-											used: formatLargeNumber(contextTokens || 0),
-											total: formatLargeNumber(contextWindow),
-										})}
-									</div>
-									{(() => {
-										const maxTokens = model
-											? getModelMaxOutputTokens({ modelId, model, settings: apiConfiguration })
-											: 0
-										const reservedForOutput = maxTokens || 0
-										const availableSpace = contextWindow - (contextTokens || 0) - reservedForOutput
+					<div
+						className="flex items-center justify-between gap-2 text-sm"
+						onClick={(e) => e.stopPropagation()}>
+						<div className="flex items-center gap-2">
+							<StandardTooltip
+								content={
+									<div className="space-y-1">
+										<div>
+											{t("chat:tokenProgress.tokensUsed", {
+												used: formatLargeNumber(contextTokens || 0),
+												total: formatLargeNumber(contextWindow),
+											})}
+										</div>
+										{(() => {
+											const maxTokens = model
+												? getModelMaxOutputTokens({
+														modelId,
+														model,
+														settings: apiConfiguration,
+													})
+												: 0
+											const reservedForOutput = maxTokens || 0
+											const availableSpace =
+												contextWindow - (contextTokens || 0) - reservedForOutput
 
-										return (
-											<>
-												{reservedForOutput > 0 && (
-													<div>
-														{t("chat:tokenProgress.reservedForResponse", {
-															amount: formatLargeNumber(reservedForOutput),
-														})}
-													</div>
-												)}
-												{availableSpace > 0 && (
-													<div>
-														{t("chat:tokenProgress.availableSpace", {
-															amount: formatLargeNumber(availableSpace),
-														})}
-													</div>
-												)}
-											</>
-										)
-									})()}
-								</div>
-							}
-							side="top"
-							sideOffset={8}>
-							<span className="mr-1">
-								{formatLargeNumber(contextTokens || 0)} / {formatLargeNumber(contextWindow)}
-							</span>
-						</StandardTooltip>
-						{!!totalCost && <span>${totalCost.toFixed(2)}</span>}
+											return (
+												<>
+													{reservedForOutput > 0 && (
+														<div>
+															{t("chat:tokenProgress.reservedForResponse", {
+																amount: formatLargeNumber(reservedForOutput),
+															})}
+														</div>
+													)}
+													{availableSpace > 0 && (
+														<div>
+															{t("chat:tokenProgress.availableSpace", {
+																amount: formatLargeNumber(availableSpace),
+															})}
+														</div>
+													)}
+												</>
+											)
+										})()}
+									</div>
+								}
+								side="top"
+								sideOffset={8}>
+								<span className="mr-1">
+									{formatLargeNumber(contextTokens || 0)} / {formatLargeNumber(contextWindow)}
+								</span>
+							</StandardTooltip>
+							{!!totalCost && <span>${totalCost.toFixed(2)}</span>}
+						</div>
+						<TaskActions item={currentTaskItem} buttonsDisabled={buttonsDisabled} />
 					</div>
 				)}
 				{/* Expanded state: Show task text and images */}

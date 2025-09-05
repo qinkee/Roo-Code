@@ -1476,9 +1476,15 @@ export class ClineProvider
 			try {
 				await ShadowCheckpointService.deleteTask({ taskId: id, globalStorageDir, workspaceDir })
 			} catch (error) {
-				console.error(
-					`[deleteTaskWithId${id}] failed to delete associated shadow repository or branch: ${error instanceof Error ? error.message : String(error)}`,
-				)
+				// Only log as warning if it's a "directory does not exist" error, otherwise log as error
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				if (errorMessage.includes("directory that does not exist")) {
+					console.log(`[deleteTaskWithId${id}] shadow repository already cleaned up or does not exist`)
+				} else {
+					console.error(
+						`[deleteTaskWithId${id}] failed to delete associated shadow repository or branch: ${errorMessage}`,
+					)
+				}
 			}
 
 			// delete the entire task directory including checkpoints and all content
@@ -1501,9 +1507,19 @@ export class ClineProvider
 	}
 
 	async deleteTaskFromState(id: string) {
-		const taskHistory = (await TaskHistoryBridge.getTaskHistory()) ?? []
+		// Ensure we read and write with the same user context
+		const taskHistory = (await TaskHistoryBridge.getTaskHistory(this.contextProxy.extensionContext)) ?? []
+		console.log(`[deleteTaskFromState] Before delete: ${taskHistory.length} tasks, removing task: ${id}`)
+
 		const updatedTaskHistory = taskHistory.filter((task) => task.id !== id)
-		await TaskHistoryBridge.updateTaskHistory(undefined, updatedTaskHistory)
+		console.log(`[deleteTaskFromState] After delete: ${updatedTaskHistory.length} tasks`)
+
+		await TaskHistoryBridge.updateTaskHistory(this.contextProxy.extensionContext, updatedTaskHistory)
+
+		// IMPORTANT: Also update the contextProxy cache so that getState() returns the updated history
+		// This ensures postStateToWebview() sends the correct task history to the React UI
+		await this.contextProxy.setValue("taskHistory", updatedTaskHistory)
+
 		await this.postStateToWebview()
 	}
 

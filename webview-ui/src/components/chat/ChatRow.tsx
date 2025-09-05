@@ -73,7 +73,7 @@ const ChatRow = memo(
 		const prevHeightRef = useRef(0)
 
 		const [chatrow, { height }] = useSize(
-			<div className="px-[15px] py-[10px] pr-[6px]">
+			<div className="px-[5px] py-[10px] pr-[6px]">
 				<ChatRowContent {...props} />
 			</div>,
 		)
@@ -278,15 +278,19 @@ export const ChatRowContent = ({
 					</div>
 				)
 				return [
-					apiReqCancelReason !== null && apiReqCancelReason !== undefined
-						? apiReqCancelReason === "user_cancelled"
-							? getIconSpan("error", cancelledColor)
-							: getIconSpan("error", errorColor)
-						: cost !== null && cost !== undefined
-							? getIconSpan("check", successColor)
-							: apiRequestFailedMessage
-								? getIconSpan("error", errorColor)
-								: <ProgressIndicator />,
+					apiReqCancelReason !== null && apiReqCancelReason !== undefined ? (
+						apiReqCancelReason === "user_cancelled" ? (
+							getIconSpan("error", cancelledColor)
+						) : (
+							getIconSpan("error", errorColor)
+						)
+					) : cost !== null && cost !== undefined ? (
+						getIconSpan("check", successColor)
+					) : apiRequestFailedMessage ? (
+						getIconSpan("error", errorColor)
+					) : (
+						<ProgressIndicator />
+					),
 					apiReqCancelReason !== null && apiReqCancelReason !== undefined ? (
 						apiReqCancelReason === "user_cancelled" ? (
 							<span style={{ color: normalColor, fontWeight: "bold" }}>
