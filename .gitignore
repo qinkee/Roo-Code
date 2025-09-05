@@ -1,5 +1,10 @@
 .pnpm-store
 # dist - Commented out to include pre-built files
+# Build directories
+packages/build/dist/
+packages/types/dist/
+src/dist/
+src/webview-ui/build/
 out
 out-*
 node_modules
