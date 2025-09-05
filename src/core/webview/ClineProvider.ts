@@ -1508,13 +1508,13 @@ export class ClineProvider
 
 	async deleteTaskFromState(id: string) {
 		// Ensure we read and write with the same user context
-		const taskHistory = (await TaskHistoryBridge.getTaskHistory(this.contextProxy.extensionContext)) ?? []
+		const taskHistory = (await TaskHistoryBridge.getTaskHistory()) ?? []
 		console.log(`[deleteTaskFromState] Before delete: ${taskHistory.length} tasks, removing task: ${id}`)
 
 		const updatedTaskHistory = taskHistory.filter((task) => task.id !== id)
 		console.log(`[deleteTaskFromState] After delete: ${updatedTaskHistory.length} tasks`)
 
-		await TaskHistoryBridge.updateTaskHistory(this.contextProxy.extensionContext, updatedTaskHistory)
+		await TaskHistoryBridge.updateTaskHistory(undefined, updatedTaskHistory)
 
 		// IMPORTANT: Also update the contextProxy cache so that getState() returns the updated history
 		// This ensures postStateToWebview() sends the correct task history to the React UI
