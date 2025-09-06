@@ -1084,6 +1084,8 @@ var commandIds = [
   "unregisterHumanRelayCallback",
   "handleHumanRelayResponse",
   "newTask",
+  "executeTask",
+  "executeTaskWithMode",
   "setCustomStoragePath",
   "importSettings",
   "focusInput",

@@ -261,6 +261,16 @@
 				"command": "roo-cline.switchToDefaultConfig",
 				"title": "Switch to Default Config",
 				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.executeTask",
+				"title": "Execute Task",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.executeTaskWithMode",
+				"title": "Execute Task with Mode",
+				"category": "Roo Code"
 			}
 		],
 		"menus": {

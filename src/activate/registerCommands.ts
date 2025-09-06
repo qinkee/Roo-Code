@@ -12,6 +12,7 @@ import { focusPanel } from "../utils/focusPanel"
 
 import { registerHumanRelayCallback, unregisterHumanRelayCallback, handleHumanRelayResponse } from "./humanRelay"
 import { handleNewTask } from "./handleTask"
+import { executeTask, executeTaskWithMode } from "./handleTaskCommands"
 import { CodeIndexManager } from "../services/code-index/manager"
 import { importSettingsWithFeedback } from "../core/config/importExport"
 import { MdmService } from "../services/mdm/MdmService"
@@ -174,6 +175,8 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 	unregisterHumanRelayCallback: unregisterHumanRelayCallback,
 	handleHumanRelayResponse: handleHumanRelayResponse,
 	newTask: handleNewTask,
+	executeTask: executeTask,
+	executeTaskWithMode: executeTaskWithMode,
 	setCustomStoragePath: async () => {
 		const { promptForCustomStoragePath } = await import("../utils/storage")
 		await promptForCustomStoragePath()
