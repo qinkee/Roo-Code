@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>零宽字符编码测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .panel h2 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            resize: vertical;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .output {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            min-height: 50px;
+            border: 1px solid #e0e0e0;
+        }
+        .output pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .stat-item {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 零宽字符编码测试工具</h1>
+    
+    <div class="info">
+        <strong>设计理念：</strong>零宽字符编码用于在 @提及系统中隐形传递<strong>必要参数</strong>。
+        <br>
+        <strong>精简原则：</strong>
+        <ul style="margin: 5px 0; padding-left: 20px;">
+            <li><strong>任务(@任务)</strong>：只传递 <code>type</code>、<code>name</code>、<code>id</code></li>
+            <li><strong>智能体(@智能体)</strong>：只传递 <code>type</code>、<code>name</code>、<code>modeId</code></li>
+            <li>额外参数可在后续版本按需扩展，避免过度设计</li>
+        </ul>
+        编码后的文本看起来和原文一样，但包含了不可见的核心参数。
+    </div>
+
+    <div class="container">
+        <!-- 编码面板 -->
+        <div class="panel">
+            <h2>📝 编码测试</h2>
+            
+            <label>显示文本：</label>
+            <input type="text" id="displayText" value="@任务[优化代码]" style="width: 100%; padding: 8px; margin: 5px 0;">
+            
+            <label>参数数据（JSON）：</label>
+            <textarea id="paramsInput">{
+  "type": "task",
+  "name": "优化代码",
+  "id": "task-123"
+}</textarea>
+            
+            <div style="margin-top: 10px;">
+                <button onclick="testEncode()">编码</button>
+                <button onclick="createTaskMention()">创建任务提及</button>
+                <button onclick="createAgentMention()">创建智能体提及</button>
+            </div>
+            
+            <div class="output">
+                <strong>编码结果：</strong>
+                <pre id="encodeOutput"></pre>
+            </div>
+            
+            <div class="stats" id="encodeStats"></div>
+        </div>
+
+        <!-- 解码面板 -->
+        <div class="panel">
+            <h2>🔓 解码测试</h2>
+            
+            <label>待解码文本：</label>
+            <textarea id="decodeInput" placeholder="粘贴包含零宽编码的文本..."></textarea>
+            
+            <div style="margin-top: 10px;">
+                <button onclick="testDecode()">解码</button>
+                <button onclick="cleanText()">清理零宽字符</button>
+                <button onclick="copyToClipboard()">复制到剪贴板</button>
+            </div>
+            
+            <div class="output">
+                <strong>解码结果：</strong>
+                <pre id="decodeOutput"></pre>
+            </div>
+            
+            <div class="output">
+                <strong>清理后文本：</strong>
+                <pre id="cleanOutput"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- 复制粘贴测试 -->
+    <div class="panel" style="margin-top: 20px;">
+        <h2>📋 复制粘贴测试</h2>
+        <p>测试零宽编码在复制粘贴过程中是否保留：</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <label>源文本（包含零宽编码）：</label>
+                <div id="copySource" style="padding: 10px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+                    点击"生成测试文本"按钮创建
+                </div>
+                <button onclick="generateTestText()">生成测试文本</button>
+            </div>
+            
+            <div>
+                <label>粘贴区域：</label>
+                <textarea id="pasteArea" placeholder="复制左侧文本后粘贴到这里..." style="min-height: 60px;"></textarea>
+                <button onclick="verifyPaste()">验证粘贴内容</button>
+                <div id="pasteResult" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 零宽字符编码器实现
+        class ZeroWidthEncoder {
+            static CHARS = {
+                ZERO: '\u200B',
+                ONE: '\u200C',
+                SEPARATOR: '\u200D',
+                START: '\uFEFF',
+                END: '\u2060'
+            };
+
+            static VERSION = 1;
+
+            static encode(params) {
+                try {
+                    const jsonStr = JSON.stringify(params);
+                    const compressed = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+                        return String.fromCharCode('0x' + p1);
+                    }));
+                    
+                    const binary = this.stringToBinary(compressed);
+                    const encoded = this.binaryToZeroWidth(binary);
+                    const versioned = this.addVersionAndChecksum(encoded);
+                    
+                    return this.CHARS.START + versioned + this.CHARS.END;
+                } catch (error) {
+                    console.error('编码错误:', error);
+                    throw new Error('参数编码失败');
+                }
+            }
+
+            static decode(text) {
+                try {
+                    const extracted = this.extractZeroWidthContent(text);
+                    if (!extracted) return null;
+
+                    const validated = this.validateAndExtract(extracted);
+                    if (!validated) return null;
+
+                    const binary = this.zeroWidthToBinary(validated);
+                    const compressed = this.binaryToString(binary);
+                    const jsonStr = decodeURIComponent(atob(compressed).split('').map(c => {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+
+                    return JSON.parse(jsonStr);
+                } catch (error) {
+                    console.error('解码错误:', error);
+                    return null;
+                }
+            }
+
+            static stringToBinary(str) {
+                return str.split('').map(char => char.charCodeAt(0).toString(2).padStart(16, '0')).join('');
+            }
+
+            static binaryToString(binary) {
+                const chunks = binary.match(/.{1,16}/g) || [];
+                return chunks.map(chunk => String.fromCharCode(parseInt(chunk, 2))).join('');
+            }
+
+            static binaryToZeroWidth(binary) {
+                return binary.split('').map(bit => (bit === '0' ? this.CHARS.ZERO : this.CHARS.ONE)).join('');
+            }
+
+            static zeroWidthToBinary(zeroWidth) {
+                return zeroWidth.split('').map(char => {
+                    if (char === this.CHARS.ZERO) return '0';
+                    if (char === this.CHARS.ONE) return '1';
+                    return '';
+                }).join('');
+            }
+
+            static addVersionAndChecksum(encoded) {
+                const versionBinary = this.VERSION.toString(2).padStart(4, '0');
+                const versionZW = this.binaryToZeroWidth(versionBinary);
+                
+                const checksum = encoded.length % 256;
+                const checksumBinary = checksum.toString(2).padStart(8, '0');
+                const checksumZW = this.binaryToZeroWidth(checksumBinary);
+                
+                return versionZW + this.CHARS.SEPARATOR + encoded + this.CHARS.SEPARATOR + checksumZW;
+            }
+
+            static validateAndExtract(content) {
+                const parts = content.split(this.CHARS.SEPARATOR);
+                if (parts.length !== 3) return null;
+
+                const [versionZW, data, checksumZW] = parts;
+                
+                const version = parseInt(this.zeroWidthToBinary(versionZW), 2);
+                if (version !== this.VERSION) {
+                    console.warn('版本不匹配:', version);
+                    return null;
+                }
+                
+                const checksum = parseInt(this.zeroWidthToBinary(checksumZW), 2);
+                const expectedChecksum = data.length % 256;
+                if (checksum !== expectedChecksum) {
+                    console.warn('校验和不匹配');
+                    return null;
+                }
+                
+                return data;
+            }
+
+            static extractZeroWidthContent(text) {
+                const startIdx = text.indexOf(this.CHARS.START);
+                const endIdx = text.indexOf(this.CHARS.END);
+                
+                if (startIdx === -1 || endIdx === -1 || startIdx >= endIdx) {
+                    return null;
+                }
+                
+                return text.substring(startIdx + 1, endIdx);
+            }
+
+            static cleanText(text) {
+                const allZeroWidth = [
+                    this.CHARS.ZERO, this.CHARS.ONE, this.CHARS.SEPARATOR,
+                    this.CHARS.START, this.CHARS.END,
+                    '\u200E', '\u200F', '\uFEFF', '\u2060'
+                ];
+                
+                let cleaned = text;
+                allZeroWidth.forEach(char => {
+                    cleaned = cleaned.replace(new RegExp(char, 'g'), '');
+                });
+                
+                return cleaned;
+            }
+
+            static embedInText(displayText, params) {
+                const encoded = this.encode(params);
+                return displayText + encoded;
+            }
+        }
+
+        // 测试函数
+        function testEncode() {
+            try {
+                const displayText = document.getElementById('displayText').value;
+                const paramsText = document.getElementById('paramsInput').value;
+                const params = JSON.parse(paramsText);
+                
+                const result = ZeroWidthEncoder.embedInText(displayText, params);
+                
+                document.getElementById('encodeOutput').textContent = result;
+                document.getElementById('decodeInput').value = result;
+                
+                // 显示统计信息
+                const stats = `
+                    <div class="stat-item">
+                        <div class="stat-label">原始文本长度</div>
+                        <div class="stat-value">${displayText.length}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">编码后长度</div>
+                        <div class="stat-value">${result.length}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">零宽字符数</div>
+                        <div class="stat-value">${result.length - displayText.length}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">数据大小</div>
+                        <div class="stat-value">${new Blob([paramsText]).size} B</div>
+                    </div>
+                `;
+                document.getElementById('encodeStats').innerHTML = stats;
+                
+            } catch (error) {
+                document.getElementById('encodeOutput').innerHTML = 
+                    `<span class="error">编码失败: ${error.message}</span>`;
+            }
+        }
+
+        function testDecode() {
+            try {
+                const text = document.getElementById('decodeInput').value;
+                const decoded = ZeroWidthEncoder.decode(text);
+                
+                if (decoded) {
+                    document.getElementById('decodeOutput').innerHTML = 
+                        `<span class="success">解码成功：</span>\n${JSON.stringify(decoded, null, 2)}`;
+                } else {
+                    document.getElementById('decodeOutput').innerHTML = 
+                        `<span class="error">未找到零宽编码数据</span>`;
+                }
+                
+                const cleaned = ZeroWidthEncoder.cleanText(text);
+                document.getElementById('cleanOutput').textContent = cleaned;
+                
+            } catch (error) {
+                document.getElementById('decodeOutput').innerHTML = 
+                    `<span class="error">解码失败: ${error.message}</span>`;
+            }
+        }
+
+        function cleanText() {
+            const text = document.getElementById('decodeInput').value;
+            const cleaned = ZeroWidthEncoder.cleanText(text);
+            document.getElementById('cleanOutput').textContent = cleaned;
+            document.getElementById('decodeInput').value = cleaned;
+        }
+
+        function createTaskMention() {
+            const taskName = '优化代码性能';
+            const taskId = 'task-' + Date.now();
+            
+            const displayText = `@任务[${taskName}]`;
+            // 精简版：只传递必要参数
+            const params = {
+                type: 'task',
+                name: taskName,
+                id: taskId  // 任务ID是必要参数
+            };
+            
+            document.getElementById('displayText').value = displayText;
+            document.getElementById('paramsInput').value = JSON.stringify(params, null, 2);
+            testEncode();
+        }
+
+        function createAgentMention() {
+            const agentName = 'Code Review';
+            const modeId = 'code-review';
+            
+            const displayText = `@智能体[${agentName}]`;
+            // 精简版：只传递必要参数
+            const params = {
+                type: 'agent',
+                name: agentName,
+                modeId: modeId  // 模式ID是必要参数
+            };
+            
+            document.getElementById('displayText').value = displayText;
+            document.getElementById('paramsInput').value = JSON.stringify(params, null, 2);
+            testEncode();
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('encodeOutput').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制到剪贴板！');
+            });
+        }
+
+        function generateTestText() {
+            // 精简版：只传递必要参数
+            const testParams = {
+                type: 'task',
+                name: '测试任务',
+                id: 'test-' + Date.now()
+            };
+            
+            const testText = ZeroWidthEncoder.embedInText('@任务[测试复制粘贴]', testParams);
+            document.getElementById('copySource').textContent = testText;
+            
+            // 自动复制到剪贴板
+            navigator.clipboard.writeText(testText).then(() => {
+                alert('测试文本已生成并复制到剪贴板，请粘贴到右侧区域测试');
+            });
+        }
+
+        function verifyPaste() {
+            const pastedText = document.getElementById('pasteArea').value;
+            const decoded = ZeroWidthEncoder.decode(pastedText);
+            
+            const resultDiv = document.getElementById('pasteResult');
+            if (decoded) {
+                resultDiv.innerHTML = `
+                    <div class="success">✅ 零宽编码保留成功！</div>
+                    <pre>${JSON.stringify(decoded, null, 2)}</pre>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ 未检测到零宽编码</div>
+                `;
+            }
+        }
+
+        // 页面加载时生成示例
+        window.onload = function() {
+            testEncode();
+        };
+    </script>
+</body>
+</html>

@@ -3,15 +3,18 @@ import { ClineProvider } from "../core/webview/ClineProvider"
 import { getModeBySlug, modes as DEFAULT_MODES } from "../shared/modes"
 import { TaskHistoryBridge } from "../api/task-history-bridge"
 import { t } from "../i18n"
+import { ZeroWidthEncoder, MentionHelper, MentionParams } from "../utils/zeroWidthEncoder"
 
 interface TaskExecutionParams {
 	taskId?: string
 	content: string
+	metadata?: Record<string, any>
 }
 
 interface ModeTaskExecutionParams {
 	modeId: string
 	content: string
+	config?: Record<string, any>
 }
 
 /**
@@ -39,6 +42,12 @@ export const executeTask = async (params: TaskExecutionParams | null | undefined
 	}
 
 	try {
+		// 记录元数据（如果有，后续扩展用）
+		if (params.metadata && Object.keys(params.metadata).length > 0) {
+			console.log("[ExecuteTask] 收到元数据:", params.metadata)
+			// 预留扩展点：未来可以根据元数据进行额外处理
+		}
+
 		if (params.taskId) {
 			// Continue existing task with multi-round conversation
 			const { historyItem } = await visibleProvider.getTaskWithId(params.taskId)
@@ -111,6 +120,12 @@ export const executeTaskWithMode = async (params: ModeTaskExecutionParams | null
 	}
 
 	try {
+		// 记录配置信息（如果有，后续扩展用）
+		if (params.config && Object.keys(params.config).length > 0) {
+			console.log("[ExecuteTaskWithMode] 收到配置:", params.config)
+			// 预留扩展点：未来可以根据配置进行额外处理
+		}
+
 		// Verify mode exists
 		const customModes = await visibleProvider.customModesManager.getCustomModes()
 		const mode = getModeBySlug(params.modeId, customModes)
