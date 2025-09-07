@@ -127,9 +127,33 @@ describe("handleTaskCommands", () => {
 	describe("listTasks", () => {
 		it("should return formatted task list", async () => {
 			const mockHistory = [
-				{ id: "task-1", task: "First task", ts: Date.now() },
-				{ id: "task-2", task: "Second task", ts: Date.now() - 3600000 },
-				{ id: "task-3", task: null, ts: Date.now() - 7200000 },
+				{ 
+					id: "task-1", 
+					task: "First task", 
+					ts: Date.now(),
+					number: 1,
+					tokensIn: 100,
+					tokensOut: 200,
+					totalCost: 0.01
+				},
+				{ 
+					id: "task-2", 
+					task: "Second task", 
+					ts: Date.now() - 3600000,
+					number: 2,
+					tokensIn: 150,
+					tokensOut: 250,
+					totalCost: 0.02
+				},
+				{ 
+					id: "task-3", 
+					task: null as any, 
+					ts: Date.now() - 7200000,
+					number: 3,
+					tokensIn: 200,
+					tokensOut: 300,
+					totalCost: 0.03
+				},
 			]
 
 			vi.mocked(TaskHistoryBridge.getTaskHistory).mockResolvedValue(mockHistory)
@@ -145,7 +169,7 @@ describe("handleTaskCommands", () => {
 		})
 
 		it("should return empty array when no tasks", async () => {
-			vi.mocked(TaskHistoryBridge.getTaskHistory).mockResolvedValue(null)
+			vi.mocked(TaskHistoryBridge.getTaskHistory).mockResolvedValue([])
 
 			const tasks = await listTasks()
 

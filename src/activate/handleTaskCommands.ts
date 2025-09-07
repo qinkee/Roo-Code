@@ -136,7 +136,7 @@ export const executeTaskWithMode = async (params: ModeTaskExecutionParams | null
 		}
 
 		// Switch to the specified mode
-		await visibleProvider.updateGlobalState("mode", params.modeId)
+		await visibleProvider.handleModeSwitch(params.modeId)
 
 		// Load the saved API config for this mode if it exists
 		const savedConfigId = await visibleProvider.providerSettingsManager.getModeConfigId(params.modeId)
