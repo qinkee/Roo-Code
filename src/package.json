@@ -271,6 +271,16 @@
 				"command": "roo-cline.executeTaskWithMode",
 				"title": "Execute Task with Mode",
 				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.sendCloudPCNotification",
+				"title": "Send Cloud PC Notification",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.testSetTerminalNo",
+				"title": "Test Set Terminal No to Cloud PC",
+				"category": "Roo Code"
 			}
 		],
 		"menus": {

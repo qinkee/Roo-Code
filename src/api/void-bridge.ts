@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { TaskHistoryBridge } from "./task-history-bridge"
 import { SECRET_STATE_KEYS, type ProviderName, type HistoryItem } from "@roo-code/types"
+import { TerminalType } from "../types/terminal"
 
 /**
  * Bridge for communication between void renderer process and Roo-Code extension
@@ -9,6 +10,7 @@ import { SECRET_STATE_KEYS, type ProviderName, type HistoryItem } from "@roo-cod
  */
 export class VoidBridge {
 	private static currentUserId: string | undefined = undefined
+	private static currentTerminalNo: number | undefined = undefined
 	private static provider: ClineProvider | undefined = undefined
 
 	/**
@@ -26,6 +28,26 @@ export class VoidBridge {
 	}
 
 	/**
+	 * Get the current terminal type (stored in currentTerminalNo for backward compatibility)
+	 * @returns 终端类型：0-傻蛋网页端, 1-傻蛋精灵App, 2-我的电脑(VSCode), 3-我的云电脑, 4-傻蛋浏览器插件, 5-MCP端
+	 */
+	static getCurrentTerminalNo(): number | undefined {
+		console.log(`[VoidBridge] getCurrentTerminalNo called, returning: ${VoidBridge.currentTerminalNo}`)
+		return VoidBridge.currentTerminalNo
+	}
+
+	/**
+	 * Get the current terminal type as enum
+	 */
+	static getCurrentTerminalType(): TerminalType | undefined {
+		console.log(`[VoidBridge] getCurrentTerminalType called, currentTerminalNo: ${VoidBridge.currentTerminalNo}`)
+		const result =
+			VoidBridge.currentTerminalNo !== undefined ? (VoidBridge.currentTerminalNo as TerminalType) : undefined
+		console.log(`[VoidBridge] getCurrentTerminalType returning: ${result}`)
+		return result
+	}
+
+	/**
 	 * Get storage key with user prefix
 	 */
 	private static getUserKey(baseKey: string, userId?: string): string {
@@ -37,23 +59,62 @@ export class VoidBridge {
 	 * Register commands for void to update globalState
 	 */
 	static register(context: vscode.ExtensionContext) {
-		// Try to restore last user ID from globalState
+		console.log("[VoidBridge] ===== REGISTER STARTED =====")
+
+		// Try to restore last user ID and terminal number from globalState
 		const lastUserId = context.globalState.get<string>("lastUserId")
+		const lastTerminalNo = context.globalState.get<number>("lastTerminalNo")
+
+		console.log("[VoidBridge] Reading from globalState:", {
+			lastUserId,
+			lastTerminalNo,
+			lastTerminalNoType: typeof lastTerminalNo,
+		})
+
 		if (lastUserId) {
 			VoidBridge.currentUserId = lastUserId
 			TaskHistoryBridge.setCurrentUserId(lastUserId)
 			console.log("[VoidBridge] Restored last user ID:", lastUserId)
+		} else {
+			console.log("[VoidBridge] No lastUserId found in globalState")
 		}
+
+		if (lastTerminalNo !== undefined) {
+			VoidBridge.currentTerminalNo = lastTerminalNo
+			console.log("[VoidBridge] Restored last terminal number:", lastTerminalNo)
+		} else {
+			console.log(
+				"[VoidBridge] No lastTerminalNo found in globalState, currentTerminalNo remains:",
+				VoidBridge.currentTerminalNo,
+			)
+		}
+
+		console.log("[VoidBridge] Initial state after register:", {
+			currentUserId: VoidBridge.currentUserId,
+			currentTerminalNo: VoidBridge.currentTerminalNo,
+		})
 
 		// Command for void to notify user switch
 		const onUserSwitchCommand = vscode.commands.registerCommand(
 			"roo-cline.onUserSwitch",
-			async (data: { userId: string; userName?: string }) => {
+			async (data: { userId: string; userName?: string; terminalNo?: number; terminal?: number }) => {
 				try {
+					console.log("[VoidBridge] ===== USER SWITCH STARTED =====")
+					console.log("[VoidBridge] Received data:", JSON.stringify(data, null, 2))
+					// 第一性原理：
+					// - terminalNo: 账号隔离标识，固定为0
+					// - terminal: 实际终端类型，需要存储到currentTerminalNo中
+					const effectiveTerminalNo = data.terminal !== undefined ? data.terminal : 0
+
 					console.log("[VoidBridge] User switch detected:", {
 						newUserId: data.userId,
 						previousUserId: VoidBridge.currentUserId,
 						userName: data.userName,
+						terminalNo: data.terminalNo,
+						terminal: data.terminal,
+						effectiveTerminalNo: effectiveTerminalNo,
+						terminalNoType: typeof data.terminalNo,
+						terminalType: typeof data.terminal,
 					})
 
 					// Save previous user's data if exists
@@ -105,8 +166,16 @@ export class VoidBridge {
 					}
 
 					// Update local tracking
+					console.log("[VoidBridge] Updating local tracking...")
+					console.log(`[VoidBridge] Setting currentUserId to: ${data.userId}`)
 					VoidBridge.currentUserId = data.userId
+					console.log(`[VoidBridge] Setting currentTerminalNo to terminal type: ${effectiveTerminalNo}`)
+					VoidBridge.currentTerminalNo = effectiveTerminalNo
 					await context.globalState.update("lastUserId", data.userId)
+					await context.globalState.update("lastTerminalNo", effectiveTerminalNo)
+					console.log(
+						`[VoidBridge] Saved terminal type ${effectiveTerminalNo} to globalState as lastTerminalNo`,
+					)
 					TaskHistoryBridge.setCurrentUserId(data.userId)
 
 					// Restore new user's data
@@ -191,6 +260,7 @@ export class VoidBridge {
 							type: "userSwitched",
 							userId: data.userId,
 							userName: data.userName,
+							terminalNo: data.terminalNo,
 						})
 
 						// Send IM contacts to webview
@@ -232,6 +302,38 @@ export class VoidBridge {
 					})
 
 					console.log("[VoidBridge] User switch completed successfully")
+
+					// Check if this is a cloud PC terminal and send notification
+					// effectiveTerminalNo contains the actual terminal type (data.terminal)
+					if (effectiveTerminalNo === 3) {
+						// 3 = CLOUD_PC
+						console.log(
+							"[VoidBridge] Cloud PC terminal detected (terminalType=3), triggering startup notification",
+						)
+
+						// Delay a bit to ensure MCP is ready
+						setTimeout(async () => {
+							try {
+								await vscode.commands.executeCommand("roo-cline.sendCloudPCNotification")
+								console.log("[VoidBridge] Cloud PC notification command executed")
+							} catch (error) {
+								console.error("[VoidBridge] Failed to send cloud PC notification:", error)
+							}
+						}, 3000) // Wait 3 seconds for MCP to be ready
+					}
+
+					// 验证最终状态
+					console.log("[VoidBridge] ===== USER SWITCH COMPLETED =====")
+					console.log("[VoidBridge] Final state verification:", {
+						currentUserId: VoidBridge.currentUserId,
+						currentTerminalNo: VoidBridge.currentTerminalNo,
+						expectedUserId: data.userId,
+						expectedTerminalNo: effectiveTerminalNo,
+					})
+					console.log("[VoidBridge] Calling getCurrentTerminalNo() for verification:")
+					const verifyTerminalNo = VoidBridge.getCurrentTerminalNo()
+					console.log("[VoidBridge] Verification result:", verifyTerminalNo)
+
 					return { success: true, message: "User switched successfully" }
 				} catch (error) {
 					console.error("[VoidBridge] Error switching user:", error)
@@ -255,10 +357,12 @@ export class VoidBridge {
 					// Clear local tracking
 					const previousUserId = VoidBridge.currentUserId
 					VoidBridge.currentUserId = undefined
+					VoidBridge.currentTerminalNo = undefined
 					TaskHistoryBridge.setCurrentUserId(undefined)
 
-					// Clear lastUserId from storage
+					// Clear lastUserId and lastTerminalNo from storage
 					await context.globalState.update("lastUserId", undefined)
+					await context.globalState.update("lastTerminalNo", undefined)
 
 					// Clear user data from display (but keep in user-specific storage)
 					await context.globalState.update("imContacts", undefined)

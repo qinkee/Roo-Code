@@ -17,6 +17,7 @@ import { CodeIndexManager } from "../services/code-index/manager"
 import { importSettingsWithFeedback } from "../core/config/importExport"
 import { MdmService } from "../services/mdm/MdmService"
 import { ImPlatformTokenManager } from "../services/im-platform/ImPlatformTokenManager"
+import { CloudPCNotificationService } from "../services/cloud-pc/CloudPCNotificationService"
 import { t } from "../i18n"
 
 /**
@@ -286,6 +287,99 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		const tokenManager = ImPlatformTokenManager.getInstance()
 		await tokenManager.clearTokenKey()
 	},
+	sendCloudPCNotification: async () => {
+		outputChannel.appendLine("[sendCloudPCNotification] Command triggered")
+
+		try {
+			// Get MCP hub instance if available
+			const { McpServerManager } = await import("../services/mcp/McpServerManager")
+			const visibleProvider = getVisibleProviderOrLog(outputChannel) || provider
+			const mcpHub = await McpServerManager.getInstance(context, visibleProvider)
+
+			if (mcpHub) {
+				// Send cloud PC startup notification
+				const cloudPCNotificationService = CloudPCNotificationService.getInstance(outputChannel)
+				cloudPCNotificationService.reset() // Reset to allow re-sending
+				await cloudPCNotificationService.sendStartupNotification(mcpHub)
+
+				outputChannel.appendLine("[sendCloudPCNotification] Notification sent successfully")
+			} else {
+				outputChannel.appendLine("[sendCloudPCNotification] MCP hub not available")
+				vscode.window.showErrorMessage("MCP服务未初始化，无法发送云电脑启动通知")
+			}
+		} catch (error) {
+			outputChannel.appendLine(
+				`[sendCloudPCNotification] Error: ${error instanceof Error ? error.message : String(error)}`,
+			)
+			vscode.window.showErrorMessage(
+				`发送云电脑启动通知失败: ${error instanceof Error ? error.message : String(error)}`,
+			)
+		}
+	},
+	testSetTerminalNo: async () => {
+		outputChannel.appendLine("[testSetTerminalNo] Command triggered")
+
+		// 手动设置为云电脑终端类型进行测试
+		const { VoidBridge } = await import("../api/void-bridge")
+		const { TerminalType } = await import("../types/terminal")
+
+		// 询问用户输入真实的用户ID和Token
+		const userId = await vscode.window.showInputBox({
+			prompt: "请输入用户ID（留空使用test-user-123）",
+			placeHolder: "例如: 12345",
+			value: "test-user-123",
+		})
+
+		const userToken = await vscode.window.showInputBox({
+			prompt: "请输入用户Token（用于IM平台认证）",
+			password: true,
+			placeHolder: "sk-xxx",
+		})
+
+		// 如果提供了token，先设置im-platform的token
+		if (userToken) {
+			outputChannel.appendLine(`[testSetTerminalNo] Setting IM Platform token...`)
+			const tokenManager = ImPlatformTokenManager.getInstance()
+			await tokenManager.setTokenKey(userToken, true) // skipRestart=true，因为我们稍后会手动重启
+			outputChannel.appendLine(`[testSetTerminalNo] IM Platform token set`)
+		}
+
+		// 模拟用户切换事件，设置为云电脑
+		await vscode.commands.executeCommand("roo-cline.onUserSwitch", {
+			userId: userId || "test-user-123",
+			userName: "Test User",
+			terminalNo: TerminalType.CLOUD_PC, // 3 - 云电脑
+		})
+
+		// 如果设置了token，重启im-platform连接
+		if (userToken) {
+			const { McpServerManager } = await import("../services/mcp/McpServerManager")
+			const visibleProvider = getVisibleProviderOrLog(outputChannel) || provider
+			const mcpHub = await McpServerManager.getInstance(context, visibleProvider)
+			if (mcpHub) {
+				outputChannel.appendLine(`[testSetTerminalNo] Restarting IM Platform connection...`)
+				await mcpHub.restartConnection("im-platform")
+				outputChannel.appendLine(`[testSetTerminalNo] IM Platform connection restarted`)
+			}
+		}
+
+		outputChannel.appendLine(`[testSetTerminalNo] Set terminal to CLOUD_PC (${TerminalType.CLOUD_PC})`)
+
+		// 显示当前状态
+		const currentTerminalNo = VoidBridge.getCurrentTerminalNo()
+		const currentTerminalType = VoidBridge.getCurrentTerminalType()
+		const currentUserId = VoidBridge.getCurrentUserId()
+
+		outputChannel.appendLine(`[testSetTerminalNo] Current state:`)
+		outputChannel.appendLine(`  - User ID: ${currentUserId}`)
+		outputChannel.appendLine(`  - Terminal No: ${currentTerminalNo}`)
+		outputChannel.appendLine(`  - Terminal Type: ${currentTerminalType}`)
+		outputChannel.appendLine(`  - Has IM Token: ${!!userToken}`)
+
+		vscode.window.showInformationMessage(
+			`测试设置完成: 终端类型=${currentTerminalType}, 用户=${currentUserId}, Token已设置=${!!userToken}`,
+		)
+	},
 	switchToDefaultConfig: async () => {
 		// 切换到默认配置，清空显示但保留用户数据
 		// 这用于用户登出后显示欢迎页面
@@ -375,6 +469,11 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			}
 
 			outputChannel.appendLine(`[autoConfigureProvider] Processing with token: ${token.substring(0, 10)}...`)
+
+			// Set IM Platform token
+			outputChannel.appendLine("[autoConfigureProvider] Setting IM Platform token...")
+			await tokenManager.setTokenKey(token, true) // skipRestart=true, we'll restart later if needed
+			outputChannel.appendLine("[autoConfigureProvider] IM Platform token set")
 
 			// Get current state to preserve existing settings
 			outputChannel.appendLine("[autoConfigureProvider] Getting current state...")
@@ -470,6 +569,22 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			// 刷新 webview 状态
 			await currentProvider.postStateToWebview()
 			outputChannel.appendLine(`[autoConfigureProvider] Posted updated state to webview`)
+
+			// Restart IM Platform MCP connection with new token
+			try {
+				const { McpServerManager } = await import("../services/mcp/McpServerManager")
+				const mcpHub = await McpServerManager.getInstance(context, currentProvider)
+				if (mcpHub) {
+					outputChannel.appendLine(
+						`[autoConfigureProvider] Restarting IM Platform connection with new token...`,
+					)
+					await mcpHub.restartConnection("im-platform")
+					outputChannel.appendLine(`[autoConfigureProvider] IM Platform connection restarted`)
+				}
+			} catch (mcpError) {
+				outputChannel.appendLine(`[autoConfigureProvider] Failed to restart IM Platform: ${mcpError}`)
+				// Don't fail the whole operation just because MCP restart failed
+			}
 		} catch (error) {
 			outputChannel.appendLine(`Error auto-configuring provider: ${error}`)
 			vscode.window.showErrorMessage(`配置失败: ${error}`)
