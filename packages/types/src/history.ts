@@ -17,6 +17,7 @@ export const historyItemSchema = z.object({
 	size: z.number().optional(),
 	workspace: z.string().optional(),
 	mode: z.string().optional(),
+	terminalNo: z.number().optional(),
 })
 
 export type HistoryItem = z.infer<typeof historyItemSchema>

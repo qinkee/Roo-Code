@@ -19,6 +19,7 @@ export type TaskMetadataOptions = {
 	globalStoragePath: string
 	workspace: string
 	mode?: string
+	terminalNo?: number
 }
 
 export async function taskMetadata({
@@ -28,6 +29,7 @@ export async function taskMetadata({
 	globalStoragePath,
 	workspace,
 	mode,
+	terminalNo,
 }: TaskMetadataOptions) {
 	const taskDir = await getTaskDirectoryPath(globalStoragePath, taskId)
 
@@ -95,6 +97,7 @@ export async function taskMetadata({
 		size: taskDirSize,
 		workspace,
 		mode,
+		terminalNo,
 	}
 
 	return { historyItem, tokenUsage }

@@ -428,7 +428,8 @@ var historyItemSchema = z4.object({
   totalCost: z4.number(),
   size: z4.number().optional(),
   workspace: z4.string().optional(),
-  mode: z4.string().optional()
+  mode: z4.string().optional(),
+  terminalNo: z4.number().optional()
 });
 
 // src/experiment.ts
@@ -869,7 +870,9 @@ var commandIds = [
   "debugResetAllProfiles",
   "autoConfigureProvider",
   "switchToDefaultConfig",
-  "receiveUserInfo"
+  "receiveUserInfo",
+  "sendCloudPCNotification",
+  "testSetTerminalNo"
 ];
 var languages = [
   "ca",

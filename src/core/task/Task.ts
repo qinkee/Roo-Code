@@ -38,6 +38,7 @@ import { CloudService, UnifiedBridgeService } from "@roo-code/cloud"
 // api
 import { ApiHandler, ApiHandlerCreateMessageMetadata, buildApiHandler } from "../../api"
 import { ApiStream } from "../../api/transform/stream"
+import { VoidBridge } from "../../api/void-bridge"
 
 // shared
 import { findLastIndex } from "../../shared/array"
@@ -596,6 +597,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				globalStoragePath: this.globalStoragePath,
 				workspace: this.cwd,
 				mode: this._taskMode || defaultModeSlug, // Use the task's own mode, not the current provider mode
+				terminalNo: VoidBridge.getCurrentTerminalNo(),
 			})
 
 			this.emit(RooCodeEventName.TaskTokenUsageUpdated, this.taskId, tokenUsage)
@@ -1016,6 +1018,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				globalStoragePath: this.globalStoragePath,
 				workspace: this.cwd,
 				mode: this._taskMode || defaultModeSlug,
+				terminalNo: VoidBridge.getCurrentTerminalNo(),
 			})
 			
 			// Update task history immediately so it appears in the UI

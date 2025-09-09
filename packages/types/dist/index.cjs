@@ -656,7 +656,8 @@ var historyItemSchema = import_zod4.z.object({
   totalCost: import_zod4.z.number(),
   size: import_zod4.z.number().optional(),
   workspace: import_zod4.z.string().optional(),
-  mode: import_zod4.z.string().optional()
+  mode: import_zod4.z.string().optional(),
+  terminalNo: import_zod4.z.number().optional()
 });
 
 // src/experiment.ts
@@ -1097,7 +1098,9 @@ var commandIds = [
   "debugResetAllProfiles",
   "autoConfigureProvider",
   "switchToDefaultConfig",
-  "receiveUserInfo"
+  "receiveUserInfo",
+  "sendCloudPCNotification",
+  "testSetTerminalNo"
 ];
 var languages = [
   "ca",

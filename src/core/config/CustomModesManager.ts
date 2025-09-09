@@ -13,6 +13,7 @@ import { getWorkspacePath } from "../../utils/path"
 import { getGlobalRooDirectory } from "../../services/roo-config"
 import { logger } from "../../utils/logging"
 import { GlobalFileNames } from "../../shared/globalFileNames"
+import { VoidBridge } from "../../api/void-bridge"
 import { ensureSettingsDirectoryExists } from "../../utils/globalContext"
 import { t } from "../../i18n"
 import { RedisSyncService } from "../../services/RedisSyncService"
@@ -1037,8 +1038,9 @@ export class CustomModesManager {
 			// 如果没有有效的用户 ID，返回空以避免存储
 			return ""
 		}
-		// 使用与任务一致的 key 格式: roo:{userId}:modes
-		return `roo:${id}:modes`
+		// 获取终端号并构建包含终端标识的key格式: roo:{userId}:{terminalNo}:modes
+		const terminalNo = VoidBridge.getCurrentTerminalNo()
+		return terminalNo ? `roo:${id}:${terminalNo}:modes` : `roo:${id}:modes`
 	}
 
 	/**

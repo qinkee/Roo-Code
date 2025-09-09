@@ -224,6 +224,7 @@ export interface ExtensionMessage {
 	}
 	userId?: string
 	userName?: string
+	terminalNo?: number
 }
 
 export type ExtensionState = Pick<

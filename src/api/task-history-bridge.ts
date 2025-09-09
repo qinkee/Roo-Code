@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import { HistoryItem, RooCodeEventName } from "@roo-code/types"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { RedisSyncService } from "../services/RedisSyncService"
+import { VoidBridge } from "./void-bridge"
 
 /**
  * Bridge for task history synchronization between Roo-Code and void
@@ -94,7 +95,9 @@ export class TaskHistoryBridge {
 
 			console.log(`[TaskHistoryBridge] No user-specific history found, trying Redis...`)
 			// Try to restore from Redis if local is empty
-			const redisHistory = await TaskHistoryBridge.redis.get(`roo:${effectiveUserId}:tasks`)
+			const terminalNo = VoidBridge.getCurrentTerminalNo()
+			const redisKey = terminalNo ? `roo:${effectiveUserId}:${terminalNo}:tasks` : `roo:${effectiveUserId}:tasks`
+			const redisHistory = await TaskHistoryBridge.redis.get(redisKey)
 			if (redisHistory && Array.isArray(redisHistory)) {
 				// Save to local storage
 				await ctx.globalState.update(userKey, redisHistory)
@@ -144,7 +147,9 @@ export class TaskHistoryBridge {
 
 			// Async sync to Redis (only keep recent 50 tasks)
 			const recentHistory = history.slice(0, 50)
-			TaskHistoryBridge.redis.set(`roo:${TaskHistoryBridge.currentUserId}:tasks`, recentHistory)
+			const terminalNo = VoidBridge.getCurrentTerminalNo()
+			const redisKey = terminalNo ? `roo:${TaskHistoryBridge.currentUserId}:${terminalNo}:tasks` : `roo:${TaskHistoryBridge.currentUserId}:tasks`
+			TaskHistoryBridge.redis.set(redisKey, recentHistory)
 		} else {
 			console.warn("[TaskHistoryBridge] No currentUserId available, only updated general history")
 		}

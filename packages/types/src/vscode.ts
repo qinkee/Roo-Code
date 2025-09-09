@@ -63,6 +63,8 @@ export const commandIds = [
 	"autoConfigureProvider",
 	"switchToDefaultConfig",
 	"receiveUserInfo",
+	"sendCloudPCNotification",
+	"testSetTerminalNo",
 ] as const
 
 export type CommandId = (typeof commandIds)[number]

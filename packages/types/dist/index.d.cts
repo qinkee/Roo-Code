@@ -5925,6 +5925,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         size: z.ZodOptional<z.ZodNumber>;
         workspace: z.ZodOptional<z.ZodString>;
         mode: z.ZodOptional<z.ZodString>;
+        terminalNo: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         number: number;
         ts: number;
@@ -5938,6 +5939,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         mode?: string | undefined;
+        terminalNo?: number | undefined;
     }, {
         number: number;
         ts: number;
@@ -5951,6 +5953,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         mode?: string | undefined;
+        terminalNo?: number | undefined;
     }>, "many">>;
     condensingApiConfigId: z.ZodOptional<z.ZodString>;
     customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -6391,6 +6394,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         mode?: string | undefined;
+        terminalNo?: number | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -6575,6 +6579,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         mode?: string | undefined;
+        terminalNo?: number | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -6973,6 +6978,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         size: z.ZodOptional<z.ZodNumber>;
         workspace: z.ZodOptional<z.ZodString>;
         mode: z.ZodOptional<z.ZodString>;
+        terminalNo: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         number: number;
         ts: number;
@@ -6986,6 +6992,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         mode?: string | undefined;
+        terminalNo?: number | undefined;
     }, {
         number: number;
         ts: number;
@@ -6999,6 +7006,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         mode?: string | undefined;
+        terminalNo?: number | undefined;
     }>, "many">>;
     condensingApiConfigId: z.ZodOptional<z.ZodString>;
     customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -7570,6 +7578,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         mode?: string | undefined;
+        terminalNo?: number | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -7893,6 +7902,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         mode?: string | undefined;
+        terminalNo?: number | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -8353,6 +8363,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size: z.ZodOptional<z.ZodNumber>;
                 workspace: z.ZodOptional<z.ZodString>;
                 mode: z.ZodOptional<z.ZodString>;
+                terminalNo: z.ZodOptional<z.ZodNumber>;
             }, "strip", z.ZodTypeAny, {
                 number: number;
                 ts: number;
@@ -8366,6 +8377,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 mode?: string | undefined;
+                terminalNo?: number | undefined;
             }, {
                 number: number;
                 ts: number;
@@ -8379,6 +8391,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 mode?: string | undefined;
+                terminalNo?: number | undefined;
             }>, "many">>;
             condensingApiConfigId: z.ZodOptional<z.ZodString>;
             customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -8950,6 +8963,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 mode?: string | undefined;
+                terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -9273,6 +9287,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 mode?: string | undefined;
+                terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -9602,6 +9617,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 mode?: string | undefined;
+                terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -9930,6 +9946,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 mode?: string | undefined;
+                terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -10261,6 +10278,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 mode?: string | undefined;
+                terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -10592,6 +10610,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 mode?: string | undefined;
+                terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -11050,6 +11069,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size: z.ZodOptional<z.ZodNumber>;
                     workspace: z.ZodOptional<z.ZodString>;
                     mode: z.ZodOptional<z.ZodString>;
+                    terminalNo: z.ZodOptional<z.ZodNumber>;
                 }, "strip", z.ZodTypeAny, {
                     number: number;
                     ts: number;
@@ -11063,6 +11083,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     mode?: string | undefined;
+                    terminalNo?: number | undefined;
                 }, {
                     number: number;
                     ts: number;
@@ -11076,6 +11097,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     mode?: string | undefined;
+                    terminalNo?: number | undefined;
                 }>, "many">>;
                 condensingApiConfigId: z.ZodOptional<z.ZodString>;
                 customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -11647,6 +11669,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     mode?: string | undefined;
+                    terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -11970,6 +11993,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     mode?: string | undefined;
+                    terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -12299,6 +12323,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     mode?: string | undefined;
+                    terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -12627,6 +12652,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     mode?: string | undefined;
+                    terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -12958,6 +12984,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     mode?: string | undefined;
+                    terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -13289,6 +13316,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     mode?: string | undefined;
+                    terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -13642,6 +13670,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     mode?: string | undefined;
+                    terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -13984,6 +14013,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     mode?: string | undefined;
+                    terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -18928,6 +18958,7 @@ declare const historyItemSchema: z.ZodObject<{
     size: z.ZodOptional<z.ZodNumber>;
     workspace: z.ZodOptional<z.ZodString>;
     mode: z.ZodOptional<z.ZodString>;
+    terminalNo: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     number: number;
     ts: number;
@@ -18941,6 +18972,7 @@ declare const historyItemSchema: z.ZodObject<{
     size?: number | undefined;
     workspace?: string | undefined;
     mode?: string | undefined;
+    terminalNo?: number | undefined;
 }, {
     number: number;
     ts: number;
@@ -18954,6 +18986,7 @@ declare const historyItemSchema: z.ZodObject<{
     size?: number | undefined;
     workspace?: string | undefined;
     mode?: string | undefined;
+    terminalNo?: number | undefined;
 }>;
 type HistoryItem = z.infer<typeof historyItemSchema>;
 
@@ -21193,7 +21226,7 @@ type TerminalActionPromptType = `TERMINAL_${TerminalActionName}`;
 /**
  * Command
  */
-declare const commandIds: readonly ["activationCompleted", "plusButtonClicked", "promptsButtonClicked", "mcpButtonClicked", "historyButtonClicked", "marketplaceButtonClicked", "popoutButtonClicked", "accountButtonClicked", "settingsButtonClicked", "openInNewTab", "showHumanRelayDialog", "registerHumanRelayCallback", "unregisterHumanRelayCallback", "handleHumanRelayResponse", "newTask", "executeTask", "executeTaskWithMode", "setCustomStoragePath", "importSettings", "focusInput", "acceptInput", "focusPanel", "imPlatform.manageToken", "imPlatform.setToken", "imPlatform.clearToken", "debugResetAllProfiles", "autoConfigureProvider", "switchToDefaultConfig", "receiveUserInfo"];
+declare const commandIds: readonly ["activationCompleted", "plusButtonClicked", "promptsButtonClicked", "mcpButtonClicked", "historyButtonClicked", "marketplaceButtonClicked", "popoutButtonClicked", "accountButtonClicked", "settingsButtonClicked", "openInNewTab", "showHumanRelayDialog", "registerHumanRelayCallback", "unregisterHumanRelayCallback", "handleHumanRelayResponse", "newTask", "executeTask", "executeTaskWithMode", "setCustomStoragePath", "importSettings", "focusInput", "acceptInput", "focusPanel", "imPlatform.manageToken", "imPlatform.setToken", "imPlatform.clearToken", "debugResetAllProfiles", "autoConfigureProvider", "switchToDefaultConfig", "receiveUserInfo", "sendCloudPCNotification", "testSetTerminalNo"];
 type CommandId = (typeof commandIds)[number];
 /**
  * Language
