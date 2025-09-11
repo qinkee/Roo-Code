@@ -735,47 +735,8 @@ export class ClineProvider
 			throw new OrganizationAllowListViolationError(t("common:errors.violated_organization_allowlist"))
 		}
 
-		// Extract zero-width encoded parameters from text
-		let targetUserId: number | undefined = undefined
-		let targetTerminal: number | undefined = undefined
-		let chatType: string | undefined = undefined
-
-		if (text) {
-			try {
-				this.log(`[ClineProvider] Parsing text for zero-width params: "${text.substring(0, 100)}..."`)
-				const encodedParams = ZeroWidthEncoder.extractAllFromText(text)
-				this.log(`[ClineProvider] Found ${encodedParams.length} zero-width encoded params`)
-				
-				if (encodedParams.length > 0) {
-					const params = encodedParams[0].params
-					this.log(`[ClineProvider] Extracted zero-width params: ${JSON.stringify(params)}`)
-					
-					if (params.targetId) {
-						// Parse targetId format: "userId_terminalId" (e.g., "1_3")
-						const parts = params.targetId.split('_')
-						if (parts.length === 2) {
-							targetUserId = parseInt(parts[0])
-							targetTerminal = parseInt(parts[1])
-						} else {
-							// Fallback: treat as userId only
-							targetUserId = parseInt(params.targetId)
-						}
-					}
-					
-					if (params.chatType) {
-						chatType = params.chatType
-					}
-					
-					this.log(`[ClineProvider] Parsed LLM stream target: recvId=${targetUserId}, targetTerminal=${targetTerminal}, chatType=${chatType}`)
-				} else {
-					this.log(`[ClineProvider] No zero-width encoded params found in text`)
-				}
-			} catch (error) {
-				this.log(`[ClineProvider] Failed to parse zero-width encoded params: ${error}`)
-			}
-		} else {
-			this.log(`[ClineProvider] No text provided for zero-width parsing`)
-		}
+		// Note: Zero-width parameter parsing is now handled in Task constructor
+		// to properly support senderTerminal routing logic
 
 		const task = new Task({
 			provider: this,
@@ -794,11 +755,6 @@ export class ClineProvider
 			enableTaskBridge: isRemoteControlEnabled(cloudUserInfo, remoteControlEnabled),
 			...options,
 		})
-
-		// Set LLM stream target if parameters were extracted
-		if (targetUserId !== undefined || targetTerminal !== undefined || chatType !== undefined) {
-			task.setLLMStreamTarget(targetUserId, targetTerminal, chatType)
-		}
 
 		await this.addClineToStack(task)
 
@@ -2440,43 +2396,43 @@ export class ClineProvider
 	 */
 	public async testZeroWidthDecoding(): Promise<void> {
 		// 创建包含零宽编码的测试文本
-		const testText = '@智能体[GPT-4]​‍⁠‍‍‍‍‍⁠‍‍⁠⁠⁠‍⁠‍‍⁠‍‍‍⁠⁠⁠‍⁠‍⁠‍‍‍‍‍⁠‍⁠‍⁠‍‍‍‍⁠‍⁠⁠‍⁠‍‍⁠⁠‍⁠‍‍‍⁠⁠⁠⁠⁠‍‍‍⁠⁠‍‍⁠⁠⁠‍⁠⁠⁠‍‍‍‍‍⁠⁠⁠‍⁠‍‍‍‍⁠‍⁠⁠‍⁠‍‍⁠⁠‍⁠‍‍‍‍⁠‍‍‍⁠⁠‍‍⁠⁠‍‍‍⁠‍⁠‍⁠⁠⁠⁠⁠‍‍⁠⁠‍‍⁠⁠‍‍⁠‍‍⁠⁠‍‍⁠‍⁠‍‍‍‍‍⁠‍⁠‍‍⁠‍‍⁠‍‍⁠‍‍⁠‍⁠‍⁠‍⁠⁠‍‍⁠‍‍‍‍‍⁠‍⁠‍⁠‍⁠‍‍‍⁠‍‍‍⁠‍⁠‌ 请帮我分析代码'
-		
-		this.log('=== 零宽编码测试开始 ===')
+		const testText =
+			"@智能体[GPT-4]​‍⁠‍‍‍‍‍⁠‍‍⁠⁠⁠‍⁠‍‍⁠‍‍‍⁠⁠⁠‍⁠‍⁠‍‍‍‍‍⁠‍⁠‍⁠‍‍‍‍⁠‍⁠⁠‍⁠‍‍⁠⁠‍⁠‍‍‍⁠⁠⁠⁠⁠‍‍‍⁠⁠‍‍⁠⁠⁠‍⁠⁠⁠‍‍‍‍‍⁠⁠⁠‍⁠‍‍‍‍⁠‍⁠⁠‍⁠‍‍⁠⁠‍⁠‍‍‍‍⁠‍‍‍⁠⁠‍‍⁠⁠‍‍‍⁠‍⁠‍⁠⁠⁠⁠⁠‍‍⁠⁠‍‍⁠⁠‍‍⁠‍‍⁠⁠‍‍⁠‍⁠‍‍‍‍‍⁠‍⁠‍‍⁠‍‍⁠‍‍⁠‍‍⁠‍⁠‍⁠‍⁠⁠‍‍⁠‍‍‍‍‍⁠‍⁠‍⁠‍⁠‍‍‍⁠‍‍‍⁠‍⁠‌ 请帮我分析代码"
+
+		this.log("=== 零宽编码测试开始 ===")
 		this.log(`测试文本长度: ${testText.length}`)
-		this.log(`可见文本: ${testText.replace(/[\u200B-\u200D\u2060]/g, '')}`)
-		
+		this.log(`可见文本: ${testText.replace(/[\u200B-\u200D\u2060]/g, "")}`)
+
 		try {
 			// 测试零宽编码解析
 			const encodedParams = ZeroWidthEncoder.extractAllFromText(testText)
 			this.log(`找到 ${encodedParams.length} 个零宽编码参数`)
-			
+
 			if (encodedParams.length > 0) {
 				const params = encodedParams[0].params
 				this.log(`解析结果: ${JSON.stringify(params)}`)
-				
+
 				// 测试参数解析
 				if (params.targetId) {
-					const parts = params.targetId.split('_')
+					const parts = params.targetId.split("_")
 					if (parts.length === 2) {
 						const targetUserId = parseInt(parts[0])
 						const targetTerminal = parseInt(parts[1])
 						this.log(`解析 targetId: userId=${targetUserId}, terminal=${targetTerminal}`)
 					}
 				}
-				
+
 				if (params.chatType) {
 					this.log(`解析 chatType: ${params.chatType}`)
 				}
 			} else {
-				this.log('未找到零宽编码参数')
+				this.log("未找到零宽编码参数")
 			}
-			
 		} catch (error) {
 			this.log(`零宽编码解析失败: ${error}`)
 		}
-		
-		this.log('=== 零宽编码测试结束 ===')
+
+		this.log("=== 零宽编码测试结束 ===")
 	}
 }
 

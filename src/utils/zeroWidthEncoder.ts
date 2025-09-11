@@ -63,6 +63,11 @@ export class ZeroWidthEncoder {
 				data += "&" + params.chatType
 			}
 
+			// 添加 senderTerminal（发送方终端）
+			if (params.senderTerminal !== undefined) {
+				data += "!" + params.senderTerminal
+			}
+
 			// 转为UTF-8字节
 			const bytes = this.stringToBytes(data)
 
@@ -145,10 +150,16 @@ export class ZeroWidthEncoder {
 				result.targetId = targetIdMatch[1]
 			}
 
-			// 提取chatType（&后面）
-			const chatTypeMatch = remaining.match(/&(.+)/)
+			// 提取chatType（&和!之间，或&后面所有）
+			const chatTypeMatch = remaining.match(/&([^!]+)/)
 			if (chatTypeMatch) {
 				result.chatType = chatTypeMatch[1]
+			}
+
+			// 提取senderTerminal（!后面）
+			const senderTerminalMatch = remaining.match(/!(\d+)/)
+			if (senderTerminalMatch) {
+				result.senderTerminal = parseInt(senderTerminalMatch[1])
 			}
 
 			return result
