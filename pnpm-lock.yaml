@@ -577,6 +577,9 @@ importers:
       '@types/lodash.debounce':
         specifier: ^4.0.9
         version: 4.0.9
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       '@vscode/codicons':
         specifier: ^0.0.36
         version: 0.0.36
@@ -748,6 +751,9 @@ importers:
       workerpool:
         specifier: ^9.2.0
         version: 9.2.0
+      ws:
+        specifier: ^8.18.3
+        version: 8.18.3
       yaml:
         specifier: ^2.8.0
         version: 2.8.0
@@ -9707,18 +9713,6 @@ packages:
       utf-8-validate:
         optional: true
 
-  ws@8.18.2:
-    resolution: {integrity: sha512-DMricUmwGZUVr++AEAe2uiVM7UoO9MAVZMDu05UQOaUII0lp+zOzLLU4Xqh/JvTqklB1T4uELaaPBKyjE1r4fQ==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   ws@8.18.3:
     resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
     engines: {node: '>=10.0.0'}
@@ -11029,7 +11023,7 @@ snapshots:
     dependencies:
       '@modelcontextprotocol/sdk': 1.12.0
       google-auth-library: 9.15.1
-      ws: 8.18.2
+      ws: 8.18.3
       zod: 3.25.61
       zod-to-json-schema: 3.24.5(zod@3.25.61)
     transitivePeerDependencies:
@@ -11176,7 +11170,7 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 20.17.57
+      '@types/node': 20.19.9
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
@@ -11274,7 +11268,7 @@ snapshots:
 
   '@lmstudio/lms-isomorphic@0.4.5':
     dependencies:
-      ws: 8.18.2
+      ws: 8.18.3
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -13263,7 +13257,6 @@ snapshots:
   '@types/node@20.19.9':
     dependencies:
       undici-types: 6.21.0
-    optional: true
 
   '@types/node@22.15.29':
     dependencies:
@@ -13329,7 +13322,6 @@ snapshots:
   '@types/ws@8.18.1':
     dependencies:
       '@types/node': 20.19.9
-    optional: true
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -13339,7 +13331,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 20.17.50
+      '@types/node': 20.19.9
     optional: true
 
   '@typescript-eslint/eslint-plugin@8.32.1(@typescript-eslint/parser@8.32.1(eslint@9.27.0(jiti@2.4.2))(typescript@5.8.3))(eslint@9.27.0(jiti@2.4.2))(typescript@5.8.3)':
@@ -16358,7 +16350,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.17.57
+      '@types/node': 20.19.9
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -16416,7 +16408,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.2.0
-      ws: 8.18.2
+      ws: 8.18.3
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -18140,7 +18132,7 @@ snapshots:
       debug: 4.4.1(supports-color@8.1.1)
       devtools-protocol: 0.0.1367902
       typed-query-selector: 2.12.0
-      ws: 8.18.2
+      ws: 8.18.3
     transitivePeerDependencies:
       - bare-buffer
       - bufferutil
@@ -18154,7 +18146,7 @@ snapshots:
       debug: 4.4.1(supports-color@8.1.1)
       devtools-protocol: 0.0.1452169
       typed-query-selector: 2.12.0
-      ws: 8.18.2
+      ws: 8.18.3
     transitivePeerDependencies:
       - bare-buffer
       - bufferutil
@@ -20206,10 +20198,7 @@ snapshots:
 
   ws@8.17.1: {}
 
-  ws@8.18.2: {}
-
-  ws@8.18.3:
-    optional: true
+  ws@8.18.3: {}
 
   xml-name-validator@5.0.0: {}
 

@@ -43,6 +43,8 @@ import {
 	CodeActionProvider,
 } from "./activate"
 import { initializeI18n } from "./i18n"
+import { LLMStreamService } from "./services/llm-stream-service"
+import { LLMStreamTargetManager } from "./commands/llm-stream-target"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -98,6 +100,91 @@ export async function activate(context: vscode.ExtensionContext) {
 	const redisSync = RedisSyncService.getInstance()
 	redisSync.startHealthCheck()
 	outputChannel.appendLine("[Redis] Sync service initialized")
+	
+	// Initialize LLM Stream Service
+	outputChannel.appendLine("[LLM] Initializing LLM Stream Service with independent login (terminal=6)...")
+	const llmService = new LLMStreamService(context, outputChannel)
+	// Make it globally available for Task to use
+	;(global as any).llmStreamService = llmService
+	outputChannel.appendLine("[LLM] LLM Stream Service initialized and registered globally")
+	
+	// Initialize LLM Stream Target Manager
+	const llmTargetManager = LLMStreamTargetManager.getInstance()
+	await llmTargetManager.loadFromState(context)
+	;(global as any).llmStreamTargetManager = llmTargetManager
+	
+	// Register test command for LLM streaming
+	context.subscriptions.push(
+		vscode.commands.registerCommand("roo-cline.testLLMStream", async () => {
+			outputChannel.appendLine("[LLM] Test command triggered")
+			
+			// Get target user ID
+			const targetUserId = await vscode.window.showInputBox({
+				prompt: "Enter target user ID (leave empty for broadcast)",
+				placeHolder: "e.g., 1"
+			})
+			
+			// Get target terminal
+			const targetTerminal = await vscode.window.showQuickPick(
+				[
+					{ label: "All Terminals", value: undefined },
+					{ label: "0 - Web", value: "0" },
+					{ label: "1 - App", value: "1" },
+					{ label: "2 - PC", value: "2" },
+					{ label: "3 - Cloud PC", value: "3" },
+					{ label: "4 - Plugin", value: "4" },
+					{ label: "5 - MCP", value: "5" },
+					{ label: "6 - Roo-Code", value: "6" }
+				],
+				{ placeHolder: "Select target terminal" }
+			)
+			
+			const question = await vscode.window.showInputBox({
+				prompt: "Enter a test question for LLM",
+				value: "Hello, this is a test message"
+			})
+			
+			if (question) {
+				const recvId = targetUserId ? parseInt(targetUserId) : undefined
+				const terminal = targetTerminal?.value ? parseInt(targetTerminal.value) : undefined
+				
+				outputChannel.appendLine(`[LLM] Sending test question: ${question}`)
+				outputChannel.appendLine(`[LLM] Target: recvId=${recvId}, terminal=${terminal}`)
+				
+				try {
+					await llmService.streamLLMResponse(question, recvId, terminal)
+					outputChannel.appendLine("[LLM] Test stream completed")
+					vscode.window.showInformationMessage("LLM stream test completed")
+				} catch (error) {
+					outputChannel.appendLine(`[LLM] Test stream error: ${error}`)
+					vscode.window.showErrorMessage(`LLM stream test failed: ${error}`)
+				}
+			}
+		})
+	)
+	
+	// Register LLM stream target commands
+	context.subscriptions.push(
+		vscode.commands.registerCommand("roo-cline.setLLMStreamTarget", async () => {
+			await llmTargetManager.setTarget(context)
+		})
+	)
+	
+	context.subscriptions.push(
+		vscode.commands.registerCommand("roo-cline.showLLMStreamTarget", async () => {
+			await llmTargetManager.showStatus()
+		})
+	)
+	
+	context.subscriptions.push(
+		vscode.commands.registerCommand("roo-cline.clearLLMStreamTarget", async () => {
+			await context.globalState.update('llmStreamTargetUserId', undefined)
+			await context.globalState.update('llmStreamTargetTerminal', undefined)
+			await llmTargetManager.loadFromState(context)
+			vscode.window.showInformationMessage('LLM stream target cleared')
+		})
+	)
+	
 
 	// Register void bridge for IM integration
 	VoidBridge.register(context)

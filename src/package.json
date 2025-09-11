@@ -203,6 +203,26 @@
 				"category": "Roo Code"
 			},
 			{
+				"command": "roo-cline.testLLMStream",
+				"title": "Test LLM Stream",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.setLLMStreamTarget",
+				"title": "Set LLM Stream Target",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.showLLMStreamTarget",
+				"title": "Show LLM Stream Target",
+				"category": "Roo Code"
+			},
+			{
+				"command": "roo-cline.clearLLMStreamTarget",
+				"title": "Clear LLM Stream Target",
+				"category": "Roo Code"
+			},
+			{
 				"command": "roo-cline.setCustomStoragePath",
 				"title": "%command.setCustomStoragePath.title%",
 				"category": "%configuration.title%"
@@ -589,6 +609,7 @@
 		"@roo-code/telemetry": "workspace:^",
 		"@roo-code/types": "workspace:^",
 		"@types/lodash.debounce": "^4.0.9",
+		"@types/ws": "^8.18.1",
 		"@vscode/codicons": "^0.0.36",
 		"async-mutex": "^0.5.0",
 		"axios": "^1.7.4",
@@ -646,6 +667,7 @@
 		"vscode-material-icons": "^0.1.1",
 		"web-tree-sitter": "^0.25.6",
 		"workerpool": "^9.2.0",
+		"ws": "^8.18.3",
 		"yaml": "^2.8.0",
 		"zod": "^3.25.61"
 	},

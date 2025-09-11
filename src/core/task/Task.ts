@@ -286,6 +286,50 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 
 		this.taskId = historyItem ? historyItem.id : crypto.randomUUID()
+		// Register this task globally for LLM stream target updates
+		;(global as any).currentTask = this
+		
+		// 调试：记录任务创建参数
+		provider.log(`[Task Constructor] Creating task ${this.taskId}: task="${task ? task.substring(0, 100) + '...' : 'undefined'}", historyItem=${historyItem ? 'exists' : 'undefined'}`)
+		
+		// 如果是新任务且包含零宽编码，立即解析并设置目标
+		if (task && !historyItem) {
+			provider.log(`[Task Constructor] New task with content, checking for zero-width encoding`)
+			try {
+				const { ZeroWidthEncoder } = require('../../utils/zeroWidthEncoder')
+				const encodedParams = ZeroWidthEncoder.extractAllFromText(task)
+				if (encodedParams.length > 0) {
+					const params = encodedParams[0].params
+					provider.log(`[Task Constructor] Found zero-width params: ${JSON.stringify(params)}`)
+					
+					if (params.targetId || params.chatType) {
+						let targetUserId: number | undefined = undefined
+						let targetTerminal: number | undefined = undefined
+						
+						if (params.targetId) {
+							const parts = params.targetId.split('_')
+							if (parts.length === 2) {
+								targetUserId = parseInt(parts[0])
+								targetTerminal = parseInt(parts[1])
+							} else {
+								targetUserId = parseInt(params.targetId)
+							}
+						}
+						
+						// 立即设置目标参数
+						this.llmTargetUserId = targetUserId
+						this.llmTargetTerminal = targetTerminal
+						this.llmChatType = params.chatType
+						
+						provider.log(`[Task Constructor] Set LLM target: recvId=${targetUserId}, targetTerminal=${targetTerminal}, chatType=${params.chatType}`)
+					}
+				} else {
+					provider.log(`[Task Constructor] No zero-width encoding found in task`)
+				}
+			} catch (error) {
+				provider.log(`[Task Constructor] Failed to parse zero-width encoding: ${error}`)
+			}
+		}
 
 		// Normal use-case is usually retry similar history task with new workspace.
 		this.workspacePath = parentTask
@@ -884,6 +928,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					lastMessage.partial = partial
 					lastMessage.progressStatus = progressStatus
 					this.updateClineMessage(lastMessage)
+					
+					// Send LLM chunk to IM if this is assistant text
+					if (type === "text" && text) {
+						this.sendLLMChunkToIM(text, true)
+					}
 				} else {
 					// This is a new partial message, so add it with partial state.
 					const sayTs = Date.now()
@@ -2553,6 +2602,79 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 		} catch {
 			// Non-fatal error in metadata persistence
+		}
+	}
+
+	// LLM Stream Integration
+	
+	private llmStreamId: string | null = null
+	private lastChunkText: string = ""
+	private llmTargetUserId: number | undefined = undefined
+	private llmTargetTerminal: number | undefined = undefined
+	private llmChatType: string | undefined = undefined
+	
+	/**
+	 * 设置LLM流式传输的目标用户
+	 * @param recvId 接收用户ID
+	 * @param targetTerminal 目标终端类型 (0:web, 1:app, 2:pc, 3:cloud_pc, 4:plugin, 5:mcp, 6:roo-code)
+	 * @param chatType 聊天类型 (PRIVATE/GROUP)
+	 */
+	public setLLMStreamTarget(recvId?: number, targetTerminal?: number, chatType?: string): void {
+		this.llmTargetUserId = recvId
+		this.llmTargetTerminal = targetTerminal
+		this.llmChatType = chatType
+		const provider = this.providerRef.deref()
+		provider?.log(`[Task] LLM stream target set: recvId=${recvId}, targetTerminal=${targetTerminal}, chatType=${chatType}`)
+	}
+	
+	private sendLLMChunkToIM(text: string, isPartial: boolean): void {
+		try {
+			// Only send if we have LLM service available
+			const llmService = (global as any).llmStreamService
+			if (!llmService) {
+				return
+			}
+			
+			const provider = this.providerRef.deref()
+			provider?.log(`[Task] sendLLMChunkToIM: recvId=${this.llmTargetUserId}, targetTerminal=${this.llmTargetTerminal}, chatType=${this.llmChatType}`)
+			
+			// Get target from manager if not set
+			if (this.llmTargetUserId === undefined) {
+				const targetManager = (global as any).llmStreamTargetManager
+				if (targetManager) {
+					const target = targetManager.getTarget()
+					this.llmTargetUserId = target.userId
+					this.llmTargetTerminal = target.terminal
+				}
+			}
+			
+			// Start new stream if needed
+			if (!this.llmStreamId) {
+				this.llmStreamId = `task_${this.taskId}_${Date.now()}`
+				// Send stream start with target user info
+				const taskInfo = `Task ${this.taskId} started`
+				llmService.imConnection?.sendLLMRequest(taskInfo, this.llmTargetUserId, this.llmTargetTerminal, this.llmChatType)
+				console.log(`[Task] LLM stream REQUEST sent: streamId=${this.llmStreamId}, recvId=${this.llmTargetUserId}, targetTerminal=${this.llmTargetTerminal}, chatType=${this.llmChatType}`)
+			}
+			
+			// Send only the new content (delta)
+			if (isPartial && text !== this.lastChunkText) {
+				const delta = text.substring(this.lastChunkText.length)
+				if (delta) {
+					llmService.imConnection?.sendLLMChunk(this.llmStreamId, delta, this.llmTargetUserId, this.llmTargetTerminal, this.llmChatType)
+				}
+				this.lastChunkText = text
+			}
+			
+			// If not partial, send end marker
+			if (!isPartial && this.llmStreamId) {
+				console.log(`[Task] LLM stream END sent: streamId=${this.llmStreamId}, recvId=${this.llmTargetUserId}, targetTerminal=${this.llmTargetTerminal}, chatType=${this.llmChatType}`)
+				llmService.imConnection?.sendLLMEnd(this.llmStreamId, this.llmTargetUserId, this.llmTargetTerminal, this.llmChatType)
+				this.llmStreamId = null
+				this.lastChunkText = ""
+			}
+		} catch (error) {
+			console.error("[Task] Failed to send LLM chunk to IM:", error)
 		}
 	}
 

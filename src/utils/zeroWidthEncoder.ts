@@ -54,6 +54,15 @@ export class ZeroWidthEncoder {
 				data += "|" + params.modeId
 			}
 
+			// 添加targetId和chatType
+			if (params.targetId) {
+				data += "#" + params.targetId
+			}
+
+			if (params.chatType) {
+				data += "&" + params.chatType
+			}
+
 			// 转为UTF-8字节
 			const bytes = this.stringToBytes(data)
 
@@ -100,26 +109,46 @@ export class ZeroWidthEncoder {
 			// 字节转字符串
 			const data = this.bytesToString(bytes)
 
-			// 解析协议
-			const parts = data.split(/[:|]/)
+			// 解析协议 - 更新为支持新的分隔符
 			const result: Record<string, any> = {}
 
-			if (parts[0] === "T") {
+			// 先提取类型标识
+			const typeChar = data[0]
+			if (typeChar === "T") {
 				result.type = "task"
-			} else if (parts[0] === "A") {
+			} else if (typeChar === "A") {
 				result.type = "agent"
 			}
 
-			if (parts[1]) {
-				result.name = parts[1]
+			// 解析剩余部分
+			const remaining = data.substring(1)
+
+			// 提取名称（:和|之间）
+			const nameMatch = remaining.match(/^:([^|#&]+)/)
+			if (nameMatch) {
+				result.name = nameMatch[1]
 			}
 
-			if (parts[2]) {
+			// 提取ID（|和#之间）
+			const idMatch = remaining.match(/\|([^#&]+)/)
+			if (idMatch) {
 				if (result.type === "task") {
-					result.id = parts[2]
+					result.id = idMatch[1]
 				} else if (result.type === "agent") {
-					result.modeId = parts[2]
+					result.modeId = idMatch[1]
 				}
+			}
+
+			// 提取targetId（#和&之间）
+			const targetIdMatch = remaining.match(/#([^&]+)/)
+			if (targetIdMatch) {
+				result.targetId = targetIdMatch[1]
+			}
+
+			// 提取chatType（&后面）
+			const chatTypeMatch = remaining.match(/&(.+)/)
+			if (chatTypeMatch) {
+				result.chatType = chatTypeMatch[1]
 			}
 
 			return result
