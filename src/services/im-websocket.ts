@@ -176,7 +176,7 @@ export class RooCodeIMConnection {
     /**
      * 发送LLM流结束标记
      */
-    public sendLLMEnd(streamId: string, recvId?: number, targetTerminal?: number, chatType?: string): void {
+    public sendLLMEnd(streamId: string, recvId?: number, targetTerminal?: number, chatType?: string, taskInfo?: {name: string, id?: string}): void {
         const message = {
             cmd: 12, // LLM_STREAM_END
             data: {
@@ -184,11 +184,15 @@ export class RooCodeIMConnection {
                 recvId,         // 保持接收用户ID
                 targetTerminal, // 保持目标终端
                 chatType,       // 聊天类型
+                // 将taskInfo拆分为独立字段，避免JSON嵌套解析问题
+                taskName: taskInfo?.name,
+                taskId: taskInfo?.id,
                 timestamp: Date.now()
             }
         };
         
-        this.outputChannel.appendLine(`[RooCode IM] Sending LLM END (cmd=12): streamId=${streamId}, recvId=${recvId}, targetTerminal=${targetTerminal}, chatType=${chatType}`);
+        this.outputChannel.appendLine(`[RooCode IM] Sending LLM END (cmd=12): streamId=${streamId}, recvId=${recvId}, targetTerminal=${targetTerminal}, chatType=${chatType}, taskName=${taskInfo?.name}`);
+        this.outputChannel.appendLine(`[RooCode IM] 🔍 完整消息体: ${JSON.stringify(message, null, 2)}`);
         this.send(message);
         this.sequenceMap.delete(streamId);
     }

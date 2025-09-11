@@ -261,6 +261,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	isAssistantMessageParserEnabled = false
 	private lastUsedInstructions?: string
 	private skipPrevResponseIdOnce: boolean = false
+	/**
+	 * Original task text with zero-width encoding preserved
+	 * Used for task continuation to maintain routing information
+	 */
+	private originalTaskText: string | undefined
 
 	constructor({
 		provider,
@@ -293,6 +298,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		provider.log(
 			`[Task Constructor] Creating task ${this.taskId}: task="${task ? task.substring(0, 100) + "..." : "undefined"}", historyItem=${historyItem ? "exists" : "undefined"}`,
 		)
+
+		// 保存原始任务文本（包含零宽编码）
+		if (task) {
+			this.originalTaskText = task
+			provider.log(`[Task Constructor] 保存原始任务文本，长度: ${task.length}`)
+		}
 
 		// 如果是新任务且包含零宽编码，立即解析并设置目标
 		if (task && !historyItem) {
@@ -351,6 +362,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						this.llmTargetUserId = targetUserId
 						this.llmTargetTerminal = targetTerminal
 						this.llmChatType = params.chatType
+						
 
 						provider.log(`[Task Constructor] LLM 路由设置:`)
 						provider.log(`  - recvId: ${targetUserId} (接收用户)`)
@@ -681,6 +693,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 			this.emit(RooCodeEventName.TaskTokenUsageUpdated, this.taskId, tokenUsage)
 
+			// Update the stored historyItem
+			this.historyItem = historyItem
+			
 			await this.providerRef.deref()?.updateTaskHistory(historyItem)
 		} catch (error) {
 			console.error("Failed to save Roo messages:", error)
@@ -1010,6 +1025,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 					// More performant than an entire `postStateToWebview`.
 					this.updateClineMessage(lastMessage)
+					
+					// Send LLM end signal when partial message becomes complete
+					if (type === "text" && text) {
+						this.sendLLMChunkToIM(text, false)
+					}
 				} else {
 					// This is a new and complete message, so add it like normal.
 					const sayTs = Date.now()
@@ -1027,6 +1047,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						contextCondense,
 						metadata: options.metadata,
 					})
+					
+					// Send LLM end signal for new complete messages
+					if (type === "text" && text) {
+						this.sendLLMChunkToIM(text, false)
+					}
 				}
 			}
 		} else {
@@ -1050,6 +1075,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				checkpoint,
 				contextCondense,
 			})
+			
+			// Send LLM end signal for non-partial messages
+			if (type === "text" && text) {
+				this.sendLLMChunkToIM(text, false)
+			}
 		}
 	}
 
@@ -1105,6 +1135,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				terminalNo: VoidBridge.getCurrentTerminalNo(),
 			})
 
+			// Store the historyItem for later use
+			this.historyItem = historyItem
+			
 			// Update task history immediately so it appears in the UI
 			const provider = this.providerRef.deref()
 			if (provider) {
@@ -1125,6 +1158,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		await this.say("text", task, images)
 		this.isInitialized = true
 
+		// Clean zero-width characters from task text before sending to LLM
+		const { ZeroWidthEncoder } = require("../../utils/zeroWidthEncoder")
+		const cleanedTask = task ? ZeroWidthEncoder.cleanText(task) : task
+
 		let imageBlocks: Anthropic.ImageBlockParam[] = formatResponse.imageBlocks(images)
 
 		console.log(`[subtasks] task ${this.taskId}.${this.instanceId} starting`)
@@ -1132,7 +1169,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		await this.initiateTaskLoop([
 			{
 				type: "text",
-				text: `<task>\n${task}\n</task>`,
+				text: `<task>\n${cleanedTask}\n</task>`,
 			},
 			...imageBlocks,
 		])
@@ -1241,6 +1278,71 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			await this.say("user_feedback", text, images)
 			responseText = text
 			responseImages = images
+			
+			// 解析续问消息中的零宽参数以恢复LLM流式传输目标
+			if (text) {
+				const provider = this.providerRef.deref()
+				provider?.log(`[Task resumeTaskFromHistory] Attempting to parse zero-width params from text: ${text.substring(0, 100)}...`)
+				try {
+					const { ZeroWidthEncoder } = require("../../utils/zeroWidthEncoder")
+					const encodedParams = ZeroWidthEncoder.extractAllFromText(text)
+					provider?.log(`[Task resumeTaskFromHistory] Found ${encodedParams.length} encoded params`)
+					
+					if (encodedParams.length > 0) {
+						const params = encodedParams[0].params
+						provider?.log(`[Task resumeTaskFromHistory] Found zero-width params in continuation: ${JSON.stringify(params)}`)
+						
+						// 提取目标参数（与构造函数相同的逻辑）
+						let targetUserId: number | undefined = undefined
+						let targetTerminal: number | undefined = undefined
+						
+						// 解析 targetId
+						if (params.targetId) {
+							provider?.log(`[Task resumeTaskFromHistory] Processing targetId: ${params.targetId}`)
+							if (params.targetId.startsWith("group_") || !params.targetId.match(/^\d+_\d+$/)) {
+								// 群聊场景
+								provider?.log(`[Task resumeTaskFromHistory] Group chat or non-standard format`)
+								if (params.targetId.match(/^\d+$/)) {
+									targetUserId = parseInt(params.targetId)
+									provider?.log(`[Task resumeTaskFromHistory] Parsed userId from group: ${targetUserId}`)
+								}
+							} else {
+								// 私聊场景
+								const parts = params.targetId.split("_")
+								provider?.log(`[Task resumeTaskFromHistory] Private chat, parts: ${JSON.stringify(parts)}`)
+								if (parts.length === 2 && !isNaN(parseInt(parts[0])) && !isNaN(parseInt(parts[1]))) {
+									targetUserId = parseInt(parts[0])
+									provider?.log(`[Task resumeTaskFromHistory] Parsed userId: ${targetUserId}`)
+								}
+							}
+						} else {
+							provider?.log(`[Task resumeTaskFromHistory] No targetId in params`)
+						}
+						
+						// 使用 senderTerminal 作为目标终端
+						if (params.senderTerminal !== undefined) {
+							targetTerminal = params.senderTerminal
+							provider?.log(`[Task resumeTaskFromHistory] Using senderTerminal: ${targetTerminal}`)
+						} else {
+							provider?.log(`[Task resumeTaskFromHistory] No senderTerminal in params`)
+						}
+						
+						// 设置LLM流式传输目标
+						this.llmTargetUserId = targetUserId
+						this.llmTargetTerminal = targetTerminal
+						this.llmChatType = params.chatType
+						
+						provider?.log(`[Task resumeTaskFromHistory] LLM stream target restored: recvId=${targetUserId}, targetTerminal=${targetTerminal}, chatType=${params.chatType}`)
+					} else {
+						provider?.log(`[Task resumeTaskFromHistory] No encoded params found in text`)
+					}
+				} catch (error) {
+					provider?.log(`[Task resumeTaskFromHistory] Failed to parse zero-width params: ${error}`)
+				}
+			} else {
+				const provider = this.providerRef.deref()
+				provider?.log(`[Task resumeTaskFromHistory] No text to parse for zero-width params`)
+			}
 		}
 
 		// Make sure that the api conversation history can be resumed by the API,
@@ -2647,6 +2749,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	private llmTargetUserId: number | undefined = undefined
 	private llmTargetTerminal: number | undefined = undefined
 	private llmChatType: string | undefined = undefined
+	private llmTaskInfo: {name: string, id?: string} | undefined = undefined
 
 	/**
 	 * 设置LLM流式传输的目标用户
@@ -2722,6 +2825,49 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 			// If not partial, send end marker
 			if (!isPartial && this.llmStreamId) {
+				// 获取当前任务的真实名称用于续问
+				// 从原始文本中提取任务名（保留零宽编码）
+				let taskName = "AI助手"
+				
+				if (this.originalTaskText) {
+					// 从原始文本中提取 @任务[xxx] 中的xxx部分
+					const match = this.originalTaskText.match(/@任务\[([^\]]+)\]/)
+					if (match) {
+						const bracketContent = match[1] // 括号内的内容（带零宽编码）
+						
+						// 如果是"新建任务"，需要替换为实际任务名
+						if (bracketContent.includes('新建任务')) {
+							// 获取实际的任务名
+							let actualTaskName = this.historyItem?.task || this.originalTaskText
+							// 如果historyItem.task也包含@任务格式，提取真正的任务内容
+							if (actualTaskName && actualTaskName.includes('@任务')) {
+								actualTaskName = actualTaskName.replace(/@任务\[[^\]]+\]\s*/, '').trim()
+							}
+							
+							// 提取原始的零宽编码并附加到实际任务名后
+							const zeroWidthChars = bracketContent.match(/[\u200B-\u200D\u2060-\u2069\u180E\uFEFF]/g) || []
+							const zeroWidthString = zeroWidthChars.join('')
+							taskName = actualTaskName + zeroWidthString
+							
+							provider.log(`[Task] 替换新建任务为: ${taskName.replace(/[\u200B-\u200D\u2060-\u2069\u180E\uFEFF]/g, '')} (长度: ${taskName.length})`)
+						} else {
+							// 不是新建任务，直接使用括号内的内容
+							taskName = bracketContent
+						}
+					} else {
+						// 没有@任务格式，使用historyItem
+						taskName = this.historyItem?.task || "AI助手"
+					}
+				} else if (this.historyItem?.task) {
+					taskName = this.historyItem.task
+				}
+				
+				const taskInfo = {
+					name: taskName, // 任务名（包含零宽编码）
+					id: this.taskId
+				}
+				
+				provider.log(`[Task] 发送流式结束标记，任务信息: ${JSON.stringify(taskInfo)}`)
 				console.log(
 					`[Task] LLM stream END sent: streamId=${this.llmStreamId}, recvId=${this.llmTargetUserId}, targetTerminal=${this.llmTargetTerminal}, chatType=${this.llmChatType}`,
 				)
@@ -2730,6 +2876,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					this.llmTargetUserId,
 					this.llmTargetTerminal,
 					this.llmChatType,
+					taskInfo
 				)
 				this.llmStreamId = null
 				this.lastChunkText = ""
