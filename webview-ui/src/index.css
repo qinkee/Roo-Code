@@ -511,18 +511,27 @@ input[cmdk-input]:focus {
 }
 
 .message-wrapper.assistant {
-	flex-direction: row;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+/* AI消息头部：头像 + 标题 */
+.message-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
 }
 
 .message-avatar {
-	width: 32px;
-	height: 32px;
+	width: 28px;
+	height: 28px;
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	font-size: 18px;
+	font-size: 16px;
 }
 
 .message-avatar.user {
@@ -533,6 +542,19 @@ input[cmdk-input]:focus {
 	background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
+.message-title {
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--vscode-foreground);
+	opacity: 0.9;
+}
+
+.message-mode {
+	font-weight: normal;
+	opacity: 0.7;
+	margin-left: 4px;
+}
+
 .message-content {
 	max-width: 70%;
 	padding: 10px 14px;
@@ -540,6 +562,7 @@ input[cmdk-input]:focus {
 	word-wrap: break-word;
 }
 
+/* 用户消息样式 */
 .message-wrapper.user .message-content {
 	background: var(--vscode-button-background);
 	color: var(--vscode-button-foreground);
@@ -547,9 +570,14 @@ input[cmdk-input]:focus {
 	margin-left: auto;
 }
 
+/* AI消息内容区样式 - 更大更突出 */
 .message-wrapper.assistant .message-content {
 	background: var(--vscode-editor-background);
 	border: 1px solid var(--vscode-editorGroup-border);
 	color: var(--vscode-editor-foreground);
-	border-bottom-left-radius: 4px;
+	border-radius: 12px;
+	max-width: 90%;
+	margin-left: 36px; /* 头像宽度 + 间距，使内容缩进对齐 */
+	padding: 12px 16px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }

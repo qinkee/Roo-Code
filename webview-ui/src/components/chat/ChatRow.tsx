@@ -1057,7 +1057,13 @@ export const ChatRowContent = ({
 				case "text":
 					return (
 						<div className="message-wrapper assistant">
-							<div className="message-avatar assistant">🤖</div>
+							<div className="message-header">
+								<div className="message-avatar assistant">🤖</div>
+								<div className="message-title">
+									傻蛋AI
+									<span className="message-mode">- {mode || "code"} 模式</span>
+								</div>
+							</div>
 							<div className="message-content">
 								<Markdown markdown={message.text} partial={message.partial} />
 							</div>
@@ -1140,27 +1146,45 @@ export const ChatRowContent = ({
 					)
 				case "error":
 					return (
-						<>
-							{title && (
+						<div className="message-wrapper assistant">
+							<div className="message-header">
+								<div className="message-avatar assistant">🤖</div>
+								<div className="message-title">
+									傻蛋AI
+									<span className="message-mode">- {mode || "code"} 模式</span>
+								</div>
+							</div>
+							<div className="message-content">
+								{title && (
+									<div style={headerStyle}>
+										{icon}
+										{title}
+									</div>
+								)}
+								<p style={{ ...pStyle, color: "var(--vscode-errorForeground)" }}>{message.text}</p>
+							</div>
+						</div>
+					)
+				case "completion_result":
+					return (
+						<div className="message-wrapper assistant">
+							<div className="message-header">
+								<div className="message-avatar assistant">🤖</div>
+								<div className="message-title">
+									傻蛋AI
+									<span className="message-mode">- {mode || "code"} 模式</span>
+								</div>
+							</div>
+							<div className="message-content">
 								<div style={headerStyle}>
 									{icon}
 									{title}
 								</div>
-							)}
-							<p style={{ ...pStyle, color: "var(--vscode-errorForeground)" }}>{message.text}</p>
-						</>
-					)
-				case "completion_result":
-					return (
-						<>
-							<div style={headerStyle}>
-								{icon}
-								{title}
+								<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
+									<Markdown markdown={message.text} />
+								</div>
 							</div>
-							<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
-								<Markdown markdown={message.text} />
-							</div>
-						</>
+						</div>
 					)
 				case "shell_integration_warning":
 					return <CommandExecutionError />
@@ -1310,13 +1334,22 @@ export const ChatRowContent = ({
 				case "completion_result":
 					if (message.text) {
 						return (
-							<div>
-								<div style={headerStyle}>
-									{icon}
-									{title}
+							<div className="message-wrapper assistant">
+								<div className="message-header">
+									<div className="message-avatar assistant">🤖</div>
+									<div className="message-title">
+										傻蛋AI
+										<span className="message-mode">- {mode || "code"} 模式</span>
+									</div>
 								</div>
-								<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
-									<Markdown markdown={message.text} partial={message.partial} />
+								<div className="message-content">
+									<div style={headerStyle}>
+										{icon}
+										{title}
+									</div>
+									<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
+										<Markdown markdown={message.text} partial={message.partial} />
+									</div>
 								</div>
 							</div>
 						)
