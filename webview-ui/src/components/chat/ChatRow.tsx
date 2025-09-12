@@ -115,6 +115,8 @@ export const ChatRowContent = ({
 }: ChatRowContentProps) => {
 	const { t } = useTranslation()
 	const { mcpServers, alwaysAllowMcp, currentCheckpoint, mode } = useExtensionState()
+	const imagesBaseUri = (window as any).IMAGES_BASE_URI || ""
+	const aiLogoPath = imagesBaseUri + "/roo-logo.svg"
 	const [reasoningCollapsed, setReasoningCollapsed] = useState(true)
 	const [isDiffErrorExpanded, setIsDiffErrorExpanded] = useState(false)
 	const [showCopySuccess, setShowCopySuccess] = useState(false)
@@ -203,7 +205,7 @@ export const ChatRowContent = ({
 
 	const normalColor = "var(--vscode-foreground)"
 	const errorColor = "var(--vscode-errorForeground)"
-	const successColor = "var(--vscode-charts-green)"
+	const successColor = "#000000"
 	const cancelledColor = "var(--vscode-descriptionForeground)"
 
 	const [icon, title] = useMemo(() => {
@@ -257,7 +259,7 @@ export const ChatRowContent = ({
 					<span
 						className="codicon codicon-check"
 						style={{ color: successColor, marginBottom: "-1.5px" }}></span>,
-					<span style={{ color: successColor, fontWeight: "bold" }}>{t("chat:taskCompleted")}</span>,
+					<span style={{ color: successColor, fontWeight: "bold" }}>{t("chat:taskCompleted")} 🚀</span>,
 				]
 			case "api_req_retry_delayed":
 				return []
@@ -1058,7 +1060,7 @@ export const ChatRowContent = ({
 					return (
 						<div className="message-wrapper assistant">
 							<div className="message-header">
-								<div className="message-avatar assistant">🤖</div>
+								<img src={aiLogoPath} alt="AI" className="message-avatar assistant" />
 								<div className="message-title">
 									傻蛋AI
 									<span className="message-mode">- {mode || "code"} 模式</span>
@@ -1148,7 +1150,7 @@ export const ChatRowContent = ({
 					return (
 						<div className="message-wrapper assistant">
 							<div className="message-header">
-								<div className="message-avatar assistant">🤖</div>
+								<img src={aiLogoPath} alt="AI" className="message-avatar assistant" />
 								<div className="message-title">
 									傻蛋AI
 									<span className="message-mode">- {mode || "code"} 模式</span>
@@ -1169,7 +1171,7 @@ export const ChatRowContent = ({
 					return (
 						<div className="message-wrapper assistant">
 							<div className="message-header">
-								<div className="message-avatar assistant">🤖</div>
+								<img src={aiLogoPath} alt="AI" className="message-avatar assistant" />
 								<div className="message-title">
 									傻蛋AI
 									<span className="message-mode">- {mode || "code"} 模式</span>
@@ -1180,7 +1182,7 @@ export const ChatRowContent = ({
 									{icon}
 									{title}
 								</div>
-								<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
+								<div style={{ color: "#000000", paddingTop: 10 }}>
 									<Markdown markdown={message.text} />
 								</div>
 							</div>
@@ -1336,7 +1338,7 @@ export const ChatRowContent = ({
 						return (
 							<div className="message-wrapper assistant">
 								<div className="message-header">
-									<div className="message-avatar assistant">🤖</div>
+									<img src={aiLogoPath} alt="AI" className="message-avatar assistant" />
 									<div className="message-title">
 										傻蛋AI
 										<span className="message-mode">- {mode || "code"} 模式</span>
@@ -1347,7 +1349,7 @@ export const ChatRowContent = ({
 										{icon}
 										{title}
 									</div>
-									<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
+									<div style={{ color: "#000000", paddingTop: 10 }}>
 										<Markdown markdown={message.text} partial={message.partial} />
 									</div>
 								</div>

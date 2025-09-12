@@ -496,6 +496,65 @@ input[cmdk-input]:focus {
  */
 
 /**
+ * Virtuoso scroller - 悬停显示滚动条，不占用宽度
+ */
+[data-test-id="virtuoso-scroller"] {
+	overflow: auto !important;
+	scrollbar-gutter: stable; /* 防止内容跳动 */
+	padding-right: 0 !important; /* 确保内容充满整个宽度 */
+}
+
+/* Webkit浏览器（Chrome/Safari/VSCode）- 滚动条覆盖在内容上 */
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+	position: absolute;
+	right: 0;
+}
+
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-track {
+	background: transparent;
+	border-radius: 3px;
+}
+
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb {
+	background: transparent;
+	border-radius: 3px;
+	transition: background 0.3s ease;
+}
+
+/* 鼠标悬停在滚动区域时显示滚动条 */
+[data-test-id="virtuoso-scroller"]:hover::-webkit-scrollbar-thumb {
+	background: rgba(var(--vscode-scrollbarSlider-background), 0.3);
+}
+
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb:hover {
+	background: rgba(var(--vscode-scrollbarSlider-hoverBackground), 0.5);
+}
+
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb:active {
+	background: rgba(var(--vscode-scrollbarSlider-activeBackground), 0.7);
+}
+
+/* 让滚动条真正浮在内容上方 */
+[data-test-id="virtuoso-item-list"] {
+	padding-right: 0 !important;
+	width: 100% !important;
+}
+
+/* Firefox - 使用细滚动条 */
+@supports (scrollbar-width: thin) {
+	[data-test-id="virtuoso-scroller"] {
+		scrollbar-width: thin;
+		scrollbar-color: transparent transparent;
+	}
+	
+	[data-test-id="virtuoso-scroller"]:hover {
+		scrollbar-color: rgba(125, 125, 125, 0.3) transparent;
+	}
+}
+
+/**
  * IM-style message bubbles - 紧凑布局
  */
 .message-wrapper {
@@ -527,8 +586,8 @@ input[cmdk-input]:focus {
 }
 
 .message-avatar {
-	width: 20px;
-	height: 20px;
+	width: 24px;
+	height: 24px;
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
@@ -542,7 +601,23 @@ input[cmdk-input]:focus {
 }
 
 .message-avatar.assistant {
-	background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+	/* SVG头像容器样式 */
+	background: transparent;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	width: 28px;
+	height: 28px;
+}
+
+/* 确保SVG logo正确显示 */
+img.message-avatar.assistant {
+	width: 28px;
+	height: 28px;
+	object-fit: contain;
+	border-radius: 0;
+	background: transparent;
+	filter: none; /* 确保没有滤镜影响颜色 */
 }
 
 .message-title {
@@ -569,26 +644,79 @@ input[cmdk-input]:focus {
 
 /* 用户消息样式 */
 .message-wrapper.user .message-content {
-	background: var(--vscode-button-background);
-	color: var(--vscode-button-foreground);
-	border-bottom-right-radius: 4px;
+	background: color-mix(in srgb, var(--vscode-editor-background) 90%, var(--vscode-foreground) 10%);
+	border: 1px solid color-mix(in srgb, var(--vscode-editorGroup-border) 95%, black 5%);
+	color: var(--vscode-editor-foreground);
+	border-radius: 10px;
 	margin-left: auto;
-	margin-right: 2px;
+	margin-right: 8px; /* 减小与头像的间距 */
+	padding: 10px 14px;
+	box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.04);
+	position: relative;
+}
+
+/* 用户消息气泡小三角 - 指向用户头像 */
+.message-wrapper.user .message-content::before {
+	content: '';
+	position: absolute;
+	top: 8px;
+	right: -6px; /* 指向右侧头像 */
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 6px 0 6px 6px;
+	border-color: transparent transparent transparent color-mix(in srgb, var(--vscode-editorGroup-border) 95%, black 5%);
+}
+
+.message-wrapper.user .message-content::after {
+	content: '';
+	position: absolute;
+	top: 8px;
+	right: -5px; /* 指向右侧头像 */
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 6px 0 6px 6px;
+	border-color: transparent transparent transparent color-mix(in srgb, var(--vscode-editor-background) 90%, var(--vscode-foreground) 10%);
 }
 
 /* AI消息内容区样式 - 紧凑专业 */
 .message-wrapper.assistant .message-content {
 	background: var(--vscode-editor-background);
-	border: 1px solid var(--vscode-editorGroup-border);
+	border: 1px solid color-mix(in srgb, var(--vscode-editorGroup-border) 95%, black 5%);
 	color: var(--vscode-editor-foreground);
 	border-radius: 10px;
-	border-top-left-radius: 3px;
 	width: calc(100% - 1px);
 	max-width: none;
 	margin-left: 1px; /* 与头像左侧对齐 */
 	padding: 10px 14px;
 	box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.04);
 	position: relative;
+}
+
+/* AI消息气泡小三角 - 指向标题 */
+.message-wrapper.assistant .message-content::before {
+	content: '';
+	position: absolute;
+	top: -6px;
+	left: 45px; /* 调整位置以适应新的logo大小 */
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 0 6px 6px 6px;
+	border-color: transparent transparent color-mix(in srgb, var(--vscode-editorGroup-border) 95%, black 5%) transparent;
+}
+
+.message-wrapper.assistant .message-content::after {
+	content: '';
+	position: absolute;
+	top: -5px;
+	left: 45px; /* 调整位置以适应新的logo大小 */
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 0 6px 6px 6px;
+	border-color: transparent transparent var(--vscode-editor-background) transparent;
 }
 
 /* 优化代码块和内容的显示 */

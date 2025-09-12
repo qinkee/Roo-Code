@@ -163,7 +163,7 @@
 	},
 	"troubleMessage": "ShadanAI遇到问题...",
 	"apiRequest": {
-		"title": "API请求",
+		"title": "努力思考",
 		"failed": "API请求失败",
 		"streaming": "API请求...",
 		"cancelled": "API请求已取消",

@@ -33,7 +33,8 @@
       "Bash(npm install:*)",
       "Bash(pnpm add:*)",
       "Bash(pnpm run check-types:*)",
-      "Bash(pnpm run lint:*)"
+      "Bash(pnpm run lint:*)",
+      "Bash(pkill:*)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
