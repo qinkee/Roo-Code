@@ -19,6 +19,7 @@ import { TelemetryService } from "@roo-code/telemetry"
 
 import { logger } from "../../utils/logging"
 import { RedisSyncService } from "../../services/RedisSyncService"
+import { VoidBridge } from "../../api/void-bridge"
 
 type GlobalStateKey = keyof GlobalState
 type SecretStateKey = keyof SecretState
@@ -138,34 +139,13 @@ export class ContextProxy {
 
 		this._isInitialized = true
 		
-		// Try to restore from Redis (async, non-blocking)
-		if (this.userId) {
-			this.tryRestoreFromRedis()
-		}
+		// 不再从Redis恢复数据，只向Redis单向同步
+		// Redis is now write-only for task history
 	}
 	
-	private async tryRestoreFromRedis() {
-		// Only restore important data if not already present
-		const keysToRestore = ['taskHistory', 'customInstructions']
-		
-		for (const key of keysToRestore) {
-			if (!this.stateCache[key as keyof GlobalState]) {
-				try {
-					const value = await this.redis.get(`roo:${this.userId}:${key}`)
-					if (value) {
-						this.stateCache[key as keyof GlobalState] = value
-						// Write back to local storage
-						const prefixedKey = this.getPrefixedKey(key)
-						await this.originalContext.globalState.update(prefixedKey, value)
-						logger.info(`[Redis] Restored ${key} from Redis for user ${this.userId}`)
-					}
-				} catch (error) {
-					// Silently ignore Redis errors
-					logger.debug(`[Redis] Failed to restore ${key}: ${error}`)
-				}
-			}
-		}
-	}
+	// 移除从Redis恢复数据的方法
+	// 现在Redis只用于单向写入同步，不再读取
+	// private async tryRestoreFromRedis() - REMOVED
 
 	/**
 	 * Load user state from storage
@@ -335,7 +315,14 @@ export class ContextProxy {
 		
 		// Async sync to Redis (non-blocking)
 		if (this.userId && this.shouldSyncToRedis(key as string)) {
-			this.redis.set(`roo:${this.userId}:${key as string}`, value)
+			// 对于taskHistory，使用terminalNo区分不同终端
+			if (key === 'taskHistory') {
+				const terminalNo = VoidBridge.getCurrentTerminalNo()
+				const redisKey = terminalNo ? `roo:${this.userId}:${terminalNo}:${key as string}` : `roo:${this.userId}:${key as string}`
+				this.redis.set(redisKey, value)
+			} else {
+				this.redis.set(`roo:${this.userId}:${key as string}`, value)
+			}
 		}
 		
 		return updatePromise

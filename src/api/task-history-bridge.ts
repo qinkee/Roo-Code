@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import { HistoryItem, RooCodeEventName } from "@roo-code/types"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { RedisSyncService } from "../services/RedisSyncService"
-import { VoidBridge } from "./void-bridge"
+import { VoidBridge } from "./void-bridge" // 需要获取terminalNo来区分不同终端
 
 /**
  * Bridge for task history synchronization between Roo-Code and void
@@ -93,19 +93,9 @@ export class TaskHistoryBridge {
 				return userHistory
 			}
 
-			console.log(`[TaskHistoryBridge] No user-specific history found, trying Redis...`)
-			// Try to restore from Redis if local is empty
-			const terminalNo = VoidBridge.getCurrentTerminalNo()
-			const redisKey = terminalNo ? `roo:${effectiveUserId}:${terminalNo}:tasks` : `roo:${effectiveUserId}:tasks`
-			const redisHistory = await TaskHistoryBridge.redis.get(redisKey)
-			if (redisHistory && Array.isArray(redisHistory)) {
-				// Save to local storage
-				await ctx.globalState.update(userKey, redisHistory)
-				console.log(
-					`[TaskHistoryBridge] Restored ${redisHistory.length} tasks from Redis for user ${effectiveUserId}`,
-				)
-				return redisHistory
-			}
+			console.log(`[TaskHistoryBridge] No user-specific history found`)
+			// 不再从Redis读取数据，Redis现在只用于单向写入同步
+			// Redis is now write-only for task history synchronization
 		}
 
 		// Fallback to general task history
@@ -147,6 +137,7 @@ export class TaskHistoryBridge {
 
 			// Async sync to Redis (only keep recent 50 tasks)
 			const recentHistory = history.slice(0, 50)
+			// 使用terminalNo区分不同终端的任务
 			const terminalNo = VoidBridge.getCurrentTerminalNo()
 			const redisKey = terminalNo ? `roo:${TaskHistoryBridge.currentUserId}:${terminalNo}:tasks` : `roo:${TaskHistoryBridge.currentUserId}:tasks`
 			TaskHistoryBridge.redis.set(redisKey, recentHistory)

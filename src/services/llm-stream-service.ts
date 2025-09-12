@@ -3,28 +3,67 @@ import * as vscode from 'vscode';
 
 export class LLMStreamService {
     public imConnection: RooCodeIMConnection;
+    private isInitialized: boolean = false;
+    private initializePromise: Promise<void> | null = null;
     
     constructor(
         private context: vscode.ExtensionContext,
         private outputChannel: vscode.OutputChannel
     ) {
         this.imConnection = new RooCodeIMConnection(context, outputChannel);
-        this.initialize();
+        // 不再自动初始化，等待token设置后再连接
+        this.outputChannel.appendLine('[LLMStreamService] Service created, waiting for manual initialization');
     }
     
-    private async initialize() {
+    /**
+     * 手动初始化服务（确保tokenKey已设置）
+     */
+    public async initialize(): Promise<void> {
+        // 防止重复初始化
+        if (this.isInitialized) {
+            this.outputChannel.appendLine('[LLMStreamService] Already initialized');
+            return;
+        }
+        
+        // 如果正在初始化，等待完成
+        if (this.initializePromise) {
+            return this.initializePromise;
+        }
+        
+        this.initializePromise = this.doInitialize();
+        return this.initializePromise;
+    }
+    
+    private async doInitialize(): Promise<void> {
         try {
+            this.outputChannel.appendLine('[LLMStreamService] Starting initialization...');
             await this.imConnection.connect();
+            this.isInitialized = true;
             this.outputChannel.appendLine('[LLMStreamService] Service initialized with terminal=6');
         } catch (error) {
             this.outputChannel.appendLine(`[LLMStreamService] Failed to initialize: ${error}`);
+            this.initializePromise = null; // 允许重试
+            throw error;
         }
+    }
+    
+    /**
+     * 检查是否已初始化
+     */
+    public isConnected(): boolean {
+        return this.isInitialized;
     }
     
     /**
      * 发送问题到LLM并流式传输响应
      */
     async streamLLMResponse(question: string, recvId?: number, targetTerminal?: number, chatType?: string): Promise<void> {
+        // 确保已连接
+        if (!this.isInitialized) {
+            this.outputChannel.appendLine('[LLMStreamService] Not initialized, attempting to connect...');
+            await this.initialize();
+        }
+        
         this.outputChannel.appendLine(`[LLMStreamService] Starting LLM stream for question: ${question}, recvId=${recvId}, targetTerminal=${targetTerminal}, chatType=${chatType}`);
         const streamId = this.imConnection.sendLLMRequest(question, recvId, targetTerminal, chatType);
         this.outputChannel.appendLine(`[LLMStreamService] Created stream with ID: ${streamId}`);

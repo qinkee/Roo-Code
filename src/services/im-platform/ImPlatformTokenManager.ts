@@ -48,6 +48,20 @@ export class ImPlatformTokenManager {
 			if (!skipRestart && this.mcpHub) {
 				await this.restartImPlatformConnection()
 			}
+			
+			// 如果设置了tokenKey，尝试初始化IM WebSocket连接
+			if (tokenKey && (global as any).llmStreamService) {
+				console.log("[IM Platform Token] TokenKey set, initializing IM WebSocket connection...")
+				const llmService = (global as any).llmStreamService
+				if (!llmService.isConnected()) {
+					try {
+						await llmService.initialize()
+						console.log("[IM Platform Token] IM WebSocket connection established")
+					} catch (error) {
+						console.error("[IM Platform Token] Failed to initialize IM WebSocket:", error)
+					}
+				}
+			}
 
 			// 不显示消息提醒
 		} catch (error) {
@@ -112,6 +126,20 @@ export class ImPlatformTokenManager {
 
 				// 自动重启连接
 				await this.restartImPlatformConnection()
+				
+				// 如果设置了新的tokenKey，初始化IM WebSocket连接
+				if (newTokenKey && (global as any).llmStreamService) {
+					console.log("[IM Platform Token] TokenKey changed, initializing IM WebSocket connection...")
+					const llmService = (global as any).llmStreamService
+					if (!llmService.isConnected()) {
+						try {
+							await llmService.initialize()
+							console.log("[IM Platform Token] IM WebSocket connection established")
+						} catch (error) {
+							console.error("[IM Platform Token] Failed to initialize IM WebSocket:", error)
+						}
+					}
+				}
 			}
 		})
 

@@ -101,12 +101,29 @@ export async function activate(context: vscode.ExtensionContext) {
 	redisSync.startHealthCheck()
 	outputChannel.appendLine("[Redis] Sync service initialized")
 	
-	// Initialize LLM Stream Service
-	outputChannel.appendLine("[LLM] Initializing LLM Stream Service with independent login (terminal=6)...")
+	// Initialize LLM Stream Service (without connecting yet)
+	outputChannel.appendLine("[LLM] Creating LLM Stream Service (deferred connection)...")
 	const llmService = new LLMStreamService(context, outputChannel)
 	// Make it globally available for Task to use
 	;(global as any).llmStreamService = llmService
-	outputChannel.appendLine("[LLM] LLM Stream Service initialized and registered globally")
+	outputChannel.appendLine("[LLM] LLM Stream Service created and registered globally")
+	
+	// 延迟初始化：检查tokenKey是否已设置
+	setTimeout(async () => {
+		const tokenManager = ImPlatformTokenManager.getInstance()
+		if (tokenManager.hasTokenKey()) {
+			outputChannel.appendLine("[LLM] TokenKey found, initializing IM connection...")
+			try {
+				await llmService.initialize()
+				outputChannel.appendLine("[LLM] IM connection established successfully")
+			} catch (error) {
+				outputChannel.appendLine(`[LLM] Failed to initialize IM connection: ${error}`)
+			}
+		} else {
+			outputChannel.appendLine("[LLM] TokenKey not found, skipping IM connection initialization")
+			outputChannel.appendLine("[LLM] IM connection will be established when TokenKey is set")
+		}
+	}, 2000) // 等待2秒，让其他初始化完成
 	
 	// Initialize LLM Stream Target Manager
 	const llmTargetManager = LLMStreamTargetManager.getInstance()
@@ -182,6 +199,30 @@ export async function activate(context: vscode.ExtensionContext) {
 			await context.globalState.update('llmStreamTargetTerminal', undefined)
 			await llmTargetManager.loadFromState(context)
 			vscode.window.showInformationMessage('LLM stream target cleared')
+		})
+	)
+	
+	// Register command to manually initialize IM connection
+	context.subscriptions.push(
+		vscode.commands.registerCommand("roo-cline.initializeIMConnection", async () => {
+			outputChannel.appendLine("[LLM] Manual IM connection initialization requested")
+			
+			const tokenManager = ImPlatformTokenManager.getInstance()
+			if (!tokenManager.hasTokenKey()) {
+				vscode.window.showErrorMessage('TokenKey not configured. Please set it in settings first.')
+				await vscode.commands.executeCommand('workbench.action.openSettings', 'roo-cline.imPlatformTokenKey')
+				return
+			}
+			
+			try {
+				outputChannel.appendLine("[LLM] Initializing IM connection...")
+				await llmService.initialize()
+				outputChannel.appendLine("[LLM] IM connection established successfully")
+				vscode.window.showInformationMessage('IM WebSocket connection established successfully')
+			} catch (error) {
+				outputChannel.appendLine(`[LLM] Failed to initialize IM connection: ${error}`)
+				vscode.window.showErrorMessage(`Failed to connect to IM server: ${error}`)
+			}
 		})
 	)
 	

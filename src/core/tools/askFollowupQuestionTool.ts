@@ -16,7 +16,10 @@ export async function askFollowupQuestionTool(
 
 	try {
 		if (block.partial) {
-			await cline.ask("followup", removeClosingTag("question", question), block.partial).catch(() => {})
+			// 只发送问题文本，不包含suggestions，避免重复
+			// 构建仅包含question的JSON，不包含suggest数组
+			const partialJson = JSON.stringify({ question: removeClosingTag("question", question) })
+			await cline.ask("followup", partialJson, block.partial).catch(() => {})
 			return
 		} else {
 			if (!question) {

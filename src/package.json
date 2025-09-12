@@ -223,6 +223,11 @@
 				"category": "Roo Code"
 			},
 			{
+				"command": "roo-cline.initializeIMConnection",
+				"title": "Initialize IM Connection",
+				"category": "Roo Code"
+			},
+			{
 				"command": "roo-cline.setCustomStoragePath",
 				"title": "%command.setCustomStoragePath.title%",
 				"category": "%configuration.title%"
