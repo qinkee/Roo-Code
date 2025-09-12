@@ -54,7 +54,7 @@ export class RooCodeIMConnection {
                 resolve();
             };
             
-            this.ws.onmessage = (event) => {
+            this.ws.onmessage = (event: MessageEvent) => {
                 this.handleMessage(event.data.toString());
             };
             

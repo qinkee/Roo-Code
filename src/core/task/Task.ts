@@ -266,6 +266,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * Used for task continuation to maintain routing information
 	 */
 	private originalTaskText: string | undefined
+	/**
+	 * History item for persisted task information
+	 */
+	private historyItem?: HistoryItem
 
 	constructor({
 		provider,
@@ -2791,11 +2795,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 
 			// Start new stream if needed
-			provider.log(`[Task] sendLLMChunkToIM: llmStreamId=${this.llmStreamId}, checking if new stream needed`)
+			provider?.log(`[Task] sendLLMChunkToIM: llmStreamId=${this.llmStreamId}, checking if new stream needed`)
 			if (!this.llmStreamId) {
 				// Send stream start with target user info and get the actual streamId
 				const taskInfo = `Task ${this.taskId} started`
-				provider.log(`[Task] Starting new LLM stream for task ${this.taskId}`)
+				provider?.log(`[Task] Starting new LLM stream for task ${this.taskId}`)
 				this.llmStreamId =
 					llmService.imConnection?.sendLLMRequest(
 						taskInfo,
@@ -2803,7 +2807,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						this.llmTargetTerminal,
 						this.llmChatType,
 					) || null
-				provider.log(
+				provider?.log(
 					`[Task] LLM stream REQUEST sent: streamId=${this.llmStreamId}, recvId=${this.llmTargetUserId}, targetTerminal=${this.llmTargetTerminal}, chatType=${this.llmChatType}`,
 				)
 			}
@@ -2849,7 +2853,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							const zeroWidthString = zeroWidthChars.join('')
 							taskName = actualTaskName + zeroWidthString
 							
-							provider.log(`[Task] 替换新建任务为: ${taskName.replace(/[\u200B-\u200D\u2060-\u2069\u180E\uFEFF]/g, '')} (长度: ${taskName.length})`)
+							provider?.log(`[Task] 替换新建任务为: ${taskName.replace(/[\u200B-\u200D\u2060-\u2069\u180E\uFEFF]/g, '')} (长度: ${taskName.length})`)
 						} else {
 							// 不是新建任务，直接使用括号内的内容
 							taskName = bracketContent
@@ -2867,7 +2871,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					id: this.taskId
 				}
 				
-				provider.log(`[Task] 发送流式结束标记，任务信息: ${JSON.stringify(taskInfo)}`)
+				provider?.log(`[Task] 发送流式结束标记，任务信息: ${JSON.stringify(taskInfo)}`)
 				console.log(
 					`[Task] LLM stream END sent: streamId=${this.llmStreamId}, recvId=${this.llmTargetUserId}, targetTerminal=${this.llmTargetTerminal}, chatType=${this.llmChatType}`,
 				)
