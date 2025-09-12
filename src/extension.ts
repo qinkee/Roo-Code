@@ -45,6 +45,7 @@ import {
 import { initializeI18n } from "./i18n"
 import { LLMStreamService } from "./services/llm-stream-service"
 import { LLMStreamTargetManager } from "./commands/llm-stream-target"
+import { ImPlatformTokenManager } from "./services/im-platform/ImPlatformTokenManager"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -95,19 +96,19 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Initialize terminal shell execution handlers.
 	TerminalRegistry.initialize()
-	
+
 	// Initialize Redis sync service
 	const redisSync = RedisSyncService.getInstance()
 	redisSync.startHealthCheck()
 	outputChannel.appendLine("[Redis] Sync service initialized")
-	
+
 	// Initialize LLM Stream Service (without connecting yet)
 	outputChannel.appendLine("[LLM] Creating LLM Stream Service (deferred connection)...")
 	const llmService = new LLMStreamService(context, outputChannel)
 	// Make it globally available for Task to use
 	;(global as any).llmStreamService = llmService
 	outputChannel.appendLine("[LLM] LLM Stream Service created and registered globally")
-	
+
 	// 延迟初始化：检查tokenKey是否已设置
 	setTimeout(async () => {
 		const tokenManager = ImPlatformTokenManager.getInstance()
@@ -124,23 +125,23 @@ export async function activate(context: vscode.ExtensionContext) {
 			outputChannel.appendLine("[LLM] IM connection will be established when TokenKey is set")
 		}
 	}, 2000) // 等待2秒，让其他初始化完成
-	
+
 	// Initialize LLM Stream Target Manager
 	const llmTargetManager = LLMStreamTargetManager.getInstance()
 	await llmTargetManager.loadFromState(context)
 	;(global as any).llmStreamTargetManager = llmTargetManager
-	
+
 	// Register test command for LLM streaming
 	context.subscriptions.push(
 		vscode.commands.registerCommand("roo-cline.testLLMStream", async () => {
 			outputChannel.appendLine("[LLM] Test command triggered")
-			
+
 			// Get target user ID
 			const targetUserId = await vscode.window.showInputBox({
 				prompt: "Enter target user ID (leave empty for broadcast)",
-				placeHolder: "e.g., 1"
+				placeHolder: "e.g., 1",
 			})
-			
+
 			// Get target terminal
 			const targetTerminal = await vscode.window.showQuickPick(
 				[
@@ -151,23 +152,23 @@ export async function activate(context: vscode.ExtensionContext) {
 					{ label: "3 - Cloud PC", value: "3" },
 					{ label: "4 - Plugin", value: "4" },
 					{ label: "5 - MCP", value: "5" },
-					{ label: "6 - Roo-Code", value: "6" }
+					{ label: "6 - Roo-Code", value: "6" },
 				],
-				{ placeHolder: "Select target terminal" }
+				{ placeHolder: "Select target terminal" },
 			)
-			
+
 			const question = await vscode.window.showInputBox({
 				prompt: "Enter a test question for LLM",
-				value: "Hello, this is a test message"
+				value: "Hello, this is a test message",
 			})
-			
+
 			if (question) {
 				const recvId = targetUserId ? parseInt(targetUserId) : undefined
 				const terminal = targetTerminal?.value ? parseInt(targetTerminal.value) : undefined
-				
+
 				outputChannel.appendLine(`[LLM] Sending test question: ${question}`)
 				outputChannel.appendLine(`[LLM] Target: recvId=${recvId}, terminal=${terminal}`)
-				
+
 				try {
 					await llmService.streamLLMResponse(question, recvId, terminal)
 					outputChannel.appendLine("[LLM] Test stream completed")
@@ -177,55 +178,54 @@ export async function activate(context: vscode.ExtensionContext) {
 					vscode.window.showErrorMessage(`LLM stream test failed: ${error}`)
 				}
 			}
-		})
+		}),
 	)
-	
+
 	// Register LLM stream target commands
 	context.subscriptions.push(
 		vscode.commands.registerCommand("roo-cline.setLLMStreamTarget", async () => {
 			await llmTargetManager.setTarget(context)
-		})
+		}),
 	)
-	
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand("roo-cline.showLLMStreamTarget", async () => {
 			await llmTargetManager.showStatus()
-		})
+		}),
 	)
-	
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand("roo-cline.clearLLMStreamTarget", async () => {
-			await context.globalState.update('llmStreamTargetUserId', undefined)
-			await context.globalState.update('llmStreamTargetTerminal', undefined)
+			await context.globalState.update("llmStreamTargetUserId", undefined)
+			await context.globalState.update("llmStreamTargetTerminal", undefined)
 			await llmTargetManager.loadFromState(context)
-			vscode.window.showInformationMessage('LLM stream target cleared')
-		})
+			vscode.window.showInformationMessage("LLM stream target cleared")
+		}),
 	)
-	
+
 	// Register command to manually initialize IM connection
 	context.subscriptions.push(
 		vscode.commands.registerCommand("roo-cline.initializeIMConnection", async () => {
 			outputChannel.appendLine("[LLM] Manual IM connection initialization requested")
-			
+
 			const tokenManager = ImPlatformTokenManager.getInstance()
 			if (!tokenManager.hasTokenKey()) {
-				vscode.window.showErrorMessage('TokenKey not configured. Please set it in settings first.')
-				await vscode.commands.executeCommand('workbench.action.openSettings', 'roo-cline.imPlatformTokenKey')
+				vscode.window.showErrorMessage("TokenKey not configured. Please set it in settings first.")
+				await vscode.commands.executeCommand("workbench.action.openSettings", "roo-cline.imPlatformTokenKey")
 				return
 			}
-			
+
 			try {
 				outputChannel.appendLine("[LLM] Initializing IM connection...")
 				await llmService.initialize()
 				outputChannel.appendLine("[LLM] IM connection established successfully")
-				vscode.window.showInformationMessage('IM WebSocket connection established successfully')
+				vscode.window.showInformationMessage("IM WebSocket connection established successfully")
 			} catch (error) {
 				outputChannel.appendLine(`[LLM] Failed to initialize IM connection: ${error}`)
 				vscode.window.showErrorMessage(`Failed to connect to IM server: ${error}`)
 			}
-		})
+		}),
 	)
-	
 
 	// Register void bridge for IM integration
 	VoidBridge.register(context)
@@ -455,7 +455,7 @@ export async function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated.
 export async function deactivate() {
 	outputChannel.appendLine(`${Package.name} extension deactivated`)
-	
+
 	// Cleanup Redis connection
 	const redisSync = RedisSyncService.getInstance()
 	await redisSync.disconnect()

@@ -130,24 +130,24 @@
 		"noResults": "未找到结果",
 		"presetModes": {
 			"architect": {
-				"name": "🏗️ 架构师",
+				"name": "🏗️ 架构计划",
 				"description": "在实施前进行规划和设计"
 			},
 			"code": {
-				"name": "💻 编码",
-				"description": "编写、修改和重构代码"
+				"name": "💻 创作输出",
+				"description": "创作输出，如代码、文档、文章等"
 			},
 			"ask": {
 				"name": "❓ 问答",
 				"description": "获取答案和解释"
 			},
 			"debug": {
-				"name": "🪲 调试",
-				"description": "诊断并修复软件问题"
+				"name": "🪲审查检查",
+				"description": "审查检查交付的成果物质量合规问题"
 			},
 			"orchestrator": {
-				"name": "🪃 协调器",
-				"description": "跨多个模式协调任务"
+				"name": "🪃 自动驾驶",
+				"description": "跨多个模式协调任务，如架构计划、创作输出、问答、审查检查等"
 			}
 		}
 	},
