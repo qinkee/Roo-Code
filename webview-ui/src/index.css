@@ -501,37 +501,40 @@ input[cmdk-input]:focus {
 .message-wrapper {
 	display: flex;
 	align-items: flex-start;
-	gap: 10px;
-	padding: 8px 12px;
-	margin: 4px 0;
+	gap: 8px;
+	padding: 6px 8px;
+	margin: 3px 0;
 }
 
 .message-wrapper.user {
 	flex-direction: row-reverse;
+	padding-right: 4px;
 }
 
 .message-wrapper.assistant {
 	flex-direction: column;
 	align-items: flex-start;
+	padding-left: 4px;
 }
 
 /* AI消息头部：头像 + 标题 */
 .message-header {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	margin-bottom: 8px;
+	gap: 6px;
+	margin-bottom: 6px;
+	padding-left: 2px;
 }
 
 .message-avatar {
-	width: 28px;
-	height: 28px;
+	width: 24px;
+	height: 24px;
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	font-size: 16px;
+	font-size: 14px;
 }
 
 .message-avatar.user {
@@ -539,27 +542,29 @@ input[cmdk-input]:focus {
 }
 
 .message-avatar.assistant {
-	background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+	background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
 }
 
 .message-title {
-	font-weight: 600;
-	font-size: 14px;
+	font-weight: 500;
+	font-size: 13px;
 	color: var(--vscode-foreground);
-	opacity: 0.9;
+	opacity: 0.85;
 }
 
 .message-mode {
 	font-weight: normal;
-	opacity: 0.7;
-	margin-left: 4px;
+	opacity: 0.6;
+	margin-left: 2px;
+	font-size: 12px;
 }
 
 .message-content {
-	max-width: 70%;
+	max-width: 85%;
 	padding: 10px 14px;
-	border-radius: 18px;
+	border-radius: 16px;
 	word-wrap: break-word;
+	line-height: 1.5;
 }
 
 /* 用户消息样式 */
@@ -568,16 +573,37 @@ input[cmdk-input]:focus {
 	color: var(--vscode-button-foreground);
 	border-bottom-right-radius: 4px;
 	margin-left: auto;
+	margin-right: 4px;
 }
 
-/* AI消息内容区样式 - 更大更突出 */
+/* AI消息内容区样式 - 专业优雅 */
 .message-wrapper.assistant .message-content {
 	background: var(--vscode-editor-background);
 	border: 1px solid var(--vscode-editorGroup-border);
 	color: var(--vscode-editor-foreground);
 	border-radius: 12px;
-	max-width: 90%;
-	margin-left: 36px; /* 头像宽度 + 间距，使内容缩进对齐 */
-	padding: 12px 16px;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	border-top-left-radius: 4px;
+	width: calc(100% - 34px);
+	max-width: none;
+	margin-left: 30px; /* 头像宽度 + 小间距 */
+	padding: 14px 18px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+	position: relative;
+}
+
+/* 优化代码块和内容的显示 */
+.message-wrapper.assistant .message-content pre {
+	margin: 8px 0;
+}
+
+.message-wrapper.assistant .message-content p {
+	margin: 6px 0;
+}
+
+.message-wrapper.assistant .message-content > *:first-child {
+	margin-top: 0;
+}
+
+.message-wrapper.assistant .message-content > *:last-child {
+	margin-bottom: 0;
 }
