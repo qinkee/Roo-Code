@@ -1056,66 +1056,72 @@ export const ChatRowContent = ({
 					return null // we should never see this message type
 				case "text":
 					return (
-						<div>
-							<Markdown markdown={message.text} partial={message.partial} />
+						<div className="message-wrapper assistant">
+							<div className="message-avatar assistant">🤖</div>
+							<div className="message-content">
+								<Markdown markdown={message.text} partial={message.partial} />
+							</div>
 						</div>
 					)
 				case "user_feedback":
 					return (
-						<div className="bg-vscode-editor-background border rounded-xs p-1 overflow-hidden whitespace-pre-wrap">
-							{isEditing ? (
-								<div className="flex flex-col gap-2 p-2">
-									<ChatTextArea
-										inputValue={editedContent}
-										setInputValue={setEditedContent}
-										sendingDisabled={false}
-										selectApiConfigDisabled={true}
-										placeholderText={t("chat:editMessage.placeholder")}
-										selectedImages={editImages}
-										setSelectedImages={setEditImages}
-										onSend={handleSaveEdit}
-										onSelectImages={handleSelectImages}
-										shouldDisableImages={false}
-										mode={editMode}
-										setMode={setEditMode}
-										modeShortcutText=""
-										isEditMode={true}
-										onCancel={handleCancelEdit}
-									/>
-								</div>
-							) : (
-								<div className="flex justify-between">
-									<div className="flex-grow px-2 py-1 wrap-anywhere">
+						<div className="message-wrapper user">
+							<div className="message-avatar user">👤</div>
+							<div className="message-content">
+								{isEditing ? (
+									<div className="flex flex-col gap-2">
+										<ChatTextArea
+											inputValue={editedContent}
+											setInputValue={setEditedContent}
+											sendingDisabled={false}
+											selectApiConfigDisabled={true}
+											placeholderText={t("chat:editMessage.placeholder")}
+											selectedImages={editImages}
+											setSelectedImages={setEditImages}
+											onSend={handleSaveEdit}
+											onSelectImages={handleSelectImages}
+											shouldDisableImages={false}
+											mode={editMode}
+											setMode={setEditMode}
+											modeShortcutText=""
+											isEditMode={true}
+											onCancel={handleCancelEdit}
+										/>
+									</div>
+								) : (
+									<div>
 										<Mention text={message.text} withShadow />
+										{message.images && message.images.length > 0 && (
+											<Thumbnails images={message.images} style={{ marginTop: "8px" }} />
+										)}
 									</div>
-									<div className="flex">
-										<Button
-											variant="ghost"
-											size="icon"
-											className="shrink-0 hidden"
-											disabled={isStreaming}
-											onClick={(e) => {
-												e.stopPropagation()
-												handleEditClick()
-											}}>
-											<span className="codicon codicon-edit" />
-										</Button>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="shrink-0"
-											disabled={isStreaming}
-											onClick={(e) => {
-												e.stopPropagation()
-												vscode.postMessage({ type: "deleteMessage", value: message.ts })
-											}}>
-											<span className="codicon codicon-trash" />
-										</Button>
-									</div>
+								)}
+							</div>
+							{!isEditing && (
+								<div className="flex" style={{ marginLeft: "-40px" }}>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="shrink-0 hidden"
+										disabled={isStreaming}
+										onClick={(e) => {
+											e.stopPropagation()
+											handleEditClick()
+										}}>
+										<span className="codicon codicon-edit" />
+									</Button>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="shrink-0"
+										disabled={isStreaming}
+										onClick={(e) => {
+											e.stopPropagation()
+											vscode.postMessage({ type: "deleteMessage", value: message.ts })
+										}}>
+										<span className="codicon codicon-trash" />
+									</Button>
 								</div>
-							)}
-							{!isEditing && message.images && message.images.length > 0 && (
-								<Thumbnails images={message.images} style={{ marginTop: "8px" }} />
 							)}
 						</div>
 					)
