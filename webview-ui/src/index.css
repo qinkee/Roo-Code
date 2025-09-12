@@ -583,9 +583,9 @@ input[cmdk-input]:focus {
 	color: var(--vscode-editor-foreground);
 	border-radius: 10px;
 	border-top-left-radius: 3px;
-	width: calc(100% - 26px);
+	width: calc(100% - 1px);
 	max-width: none;
-	margin-left: 24px; /* 头像宽度 + 小间距 */
+	margin-left: 1px; /* 与头像左侧对齐 */
 	padding: 10px 14px;
 	box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.04);
 	position: relative;
