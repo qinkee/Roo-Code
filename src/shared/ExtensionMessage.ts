@@ -98,6 +98,7 @@ export interface ExtensionMessage {
 		| "ttsStart"
 		| "ttsStop"
 		| "maxReadFileLine"
+		| "debugInfo"
 		| "fileSearchResults"
 		| "toggleApiConfigPin"
 		| "acceptInput"
@@ -200,6 +201,7 @@ export interface ExtensionMessage {
 	context?: string
 	commands?: Command[]
 	droppedFiles?: string[] // For filesDropped message type
+	data?: any // For debugInfo and other generic data
 	contacts?: {
 		friends: Array<{
 			id: number
