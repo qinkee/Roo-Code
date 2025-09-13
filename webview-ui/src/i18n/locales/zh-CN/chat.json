@@ -262,7 +262,8 @@
 		"completionInstructions": "子任务已完成！您可以查看结果并提出修改或下一步建议。如果一切正常，请确认以将结果返回给主任务。"
 	},
 	"questions": {
-		"hasQuestion": "ShadanAI有一个问题:"
+		"hasQuestion": "需要明确或延伸问题:",
+		"question": "问题"
 	},
 	"taskCompleted": "任务完成",
 	"powershell": {

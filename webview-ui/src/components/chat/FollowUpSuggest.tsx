@@ -103,35 +103,37 @@ export const FollowUpSuggest = ({
 	}
 
 	return (
-		<div className="flex mb-2 flex-col h-full gap-2">
+		<div className="flex flex-col gap-2 mb-2">
 			{suggestions.map((suggestion, index) => {
 				const isFirstSuggestion = index === 0
 
 				return (
 					<div key={`${suggestion.answer}-${ts}`} className="w-full relative group">
-						<Button
-							variant="outline"
-							className="text-left whitespace-normal break-words w-full h-auto py-3 justify-start pr-8"
+						<button
+							className="text-left w-full border border-vscode-input-border rounded-md hover:border-transparent hover:bg-vscode-list-hoverBackground cursor-pointer py-3 px-4 flex items-center justify-between transition-all"
 							onClick={(event) => handleSuggestionClick(suggestion, event)}
 							aria-label={suggestion.answer}>
-							{suggestion.answer}
-							{isFirstSuggestion && countdown !== null && !suggestionSelected && !isAnswered && (
-								<span
-									className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-vscode-badge-background text-vscode-badge-foreground"
-									title={t("chat:followUpSuggest.autoSelectCountdown", { count: countdown })}>
-									{t("chat:followUpSuggest.countdownDisplay", { count: countdown })}
-								</span>
-							)}
-						</Button>
+							<span className="flex-1 pr-3 text-vscode-textPreformat-foreground font-semibold">
+								{suggestion.answer}
+								{isFirstSuggestion && countdown !== null && !suggestionSelected && !isAnswered && (
+									<span
+										className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-vscode-badge-background text-vscode-badge-foreground"
+										title={t("chat:followUpSuggest.autoSelectCountdown", { count: countdown })}>
+										{t("chat:followUpSuggest.countdownDisplay", { count: countdown })}
+									</span>
+								)}
+							</span>
+							<span className="text-vscode-textPreformat-foreground font-bold">→</span>
+						</button>
 						{suggestion.mode && (
-							<div className="absolute bottom-0 right-0 text-[10px] bg-vscode-badge-background text-vscode-badge-foreground px-1 py-0.5 border border-vscode-badge-background flex items-center gap-0.5">
+							<div className="absolute bottom-0 right-10 text-[10px] bg-vscode-badge-background text-vscode-badge-foreground px-1 py-0.5 border border-vscode-badge-background flex items-center gap-0.5">
 								<span className="codicon codicon-arrow-right" style={{ fontSize: "8px" }} />
 								{suggestion.mode}
 							</div>
 						)}
 						<StandardTooltip content={t("chat:followUpSuggest.copyToInput")}>
 							<div
-								className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
+								className="absolute top-3 right-10 opacity-0 group-hover:opacity-100 transition-opacity"
 								onClick={(e) => {
 									e.stopPropagation()
 									// Cancel the auto-approve timer when edit button is clicked
@@ -140,8 +142,8 @@ export const FollowUpSuggest = ({
 									// Simulate shift-click by directly calling the handler with shiftKey=true.
 									onSuggestionClick?.(suggestion, { ...e, shiftKey: true })
 								}}>
-								<Button variant="ghost" size="icon">
-									<Edit />
+								<Button variant="ghost" size="icon" className="h-6 w-6">
+									<Edit className="h-3 w-3" />
 								</Button>
 							</div>
 						</StandardTooltip>
