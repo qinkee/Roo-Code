@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useMemo } from "react"
 import { Edit } from "lucide-react"
 
 import { Button, StandardTooltip } from "@/components/ui"
@@ -30,17 +30,21 @@ export const FollowUpSuggest = ({
 	const [suggestionSelected, setSuggestionSelected] = useState(false)
 	const { t } = useAppTranslation()
 
-	// Start countdown timer when auto-approval is enabled for follow-up questions
-	useEffect(() => {
-		// Only start countdown if auto-approval is enabled for follow-up questions and no suggestion has been selected
-		// Also stop countdown if the question has been answered
-		if (
+	// Determine if countdown should be shown - memoized to prevent flashing
+	const shouldShowCountdown = useMemo(() => {
+		return (
 			autoApprovalEnabled &&
 			alwaysAllowFollowupQuestions &&
 			suggestions.length > 0 &&
 			!suggestionSelected &&
 			!isAnswered
-		) {
+		)
+	}, [autoApprovalEnabled, alwaysAllowFollowupQuestions, suggestions.length, suggestionSelected, isAnswered])
+
+	// Start countdown timer when auto-approval is enabled for follow-up questions
+	useEffect(() => {
+		// Only start countdown if conditions are met
+		if (shouldShowCountdown) {
 			// Start with the configured timeout in seconds
 			const timeoutMs =
 				typeof followupAutoApproveTimeoutMs === "number" && !isNaN(followupAutoApproveTimeoutMs)
@@ -71,15 +75,7 @@ export const FollowUpSuggest = ({
 		} else {
 			setCountdown(null)
 		}
-	}, [
-		autoApprovalEnabled,
-		alwaysAllowFollowupQuestions,
-		suggestions,
-		followupAutoApproveTimeoutMs,
-		suggestionSelected,
-		onCancelAutoApproval,
-		isAnswered,
-	])
+	}, [shouldShowCountdown, followupAutoApproveTimeoutMs, onCancelAutoApproval])
 	const handleSuggestionClick = useCallback(
 		(suggestion: SuggestionItem, event: React.MouseEvent) => {
 			// Mark a suggestion as selected if it's not a shift-click (which just copies to input)
@@ -113,11 +109,11 @@ export const FollowUpSuggest = ({
 							className="text-left w-full border border-vscode-input-border rounded-md hover:border-transparent hover:bg-vscode-list-hoverBackground cursor-pointer py-3 px-4 flex items-center justify-between transition-all"
 							onClick={(event) => handleSuggestionClick(suggestion, event)}
 							aria-label={suggestion.answer}>
-							<span className="flex-1 pr-3 text-vscode-textPreformat-foreground font-semibold">
-								{suggestion.answer}
-								{isFirstSuggestion && countdown !== null && !suggestionSelected && !isAnswered && (
+							<span className="flex-1 pr-3 text-vscode-textPreformat-foreground font-semibold flex items-center">
+								<span className="flex-1">{suggestion.answer}</span>
+								{isFirstSuggestion && shouldShowCountdown && countdown !== null && countdown > 0 && (
 									<span
-										className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-vscode-badge-background text-vscode-badge-foreground"
+										className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-vscode-badge-background text-vscode-badge-foreground whitespace-nowrap flex-shrink-0"
 										title={t("chat:followUpSuggest.autoSelectCountdown", { count: countdown })}>
 										{t("chat:followUpSuggest.countdownDisplay", { count: countdown })}
 									</span>
