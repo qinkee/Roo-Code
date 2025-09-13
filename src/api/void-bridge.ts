@@ -11,6 +11,7 @@ import { TerminalType } from "../types/terminal"
 export class VoidBridge {
 	private static currentUserId: string | undefined = undefined
 	private static currentTerminalNo: number | undefined = undefined
+	private static currentSkToken: string | undefined = undefined
 	private static provider: ClineProvider | undefined = undefined
 
 	/**
@@ -34,6 +35,13 @@ export class VoidBridge {
 	static getCurrentTerminalNo(): number | undefined {
 		console.log(`[VoidBridge] getCurrentTerminalNo called, returning: ${VoidBridge.currentTerminalNo}`)
 		return VoidBridge.currentTerminalNo
+	}
+
+	/**
+	 * Get the current SK token
+	 */
+	static getCurrentSkToken(): string | undefined {
+		return VoidBridge.currentSkToken
 	}
 
 	/**
@@ -64,11 +72,13 @@ export class VoidBridge {
 		// Try to restore last user ID and terminal number from globalState
 		const lastUserId = context.globalState.get<string>("lastUserId")
 		const lastTerminalNo = context.globalState.get<number>("lastTerminalNo")
+		const lastSkToken = context.globalState.get<string>("lastSkToken")
 
 		console.log("[VoidBridge] Reading from globalState:", {
 			lastUserId,
 			lastTerminalNo,
 			lastTerminalNoType: typeof lastTerminalNo,
+			hasSkToken: !!lastSkToken,
 		})
 
 		if (lastUserId) {
@@ -89,15 +99,23 @@ export class VoidBridge {
 			)
 		}
 
+		if (lastSkToken) {
+			VoidBridge.currentSkToken = lastSkToken
+			console.log("[VoidBridge] Restored last SK token (first 10 chars):", lastSkToken.substring(0, 10) + "...")
+		} else {
+			console.log("[VoidBridge] No lastSkToken found in globalState")
+		}
+
 		console.log("[VoidBridge] Initial state after register:", {
 			currentUserId: VoidBridge.currentUserId,
 			currentTerminalNo: VoidBridge.currentTerminalNo,
+			hasSkToken: !!VoidBridge.currentSkToken,
 		})
 
 		// Command for void to notify user switch
 		const onUserSwitchCommand = vscode.commands.registerCommand(
 			"roo-cline.onUserSwitch",
-			async (data: { userId: string; userName?: string; terminalNo?: number; terminal?: number }) => {
+			async (data: { userId: string; userName?: string; terminalNo?: number; terminal?: number; skToken?: string }) => {
 				try {
 					console.log("[VoidBridge] ===== USER SWITCH STARTED =====")
 					console.log("[VoidBridge] Received data:", JSON.stringify(data, null, 2))
@@ -115,6 +133,7 @@ export class VoidBridge {
 						effectiveTerminalNo: effectiveTerminalNo,
 						terminalNoType: typeof data.terminalNo,
 						terminalType: typeof data.terminal,
+						hasSkToken: !!data.skToken,
 					})
 
 					// Save previous user's data if exists
@@ -171,6 +190,11 @@ export class VoidBridge {
 					VoidBridge.currentUserId = data.userId
 					console.log(`[VoidBridge] Setting currentTerminalNo to terminal type: ${effectiveTerminalNo}`)
 					VoidBridge.currentTerminalNo = effectiveTerminalNo
+					if (data.skToken) {
+						console.log(`[VoidBridge] Setting currentSkToken (first 10 chars): ${data.skToken.substring(0, 10)}...`)
+						VoidBridge.currentSkToken = data.skToken
+						await context.globalState.update("lastSkToken", data.skToken)
+					}
 					await context.globalState.update("lastUserId", data.userId)
 					await context.globalState.update("lastTerminalNo", effectiveTerminalNo)
 					console.log(

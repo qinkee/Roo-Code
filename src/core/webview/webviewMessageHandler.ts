@@ -511,6 +511,28 @@ export const webviewMessageHandler = async (
 			})
 
 			break
+		case "getDebugInfo": {
+			// Get debug information from VoidBridge and ImPlatformTokenManager
+			const VoidBridge = require("../../api/void-bridge").VoidBridge
+			const { ImPlatformTokenManager } = require("../../services/im-platform/ImPlatformTokenManager")
+			
+			// Get skToken from ImPlatformTokenManager
+			const tokenManager = ImPlatformTokenManager.getInstance()
+			const skToken = tokenManager.getTokenKey()
+			
+			const debugInfo = {
+				userId: VoidBridge.getCurrentUserId() || undefined,
+				terminal: VoidBridge.getCurrentTerminalNo(),
+				terminalNo: VoidBridge.getCurrentTerminalNo(),
+				skToken: skToken || undefined,
+			}
+			// Send debug info back to webview
+			provider.postMessageToWebview({ 
+				type: "debugInfo", 
+				data: debugInfo 
+			})
+			break
+		}
 		case "resetState":
 			await provider.resetState()
 			break

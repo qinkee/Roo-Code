@@ -60,6 +60,8 @@ export interface WebviewMessage {
 		| "exportTaskWithId"
 		| "importSettings"
 		| "exportSettings"
+		| "getDebugInfo"
+		| "refreshDebugInfo"
 		| "resetState"
 		| "flushRouterModels"
 		| "requestRouterModels"
