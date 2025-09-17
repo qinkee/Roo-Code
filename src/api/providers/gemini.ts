@@ -434,16 +434,12 @@ export class GeminiHandler extends BaseProvider implements SingleCompletionHandl
 										}
 									}
 									
-									// Display success message with proper line breaks
+									// Display concise success message with working view button
 									yield { 
 										type: "text", 
-										text: `🖼️ **图片生成成功！**
+										text: `🖼️ **图片生成成功！** 📁 \`${fileName}\`
 
-📁 文件路径：\`${fileName}\`
-
-💡 图片已自动在编辑器中打开预览，也可在文件资源管理器中查看
-
-✨ 图片生成任务完成！`
+<button onclick="vscode.postMessage({type: 'openFile', text: '${filePath}'})">🔍 查看图片</button> | 已保存到工作区并自动打开预览`
 									}
 								} else {
 									yield { 

@@ -215,9 +215,10 @@ export interface WebviewMessage {
 		| "deleteCommand"
 		| "createCommand"
 		| "insertTextIntoTextarea"
+		| "createAgentFromTask"
 	text?: string
 	editedMessageContent?: string
-	tab?: "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "account"
+	tab?: "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "account" | "agents"
 	disabled?: boolean
 	context?: string
 	dataUri?: string
@@ -258,6 +259,7 @@ export interface WebviewMessage {
 	visibility?: ShareVisibility // For share visibility
 	hasContent?: boolean // For checkRulesDirectoryResult
 	checkOnly?: boolean // For deleteCustomMode check
+	templateData?: any // For createAgentFromTask
 	codeIndexSettings?: {
 		// Global state settings
 		codebaseIndexEnabled: boolean

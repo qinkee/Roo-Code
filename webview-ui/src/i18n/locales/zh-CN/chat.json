@@ -26,6 +26,8 @@
 		"shareSuccessOrganization": "组织链接已复制到剪贴板",
 		"shareSuccessPublic": "公开链接已复制到剪贴板"
 	},
+	"createAgent": "创建智能体",
+	"createAgentFromTask": "从任务创建智能体",
 	"unpin": "取消置顶",
 	"pin": "置顶",
 	"modelSelector": {

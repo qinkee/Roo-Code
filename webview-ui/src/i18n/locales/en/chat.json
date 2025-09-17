@@ -26,6 +26,8 @@
 		"shareSuccessOrganization": "Organization link copied to clipboard",
 		"shareSuccessPublic": "Public link copied to clipboard"
 	},
+	"createAgent": "Create Agent",
+	"createAgentFromTask": "Create Agent from Task",
 	"unpin": "Unpin",
 	"pin": "Pin",
 	"modelSelector": {

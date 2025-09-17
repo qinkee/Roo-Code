@@ -126,6 +126,7 @@ export interface ExtensionMessage {
 		| "imContactsResponse"
 		| "userSwitched"
 		| "userLoggedOut"
+		| "createAgentFromTask"
 	text?: string
 	payload?: any // Add a generic payload for now, can refine later
 	action?:
@@ -228,6 +229,7 @@ export interface ExtensionMessage {
 	userId?: string
 	userName?: string
 	terminalNo?: number
+	templateData?: any
 }
 
 export type ExtensionState = Pick<

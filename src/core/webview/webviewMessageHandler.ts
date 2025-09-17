@@ -2441,6 +2441,24 @@ export const webviewMessageHandler = async (
 			}
 			break
 		}
+
+		case "createAgentFromTask": {
+			// Switch to agents tab and pass template data for creating agent from task
+			await provider.postMessageToWebview({
+				type: "action",
+				action: "switchTab",
+				tab: "agents"
+			})
+
+			// Send template data to pre-populate agent creation form
+			if (message.templateData) {
+				await provider.postMessageToWebview({
+					type: "createAgentFromTask",
+					templateData: message.templateData
+				})
+			}
+			break
+		}
 		case "getImContacts": {
 			try {
 				// First try to get current user ID from void
