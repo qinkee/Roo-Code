@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use strict"
 /**
  * 零宽字符编码器 - TypeScript版本

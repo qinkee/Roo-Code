@@ -151,6 +151,7 @@ const StyledMarkdown = styled.div`
 		min-width: 50%;
 		max-width: 100%;
 		table-layout: fixed;
+		border: 1px solid #cecece;
 	}
 
 	/* Table wrapper for horizontal scrolling */
@@ -161,7 +162,7 @@ const StyledMarkdown = styled.div`
 
 	th,
 	td {
-		border: 1px solid var(--vscode-panel-border);
+		border: 1px solid #cecece;
 		padding: 8px 12px;
 		text-align: left;
 		word-wrap: break-word;
