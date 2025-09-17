@@ -8,6 +8,7 @@
 	"taskList": "Task List",
 	"taskListDesc": "Allow agent to use tasks for assistance or implementation",
 	"autoRun": "Auto Run",
+	"detail": "Detail",
 	"autoRunDesc": "Automatically run commands and MCP tools when using agents",
 	"taskStatusNotification": "Task Status Notification",
 	"detailNotification": "Allow notifications when tasks complete or fail",
