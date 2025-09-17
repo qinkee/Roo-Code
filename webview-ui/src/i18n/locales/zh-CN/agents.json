@@ -17,5 +17,37 @@
 	"soundVolume": "音量设置",
 	"blacklistCommands": "黑名单",
 	"blacklistDesc": "请告知您Mac的系统设置->通知中，以便使用时获得更好的用户体验。",
-	"addCommand": "添加"
+	"addCommand": "添加",
+	"workflow": "工作流",
+	"workflowDesc": "运行自行编制并执行n8n、dify、浏览器自动化等工作流",
+	"trigger": "触发器",
+	"triggerDesc": "启动定时任务，在指定的时间规则里自动执行智能体",
+	"cronRuleConfig": "定时规则配置",
+	"cronTooltip": "使用 Cron 表达式设置定时任务执行时间",
+	"simpleMode": "简单模式",
+	"advancedMode": "高级模式",
+	"selectPreset": "选择常用的时间规则：",
+	"cronAdvancedDesc": "自定义 Cron 表达式 (分 时 日 月 周)：",
+	"cronFormat": "格式：分(0-59) 时(0-23) 日(1-31) 月(1-12) 周(0-7)",
+	"currentRule": "当前规则",
+	"cronInvalid": "无效的表达式",
+	"cronPresets": {
+		"everyMinute": "每分钟",
+		"hourly": "每小时",
+		"daily9am": "每天9点",
+		"daily6pm": "每天18点",
+		"weekdays9am": "工作日9点",
+		"weekly": "每周一9点",
+		"monthly": "每月1日9点"
+	},
+	"cronDesc": {
+		"everyMinute": "每分钟执行",
+		"hourly": "每小时执行",
+		"daily9am": "每天上午9点执行",
+		"daily6pm": "每天下午6点执行",
+		"weekdays9am": "工作日上午9点执行",
+		"weekly": "每周一上午9点执行",
+		"monthly": "每月1日上午9点执行",
+		"custom": "自定义时间规则"
+	}
 }

@@ -7,6 +7,7 @@ import { cn } from "@src/lib/utils"
 import { StandardTooltip } from "@src/components/ui"
 import ToggleSwitch from "./ToggleSwitch"
 import VolumeSlider from "./VolumeSlider"
+import CronRulePanel from "./CronRulePanel"
 
 interface Agent {
 	id: string
@@ -61,6 +62,9 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	const [agents] = useState<Agent[]>([...mockBuiltinAgents, ...mockCustomAgents])
 	const [taskListEnabled, setTaskListEnabled] = useState(true)
 	const [autoRunEnabled, setAutoRunEnabled] = useState(true)
+	const [workflowEnabled, setWorkflowEnabled] = useState(false)
+	const [triggerEnabled, setTriggerEnabled] = useState(false)
+	const [cronRule, setCronRule] = useState("0 9 * * *") // 默认每天9点
 	const [taskStatusNotification, setTaskStatusNotification] = useState({ detail: true, voice: true })
 	const [soundVolume, setSoundVolume] = useState(100)
 	const [blacklistCommands] = useState(["rm", "kill", "chmod"])
@@ -213,6 +217,46 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 							<div className="text-xs text-vscode-foreground/70 mt-0.5">{t("agents:autoRunDesc", "使用智能体时，自动运行命令和 MCP 工具")}</div>
 						</div>
 						<ToggleSwitch checked={autoRunEnabled} onChange={setAutoRunEnabled} />
+					</div>
+				</div>
+
+				{/* Workflow Section */}
+				<div>
+					<h2 className="text-sm font-medium text-vscode-foreground/90 mb-3">
+						{t("agents:workflow", "工作流")}
+					</h2>
+					<div className="flex items-center justify-between p-3 bg-vscode-input-background rounded-md border border-vscode-input-border">
+						<div className="flex-1 pr-3">
+							<span className="text-sm text-vscode-foreground">{t("agents:workflow", "工作流")}</span>
+							<div className="text-xs text-vscode-foreground/70 mt-0.5">{t("agents:workflowDesc", "运行自行编制并执行n8n、dify、浏览器自动化等工作流")}</div>
+						</div>
+						<ToggleSwitch checked={workflowEnabled} onChange={setWorkflowEnabled} />
+					</div>
+				</div>
+
+				{/* Trigger Section */}
+				<div>
+					<h2 className="text-sm font-medium text-vscode-foreground/90 mb-3">
+						{t("agents:trigger", "触发器")}
+					</h2>
+					<div className="space-y-1">
+						<div className="flex items-center justify-between p-3 bg-vscode-input-background rounded-md border border-vscode-input-border">
+							<div className="flex-1 pr-3">
+								<span className="text-sm text-vscode-foreground">{t("agents:trigger", "触发器")}</span>
+								<div className="text-xs text-vscode-foreground/70 mt-0.5">{t("agents:triggerDesc", "启动定时任务，在指定的时间规则里自动执行智能体")}</div>
+							</div>
+							<ToggleSwitch checked={triggerEnabled} onChange={setTriggerEnabled} />
+						</div>
+						
+						{/* Cron Rule Panel - 展开面板 */}
+						{triggerEnabled && (
+							<div className="p-4 bg-vscode-input-background rounded-md border border-vscode-input-border ml-4">
+								<CronRulePanel 
+									cronRule={cronRule} 
+									onChange={setCronRule}
+								/>
+							</div>
+						)}
 					</div>
 				</div>
 
