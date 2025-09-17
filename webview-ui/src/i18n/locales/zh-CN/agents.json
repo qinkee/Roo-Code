@@ -1,0 +1,20 @@
+{
+	"title": "智能体",
+	"create": "创建",
+	"customAgents": "自定义智能体",
+	"builtinAgents": "内置智能体",
+	"more": "更多",
+	"configure": "配置",
+	"taskList": "任务列表",
+	"taskListDesc": "允许agent使用任务来求助或来实现",
+	"autoRun": "自动运行",
+	"autoRunDesc": "使用智能体时，自动运行命令和 MCP 工具",
+	"taskStatusNotification": "任务状态通知",
+	"detailNotification": "允许任务完成或失败时收集通知",
+	"voiceNotification": "语言",
+	"soundSettings": "音频设置",
+	"soundVolume": "音量设置",
+	"blacklistCommands": "黑名单",
+	"blacklistDesc": "请告知您Mac的系统设置->通知中，以便使用时获得更好的用户体验。",
+	"addCommand": "添加"
+}

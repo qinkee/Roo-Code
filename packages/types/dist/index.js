@@ -852,6 +852,7 @@ var commandIds = [
   "popoutButtonClicked",
   "accountButtonClicked",
   "settingsButtonClicked",
+  "agentsButtonClicked",
   "openInNewTab",
   "showHumanRelayDialog",
   "registerHumanRelayCallback",

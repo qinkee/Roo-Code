@@ -1,0 +1,20 @@
+{
+	"title": "Agents",
+	"create": "Create",
+	"customAgents": "Custom Agents",
+	"builtinAgents": "Built-in Agents",
+	"more": "More",
+	"configure": "Configure",
+	"taskList": "Task List",
+	"taskListDesc": "Allow agent to use tasks for assistance or implementation",
+	"autoRun": "Auto Run",
+	"autoRunDesc": "Automatically run commands and MCP tools when using agents",
+	"taskStatusNotification": "Task Status Notification",
+	"detailNotification": "Allow notifications when tasks complete or fail",
+	"voiceNotification": "Voice",
+	"soundSettings": "Sound Settings",
+	"soundVolume": "Sound Volume",
+	"blacklistCommands": "Blacklist",
+	"blacklistDesc": "Please inform your Mac's System Settings -> Notifications to get a better user experience when using.",
+	"addCommand": "Add"
+}
