@@ -239,8 +239,9 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 					<h2 className="text-sm font-medium text-vscode-foreground/90 mb-3">
 						{t("agents:trigger", "触发器")}
 					</h2>
-					<div className="space-y-1">
-						<div className="flex items-center justify-between p-3 bg-vscode-input-background rounded-md border border-vscode-input-border">
+					<div className="bg-vscode-input-background rounded-md border border-vscode-input-border">
+						{/* 触发器开关控制 */}
+						<div className="flex items-center justify-between p-3">
 							<div className="flex-1 pr-3">
 								<span className="text-sm text-vscode-foreground">{t("agents:trigger", "触发器")}</span>
 								<div className="text-xs text-vscode-foreground/70 mt-0.5">{t("agents:triggerDesc", "启动定时任务，在指定的时间规则里自动执行智能体")}</div>
@@ -250,7 +251,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 						
 						{/* Cron Rule Panel - 展开面板 */}
 						{triggerEnabled && (
-							<div className="p-4 bg-vscode-input-background rounded-md border border-vscode-input-border ml-4">
+							<div className="border-t border-vscode-input-border p-4">
 								<CronRulePanel 
 									cronRule={cronRule} 
 									onChange={setCronRule}
