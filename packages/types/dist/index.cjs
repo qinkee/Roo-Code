@@ -262,6 +262,7 @@ var modelInfoSchema = import_zod.z.object({
   cacheWritesPrice: import_zod.z.number().optional(),
   cacheReadsPrice: import_zod.z.number().optional(),
   description: import_zod.z.string().optional(),
+  modelType: import_zod.z.string().optional(),
   reasoningEffort: reasoningEffortsSchema.optional(),
   minTokensPerCachePoint: import_zod.z.number().optional(),
   maxCachePoints: import_zod.z.number().optional(),
@@ -3081,6 +3082,16 @@ var geminiModels = {
     cacheWritesPrice: 1,
     supportsReasoningBudget: true,
     maxThinkingTokens: 24576
+  },
+  "imagen-2": {
+    maxTokens: 0,
+    contextWindow: 0,
+    supportsImages: true,
+    supportsPromptCache: false,
+    inputPrice: 0.02,
+    outputPrice: 0,
+    modelType: "image-generation",
+    description: "Google Imagen 3 via Gemini API for image generation"
   }
 };
 

@@ -34,6 +34,7 @@ var modelInfoSchema = z.object({
   cacheWritesPrice: z.number().optional(),
   cacheReadsPrice: z.number().optional(),
   description: z.string().optional(),
+  modelType: z.string().optional(),
   reasoningEffort: reasoningEffortsSchema.optional(),
   minTokensPerCachePoint: z.number().optional(),
   maxCachePoints: z.number().optional(),
@@ -2853,6 +2854,16 @@ var geminiModels = {
     cacheWritesPrice: 1,
     supportsReasoningBudget: true,
     maxThinkingTokens: 24576
+  },
+  "imagen-2": {
+    maxTokens: 0,
+    contextWindow: 0,
+    supportsImages: true,
+    supportsPromptCache: false,
+    inputPrice: 0.02,
+    outputPrice: 0,
+    modelType: "image-generation",
+    description: "Google Imagen 3 via Gemini API for image generation"
   }
 };
 

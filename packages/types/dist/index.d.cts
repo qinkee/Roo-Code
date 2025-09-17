@@ -1474,6 +1474,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
         cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
         description: z.ZodOptional<z.ZodString>;
+        modelType: z.ZodOptional<z.ZodString>;
         reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
         minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
         maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -1514,6 +1515,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -1542,6 +1544,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -1597,6 +1600,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -1650,6 +1654,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3056,6 +3061,7 @@ declare const providerSettingsSchema: z.ZodObject<{
         cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
         cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
         description: z.ZodOptional<z.ZodString>;
+        modelType: z.ZodOptional<z.ZodString>;
         reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
         minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
         maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -3096,6 +3102,7 @@ declare const providerSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3124,6 +3131,7 @@ declare const providerSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3248,6 +3256,7 @@ declare const providerSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3391,6 +3400,7 @@ declare const providerSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3565,6 +3575,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
         cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
         description: z.ZodOptional<z.ZodString>;
+        modelType: z.ZodOptional<z.ZodString>;
         reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
         minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
         maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -3605,6 +3616,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3633,6 +3645,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3760,6 +3773,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3904,6 +3918,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -4382,6 +4397,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
         cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
         description: z.ZodOptional<z.ZodString>;
+        modelType: z.ZodOptional<z.ZodString>;
         reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
         minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
         maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -4422,6 +4438,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -4450,6 +4467,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -4505,6 +4523,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -4558,6 +4577,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -6830,6 +6850,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
         cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
         description: z.ZodOptional<z.ZodString>;
+        modelType: z.ZodOptional<z.ZodString>;
         reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
         minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
         maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -6870,6 +6891,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -6898,6 +6920,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -7473,6 +7496,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -7797,6 +7821,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -8215,6 +8240,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
                 cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
                 description: z.ZodOptional<z.ZodString>;
+                modelType: z.ZodOptional<z.ZodString>;
                 reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
                 minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
                 maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -8255,6 +8281,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -8283,6 +8310,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -8858,6 +8886,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -9182,6 +9211,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -9512,6 +9542,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -9841,6 +9872,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -10173,6 +10205,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -10505,6 +10538,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -10921,6 +10955,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
                     cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
                     description: z.ZodOptional<z.ZodString>;
+                    modelType: z.ZodOptional<z.ZodString>;
                     reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
                     minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
                     maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -10961,6 +10996,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -10989,6 +11025,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -11564,6 +11601,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -11888,6 +11926,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -12218,6 +12257,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -12547,6 +12587,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -12879,6 +12920,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -13211,6 +13253,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -13565,6 +13608,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -13908,6 +13952,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -15909,6 +15954,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
             cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
             description: z.ZodOptional<z.ZodString>;
+            modelType: z.ZodOptional<z.ZodString>;
             reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
             minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
             maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -15949,6 +15995,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -15977,6 +16024,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -16032,6 +16080,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -16085,6 +16134,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -17608,6 +17658,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -18245,6 +18296,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -19998,6 +20050,7 @@ declare const modelInfoSchema: z.ZodObject<{
     cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
     cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
     description: z.ZodOptional<z.ZodString>;
+    modelType: z.ZodOptional<z.ZodString>;
     reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
     minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
     maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -20038,6 +20091,7 @@ declare const modelInfoSchema: z.ZodObject<{
     cacheWritesPrice?: number | undefined;
     cacheReadsPrice?: number | undefined;
     description?: string | undefined;
+    modelType?: string | undefined;
     reasoningEffort?: "low" | "medium" | "high" | undefined;
     minTokensPerCachePoint?: number | undefined;
     maxCachePoints?: number | undefined;
@@ -20066,6 +20120,7 @@ declare const modelInfoSchema: z.ZodObject<{
     cacheWritesPrice?: number | undefined;
     cacheReadsPrice?: number | undefined;
     description?: string | undefined;
+    modelType?: string | undefined;
     reasoningEffort?: "low" | "medium" | "high" | undefined;
     minTokensPerCachePoint?: number | undefined;
     maxCachePoints?: number | undefined;
@@ -22478,6 +22533,16 @@ declare const geminiModels: {
         readonly cacheWritesPrice: 1;
         readonly supportsReasoningBudget: true;
         readonly maxThinkingTokens: 24576;
+    };
+    readonly "imagen-2": {
+        readonly maxTokens: 0;
+        readonly contextWindow: 0;
+        readonly supportsImages: true;
+        readonly supportsPromptCache: false;
+        readonly inputPrice: 0.02;
+        readonly outputPrice: 0;
+        readonly modelType: "image-generation";
+        readonly description: "Google Imagen 3 via Gemini API for image generation";
     };
 };
 
