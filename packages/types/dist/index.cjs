@@ -76,6 +76,13 @@ __export(index_exports, {
   VERTEX_REGIONS: () => VERTEX_REGIONS,
   ZAI_DEFAULT_TEMPERATURE: () => ZAI_DEFAULT_TEMPERATURE,
   ackSchema: () => ackSchema,
+  agentConfigSchema: () => agentConfigSchema,
+  agentExportDataSchema: () => agentExportDataSchema,
+  agentListOptionsSchema: () => agentListOptionsSchema,
+  agentTemplateDataSchema: () => agentTemplateDataSchema,
+  agentTemplateSourceSchema: () => agentTemplateSourceSchema,
+  agentTodoSchema: () => agentTodoSchema,
+  agentToolConfigSchema: () => agentToolConfigSchema,
   anthropicDefaultModelId: () => anthropicDefaultModelId,
   anthropicModels: () => anthropicModels,
   appPropertiesSchema: () => appPropertiesSchema,
@@ -226,60 +233,121 @@ __export(index_exports, {
 });
 module.exports = __toCommonJS(index_exports);
 
+// src/agent.ts
+var import_zod = require("zod");
+var agentToolConfigSchema = import_zod.z.object({
+  toolId: import_zod.z.string(),
+  enabled: import_zod.z.boolean(),
+  config: import_zod.z.record(import_zod.z.string(), import_zod.z.any()).optional()
+});
+var agentTodoSchema = import_zod.z.object({
+  id: import_zod.z.string(),
+  content: import_zod.z.string(),
+  status: import_zod.z.enum(["pending", "in_progress", "completed"]),
+  createdAt: import_zod.z.number(),
+  updatedAt: import_zod.z.number(),
+  priority: import_zod.z.enum(["low", "medium", "high"]).optional()
+});
+var agentTemplateSourceSchema = import_zod.z.object({
+  type: import_zod.z.enum(["manual", "task"]),
+  taskId: import_zod.z.string().optional(),
+  taskDescription: import_zod.z.string().optional(),
+  timestamp: import_zod.z.number()
+});
+var agentConfigSchema = import_zod.z.object({
+  id: import_zod.z.string(),
+  userId: import_zod.z.string(),
+  name: import_zod.z.string(),
+  avatar: import_zod.z.string(),
+  roleDescription: import_zod.z.string(),
+  apiConfigId: import_zod.z.string(),
+  mode: import_zod.z.string(),
+  tools: import_zod.z.array(agentToolConfigSchema),
+  todos: import_zod.z.array(agentTodoSchema),
+  templateSource: agentTemplateSourceSchema.optional(),
+  createdAt: import_zod.z.number(),
+  updatedAt: import_zod.z.number(),
+  lastUsedAt: import_zod.z.number().optional(),
+  isActive: import_zod.z.boolean(),
+  version: import_zod.z.number()
+});
+var agentListOptionsSchema = import_zod.z.object({
+  sortBy: import_zod.z.enum(["name", "createdAt", "updatedAt", "lastUsedAt"]).optional(),
+  sortOrder: import_zod.z.enum(["asc", "desc"]).optional(),
+  filterByMode: import_zod.z.string().optional(),
+  onlyActive: import_zod.z.boolean().optional(),
+  limit: import_zod.z.number().optional(),
+  offset: import_zod.z.number().optional()
+});
+var agentExportDataSchema = import_zod.z.object({
+  agent: agentConfigSchema,
+  metadata: import_zod.z.object({
+    exportedAt: import_zod.z.number(),
+    exportedBy: import_zod.z.string(),
+    version: import_zod.z.string()
+  })
+});
+var agentTemplateDataSchema = import_zod.z.object({
+  apiConfigId: import_zod.z.string().optional(),
+  mode: import_zod.z.string().optional(),
+  tools: import_zod.z.array(import_zod.z.string()).optional(),
+  templateSource: agentTemplateSourceSchema
+});
+
 // src/cloud.ts
-var import_zod13 = require("zod");
+var import_zod14 = require("zod");
 
 // src/global-settings.ts
-var import_zod11 = require("zod");
+var import_zod12 = require("zod");
 
 // src/provider-settings.ts
-var import_zod3 = require("zod");
+var import_zod4 = require("zod");
 
 // src/model.ts
-var import_zod = require("zod");
+var import_zod2 = require("zod");
 var reasoningEfforts = ["low", "medium", "high"];
-var reasoningEffortsSchema = import_zod.z.enum(reasoningEfforts);
+var reasoningEffortsSchema = import_zod2.z.enum(reasoningEfforts);
 var verbosityLevels = ["low", "medium", "high"];
-var verbosityLevelsSchema = import_zod.z.enum(verbosityLevels);
+var verbosityLevelsSchema = import_zod2.z.enum(verbosityLevels);
 var modelParameters = ["max_tokens", "temperature", "reasoning", "include_reasoning"];
-var modelParametersSchema = import_zod.z.enum(modelParameters);
+var modelParametersSchema = import_zod2.z.enum(modelParameters);
 var isModelParameter = (value) => modelParameters.includes(value);
-var modelInfoSchema = import_zod.z.object({
-  maxTokens: import_zod.z.number().nullish(),
-  maxThinkingTokens: import_zod.z.number().nullish(),
-  contextWindow: import_zod.z.number(),
-  supportsImages: import_zod.z.boolean().optional(),
-  supportsComputerUse: import_zod.z.boolean().optional(),
-  supportsPromptCache: import_zod.z.boolean(),
+var modelInfoSchema = import_zod2.z.object({
+  maxTokens: import_zod2.z.number().nullish(),
+  maxThinkingTokens: import_zod2.z.number().nullish(),
+  contextWindow: import_zod2.z.number(),
+  supportsImages: import_zod2.z.boolean().optional(),
+  supportsComputerUse: import_zod2.z.boolean().optional(),
+  supportsPromptCache: import_zod2.z.boolean(),
   // Capability flag to indicate whether the model supports an output verbosity parameter
-  supportsVerbosity: import_zod.z.boolean().optional(),
-  supportsReasoningBudget: import_zod.z.boolean().optional(),
-  requiredReasoningBudget: import_zod.z.boolean().optional(),
-  supportsReasoningEffort: import_zod.z.boolean().optional(),
-  supportedParameters: import_zod.z.array(modelParametersSchema).optional(),
-  inputPrice: import_zod.z.number().optional(),
-  outputPrice: import_zod.z.number().optional(),
-  cacheWritesPrice: import_zod.z.number().optional(),
-  cacheReadsPrice: import_zod.z.number().optional(),
-  description: import_zod.z.string().optional(),
-  modelType: import_zod.z.string().optional(),
+  supportsVerbosity: import_zod2.z.boolean().optional(),
+  supportsReasoningBudget: import_zod2.z.boolean().optional(),
+  requiredReasoningBudget: import_zod2.z.boolean().optional(),
+  supportsReasoningEffort: import_zod2.z.boolean().optional(),
+  supportedParameters: import_zod2.z.array(modelParametersSchema).optional(),
+  inputPrice: import_zod2.z.number().optional(),
+  outputPrice: import_zod2.z.number().optional(),
+  cacheWritesPrice: import_zod2.z.number().optional(),
+  cacheReadsPrice: import_zod2.z.number().optional(),
+  description: import_zod2.z.string().optional(),
+  modelType: import_zod2.z.string().optional(),
   reasoningEffort: reasoningEffortsSchema.optional(),
-  minTokensPerCachePoint: import_zod.z.number().optional(),
-  maxCachePoints: import_zod.z.number().optional(),
-  cachableFields: import_zod.z.array(import_zod.z.string()).optional(),
-  tiers: import_zod.z.array(
-    import_zod.z.object({
-      contextWindow: import_zod.z.number(),
-      inputPrice: import_zod.z.number().optional(),
-      outputPrice: import_zod.z.number().optional(),
-      cacheWritesPrice: import_zod.z.number().optional(),
-      cacheReadsPrice: import_zod.z.number().optional()
+  minTokensPerCachePoint: import_zod2.z.number().optional(),
+  maxCachePoints: import_zod2.z.number().optional(),
+  cachableFields: import_zod2.z.array(import_zod2.z.string()).optional(),
+  tiers: import_zod2.z.array(
+    import_zod2.z.object({
+      contextWindow: import_zod2.z.number(),
+      inputPrice: import_zod2.z.number().optional(),
+      outputPrice: import_zod2.z.number().optional(),
+      cacheWritesPrice: import_zod2.z.number().optional(),
+      cacheReadsPrice: import_zod2.z.number().optional()
     })
   ).optional()
 });
 
 // src/codebase-index.ts
-var import_zod2 = require("zod");
+var import_zod3 = require("zod");
 var CODEBASE_INDEX_DEFAULTS = {
   MIN_SEARCH_RESULTS: 10,
   MAX_SEARCH_RESULTS: 200,
@@ -290,38 +358,38 @@ var CODEBASE_INDEX_DEFAULTS = {
   DEFAULT_SEARCH_MIN_SCORE: 0.4,
   SEARCH_SCORE_STEP: 0.05
 };
-var codebaseIndexConfigSchema = import_zod2.z.object({
-  codebaseIndexEnabled: import_zod2.z.boolean().optional(),
-  codebaseIndexQdrantUrl: import_zod2.z.string().optional(),
-  codebaseIndexEmbedderProvider: import_zod2.z.enum(["openai", "ollama", "openai-compatible", "gemini", "mistral"]).optional(),
-  codebaseIndexEmbedderBaseUrl: import_zod2.z.string().optional(),
-  codebaseIndexEmbedderModelId: import_zod2.z.string().optional(),
-  codebaseIndexEmbedderModelDimension: import_zod2.z.number().optional(),
-  codebaseIndexSearchMinScore: import_zod2.z.number().min(0).max(1).optional(),
-  codebaseIndexSearchMaxResults: import_zod2.z.number().min(CODEBASE_INDEX_DEFAULTS.MIN_SEARCH_RESULTS).max(CODEBASE_INDEX_DEFAULTS.MAX_SEARCH_RESULTS).optional(),
+var codebaseIndexConfigSchema = import_zod3.z.object({
+  codebaseIndexEnabled: import_zod3.z.boolean().optional(),
+  codebaseIndexQdrantUrl: import_zod3.z.string().optional(),
+  codebaseIndexEmbedderProvider: import_zod3.z.enum(["openai", "ollama", "openai-compatible", "gemini", "mistral"]).optional(),
+  codebaseIndexEmbedderBaseUrl: import_zod3.z.string().optional(),
+  codebaseIndexEmbedderModelId: import_zod3.z.string().optional(),
+  codebaseIndexEmbedderModelDimension: import_zod3.z.number().optional(),
+  codebaseIndexSearchMinScore: import_zod3.z.number().min(0).max(1).optional(),
+  codebaseIndexSearchMaxResults: import_zod3.z.number().min(CODEBASE_INDEX_DEFAULTS.MIN_SEARCH_RESULTS).max(CODEBASE_INDEX_DEFAULTS.MAX_SEARCH_RESULTS).optional(),
   // OpenAI Compatible specific fields
-  codebaseIndexOpenAiCompatibleBaseUrl: import_zod2.z.string().optional(),
-  codebaseIndexOpenAiCompatibleModelDimension: import_zod2.z.number().optional()
+  codebaseIndexOpenAiCompatibleBaseUrl: import_zod3.z.string().optional(),
+  codebaseIndexOpenAiCompatibleModelDimension: import_zod3.z.number().optional()
 });
-var codebaseIndexModelsSchema = import_zod2.z.object({
-  openai: import_zod2.z.record(import_zod2.z.string(), import_zod2.z.object({ dimension: import_zod2.z.number() })).optional(),
-  ollama: import_zod2.z.record(import_zod2.z.string(), import_zod2.z.object({ dimension: import_zod2.z.number() })).optional(),
-  "openai-compatible": import_zod2.z.record(import_zod2.z.string(), import_zod2.z.object({ dimension: import_zod2.z.number() })).optional(),
-  gemini: import_zod2.z.record(import_zod2.z.string(), import_zod2.z.object({ dimension: import_zod2.z.number() })).optional(),
-  mistral: import_zod2.z.record(import_zod2.z.string(), import_zod2.z.object({ dimension: import_zod2.z.number() })).optional()
+var codebaseIndexModelsSchema = import_zod3.z.object({
+  openai: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.object({ dimension: import_zod3.z.number() })).optional(),
+  ollama: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.object({ dimension: import_zod3.z.number() })).optional(),
+  "openai-compatible": import_zod3.z.record(import_zod3.z.string(), import_zod3.z.object({ dimension: import_zod3.z.number() })).optional(),
+  gemini: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.object({ dimension: import_zod3.z.number() })).optional(),
+  mistral: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.object({ dimension: import_zod3.z.number() })).optional()
 });
-var codebaseIndexProviderSchema = import_zod2.z.object({
-  codeIndexOpenAiKey: import_zod2.z.string().optional(),
-  codeIndexQdrantApiKey: import_zod2.z.string().optional(),
-  codebaseIndexOpenAiCompatibleBaseUrl: import_zod2.z.string().optional(),
-  codebaseIndexOpenAiCompatibleApiKey: import_zod2.z.string().optional(),
-  codebaseIndexOpenAiCompatibleModelDimension: import_zod2.z.number().optional(),
-  codebaseIndexGeminiApiKey: import_zod2.z.string().optional(),
-  codebaseIndexMistralApiKey: import_zod2.z.string().optional()
+var codebaseIndexProviderSchema = import_zod3.z.object({
+  codeIndexOpenAiKey: import_zod3.z.string().optional(),
+  codeIndexQdrantApiKey: import_zod3.z.string().optional(),
+  codebaseIndexOpenAiCompatibleBaseUrl: import_zod3.z.string().optional(),
+  codebaseIndexOpenAiCompatibleApiKey: import_zod3.z.string().optional(),
+  codebaseIndexOpenAiCompatibleModelDimension: import_zod3.z.number().optional(),
+  codebaseIndexGeminiApiKey: import_zod3.z.string().optional(),
+  codebaseIndexMistralApiKey: import_zod3.z.string().optional()
 });
 
 // src/provider-settings.ts
-var extendedReasoningEffortsSchema = import_zod3.z.union([reasoningEffortsSchema, import_zod3.z.literal("minimal")]);
+var extendedReasoningEffortsSchema = import_zod4.z.union([reasoningEffortsSchema, import_zod4.z.literal("minimal")]);
 var providerNames = [
   "anthropic",
   "claude-code",
@@ -355,226 +423,226 @@ var providerNames = [
   "fireworks",
   "io-intelligence"
 ];
-var providerNamesSchema = import_zod3.z.enum(providerNames);
-var providerSettingsEntrySchema = import_zod3.z.object({
-  id: import_zod3.z.string(),
-  name: import_zod3.z.string(),
+var providerNamesSchema = import_zod4.z.enum(providerNames);
+var providerSettingsEntrySchema = import_zod4.z.object({
+  id: import_zod4.z.string(),
+  name: import_zod4.z.string(),
   apiProvider: providerNamesSchema.optional()
 });
 var DEFAULT_CONSECUTIVE_MISTAKE_LIMIT = 3;
-var baseProviderSettingsSchema = import_zod3.z.object({
-  includeMaxTokens: import_zod3.z.boolean().optional(),
-  diffEnabled: import_zod3.z.boolean().optional(),
-  todoListEnabled: import_zod3.z.boolean().optional(),
-  fuzzyMatchThreshold: import_zod3.z.number().optional(),
-  modelTemperature: import_zod3.z.number().nullish(),
-  rateLimitSeconds: import_zod3.z.number().optional(),
-  consecutiveMistakeLimit: import_zod3.z.number().min(0).optional(),
+var baseProviderSettingsSchema = import_zod4.z.object({
+  includeMaxTokens: import_zod4.z.boolean().optional(),
+  diffEnabled: import_zod4.z.boolean().optional(),
+  todoListEnabled: import_zod4.z.boolean().optional(),
+  fuzzyMatchThreshold: import_zod4.z.number().optional(),
+  modelTemperature: import_zod4.z.number().nullish(),
+  rateLimitSeconds: import_zod4.z.number().optional(),
+  consecutiveMistakeLimit: import_zod4.z.number().min(0).optional(),
   // Model reasoning.
-  enableReasoningEffort: import_zod3.z.boolean().optional(),
+  enableReasoningEffort: import_zod4.z.boolean().optional(),
   reasoningEffort: extendedReasoningEffortsSchema.optional(),
-  modelMaxTokens: import_zod3.z.number().optional(),
-  modelMaxThinkingTokens: import_zod3.z.number().optional(),
+  modelMaxTokens: import_zod4.z.number().optional(),
+  modelMaxThinkingTokens: import_zod4.z.number().optional(),
   // Model verbosity.
   verbosity: verbosityLevelsSchema.optional()
 });
 var apiModelIdProviderModelSchema = baseProviderSettingsSchema.extend({
-  apiModelId: import_zod3.z.string().optional()
+  apiModelId: import_zod4.z.string().optional()
 });
 var anthropicSchema = apiModelIdProviderModelSchema.extend({
-  apiKey: import_zod3.z.string().optional(),
-  anthropicBaseUrl: import_zod3.z.string().optional(),
-  anthropicUseAuthToken: import_zod3.z.boolean().optional(),
-  anthropicBeta1MContext: import_zod3.z.boolean().optional()
+  apiKey: import_zod4.z.string().optional(),
+  anthropicBaseUrl: import_zod4.z.string().optional(),
+  anthropicUseAuthToken: import_zod4.z.boolean().optional(),
+  anthropicBeta1MContext: import_zod4.z.boolean().optional()
   // Enable 'context-1m-2025-08-07' beta for 1M context window
 });
 var claudeCodeSchema = apiModelIdProviderModelSchema.extend({
-  claudeCodePath: import_zod3.z.string().optional(),
-  claudeCodeMaxOutputTokens: import_zod3.z.number().int().min(1).max(2e5).optional()
+  claudeCodePath: import_zod4.z.string().optional(),
+  claudeCodeMaxOutputTokens: import_zod4.z.number().int().min(1).max(2e5).optional()
 });
 var glamaSchema = baseProviderSettingsSchema.extend({
-  glamaModelId: import_zod3.z.string().optional(),
-  glamaApiKey: import_zod3.z.string().optional()
+  glamaModelId: import_zod4.z.string().optional(),
+  glamaApiKey: import_zod4.z.string().optional()
 });
 var openRouterSchema = baseProviderSettingsSchema.extend({
-  openRouterApiKey: import_zod3.z.string().optional(),
-  openRouterModelId: import_zod3.z.string().optional(),
-  openRouterBaseUrl: import_zod3.z.string().optional(),
-  openRouterSpecificProvider: import_zod3.z.string().optional(),
-  openRouterUseMiddleOutTransform: import_zod3.z.boolean().optional()
+  openRouterApiKey: import_zod4.z.string().optional(),
+  openRouterModelId: import_zod4.z.string().optional(),
+  openRouterBaseUrl: import_zod4.z.string().optional(),
+  openRouterSpecificProvider: import_zod4.z.string().optional(),
+  openRouterUseMiddleOutTransform: import_zod4.z.boolean().optional()
 });
 var bedrockSchema = apiModelIdProviderModelSchema.extend({
-  awsAccessKey: import_zod3.z.string().optional(),
-  awsSecretKey: import_zod3.z.string().optional(),
-  awsSessionToken: import_zod3.z.string().optional(),
-  awsRegion: import_zod3.z.string().optional(),
-  awsUseCrossRegionInference: import_zod3.z.boolean().optional(),
-  awsUsePromptCache: import_zod3.z.boolean().optional(),
-  awsProfile: import_zod3.z.string().optional(),
-  awsUseProfile: import_zod3.z.boolean().optional(),
-  awsApiKey: import_zod3.z.string().optional(),
-  awsUseApiKey: import_zod3.z.boolean().optional(),
-  awsCustomArn: import_zod3.z.string().optional(),
-  awsModelContextWindow: import_zod3.z.number().optional(),
-  awsBedrockEndpointEnabled: import_zod3.z.boolean().optional(),
-  awsBedrockEndpoint: import_zod3.z.string().optional()
+  awsAccessKey: import_zod4.z.string().optional(),
+  awsSecretKey: import_zod4.z.string().optional(),
+  awsSessionToken: import_zod4.z.string().optional(),
+  awsRegion: import_zod4.z.string().optional(),
+  awsUseCrossRegionInference: import_zod4.z.boolean().optional(),
+  awsUsePromptCache: import_zod4.z.boolean().optional(),
+  awsProfile: import_zod4.z.string().optional(),
+  awsUseProfile: import_zod4.z.boolean().optional(),
+  awsApiKey: import_zod4.z.string().optional(),
+  awsUseApiKey: import_zod4.z.boolean().optional(),
+  awsCustomArn: import_zod4.z.string().optional(),
+  awsModelContextWindow: import_zod4.z.number().optional(),
+  awsBedrockEndpointEnabled: import_zod4.z.boolean().optional(),
+  awsBedrockEndpoint: import_zod4.z.string().optional()
 });
 var vertexSchema = apiModelIdProviderModelSchema.extend({
-  vertexKeyFile: import_zod3.z.string().optional(),
-  vertexJsonCredentials: import_zod3.z.string().optional(),
-  vertexProjectId: import_zod3.z.string().optional(),
-  vertexRegion: import_zod3.z.string().optional()
+  vertexKeyFile: import_zod4.z.string().optional(),
+  vertexJsonCredentials: import_zod4.z.string().optional(),
+  vertexProjectId: import_zod4.z.string().optional(),
+  vertexRegion: import_zod4.z.string().optional()
 });
 var openAiSchema = baseProviderSettingsSchema.extend({
-  openAiBaseUrl: import_zod3.z.string().optional(),
-  openAiApiKey: import_zod3.z.string().optional(),
-  openAiLegacyFormat: import_zod3.z.boolean().optional(),
-  openAiR1FormatEnabled: import_zod3.z.boolean().optional(),
-  openAiModelId: import_zod3.z.string().optional(),
+  openAiBaseUrl: import_zod4.z.string().optional(),
+  openAiApiKey: import_zod4.z.string().optional(),
+  openAiLegacyFormat: import_zod4.z.boolean().optional(),
+  openAiR1FormatEnabled: import_zod4.z.boolean().optional(),
+  openAiModelId: import_zod4.z.string().optional(),
   openAiCustomModelInfo: modelInfoSchema.nullish(),
-  openAiUseAzure: import_zod3.z.boolean().optional(),
-  azureApiVersion: import_zod3.z.string().optional(),
-  openAiStreamingEnabled: import_zod3.z.boolean().optional(),
-  openAiHostHeader: import_zod3.z.string().optional(),
+  openAiUseAzure: import_zod4.z.boolean().optional(),
+  azureApiVersion: import_zod4.z.string().optional(),
+  openAiStreamingEnabled: import_zod4.z.boolean().optional(),
+  openAiHostHeader: import_zod4.z.string().optional(),
   // Keep temporarily for backward compatibility during migration.
-  openAiHeaders: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.string()).optional()
+  openAiHeaders: import_zod4.z.record(import_zod4.z.string(), import_zod4.z.string()).optional()
 });
 var ollamaSchema = baseProviderSettingsSchema.extend({
-  ollamaModelId: import_zod3.z.string().optional(),
-  ollamaBaseUrl: import_zod3.z.string().optional()
+  ollamaModelId: import_zod4.z.string().optional(),
+  ollamaBaseUrl: import_zod4.z.string().optional()
 });
 var vsCodeLmSchema = baseProviderSettingsSchema.extend({
-  vsCodeLmModelSelector: import_zod3.z.object({
-    vendor: import_zod3.z.string().optional(),
-    family: import_zod3.z.string().optional(),
-    version: import_zod3.z.string().optional(),
-    id: import_zod3.z.string().optional()
+  vsCodeLmModelSelector: import_zod4.z.object({
+    vendor: import_zod4.z.string().optional(),
+    family: import_zod4.z.string().optional(),
+    version: import_zod4.z.string().optional(),
+    id: import_zod4.z.string().optional()
   }).optional()
 });
 var lmStudioSchema = baseProviderSettingsSchema.extend({
-  lmStudioModelId: import_zod3.z.string().optional(),
-  lmStudioBaseUrl: import_zod3.z.string().optional(),
-  lmStudioDraftModelId: import_zod3.z.string().optional(),
-  lmStudioSpeculativeDecodingEnabled: import_zod3.z.boolean().optional()
+  lmStudioModelId: import_zod4.z.string().optional(),
+  lmStudioBaseUrl: import_zod4.z.string().optional(),
+  lmStudioDraftModelId: import_zod4.z.string().optional(),
+  lmStudioSpeculativeDecodingEnabled: import_zod4.z.boolean().optional()
 });
 var geminiSchema = apiModelIdProviderModelSchema.extend({
-  geminiApiKey: import_zod3.z.string().optional(),
-  googleGeminiBaseUrl: import_zod3.z.string().optional(),
-  enableUrlContext: import_zod3.z.boolean().optional(),
-  enableGrounding: import_zod3.z.boolean().optional()
+  geminiApiKey: import_zod4.z.string().optional(),
+  googleGeminiBaseUrl: import_zod4.z.string().optional(),
+  enableUrlContext: import_zod4.z.boolean().optional(),
+  enableGrounding: import_zod4.z.boolean().optional()
 });
 var geminiCliSchema = apiModelIdProviderModelSchema.extend({
-  geminiCliOAuthPath: import_zod3.z.string().optional(),
-  geminiCliProjectId: import_zod3.z.string().optional()
+  geminiCliOAuthPath: import_zod4.z.string().optional(),
+  geminiCliProjectId: import_zod4.z.string().optional()
 });
 var openAiNativeSchema = apiModelIdProviderModelSchema.extend({
-  openAiNativeApiKey: import_zod3.z.string().optional(),
-  openAiNativeBaseUrl: import_zod3.z.string().optional()
+  openAiNativeApiKey: import_zod4.z.string().optional(),
+  openAiNativeBaseUrl: import_zod4.z.string().optional()
 });
 var mistralSchema = apiModelIdProviderModelSchema.extend({
-  mistralApiKey: import_zod3.z.string().optional(),
-  mistralCodestralUrl: import_zod3.z.string().optional()
+  mistralApiKey: import_zod4.z.string().optional(),
+  mistralCodestralUrl: import_zod4.z.string().optional()
 });
 var deepSeekSchema = apiModelIdProviderModelSchema.extend({
-  deepSeekBaseUrl: import_zod3.z.string().optional(),
-  deepSeekApiKey: import_zod3.z.string().optional()
+  deepSeekBaseUrl: import_zod4.z.string().optional(),
+  deepSeekApiKey: import_zod4.z.string().optional()
 });
 var doubaoSchema = apiModelIdProviderModelSchema.extend({
-  doubaoBaseUrl: import_zod3.z.string().optional(),
-  doubaoApiKey: import_zod3.z.string().optional()
+  doubaoBaseUrl: import_zod4.z.string().optional(),
+  doubaoApiKey: import_zod4.z.string().optional()
 });
 var moonshotSchema = apiModelIdProviderModelSchema.extend({
-  moonshotBaseUrl: import_zod3.z.union([import_zod3.z.literal("https://api.moonshot.ai/v1"), import_zod3.z.literal("https://api.moonshot.cn/v1")]).optional(),
-  moonshotApiKey: import_zod3.z.string().optional()
+  moonshotBaseUrl: import_zod4.z.union([import_zod4.z.literal("https://api.moonshot.ai/v1"), import_zod4.z.literal("https://api.moonshot.cn/v1")]).optional(),
+  moonshotApiKey: import_zod4.z.string().optional()
 });
 var unboundSchema = baseProviderSettingsSchema.extend({
-  unboundApiKey: import_zod3.z.string().optional(),
-  unboundModelId: import_zod3.z.string().optional()
+  unboundApiKey: import_zod4.z.string().optional(),
+  unboundModelId: import_zod4.z.string().optional()
 });
 var requestySchema = baseProviderSettingsSchema.extend({
-  requestyBaseUrl: import_zod3.z.string().optional(),
-  requestyApiKey: import_zod3.z.string().optional(),
-  requestyModelId: import_zod3.z.string().optional()
+  requestyBaseUrl: import_zod4.z.string().optional(),
+  requestyApiKey: import_zod4.z.string().optional(),
+  requestyModelId: import_zod4.z.string().optional()
 });
 var humanRelaySchema = baseProviderSettingsSchema;
 var fakeAiSchema = baseProviderSettingsSchema.extend({
-  fakeAi: import_zod3.z.unknown().optional()
+  fakeAi: import_zod4.z.unknown().optional()
 });
 var xaiSchema = apiModelIdProviderModelSchema.extend({
-  xaiApiKey: import_zod3.z.string().optional()
+  xaiApiKey: import_zod4.z.string().optional()
 });
 var groqSchema = apiModelIdProviderModelSchema.extend({
-  groqApiKey: import_zod3.z.string().optional()
+  groqApiKey: import_zod4.z.string().optional()
 });
 var huggingFaceSchema = baseProviderSettingsSchema.extend({
-  huggingFaceApiKey: import_zod3.z.string().optional(),
-  huggingFaceModelId: import_zod3.z.string().optional(),
-  huggingFaceInferenceProvider: import_zod3.z.string().optional()
+  huggingFaceApiKey: import_zod4.z.string().optional(),
+  huggingFaceModelId: import_zod4.z.string().optional(),
+  huggingFaceInferenceProvider: import_zod4.z.string().optional()
 });
 var chutesSchema = apiModelIdProviderModelSchema.extend({
-  chutesApiKey: import_zod3.z.string().optional()
+  chutesApiKey: import_zod4.z.string().optional()
 });
 var litellmSchema = baseProviderSettingsSchema.extend({
-  litellmBaseUrl: import_zod3.z.string().optional(),
-  litellmApiKey: import_zod3.z.string().optional(),
-  litellmModelId: import_zod3.z.string().optional(),
-  litellmUsePromptCache: import_zod3.z.boolean().optional()
+  litellmBaseUrl: import_zod4.z.string().optional(),
+  litellmApiKey: import_zod4.z.string().optional(),
+  litellmModelId: import_zod4.z.string().optional(),
+  litellmUsePromptCache: import_zod4.z.boolean().optional()
 });
 var cerebrasSchema = apiModelIdProviderModelSchema.extend({
-  cerebrasApiKey: import_zod3.z.string().optional()
+  cerebrasApiKey: import_zod4.z.string().optional()
 });
 var sambaNovaSchema = apiModelIdProviderModelSchema.extend({
-  sambaNovaApiKey: import_zod3.z.string().optional()
+  sambaNovaApiKey: import_zod4.z.string().optional()
 });
 var zaiSchema = apiModelIdProviderModelSchema.extend({
-  zaiApiKey: import_zod3.z.string().optional(),
-  zaiApiLine: import_zod3.z.union([import_zod3.z.literal("china"), import_zod3.z.literal("international")]).optional()
+  zaiApiKey: import_zod4.z.string().optional(),
+  zaiApiLine: import_zod4.z.union([import_zod4.z.literal("china"), import_zod4.z.literal("international")]).optional()
 });
 var fireworksSchema = apiModelIdProviderModelSchema.extend({
-  fireworksApiKey: import_zod3.z.string().optional()
+  fireworksApiKey: import_zod4.z.string().optional()
 });
 var ioIntelligenceSchema = apiModelIdProviderModelSchema.extend({
-  ioIntelligenceModelId: import_zod3.z.string().optional(),
-  ioIntelligenceApiKey: import_zod3.z.string().optional()
+  ioIntelligenceModelId: import_zod4.z.string().optional(),
+  ioIntelligenceApiKey: import_zod4.z.string().optional()
 });
-var defaultSchema = import_zod3.z.object({
-  apiProvider: import_zod3.z.undefined()
+var defaultSchema = import_zod4.z.object({
+  apiProvider: import_zod4.z.undefined()
 });
-var providerSettingsSchemaDiscriminated = import_zod3.z.discriminatedUnion("apiProvider", [
-  anthropicSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("anthropic") })),
-  claudeCodeSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("claude-code") })),
-  glamaSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("glama") })),
-  openRouterSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("openrouter") })),
-  bedrockSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("bedrock") })),
-  vertexSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("vertex") })),
-  openAiSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("openai") })),
-  ollamaSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("ollama") })),
-  vsCodeLmSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("vscode-lm") })),
-  lmStudioSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("lmstudio") })),
-  geminiSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("gemini") })),
-  geminiCliSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("gemini-cli") })),
-  openAiNativeSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("openai-native") })),
-  mistralSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("mistral") })),
-  deepSeekSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("deepseek") })),
-  doubaoSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("doubao") })),
-  moonshotSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("moonshot") })),
-  unboundSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("unbound") })),
-  requestySchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("requesty") })),
-  humanRelaySchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("human-relay") })),
-  fakeAiSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("fake-ai") })),
-  xaiSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("xai") })),
-  groqSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("groq") })),
-  huggingFaceSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("huggingface") })),
-  chutesSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("chutes") })),
-  litellmSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("litellm") })),
-  cerebrasSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("cerebras") })),
-  sambaNovaSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("sambanova") })),
-  zaiSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("zai") })),
-  fireworksSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("fireworks") })),
-  ioIntelligenceSchema.merge(import_zod3.z.object({ apiProvider: import_zod3.z.literal("io-intelligence") })),
+var providerSettingsSchemaDiscriminated = import_zod4.z.discriminatedUnion("apiProvider", [
+  anthropicSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("anthropic") })),
+  claudeCodeSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("claude-code") })),
+  glamaSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("glama") })),
+  openRouterSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("openrouter") })),
+  bedrockSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("bedrock") })),
+  vertexSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("vertex") })),
+  openAiSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("openai") })),
+  ollamaSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("ollama") })),
+  vsCodeLmSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("vscode-lm") })),
+  lmStudioSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("lmstudio") })),
+  geminiSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("gemini") })),
+  geminiCliSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("gemini-cli") })),
+  openAiNativeSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("openai-native") })),
+  mistralSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("mistral") })),
+  deepSeekSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("deepseek") })),
+  doubaoSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("doubao") })),
+  moonshotSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("moonshot") })),
+  unboundSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("unbound") })),
+  requestySchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("requesty") })),
+  humanRelaySchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("human-relay") })),
+  fakeAiSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("fake-ai") })),
+  xaiSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("xai") })),
+  groqSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("groq") })),
+  huggingFaceSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("huggingface") })),
+  chutesSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("chutes") })),
+  litellmSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("litellm") })),
+  cerebrasSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("cerebras") })),
+  sambaNovaSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("sambanova") })),
+  zaiSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("zai") })),
+  fireworksSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("fireworks") })),
+  ioIntelligenceSchema.merge(import_zod4.z.object({ apiProvider: import_zod4.z.literal("io-intelligence") })),
   defaultSchema
 ]);
-var providerSettingsSchema = import_zod3.z.object({
+var providerSettingsSchema = import_zod4.z.object({
   apiProvider: providerNamesSchema.optional(),
   ...anthropicSchema.shape,
   ...claudeCodeSchema.shape,
@@ -609,9 +677,9 @@ var providerSettingsSchema = import_zod3.z.object({
   ...ioIntelligenceSchema.shape,
   ...codebaseIndexProviderSchema.shape
 });
-var providerSettingsWithIdSchema = providerSettingsSchema.extend({ id: import_zod3.z.string().optional() });
+var providerSettingsWithIdSchema = providerSettingsSchema.extend({ id: import_zod4.z.string().optional() });
 var discriminatedProviderSettingsWithIdSchema = providerSettingsSchemaDiscriminated.and(
-  import_zod3.z.object({ id: import_zod3.z.string().optional() })
+  import_zod4.z.object({ id: import_zod4.z.string().optional() })
 );
 var PROVIDER_SETTINGS_KEYS = providerSettingsSchema.keyof().options;
 var MODEL_ID_KEYS = [
@@ -644,39 +712,39 @@ var getApiProtocol = (provider, modelId) => {
 };
 
 // src/history.ts
-var import_zod4 = require("zod");
-var historyItemSchema = import_zod4.z.object({
-  id: import_zod4.z.string(),
-  number: import_zod4.z.number(),
-  ts: import_zod4.z.number(),
-  task: import_zod4.z.string(),
-  tokensIn: import_zod4.z.number(),
-  tokensOut: import_zod4.z.number(),
-  cacheWrites: import_zod4.z.number().optional(),
-  cacheReads: import_zod4.z.number().optional(),
-  totalCost: import_zod4.z.number(),
-  size: import_zod4.z.number().optional(),
-  workspace: import_zod4.z.string().optional(),
-  mode: import_zod4.z.string().optional(),
-  terminalNo: import_zod4.z.number().optional()
+var import_zod5 = require("zod");
+var historyItemSchema = import_zod5.z.object({
+  id: import_zod5.z.string(),
+  number: import_zod5.z.number(),
+  ts: import_zod5.z.number(),
+  task: import_zod5.z.string(),
+  tokensIn: import_zod5.z.number(),
+  tokensOut: import_zod5.z.number(),
+  cacheWrites: import_zod5.z.number().optional(),
+  cacheReads: import_zod5.z.number().optional(),
+  totalCost: import_zod5.z.number(),
+  size: import_zod5.z.number().optional(),
+  workspace: import_zod5.z.string().optional(),
+  mode: import_zod5.z.string().optional(),
+  terminalNo: import_zod5.z.number().optional()
 });
 
 // src/experiment.ts
-var import_zod5 = require("zod");
+var import_zod6 = require("zod");
 var experimentIds = ["powerSteering", "multiFileApplyDiff", "preventFocusDisruption", "assistantMessageParser"];
-var experimentIdsSchema = import_zod5.z.enum(experimentIds);
-var experimentsSchema = import_zod5.z.object({
-  powerSteering: import_zod5.z.boolean().optional(),
-  multiFileApplyDiff: import_zod5.z.boolean().optional(),
-  preventFocusDisruption: import_zod5.z.boolean().optional(),
-  assistantMessageParser: import_zod5.z.boolean().optional()
+var experimentIdsSchema = import_zod6.z.enum(experimentIds);
+var experimentsSchema = import_zod6.z.object({
+  powerSteering: import_zod6.z.boolean().optional(),
+  multiFileApplyDiff: import_zod6.z.boolean().optional(),
+  preventFocusDisruption: import_zod6.z.boolean().optional(),
+  assistantMessageParser: import_zod6.z.boolean().optional()
 });
 
 // src/telemetry.ts
-var import_zod7 = require("zod");
+var import_zod8 = require("zod");
 
 // src/message.ts
-var import_zod6 = require("zod");
+var import_zod7 = require("zod");
 var clineAsks = [
   "followup",
   "command",
@@ -691,7 +759,7 @@ var clineAsks = [
   "use_mcp_server",
   "auto_approval_max_req_reached"
 ];
-var clineAskSchema = import_zod6.z.enum(clineAsks);
+var clineAskSchema = import_zod7.z.enum(clineAsks);
 var blockingAsks = [
   "api_req_failed",
   "mistake_limit_reached",
@@ -731,52 +799,52 @@ var clineSays = [
   "codebase_search_result",
   "user_edit_todos"
 ];
-var clineSaySchema = import_zod6.z.enum(clineSays);
-var toolProgressStatusSchema = import_zod6.z.object({
-  icon: import_zod6.z.string().optional(),
-  text: import_zod6.z.string().optional()
+var clineSaySchema = import_zod7.z.enum(clineSays);
+var toolProgressStatusSchema = import_zod7.z.object({
+  icon: import_zod7.z.string().optional(),
+  text: import_zod7.z.string().optional()
 });
-var contextCondenseSchema = import_zod6.z.object({
-  cost: import_zod6.z.number(),
-  prevContextTokens: import_zod6.z.number(),
-  newContextTokens: import_zod6.z.number(),
-  summary: import_zod6.z.string()
+var contextCondenseSchema = import_zod7.z.object({
+  cost: import_zod7.z.number(),
+  prevContextTokens: import_zod7.z.number(),
+  newContextTokens: import_zod7.z.number(),
+  summary: import_zod7.z.string()
 });
-var clineMessageSchema = import_zod6.z.object({
-  ts: import_zod6.z.number(),
-  type: import_zod6.z.union([import_zod6.z.literal("ask"), import_zod6.z.literal("say")]),
+var clineMessageSchema = import_zod7.z.object({
+  ts: import_zod7.z.number(),
+  type: import_zod7.z.union([import_zod7.z.literal("ask"), import_zod7.z.literal("say")]),
   ask: clineAskSchema.optional(),
   say: clineSaySchema.optional(),
-  text: import_zod6.z.string().optional(),
-  images: import_zod6.z.array(import_zod6.z.string()).optional(),
-  partial: import_zod6.z.boolean().optional(),
-  reasoning: import_zod6.z.string().optional(),
-  conversationHistoryIndex: import_zod6.z.number().optional(),
-  checkpoint: import_zod6.z.record(import_zod6.z.string(), import_zod6.z.unknown()).optional(),
+  text: import_zod7.z.string().optional(),
+  images: import_zod7.z.array(import_zod7.z.string()).optional(),
+  partial: import_zod7.z.boolean().optional(),
+  reasoning: import_zod7.z.string().optional(),
+  conversationHistoryIndex: import_zod7.z.number().optional(),
+  checkpoint: import_zod7.z.record(import_zod7.z.string(), import_zod7.z.unknown()).optional(),
   progressStatus: toolProgressStatusSchema.optional(),
   contextCondense: contextCondenseSchema.optional(),
-  isProtected: import_zod6.z.boolean().optional(),
-  apiProtocol: import_zod6.z.union([import_zod6.z.literal("openai"), import_zod6.z.literal("anthropic")]).optional(),
-  metadata: import_zod6.z.object({
-    gpt5: import_zod6.z.object({
-      previous_response_id: import_zod6.z.string().optional(),
-      instructions: import_zod6.z.string().optional(),
-      reasoning_summary: import_zod6.z.string().optional()
+  isProtected: import_zod7.z.boolean().optional(),
+  apiProtocol: import_zod7.z.union([import_zod7.z.literal("openai"), import_zod7.z.literal("anthropic")]).optional(),
+  metadata: import_zod7.z.object({
+    gpt5: import_zod7.z.object({
+      previous_response_id: import_zod7.z.string().optional(),
+      instructions: import_zod7.z.string().optional(),
+      reasoning_summary: import_zod7.z.string().optional()
     }).optional()
   }).optional()
 });
-var tokenUsageSchema = import_zod6.z.object({
-  totalTokensIn: import_zod6.z.number(),
-  totalTokensOut: import_zod6.z.number(),
-  totalCacheWrites: import_zod6.z.number().optional(),
-  totalCacheReads: import_zod6.z.number().optional(),
-  totalCost: import_zod6.z.number(),
-  contextTokens: import_zod6.z.number()
+var tokenUsageSchema = import_zod7.z.object({
+  totalTokensIn: import_zod7.z.number(),
+  totalTokensOut: import_zod7.z.number(),
+  totalCacheWrites: import_zod7.z.number().optional(),
+  totalCacheReads: import_zod7.z.number().optional(),
+  totalCost: import_zod7.z.number(),
+  contextTokens: import_zod7.z.number()
 });
 
 // src/telemetry.ts
 var telemetrySettings = ["unset", "enabled", "disabled"];
-var telemetrySettingsSchema = import_zod7.z.enum(telemetrySettings);
+var telemetrySettingsSchema = import_zod8.z.enum(telemetrySettings);
 var TelemetryEventName = /* @__PURE__ */ ((TelemetryEventName2) => {
   TelemetryEventName2["TASK_CREATED"] = "Task Created";
   TelemetryEventName2["TASK_RESTARTED"] = "Task Reopened";
@@ -818,42 +886,42 @@ var TelemetryEventName = /* @__PURE__ */ ((TelemetryEventName2) => {
   TelemetryEventName2["CODE_INDEX_ERROR"] = "Code Index Error";
   return TelemetryEventName2;
 })(TelemetryEventName || {});
-var appPropertiesSchema = import_zod7.z.object({
-  appName: import_zod7.z.string(),
-  appVersion: import_zod7.z.string(),
-  vscodeVersion: import_zod7.z.string(),
-  platform: import_zod7.z.string(),
-  editorName: import_zod7.z.string(),
-  language: import_zod7.z.string(),
-  mode: import_zod7.z.string(),
-  cloudIsAuthenticated: import_zod7.z.boolean().optional()
+var appPropertiesSchema = import_zod8.z.object({
+  appName: import_zod8.z.string(),
+  appVersion: import_zod8.z.string(),
+  vscodeVersion: import_zod8.z.string(),
+  platform: import_zod8.z.string(),
+  editorName: import_zod8.z.string(),
+  language: import_zod8.z.string(),
+  mode: import_zod8.z.string(),
+  cloudIsAuthenticated: import_zod8.z.boolean().optional()
 });
-var taskPropertiesSchema = import_zod7.z.object({
-  taskId: import_zod7.z.string().optional(),
-  apiProvider: import_zod7.z.enum(providerNames).optional(),
-  modelId: import_zod7.z.string().optional(),
-  diffStrategy: import_zod7.z.string().optional(),
-  isSubtask: import_zod7.z.boolean().optional(),
-  todos: import_zod7.z.object({
-    total: import_zod7.z.number(),
-    completed: import_zod7.z.number(),
-    inProgress: import_zod7.z.number(),
-    pending: import_zod7.z.number()
+var taskPropertiesSchema = import_zod8.z.object({
+  taskId: import_zod8.z.string().optional(),
+  apiProvider: import_zod8.z.enum(providerNames).optional(),
+  modelId: import_zod8.z.string().optional(),
+  diffStrategy: import_zod8.z.string().optional(),
+  isSubtask: import_zod8.z.boolean().optional(),
+  todos: import_zod8.z.object({
+    total: import_zod8.z.number(),
+    completed: import_zod8.z.number(),
+    inProgress: import_zod8.z.number(),
+    pending: import_zod8.z.number()
   }).optional()
 });
-var gitPropertiesSchema = import_zod7.z.object({
-  repositoryUrl: import_zod7.z.string().optional(),
-  repositoryName: import_zod7.z.string().optional(),
-  defaultBranch: import_zod7.z.string().optional()
+var gitPropertiesSchema = import_zod8.z.object({
+  repositoryUrl: import_zod8.z.string().optional(),
+  repositoryName: import_zod8.z.string().optional(),
+  defaultBranch: import_zod8.z.string().optional()
 });
-var telemetryPropertiesSchema = import_zod7.z.object({
+var telemetryPropertiesSchema = import_zod8.z.object({
   ...appPropertiesSchema.shape,
   ...taskPropertiesSchema.shape,
   ...gitPropertiesSchema.shape
 });
-var rooCodeTelemetryEventSchema = import_zod7.z.discriminatedUnion("type", [
-  import_zod7.z.object({
-    type: import_zod7.z.enum([
+var rooCodeTelemetryEventSchema = import_zod8.z.discriminatedUnion("type", [
+  import_zod8.z.object({
+    type: import_zod8.z.enum([
       "Task Created" /* TASK_CREATED */,
       "Task Reopened" /* TASK_RESTARTED */,
       "Task Completed" /* TASK_COMPLETED */,
@@ -893,34 +961,34 @@ var rooCodeTelemetryEventSchema = import_zod7.z.discriminatedUnion("type", [
     ]),
     properties: telemetryPropertiesSchema
   }),
-  import_zod7.z.object({
-    type: import_zod7.z.literal("Task Message" /* TASK_MESSAGE */),
-    properties: import_zod7.z.object({
+  import_zod8.z.object({
+    type: import_zod8.z.literal("Task Message" /* TASK_MESSAGE */),
+    properties: import_zod8.z.object({
       ...telemetryPropertiesSchema.shape,
-      taskId: import_zod7.z.string(),
+      taskId: import_zod8.z.string(),
       message: clineMessageSchema
     })
   }),
-  import_zod7.z.object({
-    type: import_zod7.z.literal("LLM Completion" /* LLM_COMPLETION */),
-    properties: import_zod7.z.object({
+  import_zod8.z.object({
+    type: import_zod8.z.literal("LLM Completion" /* LLM_COMPLETION */),
+    properties: import_zod8.z.object({
       ...telemetryPropertiesSchema.shape,
-      inputTokens: import_zod7.z.number(),
-      outputTokens: import_zod7.z.number(),
-      cacheReadTokens: import_zod7.z.number().optional(),
-      cacheWriteTokens: import_zod7.z.number().optional(),
-      cost: import_zod7.z.number().optional()
+      inputTokens: import_zod8.z.number(),
+      outputTokens: import_zod8.z.number(),
+      cacheReadTokens: import_zod8.z.number().optional(),
+      cacheWriteTokens: import_zod8.z.number().optional(),
+      cost: import_zod8.z.number().optional()
     })
   })
 ]);
 
 // src/mode.ts
-var import_zod9 = require("zod");
+var import_zod10 = require("zod");
 
 // src/tool.ts
-var import_zod8 = require("zod");
+var import_zod9 = require("zod");
 var toolGroups = ["read", "edit", "browser", "command", "mcp", "modes"];
-var toolGroupsSchema = import_zod8.z.enum(toolGroups);
+var toolGroupsSchema = import_zod9.z.enum(toolGroups);
 var toolNames = [
   "execute_command",
   "read_file",
@@ -942,18 +1010,18 @@ var toolNames = [
   "codebase_search",
   "update_todo_list"
 ];
-var toolNamesSchema = import_zod8.z.enum(toolNames);
-var toolUsageSchema = import_zod8.z.record(
+var toolNamesSchema = import_zod9.z.enum(toolNames);
+var toolUsageSchema = import_zod9.z.record(
   toolNamesSchema,
-  import_zod8.z.object({
-    attempts: import_zod8.z.number(),
-    failures: import_zod8.z.number()
+  import_zod9.z.object({
+    attempts: import_zod9.z.number(),
+    failures: import_zod9.z.number()
   })
 );
 
 // src/mode.ts
-var groupOptionsSchema = import_zod9.z.object({
-  fileRegex: import_zod9.z.string().optional().refine(
+var groupOptionsSchema = import_zod10.z.object({
+  fileRegex: import_zod10.z.string().optional().refine(
     (pattern) => {
       if (!pattern) {
         return true;
@@ -967,10 +1035,10 @@ var groupOptionsSchema = import_zod9.z.object({
     },
     { message: "Invalid regular expression pattern" }
   ),
-  description: import_zod9.z.string().optional()
+  description: import_zod10.z.string().optional()
 });
-var groupEntrySchema = import_zod9.z.union([toolGroupsSchema, import_zod9.z.tuple([toolGroupsSchema, groupOptionsSchema])]);
-var groupEntryArraySchema = import_zod9.z.array(groupEntrySchema).refine(
+var groupEntrySchema = import_zod10.z.union([toolGroupsSchema, import_zod10.z.tuple([toolGroupsSchema, groupOptionsSchema])]);
+var groupEntryArraySchema = import_zod10.z.array(groupEntrySchema).refine(
   (groups) => {
     const seen = /* @__PURE__ */ new Set();
     return groups.every((group) => {
@@ -984,18 +1052,18 @@ var groupEntryArraySchema = import_zod9.z.array(groupEntrySchema).refine(
   },
   { message: "Duplicate groups are not allowed" }
 );
-var modeConfigSchema = import_zod9.z.object({
-  slug: import_zod9.z.string().regex(/^[a-zA-Z0-9-]+$/, "Slug must contain only letters numbers and dashes"),
-  name: import_zod9.z.string().min(1, "Name is required"),
-  roleDefinition: import_zod9.z.string().min(1, "Role definition is required"),
-  whenToUse: import_zod9.z.string().optional(),
-  description: import_zod9.z.string().optional(),
-  customInstructions: import_zod9.z.string().optional(),
+var modeConfigSchema = import_zod10.z.object({
+  slug: import_zod10.z.string().regex(/^[a-zA-Z0-9-]+$/, "Slug must contain only letters numbers and dashes"),
+  name: import_zod10.z.string().min(1, "Name is required"),
+  roleDefinition: import_zod10.z.string().min(1, "Role definition is required"),
+  whenToUse: import_zod10.z.string().optional(),
+  description: import_zod10.z.string().optional(),
+  customInstructions: import_zod10.z.string().optional(),
   groups: groupEntryArraySchema,
-  source: import_zod9.z.enum(["global", "project"]).optional()
+  source: import_zod10.z.enum(["global", "project"]).optional()
 });
-var customModesSettingsSchema = import_zod9.z.object({
-  customModes: import_zod9.z.array(modeConfigSchema).refine(
+var customModesSettingsSchema = import_zod10.z.object({
+  customModes: import_zod10.z.array(modeConfigSchema).refine(
     (modes) => {
       const slugs = /* @__PURE__ */ new Set();
       return modes.every((mode) => {
@@ -1011,14 +1079,14 @@ var customModesSettingsSchema = import_zod9.z.object({
     }
   )
 });
-var promptComponentSchema = import_zod9.z.object({
-  roleDefinition: import_zod9.z.string().optional(),
-  whenToUse: import_zod9.z.string().optional(),
-  description: import_zod9.z.string().optional(),
-  customInstructions: import_zod9.z.string().optional()
+var promptComponentSchema = import_zod10.z.object({
+  roleDefinition: import_zod10.z.string().optional(),
+  whenToUse: import_zod10.z.string().optional(),
+  description: import_zod10.z.string().optional(),
+  customInstructions: import_zod10.z.string().optional()
 });
-var customModePromptsSchema = import_zod9.z.record(import_zod9.z.string(), promptComponentSchema.optional());
-var customSupportPromptsSchema = import_zod9.z.record(import_zod9.z.string(), import_zod9.z.string().optional());
+var customModePromptsSchema = import_zod10.z.record(import_zod10.z.string(), promptComponentSchema.optional());
+var customSupportPromptsSchema = import_zod10.z.record(import_zod10.z.string(), import_zod10.z.string().optional());
 var DEFAULT_MODES = [
   {
     slug: "architect",
@@ -1067,7 +1135,7 @@ var DEFAULT_MODES = [
 ];
 
 // src/vscode.ts
-var import_zod10 = require("zod");
+var import_zod11 = require("zod");
 var codeActionIds = ["explainCode", "fixCode", "improveCode", "addToContext", "newTask"];
 var terminalActionIds = ["terminalAddToContext", "terminalFixCommand", "terminalExplainCommand"];
 var commandIds = [
@@ -1124,143 +1192,143 @@ var languages = [
   "zh-CN",
   "zh-TW"
 ];
-var languagesSchema = import_zod10.z.enum(languages);
+var languagesSchema = import_zod11.z.enum(languages);
 var isLanguage = (value) => languages.includes(value);
 
 // src/global-settings.ts
 var DEFAULT_WRITE_DELAY_MS = 1e3;
 var DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT = 5e4;
 var DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 3e4;
-var globalSettingsSchema = import_zod11.z.object({
-  currentApiConfigName: import_zod11.z.string().optional(),
-  listApiConfigMeta: import_zod11.z.array(providerSettingsEntrySchema).optional(),
-  pinnedApiConfigs: import_zod11.z.record(import_zod11.z.string(), import_zod11.z.boolean()).optional(),
-  lastShownAnnouncementId: import_zod11.z.string().optional(),
-  customInstructions: import_zod11.z.string().optional(),
-  taskHistory: import_zod11.z.array(historyItemSchema).optional(),
-  condensingApiConfigId: import_zod11.z.string().optional(),
-  customCondensingPrompt: import_zod11.z.string().optional(),
-  autoApprovalEnabled: import_zod11.z.boolean().optional(),
-  alwaysAllowReadOnly: import_zod11.z.boolean().optional(),
-  alwaysAllowReadOnlyOutsideWorkspace: import_zod11.z.boolean().optional(),
-  alwaysAllowWrite: import_zod11.z.boolean().optional(),
-  alwaysAllowWriteOutsideWorkspace: import_zod11.z.boolean().optional(),
-  alwaysAllowWriteProtected: import_zod11.z.boolean().optional(),
-  writeDelayMs: import_zod11.z.number().min(0).optional(),
-  alwaysAllowBrowser: import_zod11.z.boolean().optional(),
-  alwaysApproveResubmit: import_zod11.z.boolean().optional(),
-  requestDelaySeconds: import_zod11.z.number().optional(),
-  alwaysAllowMcp: import_zod11.z.boolean().optional(),
-  alwaysAllowModeSwitch: import_zod11.z.boolean().optional(),
-  alwaysAllowSubtasks: import_zod11.z.boolean().optional(),
-  alwaysAllowExecute: import_zod11.z.boolean().optional(),
-  alwaysAllowFollowupQuestions: import_zod11.z.boolean().optional(),
-  followupAutoApproveTimeoutMs: import_zod11.z.number().optional(),
-  alwaysAllowUpdateTodoList: import_zod11.z.boolean().optional(),
-  allowedCommands: import_zod11.z.array(import_zod11.z.string()).optional(),
-  deniedCommands: import_zod11.z.array(import_zod11.z.string()).optional(),
-  commandExecutionTimeout: import_zod11.z.number().optional(),
-  commandTimeoutAllowlist: import_zod11.z.array(import_zod11.z.string()).optional(),
-  preventCompletionWithOpenTodos: import_zod11.z.boolean().optional(),
-  allowedMaxRequests: import_zod11.z.number().nullish(),
-  allowedMaxCost: import_zod11.z.number().nullish(),
-  autoCondenseContext: import_zod11.z.boolean().optional(),
-  autoCondenseContextPercent: import_zod11.z.number().optional(),
-  maxConcurrentFileReads: import_zod11.z.number().optional(),
+var globalSettingsSchema = import_zod12.z.object({
+  currentApiConfigName: import_zod12.z.string().optional(),
+  listApiConfigMeta: import_zod12.z.array(providerSettingsEntrySchema).optional(),
+  pinnedApiConfigs: import_zod12.z.record(import_zod12.z.string(), import_zod12.z.boolean()).optional(),
+  lastShownAnnouncementId: import_zod12.z.string().optional(),
+  customInstructions: import_zod12.z.string().optional(),
+  taskHistory: import_zod12.z.array(historyItemSchema).optional(),
+  condensingApiConfigId: import_zod12.z.string().optional(),
+  customCondensingPrompt: import_zod12.z.string().optional(),
+  autoApprovalEnabled: import_zod12.z.boolean().optional(),
+  alwaysAllowReadOnly: import_zod12.z.boolean().optional(),
+  alwaysAllowReadOnlyOutsideWorkspace: import_zod12.z.boolean().optional(),
+  alwaysAllowWrite: import_zod12.z.boolean().optional(),
+  alwaysAllowWriteOutsideWorkspace: import_zod12.z.boolean().optional(),
+  alwaysAllowWriteProtected: import_zod12.z.boolean().optional(),
+  writeDelayMs: import_zod12.z.number().min(0).optional(),
+  alwaysAllowBrowser: import_zod12.z.boolean().optional(),
+  alwaysApproveResubmit: import_zod12.z.boolean().optional(),
+  requestDelaySeconds: import_zod12.z.number().optional(),
+  alwaysAllowMcp: import_zod12.z.boolean().optional(),
+  alwaysAllowModeSwitch: import_zod12.z.boolean().optional(),
+  alwaysAllowSubtasks: import_zod12.z.boolean().optional(),
+  alwaysAllowExecute: import_zod12.z.boolean().optional(),
+  alwaysAllowFollowupQuestions: import_zod12.z.boolean().optional(),
+  followupAutoApproveTimeoutMs: import_zod12.z.number().optional(),
+  alwaysAllowUpdateTodoList: import_zod12.z.boolean().optional(),
+  allowedCommands: import_zod12.z.array(import_zod12.z.string()).optional(),
+  deniedCommands: import_zod12.z.array(import_zod12.z.string()).optional(),
+  commandExecutionTimeout: import_zod12.z.number().optional(),
+  commandTimeoutAllowlist: import_zod12.z.array(import_zod12.z.string()).optional(),
+  preventCompletionWithOpenTodos: import_zod12.z.boolean().optional(),
+  allowedMaxRequests: import_zod12.z.number().nullish(),
+  allowedMaxCost: import_zod12.z.number().nullish(),
+  autoCondenseContext: import_zod12.z.boolean().optional(),
+  autoCondenseContextPercent: import_zod12.z.number().optional(),
+  maxConcurrentFileReads: import_zod12.z.number().optional(),
   /**
    * Whether to include diagnostic messages (errors, warnings) in tool outputs
    * @default true
    */
-  includeDiagnosticMessages: import_zod11.z.boolean().optional(),
+  includeDiagnosticMessages: import_zod12.z.boolean().optional(),
   /**
    * Maximum number of diagnostic messages to include in tool outputs
    * @default 50
    */
-  maxDiagnosticMessages: import_zod11.z.number().optional(),
-  browserToolEnabled: import_zod11.z.boolean().optional(),
-  browserViewportSize: import_zod11.z.string().optional(),
-  screenshotQuality: import_zod11.z.number().optional(),
-  remoteBrowserEnabled: import_zod11.z.boolean().optional(),
-  remoteBrowserHost: import_zod11.z.string().optional(),
-  cachedChromeHostUrl: import_zod11.z.string().optional(),
-  enableCheckpoints: import_zod11.z.boolean().optional(),
-  ttsEnabled: import_zod11.z.boolean().optional(),
-  ttsSpeed: import_zod11.z.number().optional(),
-  soundEnabled: import_zod11.z.boolean().optional(),
-  soundVolume: import_zod11.z.number().optional(),
-  maxOpenTabsContext: import_zod11.z.number().optional(),
-  maxWorkspaceFiles: import_zod11.z.number().optional(),
-  showRooIgnoredFiles: import_zod11.z.boolean().optional(),
-  maxReadFileLine: import_zod11.z.number().optional(),
-  maxImageFileSize: import_zod11.z.number().optional(),
-  maxTotalImageSize: import_zod11.z.number().optional(),
-  terminalOutputLineLimit: import_zod11.z.number().optional(),
-  terminalOutputCharacterLimit: import_zod11.z.number().optional(),
-  terminalShellIntegrationTimeout: import_zod11.z.number().optional(),
-  terminalShellIntegrationDisabled: import_zod11.z.boolean().optional(),
-  terminalCommandDelay: import_zod11.z.number().optional(),
-  terminalPowershellCounter: import_zod11.z.boolean().optional(),
-  terminalZshClearEolMark: import_zod11.z.boolean().optional(),
-  terminalZshOhMy: import_zod11.z.boolean().optional(),
-  terminalZshP10k: import_zod11.z.boolean().optional(),
-  terminalZdotdir: import_zod11.z.boolean().optional(),
-  terminalCompressProgressBar: import_zod11.z.boolean().optional(),
-  diagnosticsEnabled: import_zod11.z.boolean().optional(),
-  rateLimitSeconds: import_zod11.z.number().optional(),
-  diffEnabled: import_zod11.z.boolean().optional(),
-  fuzzyMatchThreshold: import_zod11.z.number().optional(),
+  maxDiagnosticMessages: import_zod12.z.number().optional(),
+  browserToolEnabled: import_zod12.z.boolean().optional(),
+  browserViewportSize: import_zod12.z.string().optional(),
+  screenshotQuality: import_zod12.z.number().optional(),
+  remoteBrowserEnabled: import_zod12.z.boolean().optional(),
+  remoteBrowserHost: import_zod12.z.string().optional(),
+  cachedChromeHostUrl: import_zod12.z.string().optional(),
+  enableCheckpoints: import_zod12.z.boolean().optional(),
+  ttsEnabled: import_zod12.z.boolean().optional(),
+  ttsSpeed: import_zod12.z.number().optional(),
+  soundEnabled: import_zod12.z.boolean().optional(),
+  soundVolume: import_zod12.z.number().optional(),
+  maxOpenTabsContext: import_zod12.z.number().optional(),
+  maxWorkspaceFiles: import_zod12.z.number().optional(),
+  showRooIgnoredFiles: import_zod12.z.boolean().optional(),
+  maxReadFileLine: import_zod12.z.number().optional(),
+  maxImageFileSize: import_zod12.z.number().optional(),
+  maxTotalImageSize: import_zod12.z.number().optional(),
+  terminalOutputLineLimit: import_zod12.z.number().optional(),
+  terminalOutputCharacterLimit: import_zod12.z.number().optional(),
+  terminalShellIntegrationTimeout: import_zod12.z.number().optional(),
+  terminalShellIntegrationDisabled: import_zod12.z.boolean().optional(),
+  terminalCommandDelay: import_zod12.z.number().optional(),
+  terminalPowershellCounter: import_zod12.z.boolean().optional(),
+  terminalZshClearEolMark: import_zod12.z.boolean().optional(),
+  terminalZshOhMy: import_zod12.z.boolean().optional(),
+  terminalZshP10k: import_zod12.z.boolean().optional(),
+  terminalZdotdir: import_zod12.z.boolean().optional(),
+  terminalCompressProgressBar: import_zod12.z.boolean().optional(),
+  diagnosticsEnabled: import_zod12.z.boolean().optional(),
+  rateLimitSeconds: import_zod12.z.number().optional(),
+  diffEnabled: import_zod12.z.boolean().optional(),
+  fuzzyMatchThreshold: import_zod12.z.number().optional(),
   experiments: experimentsSchema.optional(),
   codebaseIndexModels: codebaseIndexModelsSchema.optional(),
   codebaseIndexConfig: codebaseIndexConfigSchema.optional(),
   language: languagesSchema.optional(),
   telemetrySetting: telemetrySettingsSchema.optional(),
-  mcpEnabled: import_zod11.z.boolean().optional(),
-  enableMcpServerCreation: import_zod11.z.boolean().optional(),
-  remoteControlEnabled: import_zod11.z.boolean().optional(),
-  mode: import_zod11.z.string().optional(),
-  modeApiConfigs: import_zod11.z.record(import_zod11.z.string(), import_zod11.z.string()).optional(),
-  customModes: import_zod11.z.array(modeConfigSchema).optional(),
+  mcpEnabled: import_zod12.z.boolean().optional(),
+  enableMcpServerCreation: import_zod12.z.boolean().optional(),
+  remoteControlEnabled: import_zod12.z.boolean().optional(),
+  mode: import_zod12.z.string().optional(),
+  modeApiConfigs: import_zod12.z.record(import_zod12.z.string(), import_zod12.z.string()).optional(),
+  customModes: import_zod12.z.array(modeConfigSchema).optional(),
   customModePrompts: customModePromptsSchema.optional(),
   customSupportPrompts: customSupportPromptsSchema.optional(),
-  enhancementApiConfigId: import_zod11.z.string().optional(),
-  includeTaskHistoryInEnhance: import_zod11.z.boolean().optional(),
-  historyPreviewCollapsed: import_zod11.z.boolean().optional(),
-  profileThresholds: import_zod11.z.record(import_zod11.z.string(), import_zod11.z.number()).optional(),
-  hasOpenedModeSelector: import_zod11.z.boolean().optional(),
-  lastModeExportPath: import_zod11.z.string().optional(),
-  lastModeImportPath: import_zod11.z.string().optional(),
+  enhancementApiConfigId: import_zod12.z.string().optional(),
+  includeTaskHistoryInEnhance: import_zod12.z.boolean().optional(),
+  historyPreviewCollapsed: import_zod12.z.boolean().optional(),
+  profileThresholds: import_zod12.z.record(import_zod12.z.string(), import_zod12.z.number()).optional(),
+  hasOpenedModeSelector: import_zod12.z.boolean().optional(),
+  lastModeExportPath: import_zod12.z.string().optional(),
+  lastModeImportPath: import_zod12.z.string().optional(),
   // IM integration data
-  imContacts: import_zod11.z.object({
-    friends: import_zod11.z.array(
-      import_zod11.z.object({
-        id: import_zod11.z.number(),
-        nickName: import_zod11.z.string(),
-        headImage: import_zod11.z.string(),
-        deleted: import_zod11.z.boolean(),
-        online: import_zod11.z.boolean(),
-        onlineWeb: import_zod11.z.boolean(),
-        onlineApp: import_zod11.z.boolean()
+  imContacts: import_zod12.z.object({
+    friends: import_zod12.z.array(
+      import_zod12.z.object({
+        id: import_zod12.z.number(),
+        nickName: import_zod12.z.string(),
+        headImage: import_zod12.z.string(),
+        deleted: import_zod12.z.boolean(),
+        online: import_zod12.z.boolean(),
+        onlineWeb: import_zod12.z.boolean(),
+        onlineApp: import_zod12.z.boolean()
       })
     ).optional(),
-    groups: import_zod11.z.array(
-      import_zod11.z.object({
-        id: import_zod11.z.number(),
-        name: import_zod11.z.string(),
-        ownerId: import_zod11.z.number(),
-        headImage: import_zod11.z.string(),
-        headImageThumb: import_zod11.z.string(),
-        notice: import_zod11.z.string(),
-        remarkNickName: import_zod11.z.string(),
-        showNickName: import_zod11.z.string(),
-        showGroupName: import_zod11.z.string(),
-        remarkGroupName: import_zod11.z.string(),
-        dissolve: import_zod11.z.boolean(),
-        quit: import_zod11.z.boolean(),
-        isBanned: import_zod11.z.boolean(),
-        reason: import_zod11.z.string()
+    groups: import_zod12.z.array(
+      import_zod12.z.object({
+        id: import_zod12.z.number(),
+        name: import_zod12.z.string(),
+        ownerId: import_zod12.z.number(),
+        headImage: import_zod12.z.string(),
+        headImageThumb: import_zod12.z.string(),
+        notice: import_zod12.z.string(),
+        remarkNickName: import_zod12.z.string(),
+        showNickName: import_zod12.z.string(),
+        showGroupName: import_zod12.z.string(),
+        remarkGroupName: import_zod12.z.string(),
+        dissolve: import_zod12.z.boolean(),
+        quit: import_zod12.z.boolean(),
+        isBanned: import_zod12.z.boolean(),
+        reason: import_zod12.z.string()
       })
     ).optional(),
-    lastUpdated: import_zod11.z.number().optional()
+    lastUpdated: import_zod12.z.number().optional()
   }).optional()
 });
 var GLOBAL_SETTINGS_KEYS = globalSettingsSchema.keyof().options;
@@ -1369,62 +1437,62 @@ var EVALS_SETTINGS = {
 var EVALS_TIMEOUT = 5 * 60 * 1e3;
 
 // src/marketplace.ts
-var import_zod12 = require("zod");
-var mcpParameterSchema = import_zod12.z.object({
-  name: import_zod12.z.string().min(1),
-  key: import_zod12.z.string().min(1),
-  placeholder: import_zod12.z.string().optional(),
-  optional: import_zod12.z.boolean().optional().default(false)
+var import_zod13 = require("zod");
+var mcpParameterSchema = import_zod13.z.object({
+  name: import_zod13.z.string().min(1),
+  key: import_zod13.z.string().min(1),
+  placeholder: import_zod13.z.string().optional(),
+  optional: import_zod13.z.boolean().optional().default(false)
 });
-var mcpInstallationMethodSchema = import_zod12.z.object({
-  name: import_zod12.z.string().min(1),
-  content: import_zod12.z.string().min(1),
-  parameters: import_zod12.z.array(mcpParameterSchema).optional(),
-  prerequisites: import_zod12.z.array(import_zod12.z.string()).optional()
+var mcpInstallationMethodSchema = import_zod13.z.object({
+  name: import_zod13.z.string().min(1),
+  content: import_zod13.z.string().min(1),
+  parameters: import_zod13.z.array(mcpParameterSchema).optional(),
+  prerequisites: import_zod13.z.array(import_zod13.z.string()).optional()
 });
-var marketplaceItemTypeSchema = import_zod12.z.enum(["mode", "mcp"]);
-var baseMarketplaceItemSchema = import_zod12.z.object({
-  id: import_zod12.z.string().min(1),
-  name: import_zod12.z.string().min(1, "Name is required"),
-  description: import_zod12.z.string(),
-  author: import_zod12.z.string().optional(),
-  authorUrl: import_zod12.z.string().url("Author URL must be a valid URL").optional(),
-  tags: import_zod12.z.array(import_zod12.z.string()).optional(),
-  prerequisites: import_zod12.z.array(import_zod12.z.string()).optional()
+var marketplaceItemTypeSchema = import_zod13.z.enum(["mode", "mcp"]);
+var baseMarketplaceItemSchema = import_zod13.z.object({
+  id: import_zod13.z.string().min(1),
+  name: import_zod13.z.string().min(1, "Name is required"),
+  description: import_zod13.z.string(),
+  author: import_zod13.z.string().optional(),
+  authorUrl: import_zod13.z.string().url("Author URL must be a valid URL").optional(),
+  tags: import_zod13.z.array(import_zod13.z.string()).optional(),
+  prerequisites: import_zod13.z.array(import_zod13.z.string()).optional()
 });
 var modeMarketplaceItemSchema = baseMarketplaceItemSchema.extend({
-  content: import_zod12.z.string().min(1)
+  content: import_zod13.z.string().min(1)
   // YAML content for modes
 });
 var mcpMarketplaceItemSchema = baseMarketplaceItemSchema.extend({
-  url: import_zod12.z.string().url(),
+  url: import_zod13.z.string().url(),
   // Required url field
-  content: import_zod12.z.union([import_zod12.z.string().min(1), import_zod12.z.array(mcpInstallationMethodSchema)]),
+  content: import_zod13.z.union([import_zod13.z.string().min(1), import_zod13.z.array(mcpInstallationMethodSchema)]),
   // Single config or array of methods
-  parameters: import_zod12.z.array(mcpParameterSchema).optional()
+  parameters: import_zod13.z.array(mcpParameterSchema).optional()
 });
-var marketplaceItemSchema = import_zod12.z.discriminatedUnion("type", [
+var marketplaceItemSchema = import_zod13.z.discriminatedUnion("type", [
   // Mode marketplace item
   modeMarketplaceItemSchema.extend({
-    type: import_zod12.z.literal("mode")
+    type: import_zod13.z.literal("mode")
   }),
   // MCP marketplace item
   mcpMarketplaceItemSchema.extend({
-    type: import_zod12.z.literal("mcp")
+    type: import_zod13.z.literal("mcp")
   })
 ]);
-var installMarketplaceItemOptionsSchema = import_zod12.z.object({
-  target: import_zod12.z.enum(["global", "project"]).optional().default("project"),
-  parameters: import_zod12.z.record(import_zod12.z.string(), import_zod12.z.any()).optional()
+var installMarketplaceItemOptionsSchema = import_zod13.z.object({
+  target: import_zod13.z.enum(["global", "project"]).optional().default("project"),
+  parameters: import_zod13.z.record(import_zod13.z.string(), import_zod13.z.any()).optional()
 });
 
 // src/cloud.ts
-var organizationAllowListSchema = import_zod13.z.object({
-  allowAll: import_zod13.z.boolean(),
-  providers: import_zod13.z.record(
-    import_zod13.z.object({
-      allowAll: import_zod13.z.boolean(),
-      models: import_zod13.z.array(import_zod13.z.string()).optional()
+var organizationAllowListSchema = import_zod14.z.object({
+  allowAll: import_zod14.z.boolean(),
+  providers: import_zod14.z.record(
+    import_zod14.z.object({
+      allowAll: import_zod14.z.boolean(),
+      models: import_zod14.z.array(import_zod14.z.string()).optional()
     })
   )
 });
@@ -1442,30 +1510,30 @@ var organizationDefaultSettingsSchema = globalSettingsSchema.pick({
   terminalShellIntegrationTimeout: true,
   terminalZshClearEolMark: true
 }).merge(
-  import_zod13.z.object({
-    maxOpenTabsContext: import_zod13.z.number().int().nonnegative().optional(),
-    maxReadFileLine: import_zod13.z.number().int().gte(-1).optional(),
-    maxWorkspaceFiles: import_zod13.z.number().int().nonnegative().optional(),
-    terminalCommandDelay: import_zod13.z.number().int().nonnegative().optional(),
-    terminalOutputLineLimit: import_zod13.z.number().int().nonnegative().optional(),
-    terminalShellIntegrationTimeout: import_zod13.z.number().int().nonnegative().optional()
+  import_zod14.z.object({
+    maxOpenTabsContext: import_zod14.z.number().int().nonnegative().optional(),
+    maxReadFileLine: import_zod14.z.number().int().gte(-1).optional(),
+    maxWorkspaceFiles: import_zod14.z.number().int().nonnegative().optional(),
+    terminalCommandDelay: import_zod14.z.number().int().nonnegative().optional(),
+    terminalOutputLineLimit: import_zod14.z.number().int().nonnegative().optional(),
+    terminalShellIntegrationTimeout: import_zod14.z.number().int().nonnegative().optional()
   })
 );
-var organizationCloudSettingsSchema = import_zod13.z.object({
-  recordTaskMessages: import_zod13.z.boolean().optional(),
-  enableTaskSharing: import_zod13.z.boolean().optional(),
-  taskShareExpirationDays: import_zod13.z.number().int().positive().optional(),
-  allowMembersViewAllTasks: import_zod13.z.boolean().optional()
+var organizationCloudSettingsSchema = import_zod14.z.object({
+  recordTaskMessages: import_zod14.z.boolean().optional(),
+  enableTaskSharing: import_zod14.z.boolean().optional(),
+  taskShareExpirationDays: import_zod14.z.number().int().positive().optional(),
+  allowMembersViewAllTasks: import_zod14.z.boolean().optional()
 });
-var organizationSettingsSchema = import_zod13.z.object({
-  version: import_zod13.z.number(),
+var organizationSettingsSchema = import_zod14.z.object({
+  version: import_zod14.z.number(),
   cloudSettings: organizationCloudSettingsSchema.optional(),
   defaultSettings: organizationDefaultSettingsSchema,
   allowList: organizationAllowListSchema,
-  hiddenMcps: import_zod13.z.array(import_zod13.z.string()).optional(),
-  hideMarketplaceMcps: import_zod13.z.boolean().optional(),
-  mcps: import_zod13.z.array(mcpMarketplaceItemSchema).optional(),
-  providerProfiles: import_zod13.z.record(import_zod13.z.string(), discriminatedProviderSettingsWithIdSchema).optional()
+  hiddenMcps: import_zod14.z.array(import_zod14.z.string()).optional(),
+  hideMarketplaceMcps: import_zod14.z.boolean().optional(),
+  mcps: import_zod14.z.array(mcpMarketplaceItemSchema).optional(),
+  providerProfiles: import_zod14.z.record(import_zod14.z.string(), discriminatedProviderSettingsWithIdSchema).optional()
 });
 var ORGANIZATION_ALLOW_ALL = {
   allowAll: true,
@@ -1482,16 +1550,16 @@ var ORGANIZATION_DEFAULT = {
   defaultSettings: {},
   allowList: ORGANIZATION_ALLOW_ALL
 };
-var shareResponseSchema = import_zod13.z.object({
-  success: import_zod13.z.boolean(),
-  shareUrl: import_zod13.z.string().optional(),
-  error: import_zod13.z.string().optional(),
-  isNewShare: import_zod13.z.boolean().optional(),
-  manageUrl: import_zod13.z.string().optional()
+var shareResponseSchema = import_zod14.z.object({
+  success: import_zod14.z.boolean(),
+  shareUrl: import_zod14.z.string().optional(),
+  error: import_zod14.z.string().optional(),
+  isNewShare: import_zod14.z.boolean().optional(),
+  manageUrl: import_zod14.z.string().optional()
 });
 
 // src/events.ts
-var import_zod14 = require("zod");
+var import_zod15 = require("zod");
 var RooCodeEventName = /* @__PURE__ */ ((RooCodeEventName2) => {
   RooCodeEventName2["TaskCreated"] = "taskCreated";
   RooCodeEventName2["TaskStarted"] = "taskStarted";
@@ -1513,149 +1581,149 @@ var RooCodeEventName = /* @__PURE__ */ ((RooCodeEventName2) => {
   RooCodeEventName2["EvalFail"] = "evalFail";
   return RooCodeEventName2;
 })(RooCodeEventName || {});
-var rooCodeEventsSchema = import_zod14.z.object({
-  ["taskCreated" /* TaskCreated */]: import_zod14.z.tuple([import_zod14.z.string()]),
-  ["taskStarted" /* TaskStarted */]: import_zod14.z.tuple([import_zod14.z.string()]),
-  ["taskCompleted" /* TaskCompleted */]: import_zod14.z.tuple([
-    import_zod14.z.string(),
+var rooCodeEventsSchema = import_zod15.z.object({
+  ["taskCreated" /* TaskCreated */]: import_zod15.z.tuple([import_zod15.z.string()]),
+  ["taskStarted" /* TaskStarted */]: import_zod15.z.tuple([import_zod15.z.string()]),
+  ["taskCompleted" /* TaskCompleted */]: import_zod15.z.tuple([
+    import_zod15.z.string(),
     tokenUsageSchema,
     toolUsageSchema,
-    import_zod14.z.object({
-      isSubtask: import_zod14.z.boolean()
+    import_zod15.z.object({
+      isSubtask: import_zod15.z.boolean()
     })
   ]),
-  ["taskAborted" /* TaskAborted */]: import_zod14.z.tuple([import_zod14.z.string()]),
-  ["taskFocused" /* TaskFocused */]: import_zod14.z.tuple([import_zod14.z.string()]),
-  ["taskUnfocused" /* TaskUnfocused */]: import_zod14.z.tuple([import_zod14.z.string()]),
-  ["taskActive" /* TaskActive */]: import_zod14.z.tuple([import_zod14.z.string()]),
-  ["taskIdle" /* TaskIdle */]: import_zod14.z.tuple([import_zod14.z.string()]),
-  ["taskPaused" /* TaskPaused */]: import_zod14.z.tuple([import_zod14.z.string()]),
-  ["taskUnpaused" /* TaskUnpaused */]: import_zod14.z.tuple([import_zod14.z.string()]),
-  ["taskSpawned" /* TaskSpawned */]: import_zod14.z.tuple([import_zod14.z.string(), import_zod14.z.string()]),
-  ["message" /* Message */]: import_zod14.z.tuple([
-    import_zod14.z.object({
-      taskId: import_zod14.z.string(),
-      action: import_zod14.z.union([import_zod14.z.literal("created"), import_zod14.z.literal("updated")]),
+  ["taskAborted" /* TaskAborted */]: import_zod15.z.tuple([import_zod15.z.string()]),
+  ["taskFocused" /* TaskFocused */]: import_zod15.z.tuple([import_zod15.z.string()]),
+  ["taskUnfocused" /* TaskUnfocused */]: import_zod15.z.tuple([import_zod15.z.string()]),
+  ["taskActive" /* TaskActive */]: import_zod15.z.tuple([import_zod15.z.string()]),
+  ["taskIdle" /* TaskIdle */]: import_zod15.z.tuple([import_zod15.z.string()]),
+  ["taskPaused" /* TaskPaused */]: import_zod15.z.tuple([import_zod15.z.string()]),
+  ["taskUnpaused" /* TaskUnpaused */]: import_zod15.z.tuple([import_zod15.z.string()]),
+  ["taskSpawned" /* TaskSpawned */]: import_zod15.z.tuple([import_zod15.z.string(), import_zod15.z.string()]),
+  ["message" /* Message */]: import_zod15.z.tuple([
+    import_zod15.z.object({
+      taskId: import_zod15.z.string(),
+      action: import_zod15.z.union([import_zod15.z.literal("created"), import_zod15.z.literal("updated")]),
       message: clineMessageSchema
     })
   ]),
-  ["taskModeSwitched" /* TaskModeSwitched */]: import_zod14.z.tuple([import_zod14.z.string(), import_zod14.z.string()]),
-  ["taskAskResponded" /* TaskAskResponded */]: import_zod14.z.tuple([import_zod14.z.string()]),
-  ["taskToolFailed" /* TaskToolFailed */]: import_zod14.z.tuple([import_zod14.z.string(), toolNamesSchema, import_zod14.z.string()]),
-  ["taskTokenUsageUpdated" /* TaskTokenUsageUpdated */]: import_zod14.z.tuple([import_zod14.z.string(), tokenUsageSchema])
+  ["taskModeSwitched" /* TaskModeSwitched */]: import_zod15.z.tuple([import_zod15.z.string(), import_zod15.z.string()]),
+  ["taskAskResponded" /* TaskAskResponded */]: import_zod15.z.tuple([import_zod15.z.string()]),
+  ["taskToolFailed" /* TaskToolFailed */]: import_zod15.z.tuple([import_zod15.z.string(), toolNamesSchema, import_zod15.z.string()]),
+  ["taskTokenUsageUpdated" /* TaskTokenUsageUpdated */]: import_zod15.z.tuple([import_zod15.z.string(), tokenUsageSchema])
 });
-var taskEventSchema = import_zod14.z.discriminatedUnion("eventName", [
+var taskEventSchema = import_zod15.z.discriminatedUnion("eventName", [
   // Task Provider Lifecycle
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskCreated" /* TaskCreated */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskCreated" /* TaskCreated */),
     payload: rooCodeEventsSchema.shape["taskCreated" /* TaskCreated */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
   // Task Lifecycle
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskStarted" /* TaskStarted */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskStarted" /* TaskStarted */),
     payload: rooCodeEventsSchema.shape["taskStarted" /* TaskStarted */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskCompleted" /* TaskCompleted */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskCompleted" /* TaskCompleted */),
     payload: rooCodeEventsSchema.shape["taskCompleted" /* TaskCompleted */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskAborted" /* TaskAborted */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskAborted" /* TaskAborted */),
     payload: rooCodeEventsSchema.shape["taskAborted" /* TaskAborted */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskFocused" /* TaskFocused */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskFocused" /* TaskFocused */),
     payload: rooCodeEventsSchema.shape["taskFocused" /* TaskFocused */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskUnfocused" /* TaskUnfocused */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskUnfocused" /* TaskUnfocused */),
     payload: rooCodeEventsSchema.shape["taskUnfocused" /* TaskUnfocused */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskActive" /* TaskActive */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskActive" /* TaskActive */),
     payload: rooCodeEventsSchema.shape["taskActive" /* TaskActive */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskIdle" /* TaskIdle */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskIdle" /* TaskIdle */),
     payload: rooCodeEventsSchema.shape["taskIdle" /* TaskIdle */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
   // Subtask Lifecycle
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskPaused" /* TaskPaused */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskPaused" /* TaskPaused */),
     payload: rooCodeEventsSchema.shape["taskPaused" /* TaskPaused */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskUnpaused" /* TaskUnpaused */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskUnpaused" /* TaskUnpaused */),
     payload: rooCodeEventsSchema.shape["taskUnpaused" /* TaskUnpaused */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskSpawned" /* TaskSpawned */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskSpawned" /* TaskSpawned */),
     payload: rooCodeEventsSchema.shape["taskSpawned" /* TaskSpawned */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
   // Task Execution
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("message" /* Message */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("message" /* Message */),
     payload: rooCodeEventsSchema.shape["message" /* Message */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskModeSwitched" /* TaskModeSwitched */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskModeSwitched" /* TaskModeSwitched */),
     payload: rooCodeEventsSchema.shape["taskModeSwitched" /* TaskModeSwitched */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskAskResponded" /* TaskAskResponded */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskAskResponded" /* TaskAskResponded */),
     payload: rooCodeEventsSchema.shape["taskAskResponded" /* TaskAskResponded */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
   // Task Analytics
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskToolFailed" /* TaskToolFailed */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskToolFailed" /* TaskToolFailed */),
     payload: rooCodeEventsSchema.shape["taskToolFailed" /* TaskToolFailed */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("taskTokenUsageUpdated" /* TaskTokenUsageUpdated */),
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("taskTokenUsageUpdated" /* TaskTokenUsageUpdated */),
     payload: rooCodeEventsSchema.shape["taskTokenUsageUpdated" /* TaskTokenUsageUpdated */],
-    taskId: import_zod14.z.number().optional()
+    taskId: import_zod15.z.number().optional()
   }),
   // Evals
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("evalPass" /* EvalPass */),
-    payload: import_zod14.z.undefined(),
-    taskId: import_zod14.z.number()
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("evalPass" /* EvalPass */),
+    payload: import_zod15.z.undefined(),
+    taskId: import_zod15.z.number()
   }),
-  import_zod14.z.object({
-    eventName: import_zod14.z.literal("evalFail" /* EvalFail */),
-    payload: import_zod14.z.undefined(),
-    taskId: import_zod14.z.number()
+  import_zod15.z.object({
+    eventName: import_zod15.z.literal("evalFail" /* EvalFail */),
+    payload: import_zod15.z.undefined(),
+    taskId: import_zod15.z.number()
   })
 ]);
 
 // src/followup.ts
-var import_zod15 = require("zod");
-var suggestionItemSchema = import_zod15.z.object({
-  answer: import_zod15.z.string(),
-  mode: import_zod15.z.string().optional()
+var import_zod16 = require("zod");
+var suggestionItemSchema = import_zod16.z.object({
+  answer: import_zod16.z.string(),
+  mode: import_zod16.z.string().optional()
 });
-var followUpDataSchema = import_zod15.z.object({
-  question: import_zod15.z.string().optional(),
-  suggest: import_zod15.z.array(suggestionItemSchema).optional()
+var followUpDataSchema = import_zod16.z.object({
+  question: import_zod16.z.string().optional(),
+  suggest: import_zod16.z.array(suggestionItemSchema).optional()
 });
 
 // src/ipc.ts
-var import_zod16 = require("zod");
+var import_zod17 = require("zod");
 var IpcMessageType = /* @__PURE__ */ ((IpcMessageType2) => {
   IpcMessageType2["Connect"] = "Connect";
   IpcMessageType2["Disconnect"] = "Disconnect";
@@ -1669,10 +1737,10 @@ var IpcOrigin = /* @__PURE__ */ ((IpcOrigin2) => {
   IpcOrigin2["Server"] = "server";
   return IpcOrigin2;
 })(IpcOrigin || {});
-var ackSchema = import_zod16.z.object({
-  clientId: import_zod16.z.string(),
-  pid: import_zod16.z.number(),
-  ppid: import_zod16.z.number()
+var ackSchema = import_zod17.z.object({
+  clientId: import_zod17.z.string(),
+  pid: import_zod17.z.number(),
+  ppid: import_zod17.z.number()
 });
 var TaskCommandName = /* @__PURE__ */ ((TaskCommandName2) => {
   TaskCommandName2["StartNewTask"] = "StartNewTask";
@@ -1680,106 +1748,106 @@ var TaskCommandName = /* @__PURE__ */ ((TaskCommandName2) => {
   TaskCommandName2["CloseTask"] = "CloseTask";
   return TaskCommandName2;
 })(TaskCommandName || {});
-var taskCommandSchema = import_zod16.z.discriminatedUnion("commandName", [
-  import_zod16.z.object({
-    commandName: import_zod16.z.literal("StartNewTask" /* StartNewTask */),
-    data: import_zod16.z.object({
+var taskCommandSchema = import_zod17.z.discriminatedUnion("commandName", [
+  import_zod17.z.object({
+    commandName: import_zod17.z.literal("StartNewTask" /* StartNewTask */),
+    data: import_zod17.z.object({
       configuration: rooCodeSettingsSchema,
-      text: import_zod16.z.string(),
-      images: import_zod16.z.array(import_zod16.z.string()).optional(),
-      newTab: import_zod16.z.boolean().optional()
+      text: import_zod17.z.string(),
+      images: import_zod17.z.array(import_zod17.z.string()).optional(),
+      newTab: import_zod17.z.boolean().optional()
     })
   }),
-  import_zod16.z.object({
-    commandName: import_zod16.z.literal("CancelTask" /* CancelTask */),
-    data: import_zod16.z.string()
+  import_zod17.z.object({
+    commandName: import_zod17.z.literal("CancelTask" /* CancelTask */),
+    data: import_zod17.z.string()
   }),
-  import_zod16.z.object({
-    commandName: import_zod16.z.literal("CloseTask" /* CloseTask */),
-    data: import_zod16.z.string()
+  import_zod17.z.object({
+    commandName: import_zod17.z.literal("CloseTask" /* CloseTask */),
+    data: import_zod17.z.string()
   })
 ]);
-var ipcMessageSchema = import_zod16.z.discriminatedUnion("type", [
-  import_zod16.z.object({
-    type: import_zod16.z.literal("Ack" /* Ack */),
-    origin: import_zod16.z.literal("server" /* Server */),
+var ipcMessageSchema = import_zod17.z.discriminatedUnion("type", [
+  import_zod17.z.object({
+    type: import_zod17.z.literal("Ack" /* Ack */),
+    origin: import_zod17.z.literal("server" /* Server */),
     data: ackSchema
   }),
-  import_zod16.z.object({
-    type: import_zod16.z.literal("TaskCommand" /* TaskCommand */),
-    origin: import_zod16.z.literal("client" /* Client */),
-    clientId: import_zod16.z.string(),
+  import_zod17.z.object({
+    type: import_zod17.z.literal("TaskCommand" /* TaskCommand */),
+    origin: import_zod17.z.literal("client" /* Client */),
+    clientId: import_zod17.z.string(),
     data: taskCommandSchema
   }),
-  import_zod16.z.object({
-    type: import_zod16.z.literal("TaskEvent" /* TaskEvent */),
-    origin: import_zod16.z.literal("server" /* Server */),
-    relayClientId: import_zod16.z.string().optional(),
+  import_zod17.z.object({
+    type: import_zod17.z.literal("TaskEvent" /* TaskEvent */),
+    origin: import_zod17.z.literal("server" /* Server */),
+    relayClientId: import_zod17.z.string().optional(),
     data: taskEventSchema
   })
 ]);
 
 // src/mcp.ts
-var import_zod17 = require("zod");
-var mcpExecutionStatusSchema = import_zod17.z.discriminatedUnion("status", [
-  import_zod17.z.object({
-    executionId: import_zod17.z.string(),
-    status: import_zod17.z.literal("started"),
-    serverName: import_zod17.z.string(),
-    toolName: import_zod17.z.string()
+var import_zod18 = require("zod");
+var mcpExecutionStatusSchema = import_zod18.z.discriminatedUnion("status", [
+  import_zod18.z.object({
+    executionId: import_zod18.z.string(),
+    status: import_zod18.z.literal("started"),
+    serverName: import_zod18.z.string(),
+    toolName: import_zod18.z.string()
   }),
-  import_zod17.z.object({
-    executionId: import_zod17.z.string(),
-    status: import_zod17.z.literal("output"),
-    response: import_zod17.z.string()
+  import_zod18.z.object({
+    executionId: import_zod18.z.string(),
+    status: import_zod18.z.literal("output"),
+    response: import_zod18.z.string()
   }),
-  import_zod17.z.object({
-    executionId: import_zod17.z.string(),
-    status: import_zod17.z.literal("completed"),
-    response: import_zod17.z.string().optional()
+  import_zod18.z.object({
+    executionId: import_zod18.z.string(),
+    status: import_zod18.z.literal("completed"),
+    response: import_zod18.z.string().optional()
   }),
-  import_zod17.z.object({
-    executionId: import_zod17.z.string(),
-    status: import_zod17.z.literal("error"),
-    error: import_zod17.z.string().optional()
+  import_zod18.z.object({
+    executionId: import_zod18.z.string(),
+    status: import_zod18.z.literal("error"),
+    error: import_zod18.z.string().optional()
   })
 ]);
 
 // src/todo.ts
-var import_zod18 = require("zod");
-var todoStatusSchema = import_zod18.z.enum(["pending", "in_progress", "completed"]);
-var todoItemSchema = import_zod18.z.object({
-  id: import_zod18.z.string(),
-  content: import_zod18.z.string(),
+var import_zod19 = require("zod");
+var todoStatusSchema = import_zod19.z.enum(["pending", "in_progress", "completed"]);
+var todoItemSchema = import_zod19.z.object({
+  id: import_zod19.z.string(),
+  content: import_zod19.z.string(),
   status: todoStatusSchema
 });
 
 // src/terminal.ts
-var import_zod19 = require("zod");
-var commandExecutionStatusSchema = import_zod19.z.discriminatedUnion("status", [
-  import_zod19.z.object({
-    executionId: import_zod19.z.string(),
-    status: import_zod19.z.literal("started"),
-    pid: import_zod19.z.number().optional(),
-    command: import_zod19.z.string()
+var import_zod20 = require("zod");
+var commandExecutionStatusSchema = import_zod20.z.discriminatedUnion("status", [
+  import_zod20.z.object({
+    executionId: import_zod20.z.string(),
+    status: import_zod20.z.literal("started"),
+    pid: import_zod20.z.number().optional(),
+    command: import_zod20.z.string()
   }),
-  import_zod19.z.object({
-    executionId: import_zod19.z.string(),
-    status: import_zod19.z.literal("output"),
-    output: import_zod19.z.string()
+  import_zod20.z.object({
+    executionId: import_zod20.z.string(),
+    status: import_zod20.z.literal("output"),
+    output: import_zod20.z.string()
   }),
-  import_zod19.z.object({
-    executionId: import_zod19.z.string(),
-    status: import_zod19.z.literal("exited"),
-    exitCode: import_zod19.z.number().optional()
+  import_zod20.z.object({
+    executionId: import_zod20.z.string(),
+    status: import_zod20.z.literal("exited"),
+    exitCode: import_zod20.z.number().optional()
   }),
-  import_zod19.z.object({
-    executionId: import_zod19.z.string(),
-    status: import_zod19.z.literal("fallback")
+  import_zod20.z.object({
+    executionId: import_zod20.z.string(),
+    status: import_zod20.z.literal("fallback")
   }),
-  import_zod19.z.object({
-    executionId: import_zod19.z.string(),
-    status: import_zod19.z.literal("timeout")
+  import_zod20.z.object({
+    executionId: import_zod20.z.string(),
+    status: import_zod20.z.literal("timeout")
   })
 ]);
 
@@ -4711,6 +4779,13 @@ var fireworksModels = {
   VERTEX_REGIONS,
   ZAI_DEFAULT_TEMPERATURE,
   ackSchema,
+  agentConfigSchema,
+  agentExportDataSchema,
+  agentListOptionsSchema,
+  agentTemplateDataSchema,
+  agentTemplateSourceSchema,
+  agentTodoSchema,
+  agentToolConfigSchema,
   anthropicDefaultModelId,
   anthropicModels,
   appPropertiesSchema,

@@ -1,7 +1,7 @@
 {
 	"title": "Agents",
 	"create": "Create",
-	"customAgents": "Custom Agents",
+	"customAgents": "My Agents",
 	"builtinAgents": "Built-in Agents",
 	"more": "More",
 	"configure": "Configure",
@@ -51,6 +51,8 @@
 		"custom": "Custom time rule"
 	},
 	"createAgent": "Create Agent",
+	"editAgent": "Edit Agent",
+	"update": "Save",
 	"agentName": "Name",
 	"agentNamePlaceholder": "Enter agent name",
 	"mode": "Mode",

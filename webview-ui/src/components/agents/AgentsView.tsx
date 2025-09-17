@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { Plus, MoreHorizontal, Settings, Info } from "lucide-react"
+import { Plus, MoreHorizontal, Settings, Info, Play, Edit, Trash2, Share } from "lucide-react"
 import ActionBar from "./ActionBar"
 import TaskListModal from "./TaskListModal"
 import type { AgentTemplateData } from "./utils/taskToAgentTemplate"
@@ -39,38 +39,19 @@ const mockBuiltinAgents: Agent[] = [
 	}
 ]
 
-const mockCustomAgents: Agent[] = [
-	{
-		id: "chat-agent",
-		name: "Chat",
-		description: "聊聊你的代码或编写代码",
-		type: "custom",
-		status: "active"
-	},
-	{
-		id: "builder-agent",
-		name: "Builder",
-		description: "端到端构建开发任务",
-		type: "custom",
-		status: "active"
-	},
-	{
-		id: "builder-mcp-agent", 
-		name: "Builder with MCP",
-		description: "支持使用配置的所有 MCP Serv...",
-		type: "custom",
-		status: "active"
-	}
-]
 
 const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	const { t } = useTranslation()
-	const [agents, setAgents] = useState<Agent[]>([...mockBuiltinAgents, ...mockCustomAgents])
+	const [agents, setAgents] = useState<Agent[]>([...mockBuiltinAgents])
+	const [customAgents, setCustomAgents] = useState<Agent[]>([])
+	const [loading, setLoading] = useState(false)
 	const [showCreateAgent, setShowCreateAgent] = useState(false)
 	const [showApiConfig, setShowApiConfig] = useState(false)
 	const [showModeConfig, setShowModeConfig] = useState(false)
 	const [showTaskModal, setShowTaskModal] = useState(false)
 	const [selectedTaskData, setSelectedTaskData] = useState<AgentTemplateData | null>(null)
+	const [editMode, setEditMode] = useState(false)
+	const [editAgentData, setEditAgentData] = useState<any>(null)
 	const [taskListEnabled, setTaskListEnabled] = useState(true)
 	const [autoRunEnabled, setAutoRunEnabled] = useState(true)
 	const [workflowEnabled, setWorkflowEnabled] = useState(false)
@@ -79,12 +60,81 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	const [taskStatusNotification, setTaskStatusNotification] = useState({ detail: true, voice: true })
 	const [soundVolume, setSoundVolume] = useState(100)
 	const [blacklistCommands] = useState(["rm", "kill", "chmod"])
+	const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
 
-	// Listen for createAgentFromTask messages
+	// 加载智能体列表
+	const loadAgents = useCallback(() => {
+		setLoading(true)
+		vscode.postMessage({
+			type: "listAgents",
+			agentListOptions: {} // 可以添加过滤和排序选项
+		})
+	}, [])
+
+	// Listen for messages from extension
 	useEffect(() => {
 		const handleMessage = (event: MessageEvent) => {
 			const message = event.data
-			if (message.type === "createAgentFromTask" && message.templateData) {
+			
+			if (message.type === "action") {
+				switch (message.action) {
+					case "createAgentResult":
+						setLoading(false)
+						if (message.success) {
+							// 智能体创建成功，关闭创建页面并刷新列表
+							setShowCreateAgent(false)
+							setSelectedTaskData(null)
+							loadAgents() // 重新加载智能体列表
+						} else {
+							console.error("Failed to create agent:", message.error)
+						}
+						break
+					
+					case "listAgentsResult":
+						setLoading(false)
+						if (message.success && message.agents) {
+							// 转换后端数据为前端格式
+							const transformedAgents = message.agents.map((agent: any) => ({
+								id: agent.id,
+								name: agent.name,
+								description: agent.roleDescription || "",
+								type: "custom" as const,
+								status: agent.isActive ? "active" as const : "inactive" as const,
+								icon: agent.avatar
+							}))
+							setCustomAgents(transformedAgents)
+						} else {
+							console.error("Failed to list agents:", message.error)
+						}
+						break
+					
+					case "getAgentResult":
+						setLoading(false)
+						if (message.success && message.agent) {
+							// 设置编辑模式和智能体数据
+							setEditAgentData(message.agent)
+							setEditMode(true)
+							setShowCreateAgent(true) // 复用创建页面
+						} else {
+							console.error("Failed to get agent:", message.error)
+						}
+						break
+					
+					case "updateAgentResult":
+						setLoading(false)
+						if (message.success) {
+							// 智能体更新成功，关闭编辑页面并刷新列表
+							setShowCreateAgent(false)
+							setEditMode(false)
+							setEditAgentData(null)
+							setSelectedTaskData(null)
+							loadAgents() // 重新加载智能体列表
+						} else {
+							console.error("Failed to update agent:", message.error)
+						}
+						break
+				}
+			} else if (message.type === "createAgentFromTask" && message.templateData) {
 				// Set the template data and show the create agent view
 				setSelectedTaskData(message.templateData)
 				setShowCreateAgent(true)
@@ -93,7 +143,73 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 
 		window.addEventListener("message", handleMessage)
 		return () => window.removeEventListener("message", handleMessage)
+	}, [loadAgents])
+
+	// 在组件挂载时加载智能体列表
+	useEffect(() => {
+		loadAgents()
+	}, [loadAgents])
+
+	// 智能体操作处理函数
+	const handleRunAgent = useCallback((agent: Agent) => {
+		// 在新任务面板中加载智能体，发送消息给扩展
+		vscode.postMessage({
+			type: "startAgentTask",
+			agentId: agent.id
+		})
+		// 关闭智能体面板，切换到聊天界面
+		onDone()
+	}, [onDone])
+
+	const handleEditAgent = useCallback(async (agent: Agent) => {
+		setLoading(true)
+		try {
+			// 获取完整的智能体数据
+			vscode.postMessage({
+				type: "getAgent" as const,
+				agentId: agent.id
+			})
+			
+			// 等待getAgent响应，然后在message listener中处理
+			setOpenDropdownId(null)
+		} catch (error) {
+			console.error("Error fetching agent for edit:", error)
+			setLoading(false)
+		}
 	}, [])
+
+	const handleDeleteAgent = useCallback(async (agent: Agent) => {
+		if (confirm(`确定要删除智能体 "${agent.name}" 吗？`)) {
+			setLoading(true)
+			vscode.postMessage({
+				type: "deleteAgent",
+				agentId: agent.id
+			})
+			setOpenDropdownId(null)
+		}
+	}, [])
+
+	const handleShareAgent = useCallback(async (agent: Agent) => {
+		// TODO: 实现分享智能体功能
+		console.log("Share/unshare agent:", agent)
+		setOpenDropdownId(null)
+	}, [])
+
+	const handleDropdownToggle = useCallback((agentId: string) => {
+		setOpenDropdownId(openDropdownId === agentId ? null : agentId)
+	}, [openDropdownId])
+
+	// 点击外部关闭下拉菜单
+	useEffect(() => {
+		const handleClickOutside = () => {
+			setOpenDropdownId(null)
+		}
+		
+		if (openDropdownId) {
+			document.addEventListener('click', handleClickOutside)
+			return () => document.removeEventListener('click', handleClickOutside)
+		}
+	}, [openDropdownId])
 
 	const handleCreateAgent = useCallback(() => {
 		setShowCreateAgent(true)
@@ -116,24 +232,30 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 
 	const handleCreateAgentBack = useCallback(() => {
 		setShowCreateAgent(false)
-	}, [])
+		// 清理编辑模式状态
+		if (editMode) {
+			setEditMode(false)
+			setEditAgentData(null)
+		}
+	}, [editMode])
 
 	const handleCreateAgentCancel = useCallback(() => {
 		setShowCreateAgent(false)
-	}, [])
+		// 清理编辑模式状态
+		if (editMode) {
+			setEditMode(false)
+			setEditAgentData(null)
+		}
+	}, [editMode])
 
 	const handleCreateAgentSubmit = useCallback((agentData: any) => {
-		// 创建新智能体的逻辑
-		console.log("Creating new agent with data:", agentData)
-		const newAgent: Agent = {
-			id: `custom-${Date.now()}`,
-			name: agentData.name,
-			description: `${agentData.mode} 模式智能体`,
-			type: "custom",
-			status: "active"
-		}
-		setAgents(prev => [...prev, newAgent])
-		setShowCreateAgent(false)
+		// CreateAgentView已经发送了createAgent消息，这里只需要设置loading状态
+		setLoading(true)
+	}, [])
+
+	const handleAgentUpdate = useCallback((agentData: any) => {
+		// CreateAgentView已经发送了updateAgent消息，这里只需要设置loading状态
+		setLoading(true)
 	}, [])
 
 	const handleShowApiConfig = useCallback(() => {
@@ -188,6 +310,9 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 				onShowApiConfig={handleShowApiConfig}
 				onShowModeConfig={handleShowModeConfig}
 				templateData={selectedTaskData}
+				editMode={editMode}
+				editData={editAgentData}
+				onUpdate={handleAgentUpdate}
 			/>
 		)
 	}
@@ -223,7 +348,17 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 					</div>
 
 					<div className="space-y-1">
-						{agents.filter(agent => agent.type === "custom").map((agent) => {
+						{loading && customAgents.length === 0 ? (
+							<div className="text-center py-8 text-vscode-foreground/70">
+								<div className="text-sm">加载中...</div>
+							</div>
+						) : customAgents.length === 0 ? (
+							<div className="text-center py-8 text-vscode-foreground/70">
+								<div className="text-sm">暂无智能体</div>
+								<div className="text-xs mt-1">点击创建按钮开始创建您的第一个智能体</div>
+							</div>
+						) : (
+							customAgents.map((agent) => {
 							const getAgentIcon = (name: string) => {
 								switch (name.toLowerCase()) {
 									case 'chat': return { bg: 'bg-blue-500', icon: '💬' }
@@ -248,15 +383,73 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 										</div>
 									</div>
 									<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-										<StandardTooltip content={t("agents:more", "更多")}>
-											<button className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors">
-												<MoreHorizontal size={14} />
+										{/* 运行按钮 */}
+										<StandardTooltip content="运行智能体">
+											<button 
+												onClick={(e) => {
+													e.stopPropagation()
+													handleRunAgent(agent)
+												}}
+												className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors"
+											>
+												<Play size={14} />
 											</button>
 										</StandardTooltip>
+										
+										{/* 更多操作下拉菜单 */}
+										<div className="relative">
+											<StandardTooltip content="更多操作">
+												<button 
+													onClick={(e) => {
+														e.stopPropagation()
+														handleDropdownToggle(agent.id)
+													}}
+													className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors"
+												>
+													<MoreHorizontal size={14} />
+												</button>
+											</StandardTooltip>
+											
+											{/* 下拉菜单内容 */}
+											{openDropdownId === agent.id && (
+												<div 
+													className="absolute right-0 top-full mt-1 z-10 bg-vscode-dropdown-background border border-vscode-dropdown-border rounded-md shadow-lg min-w-32"
+													onClick={(e) => e.stopPropagation()}
+												>
+													<button
+														onClick={(e) => {
+															e.preventDefault()
+															e.stopPropagation()
+															handleEditAgent(agent)
+														}}
+														className="w-full px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground flex items-center gap-2"
+													>
+														<Edit size={12} />
+														修改
+													</button>
+													<button
+														onClick={() => handleDeleteAgent(agent)}
+														className="w-full px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground flex items-center gap-2"
+													>
+														<Trash2 size={12} />
+														删除
+													</button>
+													<button
+														onClick={() => handleShareAgent(agent)}
+														className="w-full px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground flex items-center gap-2"
+													>
+														{/* TODO: 根据分享状态显示不同的图标 */}
+														<Share size={12} />
+														分享
+													</button>
+												</div>
+											)}
+										</div>
 									</div>
 								</div>
 							)
-						})}
+						})
+					)}
 					</div>
 				</div>
 

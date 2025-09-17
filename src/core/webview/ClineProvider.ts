@@ -81,6 +81,7 @@ import { ProviderSettingsManager } from "../config/ProviderSettingsManager"
 import { CustomModesManager } from "../config/CustomModesManager"
 import { Task, TaskOptions } from "../task/Task"
 import { getSystemPromptFilePath } from "../prompts/sections/custom-system-prompt"
+import { AgentManager } from "../agent/AgentManager"
 
 import { webviewMessageHandler } from "./webviewMessageHandler"
 import { getNonce } from "./getNonce"
@@ -116,6 +117,7 @@ export class ClineProvider
 	private mdmService?: MdmService
 	private taskCreationCallback: (task: Task) => void
 	private taskEventListeners: WeakMap<Task, Array<() => void>> = new WeakMap()
+	public readonly agentManager: AgentManager
 
 	public isViewLaunched = false
 	public settingsImportedAt?: number
@@ -160,6 +162,9 @@ export class ClineProvider
 			if (currentUserId && this.customModesManager) {
 				this.customModesManager.setUserId(currentUserId)
 			}
+			if (currentUserId && this.agentManager) {
+				this.agentManager.setCurrentUserId(currentUserId)
+			}
 		})
 
 		// Initialize MCP Hub through the singleton manager
@@ -173,6 +178,9 @@ export class ClineProvider
 			})
 
 		this.marketplaceManager = new MarketplaceManager(this.context, this.customModesManager)
+		
+		// Initialize Agent Manager
+		this.agentManager = new AgentManager(this.context)
 
 		this.taskCreationCallback = (instance: Task) => {
 			this.emit(RooCodeEventName.TaskCreated, instance)

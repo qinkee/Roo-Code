@@ -127,6 +127,8 @@ export interface ExtensionMessage {
 		| "userSwitched"
 		| "userLoggedOut"
 		| "createAgentFromTask"
+		| "getAgent"
+		| "updateAgent"
 	text?: string
 	payload?: any // Add a generic payload for now, can refine later
 	action?:
@@ -141,6 +143,11 @@ export interface ExtensionMessage {
 		| "didBecomeVisible"
 		| "focusInput"
 		| "switchTab"
+		| "createAgentResult"
+		| "listAgentsResult"
+		| "startAgentTaskResult"
+		| "getAgentResult"
+		| "updateAgentResult"
 	invoke?: "newChat" | "sendMessage" | "primaryButtonClick" | "secondaryButtonClick" | "setChatBoxMessage"
 	state?: ExtensionState
 	images?: string[]
@@ -204,6 +211,11 @@ export interface ExtensionMessage {
 	commands?: Command[]
 	droppedFiles?: string[] // For filesDropped message type
 	data?: any // For debugInfo and other generic data
+	agents?: any[] // For agent listing results
+	agent?: any // For single agent results
+	agentId?: string // For agent operations
+	agentName?: string // For agent operations
+	agentConfig?: any // For agent configuration data
 	contacts?: {
 		friends: Array<{
 			id: number

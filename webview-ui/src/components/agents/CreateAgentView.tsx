@@ -17,25 +17,56 @@ interface CreateAgentViewProps {
 	onShowApiConfig: () => void
 	onShowModeConfig: () => void
 	templateData?: AgentTemplateData | null // 新增：模板数据
+	editMode?: boolean // 新增：编辑模式标识
+	editData?: any // 新增：要编辑的智能体数据
+	onUpdate?: (agentData: any) => void // 新增：更新回调
 }
 
-const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onCreate, onShowApiConfig, onShowModeConfig, templateData }) => {
+const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onCreate, onShowApiConfig, onShowModeConfig, templateData, editMode = false, editData, onUpdate }) => {
 	const { t } = useTranslation()
 	const { customModes, customModePrompts, listApiConfigMeta, currentApiConfigName } = useExtensionState()
-	const [agentName, setAgentName] = useState("")
-	const [selectedMode, setSelectedMode] = useState(() => templateData?.mode || "architect")
-	const [selectedTools, setSelectedTools] = useState<string[]>(() => templateData?.tools || ["internal"])
-	const [agentAvatar, setAgentAvatar] = useState<string>("")
+	const [agentName, setAgentName] = useState(() => {
+		if (editMode && editData) return editData.name || ""
+		return ""
+	})
+	const [selectedMode, setSelectedMode] = useState(() => {
+		if (editMode && editData) return editData.mode || "architect"
+		return templateData?.mode || "architect"
+	})
+	const [selectedTools, setSelectedTools] = useState<string[]>(() => {
+		if (editMode && editData) {
+			return editData.tools?.map((tool: any) => tool.toolId) || ["internal"]
+		}
+		return templateData?.tools || ["internal"]
+	})
+	const [agentAvatar, setAgentAvatar] = useState<string>(() => {
+		if (editMode && editData) return editData.avatar || ""
+		return ""
+	})
 	const [showAvatarModal, setShowAvatarModal] = useState(false)
-	const [roleDescription, setRoleDescription] = useState("")
-	const [todos, setTodos] = useState<Array<{ id: string; content: string; completed: boolean }>>([
-		{ id: "1", content: "", completed: false }
-	])
+	const [roleDescription, setRoleDescription] = useState(() => {
+		if (editMode && editData) return editData.roleDescription || ""
+		return ""
+	})
+	const [todos, setTodos] = useState<Array<{ id: string; content: string; completed: boolean }>>(() => {
+		if (editMode && editData && editData.todos) {
+			return editData.todos.map((todo: any, index: number) => ({
+				id: String(index + 1),
+				content: todo.content || "",
+				completed: todo.status === "completed"
+			}))
+		}
+		return [{ id: "1", content: "", completed: false }]
+	})
 	const [displayMode, setDisplayMode] = useState<"stack" | "switch">("stack")
 	const [currentSectionIndex, setCurrentSectionIndex] = useState(0)
 	
 	// Get the current API config ID or default to the first available
 	const [selectedApiConfig, setSelectedApiConfig] = useState(() => {
+		// 编辑模式下优先使用编辑数据中的API配置
+		if (editMode && editData?.apiConfigId) {
+			return editData.apiConfigId
+		}
 		// 优先使用模板数据中的API配置
 		if (templateData?.apiConfigId) {
 			return templateData.apiConfigId
@@ -94,18 +125,83 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 		)
 	}, [])
 
-	const handleCreate = useCallback(() => {
-		const agentData = {
-			name: agentName,
-			mode: selectedMode,
-			tools: selectedTools,
-			apiConfig: selectedApiConfig,
-			avatar: agentAvatar,
-			roleDescription: roleDescription,
-			todos: todos.filter(todo => todo.content.trim() !== "")
+	const handleSave = useCallback(async () => {
+		if (!agentName.trim()) {
+			return
 		}
-		onCreate(agentData)
-	}, [agentName, selectedMode, selectedTools, selectedApiConfig, agentAvatar, roleDescription, todos, onCreate])
+
+		try {
+			// 构建智能体配置，符合AgentConfig接口
+			const agentConfig = {
+				...(editMode && editData ? { id: editData.id } : {}), // 编辑模式下保留原有ID
+				name: agentName.trim(),
+				avatar: agentAvatar,
+				roleDescription: roleDescription,
+				apiConfigId: selectedApiConfig,
+				mode: selectedMode,
+				tools: selectedTools.map(toolId => ({
+					toolId,
+					enabled: true,
+					config: {}
+				})),
+				todos: todos
+					.filter(todo => todo.content.trim() !== "")
+					.map((todo, index) => ({
+						id: `todo_${Date.now()}_${index}`,
+						content: todo.content.trim(),
+						status: "pending" as const,
+						priority: "medium" as const,
+						createdAt: Date.now(),
+						updatedAt: Date.now()
+					})),
+				templateSource: templateData?.templateSource,
+				isActive: true,
+				version: editMode && editData ? (editData.version || 1) + 1 : 1 // 编辑模式下递增版本号
+			}
+
+			if (editMode) {
+				// 编辑模式：发送更新消息
+				vscode.postMessage({
+					type: "updateAgent",
+					agentId: editData?.id,
+					agentConfig
+				})
+				// 调用更新回调
+				if (onUpdate) {
+					const legacyData = {
+						name: agentName,
+						mode: selectedMode,
+						tools: selectedTools,
+						apiConfig: selectedApiConfig,
+						avatar: agentAvatar,
+						roleDescription: roleDescription,
+						todos: todos.filter(todo => todo.content.trim() !== "")
+					}
+					onUpdate(legacyData)
+				}
+			} else {
+				// 创建模式：发送创建消息
+				vscode.postMessage({
+					type: "createAgent",
+					agentConfig
+				})
+				// 暂时保持原有回调以兼容现有逻辑
+				const legacyData = {
+					name: agentName,
+					mode: selectedMode,
+					tools: selectedTools,
+					apiConfig: selectedApiConfig,
+					avatar: agentAvatar,
+					roleDescription: roleDescription,
+					todos: todos.filter(todo => todo.content.trim() !== "")
+				}
+				onCreate(legacyData)
+			}
+		} catch (error) {
+			console.error(editMode ? "Error updating agent:" : "Error creating agent:", error)
+			// 可以在这里显示错误提示
+		}
+	}, [agentName, selectedMode, selectedTools, selectedApiConfig, agentAvatar, roleDescription, todos, templateData, onCreate, editMode, editData, onUpdate])
 
 	const handleApiConfigSettings = useCallback(() => {
 		// Show API configuration page within agents view
@@ -417,7 +513,9 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 						<ArrowLeft size={16} />
 					</button>
 					<div className="flex items-center gap-2">
-						<h1 className="text-lg font-bold">{t("agents:createAgent", "创建智能体")}</h1>
+						<h1 className="text-lg font-bold">
+							{editMode ? t("agents:editAgent", "编辑智能体") : t("agents:createAgent", "创建智能体")}
+						</h1>
 					</div>
 				</div>
 			</div>
@@ -630,32 +728,33 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 							</div>
 						</div>
 					) : (
-						/* Switch Mode - One section at a time with navigation */
+						/* Switch Mode - One section at a time with side navigation */
 						<div className="pt-12">
-							{/* Section Navigation Header */}
-							<div className="flex items-center justify-between mb-6 p-4 bg-vscode-input-background border border-vscode-input-border rounded-md">
-								<div className="flex items-center gap-3">
-									<button
-										onClick={goToPrevSection}
-										className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors"
-									>
-										<ChevronLeft size={16} />
-									</button>
-									<div className="flex items-center gap-2">
-										<h2 className="text-sm font-bold text-vscode-foreground/90">
-											{currentSection.title}
-										</h2>
-										<span className="text-xs text-vscode-foreground/50">
-											({currentSectionIndex + 1}/{sections.length})
-										</span>
+							{/* Section Header */}
+							<div className="flex items-center justify-between mb-4 p-3 bg-vscode-input-background border border-vscode-input-border rounded-md">
+								<div className="flex items-center gap-2">
+									<h2 className="text-sm font-bold text-vscode-foreground/90">
+										{currentSection.title}
+									</h2>
+									<div className="flex gap-1">
+										{sections.map((_, index) => (
+											<div
+												key={index}
+												className={cn(
+													"w-1.5 h-1.5 rounded-full transition-colors",
+													index === currentSectionIndex
+														? "bg-vscode-button-background"
+														: "bg-vscode-foreground/30"
+												)}
+											/>
+										))}
 									</div>
-									<button
-										onClick={goToNextSection}
-										className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors"
-									>
-										<ChevronRight size={16} />
-									</button>
+									<span className="text-xs text-vscode-foreground/50">
+										{currentSectionIndex + 1}/{sections.length}
+									</span>
 								</div>
+
+								{/* Settings Button */}
 								{currentSection.hasSettings && (
 									<StandardTooltip content={t("agents:configureSection", "配置")}>
 										<button
@@ -668,26 +767,31 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 								)}
 							</div>
 
-							{/* Current Section Content */}
-							<div className="min-h-[300px]">
-								{renderSectionContent(currentSection.id)}
-							</div>
+							{/* Section Content with Side Navigation */}
+							<div className="relative">
+								{/* Left Arrow - Outside content area */}
+								<StandardTooltip content={`上一个：${sections[(currentSectionIndex - 1 + sections.length) % sections.length].title}`}>
+									<button
+										onClick={goToPrevSection}
+										className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-20 p-2 bg-vscode-input-background border border-vscode-input-border rounded-full hover:bg-vscode-toolbar-hoverBackground text-vscode-foreground/70 hover:text-vscode-foreground transition-all duration-200 shadow-lg"
+									>
+										<ChevronLeft size={18} />
+									</button>
+								</StandardTooltip>
 
-							{/* Section Indicators */}
-							<div className="flex justify-center mt-6">
-								<div className="flex gap-2">
-									{sections.map((section, index) => (
-										<button
-											key={section.id}
-											onClick={() => setCurrentSectionIndex(index)}
-											className={cn(
-												"w-2 h-2 rounded-full transition-colors",
-												index === currentSectionIndex
-													? "bg-vscode-button-background"
-													: "bg-vscode-foreground/30 hover:bg-vscode-foreground/50"
-											)}
-										/>
-									))}
+								{/* Right Arrow - Outside content area */}
+								<StandardTooltip content={`下一个：${sections[(currentSectionIndex + 1) % sections.length].title}`}>
+									<button
+										onClick={goToNextSection}
+										className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 z-20 p-2 bg-vscode-input-background border border-vscode-input-border rounded-full hover:bg-vscode-toolbar-hoverBackground text-vscode-foreground/70 hover:text-vscode-foreground transition-all duration-200 shadow-lg"
+									>
+										<ChevronRight size={18} />
+									</button>
+								</StandardTooltip>
+
+								{/* Section Content - Full width */}
+								<div className="bg-vscode-editor-background border border-vscode-input-border rounded-md p-6 min-h-[300px]">
+									{renderSectionContent(currentSection.id)}
 								</div>
 							</div>
 						</div>
@@ -704,7 +808,7 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 					{t("agents:cancel", "取消")}
 				</button>
 				<button
-					onClick={handleCreate}
+					onClick={handleSave}
 					disabled={!agentName.trim()}
 					className={cn(
 						"px-4 py-2 text-sm rounded-md transition-colors",
@@ -713,7 +817,7 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 							: "bg-vscode-button-background/50 text-vscode-button-foreground/50 cursor-not-allowed"
 					)}
 				>
-					{t("agents:create", "创建")}
+					{editMode ? t("agents:update", "保存") : t("agents:create", "创建")}
 				</button>
 			</div>
 

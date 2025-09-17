@@ -7,6 +7,11 @@ import type {
 	InstallMarketplaceItemOptions,
 	MarketplaceItem,
 	ShareVisibility,
+	AgentConfig,
+	AgentTodo,
+	AgentListOptions,
+	AgentExportData,
+	AgentTemplateData,
 } from "@roo-code/types"
 import { marketplaceItemSchema } from "@roo-code/types"
 
@@ -216,6 +221,18 @@ export interface WebviewMessage {
 		| "createCommand"
 		| "insertTextIntoTextarea"
 		| "createAgentFromTask"
+		| "createAgent"
+		| "updateAgent"
+		| "deleteAgent"
+		| "getAgent"
+		| "listAgents"
+		| "searchAgents"
+		| "exportAgent"
+		| "importAgent"
+		| "startAgentTask"
+		| "addAgentTodo"
+		| "updateAgentTodo"
+		| "deleteAgentTodo"
 	text?: string
 	editedMessageContent?: string
 	tab?: "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "account" | "agents"
@@ -245,6 +262,15 @@ export interface WebviewMessage {
 	timeout?: number
 	payload?: WebViewMessagePayload
 	source?: "global" | "project"
+	// 智能体相关字段
+	agentId?: string
+	agentConfig?: Partial<AgentConfig>
+	agentListOptions?: AgentListOptions
+	agentExportData?: AgentExportData
+	templateData?: AgentTemplateData
+	todoId?: string
+	todoData?: Partial<AgentTodo>
+	searchQuery?: string
 	requestId?: string
 	ids?: string[]
 	hasSystemPromptOverride?: boolean
@@ -259,7 +285,6 @@ export interface WebviewMessage {
 	visibility?: ShareVisibility // For share visibility
 	hasContent?: boolean // For checkRulesDirectoryResult
 	checkOnly?: boolean // For deleteCustomMode check
-	templateData?: any // For createAgentFromTask
 	codeIndexSettings?: {
 		// Global state settings
 		codebaseIndexEnabled: boolean
