@@ -63,6 +63,8 @@ export class CustomModesManager {
 	private cachedAt: number = 0
 	private redis = RedisSyncService.getInstance()
 	private currentUserId?: string
+	private syncTimer: NodeJS.Timeout | null = null
+	private readonly SYNC_INTERVAL = 30000 // 30秒同步一次
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
@@ -75,9 +77,60 @@ export class CustomModesManager {
 		this.watchCustomModesFiles().catch((error) => {
 			console.error("[CustomModesManager] Failed to setup file watchers:", error)
 		})
-		// Sync modes to Redis on startup
-		this.syncModesToRedis().catch(console.error)
+		
+		// 初始化时先从 Redis 同步，然后再同步到 Redis
+		this.initializeSync().catch(console.error)
+		
+		// 启动定时同步
+		this.startPeriodicSync()
 	}
+
+	/**
+	 * 初始化同步流程：确保首次加载时同步到 Redis
+	 */
+	private async initializeSync(): Promise<void> {
+		try {
+			// 无论如何都尝试同步当前数据到 Redis（如果有用户的话）
+			await this.syncModesToRedis()
+		} catch (error) {
+			logger.error("[CustomModesManager] Failed to initialize sync:", error)
+		}
+	}
+
+	/**
+	 * 启动定时同步机制
+	 */
+	private startPeriodicSync(): void {
+		// 清除之前的定时器
+		if (this.syncTimer) {
+			clearInterval(this.syncTimer)
+		}
+
+		// 设置定时同步
+		this.syncTimer = setInterval(async () => {
+			try {
+				if (this.currentUserId && this.currentUserId !== "default") {
+					await this.syncFromRedis()
+				}
+			} catch (error) {
+				logger.error("[CustomModesManager] Failed in periodic sync:", error)
+			}
+		}, this.SYNC_INTERVAL)
+
+		logger.info("[CustomModesManager] Started periodic sync")
+	}
+
+	/**
+	 * 停止定时同步
+	 */
+	private stopPeriodicSync(): void {
+		if (this.syncTimer) {
+			clearInterval(this.syncTimer)
+			this.syncTimer = null
+			logger.info("[CustomModesManager] Stopped periodic sync")
+		}
+	}
+
 
 	private async queueWrite(operation: () => Promise<void>): Promise<void> {
 		this.writeQueue.push(operation)
@@ -435,9 +488,7 @@ export class CustomModesManager {
 					updatedAt: now,
 				}
 
-				logger.info(
-					`[CustomModesManager] Updating mode ${slug} with userId: ${this.currentUserId || "undefined"}`,
-				)
+				logger.info(`[CustomModesManager] Updating mode ${slug}`)
 
 				// If it's a new mode (not found in existing modes), set createdAt
 				const existingModes = await this.getCustomModes()
@@ -455,8 +506,8 @@ export class CustomModesManager {
 					return updatedModes
 				})
 
-				this.clearCache()
 				await this.refreshMergedState()
+				await this.syncModesToRedis()
 			})
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error)
@@ -500,20 +551,12 @@ export class CustomModesManager {
 	}
 
 	private async refreshMergedState(): Promise<void> {
-		const settingsPath = await this.getCustomModesFilePath()
-		const roomodesPath = await this.getWorkspaceRoomodes()
-
-		const settingsModes = await this.loadModesFromFile(settingsPath)
-		const roomodesModes = roomodesPath ? await this.loadModesFromFile(roomodesPath) : []
-		const mergedModes = await this.mergeCustomModes(roomodesModes, settingsModes)
-
-		await this.context.globalState.update("customModes", mergedModes)
-
 		this.clearCache()
-
-		// Sync modes to Redis after refresh
-		await this.syncModesToRedis()
-
+		
+		// 强制从本地文件读取最新数据
+		const modes = await this.internalGetCustomModes(true)
+		
+		await this.context.globalState.update("customModes", modes)
 		await this.onUpdate()
 	}
 
@@ -552,9 +595,8 @@ export class CustomModesManager {
 					await this.deleteRulesFolder(slug, modeToDelete, fromMarketplace)
 				}
 
-				// Clear cache when modes are deleted
-				this.clearCache()
 				await this.refreshMergedState()
+				await this.syncModesToRedis()
 			})
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error)
@@ -876,8 +918,7 @@ export class CustomModesManager {
 			await fs.rm(rulesFolderPath, { recursive: true, force: true })
 			logger.info(`Removed existing ${source} rules folder for mode ${importMode.slug}`)
 		} catch (error) {
-			// It's okay if the folder doesn't exist
-			logger.debug(`No existing ${source} rules folder to remove for mode ${importMode.slug}`)
+			// Rules folder doesn't exist, which is fine
 		}
 
 		// Only proceed with file creation if there are rules files to import
@@ -1021,26 +1062,21 @@ export class CustomModesManager {
 			`[CustomModesManager] Setting userId from ${this.currentUserId || "undefined"} to ${userId || "undefined"}`,
 		)
 		this.currentUserId = userId
-		// Clear cache when user changes
-		this.cachedModes = null
-		this.cachedAt = 0
-		// Sync modes for new user
-		this.syncModesToRedis().catch(console.error)
+		// Clear cache when user changes - 强制重新从 Redis 加载
+		this.clearCache()
+		// 重启定时同步
+		this.startPeriodicSync()
 	}
 
 	/**
-	 * Get the Redis key for storing user modes
+	 * Get Redis key for user modes (format: roo:{userId}:modes)
 	 */
 	private getUserModesRedisKey(userId?: string): string {
-		// 使用实际的用户 ID，如果没有则不存储
 		const id = userId || this.currentUserId
 		if (!id || id === "default") {
-			// 如果没有有效的用户 ID，返回空以避免存储
 			return ""
 		}
-		// 获取终端号并构建包含终端标识的key格式: roo:{userId}:{terminalNo}:modes
-		const terminalNo = VoidBridge.getCurrentTerminalNo()
-		return terminalNo ? `roo:${id}:${terminalNo}:modes` : `roo:${id}:modes`
+		return `roo:${id}:modes`
 	}
 
 	/**
@@ -1050,7 +1086,6 @@ export class CustomModesManager {
 		try {
 			// 必须有有效的用户ID才能同步
 			if (!this.currentUserId || this.currentUserId === "default") {
-				logger.debug("[CustomModesManager] No valid user ID for Redis sync")
 				return
 			}
 
@@ -1083,6 +1118,25 @@ export class CustomModesManager {
 			logger.error("[CustomModesManager] Failed to sync modes to Redis:", error)
 		}
 	}
+
+	/**
+	 * Sync modes from Redis - 简化版，仅用于定期同步检查
+	 */
+	private async syncFromRedis(): Promise<void> {
+		try {
+			// 必须有有效的用户ID才能同步
+			if (!this.currentUserId || this.currentUserId === "default") {
+				return
+			}
+
+			// 清除缓存，让下次获取时从 Redis 重新加载
+			this.clearCache()
+
+		} catch (error) {
+			logger.error("[CustomModesManager] Failed to sync modes from Redis:", error)
+		}
+	}
+
 
 	/**
 	 * Get modes from Redis for a specific user
@@ -1131,16 +1185,36 @@ export class CustomModesManager {
 	}
 
 	/**
-	 * Internal method to get modes without triggering sync
+	 * Internal method to get modes - Redis优先，支持强制本地读取
 	 */
-	private async internalGetCustomModes(): Promise<UserModeConfig[]> {
-		// Check if we have a valid cached result.
+	private async internalGetCustomModes(forceLocal = false): Promise<UserModeConfig[]> {
 		const now = Date.now()
 
 		if (this.cachedModes && now - this.cachedAt < CustomModesManager.cacheTTL) {
 			return this.cachedModes
 		}
 
+		// 优先从 Redis 获取数据（除非强制使用本地数据）
+		if (!forceLocal && this.currentUserId && this.currentUserId !== "default") {
+			const redisKey = this.getUserModesRedisKey(this.currentUserId)
+			if (redisKey) {
+				try {
+					const redisModes = await this.redis.get(redisKey) as UserModeConfig[] | null
+					if (redisModes && Array.isArray(redisModes) && redisModes.length > 0) {
+						// 直接使用 Redis 数据，缓存并返回
+						this.cachedModes = redisModes
+						this.cachedAt = now
+						await this.context.globalState.update("customModes", redisModes)
+						return redisModes
+					}
+				} catch (error) {
+					logger.error("[CustomModesManager] Failed to get Redis data, falling back to local files:", error)
+				}
+			}
+		}
+
+		// 从本地文件加载数据
+		
 		// Get modes from settings file.
 		const settingsPath = await this.getCustomModesFilePath()
 		const settingsModes = await this.loadModesFromFile(settingsPath)
@@ -1222,7 +1296,39 @@ export class CustomModesManager {
 		return modes
 	}
 
+	/**
+	 * 强制从 Redis 同步数据 - 供外部调用（如用户切换时）
+	 */
+	public async forceSyncFromRedis(): Promise<void> {
+		try {
+			logger.info("[CustomModesManager] Force sync from Redis requested")
+			// 清除缓存，强制重新加载
+			this.clearCache()
+			await this.syncFromRedis()
+		} catch (error) {
+			logger.error("[CustomModesManager] Failed to force sync from Redis:", error)
+		}
+	}
+
+	/**
+	 * 强制刷新所有数据 - 清除缓存重新加载
+	 */
+	public async forceRefresh(): Promise<void> {
+		try {
+			logger.info("[CustomModesManager] Force refresh requested")
+			// 清除缓存，下次调用时会重新从 Redis 或本地文件加载
+			this.clearCache()
+			// 重新获取数据
+			await this.getCustomModes()
+		} catch (error) {
+			logger.error("[CustomModesManager] Failed to force refresh:", error)
+		}
+	}
+
 	dispose(): void {
+		// 停止定时同步
+		this.stopPeriodicSync()
+		
 		for (const disposable of this.disposables) {
 			disposable.dispose()
 		}

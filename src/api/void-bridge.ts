@@ -273,10 +273,14 @@ export class VoidBridge {
 						// Remove current task if any
 						await VoidBridge.provider.removeClineFromStack()
 
-						// Update CustomModesManager with new userId
+						// Update CustomModesManager with new userId and sync from Redis
 						if (VoidBridge.provider.customModesManager) {
 							VoidBridge.provider.customModesManager.setUserId(data.userId)
 							console.log(`[VoidBridge] Updated CustomModesManager userId to ${data.userId}`)
+							
+							// Force sync modes from Redis for the new user
+							await VoidBridge.provider.customModesManager.forceSyncFromRedis()
+							console.log(`[VoidBridge] Synced modes from Redis for user ${data.userId}`)
 						}
 
 						// Notify webview about user change
