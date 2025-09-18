@@ -8,6 +8,105 @@ import { extractTextFromXLSX } from "./extract-text-from-xlsx"
 import { countFileLines } from "./line-counter"
 import { readLines } from "./read-lines"
 
+// Document parsing API configuration
+const DOCUMENT_PARSING_API_ENDPOINT = "http://192.168.10.254:5009/parse_document"
+const DOCUMENT_PARSING_API_TIMEOUT = 30000 // 30 seconds
+const DOCUMENT_PARSING_API_MAX_SIZE = 100 * 1024 * 1024 // 100MB
+
+// Additional formats supported by the remote API
+const API_SUPPORTED_FORMATS = [
+	".doc",
+	".xls",
+	".ppt",
+	".pptx",
+	".rtf",
+	".odt",
+	".ods",
+	".odp",
+	".pages",
+	".key",
+	".epub",
+	".mobi",
+	".csv",
+	".tsv",
+	".xlsm",
+	".xlsb",
+] as const
+
+/**
+ * Extracts text from a file using the remote document parsing API
+ * @param filePath - Path to the file to extract text from
+ * @returns Promise resolving to the extracted text content with line numbers
+ * @throws {Error} If API request fails or file cannot be processed
+ */
+async function extractTextFromRemoteAPI(filePath: string): Promise<string> {
+	try {
+		// Check file size
+		const stats = await fs.stat(filePath)
+		if (stats.size > DOCUMENT_PARSING_API_MAX_SIZE) {
+			throw new Error(
+				`File size (${Math.round(stats.size / 1024 / 1024)}MB) exceeds API limit (${
+					DOCUMENT_PARSING_API_MAX_SIZE / 1024 / 1024
+				}MB)`,
+			)
+		}
+
+		// Read file and prepare form data
+		const fileBuffer = await fs.readFile(filePath)
+		const fileName = path.basename(filePath)
+
+		// Create FormData with file
+		const formData = new FormData()
+		const blob = new Blob([fileBuffer], { type: "application/octet-stream" })
+		formData.append("files", blob, fileName)
+
+		// Make API request with timeout
+		const controller = new AbortController()
+		const timeoutId = setTimeout(() => controller.abort(), DOCUMENT_PARSING_API_TIMEOUT)
+
+		const response = await fetch(DOCUMENT_PARSING_API_ENDPOINT, {
+			method: "POST",
+			body: formData,
+			signal: controller.signal,
+		})
+
+		clearTimeout(timeoutId)
+
+		if (!response.ok) {
+			throw new Error(`API request failed with status ${response.status}: ${response.statusText}`)
+		}
+
+		const result = await response.json()
+
+		// Check if parsing was successful
+		if (!result.success) {
+			throw new Error(result.error || "Document parsing failed")
+		}
+
+		// Extract content from the first (and only) file result
+		if (result.results && result.results.length > 0 && result.results[0].success) {
+			const content = result.results[0].content || ""
+			return addLineNumbers(content)
+		}
+
+		// Handle individual file errors
+		if (result.results && result.results.length > 0 && result.results[0].error) {
+			throw new Error(result.results[0].error)
+		}
+
+		throw new Error("No content extracted from document")
+	} catch (error) {
+		// Re-throw with more context
+		if (error instanceof Error) {
+			if (error.name === "AbortError") {
+				throw new Error(`Document parsing API timeout after ${DOCUMENT_PARSING_API_TIMEOUT / 1000} seconds`)
+			}
+			throw new Error(`Document parsing API error: ${error.message}`)
+		}
+		throw error
+	}
+}
+
 async function extractTextFromPDF(filePath: string): Promise<string> {
 	const dataBuffer = await fs.readFile(filePath)
 	const data = await pdf(dataBuffer)
@@ -45,9 +144,12 @@ const SUPPORTED_BINARY_FORMATS = {
 
 /**
  * Returns the list of supported binary file formats that can be processed by extractTextFromFile
+ * Includes both locally supported formats and those supported via the remote API
  */
 export function getSupportedBinaryFormats(): string[] {
-	return Object.keys(SUPPORTED_BINARY_FORMATS)
+	const localFormats = Object.keys(SUPPORTED_BINARY_FORMATS)
+	// Always include API-supported formats
+	return [...localFormats, ...API_SUPPORTED_FORMATS]
 }
 
 /**
@@ -79,10 +181,24 @@ export async function extractTextFromFile(filePath: string, maxReadFileLine?: nu
 
 	const fileExtension = path.extname(filePath).toLowerCase()
 
-	// Check if we have a specific extractor for this format
-	const extractor = SUPPORTED_BINARY_FORMATS[fileExtension as keyof typeof SUPPORTED_BINARY_FORMATS]
-	if (extractor) {
-		return extractor(filePath)
+	// Check if we have a local extractor for this format
+	const localExtractor = SUPPORTED_BINARY_FORMATS[fileExtension as keyof typeof SUPPORTED_BINARY_FORMATS]
+	if (localExtractor) {
+		// Use local extractor for supported formats
+		return await localExtractor(filePath)
+	}
+
+	// Check if this is an API-supported format
+	if (API_SUPPORTED_FORMATS.includes(fileExtension as any)) {
+		try {
+			return await extractTextFromRemoteAPI(filePath)
+		} catch (error) {
+			// Provide helpful error message for API-supported formats
+			if (error instanceof Error) {
+				throw new Error(`Cannot read ${fileExtension} file: ${error.message}`)
+			}
+			throw error
+		}
 	}
 
 	// Handle other files

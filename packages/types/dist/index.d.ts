@@ -1,6 +1,500 @@
+import { z } from 'zod';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
-import { z } from 'zod';
+
+/**
+ * 智能体工具配置
+ */
+declare const agentToolConfigSchema: z.ZodObject<{
+    toolId: z.ZodString;
+    enabled: z.ZodBoolean;
+    config: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
+}, "strip", z.ZodTypeAny, {
+    toolId: string;
+    enabled: boolean;
+    config?: Record<string, any> | undefined;
+}, {
+    toolId: string;
+    enabled: boolean;
+    config?: Record<string, any> | undefined;
+}>;
+type AgentToolConfig = z.infer<typeof agentToolConfigSchema>;
+/**
+ * 智能体Todo项
+ */
+declare const agentTodoSchema: z.ZodObject<{
+    id: z.ZodString;
+    content: z.ZodString;
+    status: z.ZodEnum<["pending", "in_progress", "completed"]>;
+    createdAt: z.ZodNumber;
+    updatedAt: z.ZodNumber;
+    priority: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+}, "strip", z.ZodTypeAny, {
+    status: "pending" | "in_progress" | "completed";
+    id: string;
+    content: string;
+    createdAt: number;
+    updatedAt: number;
+    priority?: "low" | "medium" | "high" | undefined;
+}, {
+    status: "pending" | "in_progress" | "completed";
+    id: string;
+    content: string;
+    createdAt: number;
+    updatedAt: number;
+    priority?: "low" | "medium" | "high" | undefined;
+}>;
+type AgentTodo = z.infer<typeof agentTodoSchema>;
+/**
+ * 智能体模板来源
+ */
+declare const agentTemplateSourceSchema: z.ZodObject<{
+    type: z.ZodEnum<["manual", "task"]>;
+    taskId: z.ZodOptional<z.ZodString>;
+    taskDescription: z.ZodOptional<z.ZodString>;
+    timestamp: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    type: "manual" | "task";
+    timestamp: number;
+    taskId?: string | undefined;
+    taskDescription?: string | undefined;
+}, {
+    type: "manual" | "task";
+    timestamp: number;
+    taskId?: string | undefined;
+    taskDescription?: string | undefined;
+}>;
+type AgentTemplateSource = z.infer<typeof agentTemplateSourceSchema>;
+/**
+ * 智能体配置
+ */
+declare const agentConfigSchema: z.ZodObject<{
+    id: z.ZodString;
+    userId: z.ZodString;
+    name: z.ZodString;
+    avatar: z.ZodString;
+    roleDescription: z.ZodString;
+    apiConfigId: z.ZodString;
+    mode: z.ZodString;
+    tools: z.ZodArray<z.ZodObject<{
+        toolId: z.ZodString;
+        enabled: z.ZodBoolean;
+        config: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
+    }, "strip", z.ZodTypeAny, {
+        toolId: string;
+        enabled: boolean;
+        config?: Record<string, any> | undefined;
+    }, {
+        toolId: string;
+        enabled: boolean;
+        config?: Record<string, any> | undefined;
+    }>, "many">;
+    todos: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        content: z.ZodString;
+        status: z.ZodEnum<["pending", "in_progress", "completed"]>;
+        createdAt: z.ZodNumber;
+        updatedAt: z.ZodNumber;
+        priority: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+    }, "strip", z.ZodTypeAny, {
+        status: "pending" | "in_progress" | "completed";
+        id: string;
+        content: string;
+        createdAt: number;
+        updatedAt: number;
+        priority?: "low" | "medium" | "high" | undefined;
+    }, {
+        status: "pending" | "in_progress" | "completed";
+        id: string;
+        content: string;
+        createdAt: number;
+        updatedAt: number;
+        priority?: "low" | "medium" | "high" | undefined;
+    }>, "many">;
+    templateSource: z.ZodOptional<z.ZodObject<{
+        type: z.ZodEnum<["manual", "task"]>;
+        taskId: z.ZodOptional<z.ZodString>;
+        taskDescription: z.ZodOptional<z.ZodString>;
+        timestamp: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        type: "manual" | "task";
+        timestamp: number;
+        taskId?: string | undefined;
+        taskDescription?: string | undefined;
+    }, {
+        type: "manual" | "task";
+        timestamp: number;
+        taskId?: string | undefined;
+        taskDescription?: string | undefined;
+    }>>;
+    createdAt: z.ZodNumber;
+    updatedAt: z.ZodNumber;
+    lastUsedAt: z.ZodOptional<z.ZodNumber>;
+    isActive: z.ZodBoolean;
+    version: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    createdAt: number;
+    updatedAt: number;
+    userId: string;
+    name: string;
+    avatar: string;
+    roleDescription: string;
+    apiConfigId: string;
+    mode: string;
+    tools: {
+        toolId: string;
+        enabled: boolean;
+        config?: Record<string, any> | undefined;
+    }[];
+    todos: {
+        status: "pending" | "in_progress" | "completed";
+        id: string;
+        content: string;
+        createdAt: number;
+        updatedAt: number;
+        priority?: "low" | "medium" | "high" | undefined;
+    }[];
+    isActive: boolean;
+    version: number;
+    templateSource?: {
+        type: "manual" | "task";
+        timestamp: number;
+        taskId?: string | undefined;
+        taskDescription?: string | undefined;
+    } | undefined;
+    lastUsedAt?: number | undefined;
+}, {
+    id: string;
+    createdAt: number;
+    updatedAt: number;
+    userId: string;
+    name: string;
+    avatar: string;
+    roleDescription: string;
+    apiConfigId: string;
+    mode: string;
+    tools: {
+        toolId: string;
+        enabled: boolean;
+        config?: Record<string, any> | undefined;
+    }[];
+    todos: {
+        status: "pending" | "in_progress" | "completed";
+        id: string;
+        content: string;
+        createdAt: number;
+        updatedAt: number;
+        priority?: "low" | "medium" | "high" | undefined;
+    }[];
+    isActive: boolean;
+    version: number;
+    templateSource?: {
+        type: "manual" | "task";
+        timestamp: number;
+        taskId?: string | undefined;
+        taskDescription?: string | undefined;
+    } | undefined;
+    lastUsedAt?: number | undefined;
+}>;
+type AgentConfig = z.infer<typeof agentConfigSchema>;
+/**
+ * 智能体列表查询选项
+ */
+declare const agentListOptionsSchema: z.ZodObject<{
+    sortBy: z.ZodOptional<z.ZodEnum<["name", "createdAt", "updatedAt", "lastUsedAt"]>>;
+    sortOrder: z.ZodOptional<z.ZodEnum<["asc", "desc"]>>;
+    filterByMode: z.ZodOptional<z.ZodString>;
+    onlyActive: z.ZodOptional<z.ZodBoolean>;
+    limit: z.ZodOptional<z.ZodNumber>;
+    offset: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    sortBy?: "createdAt" | "updatedAt" | "name" | "lastUsedAt" | undefined;
+    sortOrder?: "asc" | "desc" | undefined;
+    filterByMode?: string | undefined;
+    onlyActive?: boolean | undefined;
+    limit?: number | undefined;
+    offset?: number | undefined;
+}, {
+    sortBy?: "createdAt" | "updatedAt" | "name" | "lastUsedAt" | undefined;
+    sortOrder?: "asc" | "desc" | undefined;
+    filterByMode?: string | undefined;
+    onlyActive?: boolean | undefined;
+    limit?: number | undefined;
+    offset?: number | undefined;
+}>;
+type AgentListOptions = z.infer<typeof agentListOptionsSchema>;
+/**
+ * 智能体导出数据
+ */
+declare const agentExportDataSchema: z.ZodObject<{
+    agent: z.ZodObject<{
+        id: z.ZodString;
+        userId: z.ZodString;
+        name: z.ZodString;
+        avatar: z.ZodString;
+        roleDescription: z.ZodString;
+        apiConfigId: z.ZodString;
+        mode: z.ZodString;
+        tools: z.ZodArray<z.ZodObject<{
+            toolId: z.ZodString;
+            enabled: z.ZodBoolean;
+            config: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
+        }, "strip", z.ZodTypeAny, {
+            toolId: string;
+            enabled: boolean;
+            config?: Record<string, any> | undefined;
+        }, {
+            toolId: string;
+            enabled: boolean;
+            config?: Record<string, any> | undefined;
+        }>, "many">;
+        todos: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            content: z.ZodString;
+            status: z.ZodEnum<["pending", "in_progress", "completed"]>;
+            createdAt: z.ZodNumber;
+            updatedAt: z.ZodNumber;
+            priority: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+        }, "strip", z.ZodTypeAny, {
+            status: "pending" | "in_progress" | "completed";
+            id: string;
+            content: string;
+            createdAt: number;
+            updatedAt: number;
+            priority?: "low" | "medium" | "high" | undefined;
+        }, {
+            status: "pending" | "in_progress" | "completed";
+            id: string;
+            content: string;
+            createdAt: number;
+            updatedAt: number;
+            priority?: "low" | "medium" | "high" | undefined;
+        }>, "many">;
+        templateSource: z.ZodOptional<z.ZodObject<{
+            type: z.ZodEnum<["manual", "task"]>;
+            taskId: z.ZodOptional<z.ZodString>;
+            taskDescription: z.ZodOptional<z.ZodString>;
+            timestamp: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            type: "manual" | "task";
+            timestamp: number;
+            taskId?: string | undefined;
+            taskDescription?: string | undefined;
+        }, {
+            type: "manual" | "task";
+            timestamp: number;
+            taskId?: string | undefined;
+            taskDescription?: string | undefined;
+        }>>;
+        createdAt: z.ZodNumber;
+        updatedAt: z.ZodNumber;
+        lastUsedAt: z.ZodOptional<z.ZodNumber>;
+        isActive: z.ZodBoolean;
+        version: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+        createdAt: number;
+        updatedAt: number;
+        userId: string;
+        name: string;
+        avatar: string;
+        roleDescription: string;
+        apiConfigId: string;
+        mode: string;
+        tools: {
+            toolId: string;
+            enabled: boolean;
+            config?: Record<string, any> | undefined;
+        }[];
+        todos: {
+            status: "pending" | "in_progress" | "completed";
+            id: string;
+            content: string;
+            createdAt: number;
+            updatedAt: number;
+            priority?: "low" | "medium" | "high" | undefined;
+        }[];
+        isActive: boolean;
+        version: number;
+        templateSource?: {
+            type: "manual" | "task";
+            timestamp: number;
+            taskId?: string | undefined;
+            taskDescription?: string | undefined;
+        } | undefined;
+        lastUsedAt?: number | undefined;
+    }, {
+        id: string;
+        createdAt: number;
+        updatedAt: number;
+        userId: string;
+        name: string;
+        avatar: string;
+        roleDescription: string;
+        apiConfigId: string;
+        mode: string;
+        tools: {
+            toolId: string;
+            enabled: boolean;
+            config?: Record<string, any> | undefined;
+        }[];
+        todos: {
+            status: "pending" | "in_progress" | "completed";
+            id: string;
+            content: string;
+            createdAt: number;
+            updatedAt: number;
+            priority?: "low" | "medium" | "high" | undefined;
+        }[];
+        isActive: boolean;
+        version: number;
+        templateSource?: {
+            type: "manual" | "task";
+            timestamp: number;
+            taskId?: string | undefined;
+            taskDescription?: string | undefined;
+        } | undefined;
+        lastUsedAt?: number | undefined;
+    }>;
+    metadata: z.ZodObject<{
+        exportedAt: z.ZodNumber;
+        exportedBy: z.ZodString;
+        version: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        version: string;
+        exportedAt: number;
+        exportedBy: string;
+    }, {
+        version: string;
+        exportedAt: number;
+        exportedBy: string;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    agent: {
+        id: string;
+        createdAt: number;
+        updatedAt: number;
+        userId: string;
+        name: string;
+        avatar: string;
+        roleDescription: string;
+        apiConfigId: string;
+        mode: string;
+        tools: {
+            toolId: string;
+            enabled: boolean;
+            config?: Record<string, any> | undefined;
+        }[];
+        todos: {
+            status: "pending" | "in_progress" | "completed";
+            id: string;
+            content: string;
+            createdAt: number;
+            updatedAt: number;
+            priority?: "low" | "medium" | "high" | undefined;
+        }[];
+        isActive: boolean;
+        version: number;
+        templateSource?: {
+            type: "manual" | "task";
+            timestamp: number;
+            taskId?: string | undefined;
+            taskDescription?: string | undefined;
+        } | undefined;
+        lastUsedAt?: number | undefined;
+    };
+    metadata: {
+        version: string;
+        exportedAt: number;
+        exportedBy: string;
+    };
+}, {
+    agent: {
+        id: string;
+        createdAt: number;
+        updatedAt: number;
+        userId: string;
+        name: string;
+        avatar: string;
+        roleDescription: string;
+        apiConfigId: string;
+        mode: string;
+        tools: {
+            toolId: string;
+            enabled: boolean;
+            config?: Record<string, any> | undefined;
+        }[];
+        todos: {
+            status: "pending" | "in_progress" | "completed";
+            id: string;
+            content: string;
+            createdAt: number;
+            updatedAt: number;
+            priority?: "low" | "medium" | "high" | undefined;
+        }[];
+        isActive: boolean;
+        version: number;
+        templateSource?: {
+            type: "manual" | "task";
+            timestamp: number;
+            taskId?: string | undefined;
+            taskDescription?: string | undefined;
+        } | undefined;
+        lastUsedAt?: number | undefined;
+    };
+    metadata: {
+        version: string;
+        exportedAt: number;
+        exportedBy: string;
+    };
+}>;
+type AgentExportData = z.infer<typeof agentExportDataSchema>;
+/**
+ * 智能体模板数据（用于从任务创建智能体）
+ */
+declare const agentTemplateDataSchema: z.ZodObject<{
+    apiConfigId: z.ZodOptional<z.ZodString>;
+    mode: z.ZodOptional<z.ZodString>;
+    tools: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    templateSource: z.ZodObject<{
+        type: z.ZodEnum<["manual", "task"]>;
+        taskId: z.ZodOptional<z.ZodString>;
+        taskDescription: z.ZodOptional<z.ZodString>;
+        timestamp: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        type: "manual" | "task";
+        timestamp: number;
+        taskId?: string | undefined;
+        taskDescription?: string | undefined;
+    }, {
+        type: "manual" | "task";
+        timestamp: number;
+        taskId?: string | undefined;
+        taskDescription?: string | undefined;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    templateSource: {
+        type: "manual" | "task";
+        timestamp: number;
+        taskId?: string | undefined;
+        taskDescription?: string | undefined;
+    };
+    apiConfigId?: string | undefined;
+    mode?: string | undefined;
+    tools?: string[] | undefined;
+}, {
+    templateSource: {
+        type: "manual" | "task";
+        timestamp: number;
+        taskId?: string | undefined;
+        taskDescription?: string | undefined;
+    };
+    apiConfigId?: string | undefined;
+    mode?: string | undefined;
+    tools?: string[] | undefined;
+}>;
+type AgentTemplateData = z.infer<typeof agentTemplateDataSchema>;
 
 /**
  * RooCodeEventName
@@ -148,6 +642,13 @@ declare const rooCodeEventsSchema: z.ZodObject<{
         }, "strip", z.ZodTypeAny, {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -168,16 +669,16 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         }, {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -198,18 +699,18 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         }>;
     }, "strip", z.ZodTypeAny, {
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -230,13 +731,6 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         action: "created" | "updated";
@@ -244,6 +738,13 @@ declare const rooCodeEventsSchema: z.ZodObject<{
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -264,13 +765,6 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         action: "created" | "updated";
@@ -328,6 +822,13 @@ declare const rooCodeEventsSchema: z.ZodObject<{
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -348,13 +849,6 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         action: "created" | "updated";
@@ -398,6 +892,13 @@ declare const rooCodeEventsSchema: z.ZodObject<{
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -418,13 +919,6 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         action: "created" | "updated";
@@ -711,6 +1205,13 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
         }, "strip", z.ZodTypeAny, {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -731,16 +1232,16 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         }, {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -761,18 +1262,18 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         }>;
     }, "strip", z.ZodTypeAny, {
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -793,13 +1294,6 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         action: "created" | "updated";
@@ -807,6 +1301,13 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -827,13 +1328,6 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         action: "created" | "updated";
@@ -845,6 +1339,13 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -865,13 +1366,6 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         action: "created" | "updated";
@@ -883,6 +1377,13 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -903,13 +1404,6 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         action: "created" | "updated";
@@ -1474,6 +1968,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
         cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
         description: z.ZodOptional<z.ZodString>;
+        modelType: z.ZodOptional<z.ZodString>;
         reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
         minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
         maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -1514,6 +2009,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -1542,6 +2038,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -1597,6 +2094,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -1650,6 +2148,7 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -1738,14 +2237,14 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
         id: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     }, {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     }>>;
 } & {
     apiProvider: z.ZodLiteral<"vscode-lm">;
@@ -1765,9 +2264,9 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
     verbosity?: "low" | "medium" | "high" | undefined;
     vsCodeLmModelSelector?: {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     } | undefined;
 }, {
     apiProvider: "vscode-lm";
@@ -1785,9 +2284,9 @@ declare const providerSettingsSchemaDiscriminated: z.ZodDiscriminatedUnion<"apiP
     verbosity?: "low" | "medium" | "high" | undefined;
     vsCodeLmModelSelector?: {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     } | undefined;
 }>, z.ZodObject<{
     includeMaxTokens: z.ZodOptional<z.ZodBoolean>;
@@ -3023,14 +3522,14 @@ declare const providerSettingsSchema: z.ZodObject<{
         id: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     }, {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     }>>;
     ollamaModelId: z.ZodOptional<z.ZodString>;
     ollamaBaseUrl: z.ZodOptional<z.ZodString>;
@@ -3056,6 +3555,7 @@ declare const providerSettingsSchema: z.ZodObject<{
         cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
         cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
         description: z.ZodOptional<z.ZodString>;
+        modelType: z.ZodOptional<z.ZodString>;
         reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
         minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
         maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -3096,6 +3596,7 @@ declare const providerSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3124,6 +3625,7 @@ declare const providerSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3248,6 +3750,7 @@ declare const providerSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3269,9 +3772,9 @@ declare const providerSettingsSchema: z.ZodObject<{
     ollamaBaseUrl?: string | undefined;
     vsCodeLmModelSelector?: {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     } | undefined;
     lmStudioModelId?: string | undefined;
     lmStudioBaseUrl?: string | undefined;
@@ -3391,6 +3894,7 @@ declare const providerSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3412,9 +3916,9 @@ declare const providerSettingsSchema: z.ZodObject<{
     ollamaBaseUrl?: string | undefined;
     vsCodeLmModelSelector?: {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     } | undefined;
     lmStudioModelId?: string | undefined;
     lmStudioBaseUrl?: string | undefined;
@@ -3532,14 +4036,14 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         id: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     }, {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     }>>;
     ollamaModelId: z.ZodOptional<z.ZodString>;
     ollamaBaseUrl: z.ZodOptional<z.ZodString>;
@@ -3565,6 +4069,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
         cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
         description: z.ZodOptional<z.ZodString>;
+        modelType: z.ZodOptional<z.ZodString>;
         reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
         minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
         maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -3605,6 +4110,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3633,6 +4139,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3685,6 +4192,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
 } & {
     id: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
+    id?: string | undefined;
     reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -3693,7 +4201,6 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
     codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
     codebaseIndexGeminiApiKey?: string | undefined;
     codebaseIndexMistralApiKey?: string | undefined;
-    id?: string | undefined;
     apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
     includeMaxTokens?: boolean | undefined;
     diffEnabled?: boolean | undefined;
@@ -3760,6 +4267,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3781,9 +4289,9 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
     ollamaBaseUrl?: string | undefined;
     vsCodeLmModelSelector?: {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     } | undefined;
     lmStudioModelId?: string | undefined;
     lmStudioBaseUrl?: string | undefined;
@@ -3829,6 +4337,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
     ioIntelligenceModelId?: string | undefined;
     ioIntelligenceApiKey?: string | undefined;
 }, {
+    id?: string | undefined;
     reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -3837,7 +4346,6 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
     codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
     codebaseIndexGeminiApiKey?: string | undefined;
     codebaseIndexMistralApiKey?: string | undefined;
-    id?: string | undefined;
     apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
     includeMaxTokens?: boolean | undefined;
     diffEnabled?: boolean | undefined;
@@ -3904,6 +4412,7 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -3925,9 +4434,9 @@ declare const providerSettingsWithIdSchema: z.ZodObject<{
     ollamaBaseUrl?: string | undefined;
     vsCodeLmModelSelector?: {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     } | undefined;
     lmStudioModelId?: string | undefined;
     lmStudioBaseUrl?: string | undefined;
@@ -4382,6 +4891,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
         cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
         description: z.ZodOptional<z.ZodString>;
+        modelType: z.ZodOptional<z.ZodString>;
         reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
         minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
         maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -4422,6 +4932,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -4450,6 +4961,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -4505,6 +5017,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -4558,6 +5071,7 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -4646,14 +5160,14 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
         id: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     }, {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     }>>;
 } & {
     apiProvider: z.ZodLiteral<"vscode-lm">;
@@ -4673,9 +5187,9 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
     verbosity?: "low" | "medium" | "high" | undefined;
     vsCodeLmModelSelector?: {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     } | undefined;
 }, {
     apiProvider: "vscode-lm";
@@ -4693,9 +5207,9 @@ declare const discriminatedProviderSettingsWithIdSchema: z.ZodIntersection<z.Zod
     verbosity?: "low" | "medium" | "high" | undefined;
     vsCodeLmModelSelector?: {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     } | undefined;
 }>, z.ZodObject<{
     includeMaxTokens: z.ZodOptional<z.ZodBoolean>;
@@ -5928,31 +6442,31 @@ declare const globalSettingsSchema: z.ZodObject<{
         terminalNo: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         number: number;
-        ts: number;
-        totalCost: number;
         id: string;
         task: string;
+        ts: number;
+        totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        mode?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
-        mode?: string | undefined;
         terminalNo?: number | undefined;
     }, {
         number: number;
-        ts: number;
-        totalCost: number;
         id: string;
         task: string;
+        ts: number;
+        totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        mode?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
-        mode?: string | undefined;
         terminalNo?: number | undefined;
     }>, "many">>;
     condensingApiConfigId: z.ZodOptional<z.ZodString>;
@@ -6354,10 +6868,10 @@ declare const globalSettingsSchema: z.ZodObject<{
         lastUpdated?: number | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
+    mode?: string | undefined;
     diffEnabled?: boolean | undefined;
     fuzzyMatchThreshold?: number | undefined;
     rateLimitSeconds?: number | undefined;
-    mode?: string | undefined;
     language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     customInstructions?: string | undefined;
     customModes?: {
@@ -6383,17 +6897,17 @@ declare const globalSettingsSchema: z.ZodObject<{
     lastShownAnnouncementId?: string | undefined;
     taskHistory?: {
         number: number;
-        ts: number;
-        totalCost: number;
         id: string;
         task: string;
+        ts: number;
+        totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        mode?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
-        mode?: string | undefined;
         terminalNo?: number | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
@@ -6491,7 +7005,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
         codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
     } | undefined;
-    telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+    telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
     mcpEnabled?: boolean | undefined;
     enableMcpServerCreation?: boolean | undefined;
     remoteControlEnabled?: boolean | undefined;
@@ -6539,10 +7053,10 @@ declare const globalSettingsSchema: z.ZodObject<{
         lastUpdated?: number | undefined;
     } | undefined;
 }, {
+    mode?: string | undefined;
     diffEnabled?: boolean | undefined;
     fuzzyMatchThreshold?: number | undefined;
     rateLimitSeconds?: number | undefined;
-    mode?: string | undefined;
     language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     customInstructions?: string | undefined;
     customModes?: {
@@ -6568,17 +7082,17 @@ declare const globalSettingsSchema: z.ZodObject<{
     lastShownAnnouncementId?: string | undefined;
     taskHistory?: {
         number: number;
-        ts: number;
-        totalCost: number;
         id: string;
         task: string;
+        ts: number;
+        totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        mode?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
-        mode?: string | undefined;
         terminalNo?: number | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
@@ -6676,7 +7190,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
         codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
     } | undefined;
-    telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+    telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
     mcpEnabled?: boolean | undefined;
     enableMcpServerCreation?: boolean | undefined;
     remoteControlEnabled?: boolean | undefined;
@@ -6797,14 +7311,14 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         id: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     }, {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     }>>;
     ollamaModelId: z.ZodOptional<z.ZodString>;
     ollamaBaseUrl: z.ZodOptional<z.ZodString>;
@@ -6830,6 +7344,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
         cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
         description: z.ZodOptional<z.ZodString>;
+        modelType: z.ZodOptional<z.ZodString>;
         reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
         minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
         maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -6870,6 +7385,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -6898,6 +7414,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -6981,31 +7498,31 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         terminalNo: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         number: number;
-        ts: number;
-        totalCost: number;
         id: string;
         task: string;
+        ts: number;
+        totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        mode?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
-        mode?: string | undefined;
         terminalNo?: number | undefined;
     }, {
         number: number;
-        ts: number;
-        totalCost: number;
         id: string;
         task: string;
+        ts: number;
+        totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        mode?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
-        mode?: string | undefined;
         terminalNo?: number | undefined;
     }>, "many">>;
     condensingApiConfigId: z.ZodOptional<z.ZodString>;
@@ -7399,6 +7916,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         lastUpdated?: number | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
+    mode?: string | undefined;
     reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -7473,6 +7991,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -7494,9 +8013,9 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     ollamaBaseUrl?: string | undefined;
     vsCodeLmModelSelector?: {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     } | undefined;
     lmStudioModelId?: string | undefined;
     lmStudioBaseUrl?: string | undefined;
@@ -7541,7 +8060,6 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     fireworksApiKey?: string | undefined;
     ioIntelligenceModelId?: string | undefined;
     ioIntelligenceApiKey?: string | undefined;
-    mode?: string | undefined;
     language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     customInstructions?: string | undefined;
     customModes?: {
@@ -7567,17 +8085,17 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     lastShownAnnouncementId?: string | undefined;
     taskHistory?: {
         number: number;
-        ts: number;
-        totalCost: number;
         id: string;
         task: string;
+        ts: number;
+        totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        mode?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
-        mode?: string | undefined;
         terminalNo?: number | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
@@ -7675,7 +8193,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
         codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
     } | undefined;
-    telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+    telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
     mcpEnabled?: boolean | undefined;
     enableMcpServerCreation?: boolean | undefined;
     remoteControlEnabled?: boolean | undefined;
@@ -7723,6 +8241,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         lastUpdated?: number | undefined;
     } | undefined;
 }, {
+    mode?: string | undefined;
     reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -7797,6 +8316,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         cacheWritesPrice?: number | undefined;
         cacheReadsPrice?: number | undefined;
         description?: string | undefined;
+        modelType?: string | undefined;
         reasoningEffort?: "low" | "medium" | "high" | undefined;
         minTokensPerCachePoint?: number | undefined;
         maxCachePoints?: number | undefined;
@@ -7818,9 +8338,9 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     ollamaBaseUrl?: string | undefined;
     vsCodeLmModelSelector?: {
         id?: string | undefined;
+        version?: string | undefined;
         vendor?: string | undefined;
         family?: string | undefined;
-        version?: string | undefined;
     } | undefined;
     lmStudioModelId?: string | undefined;
     lmStudioBaseUrl?: string | undefined;
@@ -7865,7 +8385,6 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     fireworksApiKey?: string | undefined;
     ioIntelligenceModelId?: string | undefined;
     ioIntelligenceApiKey?: string | undefined;
-    mode?: string | undefined;
     language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     customInstructions?: string | undefined;
     customModes?: {
@@ -7891,17 +8410,17 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     lastShownAnnouncementId?: string | undefined;
     taskHistory?: {
         number: number;
-        ts: number;
-        totalCost: number;
         id: string;
         task: string;
+        ts: number;
+        totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        mode?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
-        mode?: string | undefined;
         terminalNo?: number | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
@@ -7999,7 +8518,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
         codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
     } | undefined;
-    telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+    telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
     mcpEnabled?: boolean | undefined;
     enableMcpServerCreation?: boolean | undefined;
     remoteControlEnabled?: boolean | undefined;
@@ -8182,14 +8701,14 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 id: z.ZodOptional<z.ZodString>;
             }, "strip", z.ZodTypeAny, {
                 id?: string | undefined;
+                version?: string | undefined;
                 vendor?: string | undefined;
                 family?: string | undefined;
-                version?: string | undefined;
             }, {
                 id?: string | undefined;
+                version?: string | undefined;
                 vendor?: string | undefined;
                 family?: string | undefined;
-                version?: string | undefined;
             }>>;
             ollamaModelId: z.ZodOptional<z.ZodString>;
             ollamaBaseUrl: z.ZodOptional<z.ZodString>;
@@ -8215,6 +8734,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
                 cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
                 description: z.ZodOptional<z.ZodString>;
+                modelType: z.ZodOptional<z.ZodString>;
                 reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
                 minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
                 maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -8255,6 +8775,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -8283,6 +8804,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -8366,31 +8888,31 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 terminalNo: z.ZodOptional<z.ZodNumber>;
             }, "strip", z.ZodTypeAny, {
                 number: number;
-                ts: number;
-                totalCost: number;
                 id: string;
                 task: string;
+                ts: number;
+                totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                mode?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
-                mode?: string | undefined;
                 terminalNo?: number | undefined;
             }, {
                 number: number;
-                ts: number;
-                totalCost: number;
                 id: string;
                 task: string;
+                ts: number;
+                totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                mode?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
-                mode?: string | undefined;
                 terminalNo?: number | undefined;
             }>, "many">>;
             condensingApiConfigId: z.ZodOptional<z.ZodString>;
@@ -8784,6 +9306,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 lastUpdated?: number | undefined;
             }>>;
         }, "strip", z.ZodTypeAny, {
+            mode?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
             codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -8858,6 +9381,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -8879,9 +9403,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             ollamaBaseUrl?: string | undefined;
             vsCodeLmModelSelector?: {
                 id?: string | undefined;
+                version?: string | undefined;
                 vendor?: string | undefined;
                 family?: string | undefined;
-                version?: string | undefined;
             } | undefined;
             lmStudioModelId?: string | undefined;
             lmStudioBaseUrl?: string | undefined;
@@ -8926,7 +9450,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
             language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
@@ -8952,17 +9475,17 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastShownAnnouncementId?: string | undefined;
             taskHistory?: {
                 number: number;
-                ts: number;
-                totalCost: number;
                 id: string;
                 task: string;
+                ts: number;
+                totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                mode?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
-                mode?: string | undefined;
                 terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
@@ -9060,7 +9583,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
             } | undefined;
-            telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+            telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
             mcpEnabled?: boolean | undefined;
             enableMcpServerCreation?: boolean | undefined;
             remoteControlEnabled?: boolean | undefined;
@@ -9108,6 +9631,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 lastUpdated?: number | undefined;
             } | undefined;
         }, {
+            mode?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
             codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -9182,6 +9706,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -9203,9 +9728,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             ollamaBaseUrl?: string | undefined;
             vsCodeLmModelSelector?: {
                 id?: string | undefined;
+                version?: string | undefined;
                 vendor?: string | undefined;
                 family?: string | undefined;
-                version?: string | undefined;
             } | undefined;
             lmStudioModelId?: string | undefined;
             lmStudioBaseUrl?: string | undefined;
@@ -9250,7 +9775,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
             language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
@@ -9276,17 +9800,17 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastShownAnnouncementId?: string | undefined;
             taskHistory?: {
                 number: number;
-                ts: number;
-                totalCost: number;
                 id: string;
                 task: string;
+                ts: number;
+                totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                mode?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
-                mode?: string | undefined;
                 terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
@@ -9384,7 +9908,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
             } | undefined;
-            telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+            telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
             mcpEnabled?: boolean | undefined;
             enableMcpServerCreation?: boolean | undefined;
             remoteControlEnabled?: boolean | undefined;
@@ -9438,6 +9962,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
     }, "strip", z.ZodTypeAny, {
         text: string;
         configuration: {
+            mode?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
             codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -9512,6 +10037,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -9533,9 +10059,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             ollamaBaseUrl?: string | undefined;
             vsCodeLmModelSelector?: {
                 id?: string | undefined;
+                version?: string | undefined;
                 vendor?: string | undefined;
                 family?: string | undefined;
-                version?: string | undefined;
             } | undefined;
             lmStudioModelId?: string | undefined;
             lmStudioBaseUrl?: string | undefined;
@@ -9580,7 +10106,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
             language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
@@ -9606,17 +10131,17 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastShownAnnouncementId?: string | undefined;
             taskHistory?: {
                 number: number;
-                ts: number;
-                totalCost: number;
                 id: string;
                 task: string;
+                ts: number;
+                totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                mode?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
-                mode?: string | undefined;
                 terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
@@ -9714,7 +10239,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
             } | undefined;
-            telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+            telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
             mcpEnabled?: boolean | undefined;
             enableMcpServerCreation?: boolean | undefined;
             remoteControlEnabled?: boolean | undefined;
@@ -9767,6 +10292,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
     }, {
         text: string;
         configuration: {
+            mode?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
             codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -9841,6 +10367,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -9862,9 +10389,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             ollamaBaseUrl?: string | undefined;
             vsCodeLmModelSelector?: {
                 id?: string | undefined;
+                version?: string | undefined;
                 vendor?: string | undefined;
                 family?: string | undefined;
-                version?: string | undefined;
             } | undefined;
             lmStudioModelId?: string | undefined;
             lmStudioBaseUrl?: string | undefined;
@@ -9909,7 +10436,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
             language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
@@ -9935,17 +10461,17 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastShownAnnouncementId?: string | undefined;
             taskHistory?: {
                 number: number;
-                ts: number;
-                totalCost: number;
                 id: string;
                 task: string;
+                ts: number;
+                totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                mode?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
-                mode?: string | undefined;
                 terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
@@ -10043,7 +10569,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
             } | undefined;
-            telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+            telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
             mcpEnabled?: boolean | undefined;
             enableMcpServerCreation?: boolean | undefined;
             remoteControlEnabled?: boolean | undefined;
@@ -10099,6 +10625,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
     data: {
         text: string;
         configuration: {
+            mode?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
             codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -10173,6 +10700,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -10194,9 +10722,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             ollamaBaseUrl?: string | undefined;
             vsCodeLmModelSelector?: {
                 id?: string | undefined;
+                version?: string | undefined;
                 vendor?: string | undefined;
                 family?: string | undefined;
-                version?: string | undefined;
             } | undefined;
             lmStudioModelId?: string | undefined;
             lmStudioBaseUrl?: string | undefined;
@@ -10241,7 +10769,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
             language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
@@ -10267,17 +10794,17 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastShownAnnouncementId?: string | undefined;
             taskHistory?: {
                 number: number;
-                ts: number;
-                totalCost: number;
                 id: string;
                 task: string;
+                ts: number;
+                totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                mode?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
-                mode?: string | undefined;
                 terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
@@ -10375,7 +10902,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
             } | undefined;
-            telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+            telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
             mcpEnabled?: boolean | undefined;
             enableMcpServerCreation?: boolean | undefined;
             remoteControlEnabled?: boolean | undefined;
@@ -10431,6 +10958,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
     data: {
         text: string;
         configuration: {
+            mode?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
             codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -10505,6 +11033,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 cacheWritesPrice?: number | undefined;
                 cacheReadsPrice?: number | undefined;
                 description?: string | undefined;
+                modelType?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | undefined;
                 minTokensPerCachePoint?: number | undefined;
                 maxCachePoints?: number | undefined;
@@ -10526,9 +11055,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             ollamaBaseUrl?: string | undefined;
             vsCodeLmModelSelector?: {
                 id?: string | undefined;
+                version?: string | undefined;
                 vendor?: string | undefined;
                 family?: string | undefined;
-                version?: string | undefined;
             } | undefined;
             lmStudioModelId?: string | undefined;
             lmStudioBaseUrl?: string | undefined;
@@ -10573,7 +11102,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
             language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
@@ -10599,17 +11127,17 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastShownAnnouncementId?: string | undefined;
             taskHistory?: {
                 number: number;
-                ts: number;
-                totalCost: number;
                 id: string;
                 task: string;
+                ts: number;
+                totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                mode?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
-                mode?: string | undefined;
                 terminalNo?: number | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
@@ -10707,7 +11235,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
             } | undefined;
-            telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+            telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
             mcpEnabled?: boolean | undefined;
             enableMcpServerCreation?: boolean | undefined;
             remoteControlEnabled?: boolean | undefined;
@@ -10888,14 +11416,14 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     id: z.ZodOptional<z.ZodString>;
                 }, "strip", z.ZodTypeAny, {
                     id?: string | undefined;
+                    version?: string | undefined;
                     vendor?: string | undefined;
                     family?: string | undefined;
-                    version?: string | undefined;
                 }, {
                     id?: string | undefined;
+                    version?: string | undefined;
                     vendor?: string | undefined;
                     family?: string | undefined;
-                    version?: string | undefined;
                 }>>;
                 ollamaModelId: z.ZodOptional<z.ZodString>;
                 ollamaBaseUrl: z.ZodOptional<z.ZodString>;
@@ -10921,6 +11449,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
                     cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
                     description: z.ZodOptional<z.ZodString>;
+                    modelType: z.ZodOptional<z.ZodString>;
                     reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
                     minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
                     maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -10961,6 +11490,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -10989,6 +11519,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -11072,31 +11603,31 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     terminalNo: z.ZodOptional<z.ZodNumber>;
                 }, "strip", z.ZodTypeAny, {
                     number: number;
-                    ts: number;
-                    totalCost: number;
                     id: string;
                     task: string;
+                    ts: number;
+                    totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    mode?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
-                    mode?: string | undefined;
                     terminalNo?: number | undefined;
                 }, {
                     number: number;
-                    ts: number;
-                    totalCost: number;
                     id: string;
                     task: string;
+                    ts: number;
+                    totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    mode?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
-                    mode?: string | undefined;
                     terminalNo?: number | undefined;
                 }>, "many">>;
                 condensingApiConfigId: z.ZodOptional<z.ZodString>;
@@ -11490,6 +12021,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     lastUpdated?: number | undefined;
                 }>>;
             }, "strip", z.ZodTypeAny, {
+                mode?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -11564,6 +12096,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -11585,9 +12118,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ollamaBaseUrl?: string | undefined;
                 vsCodeLmModelSelector?: {
                     id?: string | undefined;
+                    version?: string | undefined;
                     vendor?: string | undefined;
                     family?: string | undefined;
-                    version?: string | undefined;
                 } | undefined;
                 lmStudioModelId?: string | undefined;
                 lmStudioBaseUrl?: string | undefined;
@@ -11632,7 +12165,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
                 language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
@@ -11658,17 +12190,17 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastShownAnnouncementId?: string | undefined;
                 taskHistory?: {
                     number: number;
-                    ts: number;
-                    totalCost: number;
                     id: string;
                     task: string;
+                    ts: number;
+                    totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    mode?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
-                    mode?: string | undefined;
                     terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
@@ -11766,7 +12298,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
                 } | undefined;
-                telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+                telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
                 mcpEnabled?: boolean | undefined;
                 enableMcpServerCreation?: boolean | undefined;
                 remoteControlEnabled?: boolean | undefined;
@@ -11814,6 +12346,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     lastUpdated?: number | undefined;
                 } | undefined;
             }, {
+                mode?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -11888,6 +12421,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -11909,9 +12443,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ollamaBaseUrl?: string | undefined;
                 vsCodeLmModelSelector?: {
                     id?: string | undefined;
+                    version?: string | undefined;
                     vendor?: string | undefined;
                     family?: string | undefined;
-                    version?: string | undefined;
                 } | undefined;
                 lmStudioModelId?: string | undefined;
                 lmStudioBaseUrl?: string | undefined;
@@ -11956,7 +12490,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
                 language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
@@ -11982,17 +12515,17 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastShownAnnouncementId?: string | undefined;
                 taskHistory?: {
                     number: number;
-                    ts: number;
-                    totalCost: number;
                     id: string;
                     task: string;
+                    ts: number;
+                    totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    mode?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
-                    mode?: string | undefined;
                     terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
@@ -12090,7 +12623,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
                 } | undefined;
-                telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+                telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
                 mcpEnabled?: boolean | undefined;
                 enableMcpServerCreation?: boolean | undefined;
                 remoteControlEnabled?: boolean | undefined;
@@ -12144,6 +12677,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         }, "strip", z.ZodTypeAny, {
             text: string;
             configuration: {
+                mode?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -12218,6 +12752,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -12239,9 +12774,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ollamaBaseUrl?: string | undefined;
                 vsCodeLmModelSelector?: {
                     id?: string | undefined;
+                    version?: string | undefined;
                     vendor?: string | undefined;
                     family?: string | undefined;
-                    version?: string | undefined;
                 } | undefined;
                 lmStudioModelId?: string | undefined;
                 lmStudioBaseUrl?: string | undefined;
@@ -12286,7 +12821,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
                 language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
@@ -12312,17 +12846,17 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastShownAnnouncementId?: string | undefined;
                 taskHistory?: {
                     number: number;
-                    ts: number;
-                    totalCost: number;
                     id: string;
                     task: string;
+                    ts: number;
+                    totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    mode?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
-                    mode?: string | undefined;
                     terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
@@ -12420,7 +12954,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
                 } | undefined;
-                telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+                telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
                 mcpEnabled?: boolean | undefined;
                 enableMcpServerCreation?: boolean | undefined;
                 remoteControlEnabled?: boolean | undefined;
@@ -12473,6 +13007,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         }, {
             text: string;
             configuration: {
+                mode?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -12547,6 +13082,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -12568,9 +13104,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ollamaBaseUrl?: string | undefined;
                 vsCodeLmModelSelector?: {
                     id?: string | undefined;
+                    version?: string | undefined;
                     vendor?: string | undefined;
                     family?: string | undefined;
-                    version?: string | undefined;
                 } | undefined;
                 lmStudioModelId?: string | undefined;
                 lmStudioBaseUrl?: string | undefined;
@@ -12615,7 +13151,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
                 language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
@@ -12641,17 +13176,17 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastShownAnnouncementId?: string | undefined;
                 taskHistory?: {
                     number: number;
-                    ts: number;
-                    totalCost: number;
                     id: string;
                     task: string;
+                    ts: number;
+                    totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    mode?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
-                    mode?: string | undefined;
                     terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
@@ -12749,7 +13284,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
                 } | undefined;
-                telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+                telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
                 mcpEnabled?: boolean | undefined;
                 enableMcpServerCreation?: boolean | undefined;
                 remoteControlEnabled?: boolean | undefined;
@@ -12805,6 +13340,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         data: {
             text: string;
             configuration: {
+                mode?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -12879,6 +13415,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -12900,9 +13437,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ollamaBaseUrl?: string | undefined;
                 vsCodeLmModelSelector?: {
                     id?: string | undefined;
+                    version?: string | undefined;
                     vendor?: string | undefined;
                     family?: string | undefined;
-                    version?: string | undefined;
                 } | undefined;
                 lmStudioModelId?: string | undefined;
                 lmStudioBaseUrl?: string | undefined;
@@ -12947,7 +13484,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
                 language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
@@ -12973,17 +13509,17 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastShownAnnouncementId?: string | undefined;
                 taskHistory?: {
                     number: number;
-                    ts: number;
-                    totalCost: number;
                     id: string;
                     task: string;
+                    ts: number;
+                    totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    mode?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
-                    mode?: string | undefined;
                     terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
@@ -13081,7 +13617,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
                 } | undefined;
-                telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+                telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
                 mcpEnabled?: boolean | undefined;
                 enableMcpServerCreation?: boolean | undefined;
                 remoteControlEnabled?: boolean | undefined;
@@ -13137,6 +13673,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         data: {
             text: string;
             configuration: {
+                mode?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -13211,6 +13748,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -13232,9 +13770,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ollamaBaseUrl?: string | undefined;
                 vsCodeLmModelSelector?: {
                     id?: string | undefined;
+                    version?: string | undefined;
                     vendor?: string | undefined;
                     family?: string | undefined;
-                    version?: string | undefined;
                 } | undefined;
                 lmStudioModelId?: string | undefined;
                 lmStudioBaseUrl?: string | undefined;
@@ -13279,7 +13817,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
                 language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
@@ -13305,17 +13842,17 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastShownAnnouncementId?: string | undefined;
                 taskHistory?: {
                     number: number;
-                    ts: number;
-                    totalCost: number;
                     id: string;
                     task: string;
+                    ts: number;
+                    totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    mode?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
-                    mode?: string | undefined;
                     terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
@@ -13413,7 +13950,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
                 } | undefined;
-                telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+                telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
                 mcpEnabled?: boolean | undefined;
                 enableMcpServerCreation?: boolean | undefined;
                 remoteControlEnabled?: boolean | undefined;
@@ -13491,6 +14028,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         data: {
             text: string;
             configuration: {
+                mode?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -13565,6 +14103,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -13586,9 +14125,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ollamaBaseUrl?: string | undefined;
                 vsCodeLmModelSelector?: {
                     id?: string | undefined;
+                    version?: string | undefined;
                     vendor?: string | undefined;
                     family?: string | undefined;
-                    version?: string | undefined;
                 } | undefined;
                 lmStudioModelId?: string | undefined;
                 lmStudioBaseUrl?: string | undefined;
@@ -13633,7 +14172,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
                 language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
@@ -13659,17 +14197,17 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastShownAnnouncementId?: string | undefined;
                 taskHistory?: {
                     number: number;
-                    ts: number;
-                    totalCost: number;
                     id: string;
                     task: string;
+                    ts: number;
+                    totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    mode?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
-                    mode?: string | undefined;
                     terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
@@ -13767,7 +14305,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
                 } | undefined;
-                telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+                telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
                 mcpEnabled?: boolean | undefined;
                 enableMcpServerCreation?: boolean | undefined;
                 remoteControlEnabled?: boolean | undefined;
@@ -13834,6 +14372,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         data: {
             text: string;
             configuration: {
+                mode?: string | undefined;
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                 codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
@@ -13908,6 +14447,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     cacheWritesPrice?: number | undefined;
                     cacheReadsPrice?: number | undefined;
                     description?: string | undefined;
+                    modelType?: string | undefined;
                     reasoningEffort?: "low" | "medium" | "high" | undefined;
                     minTokensPerCachePoint?: number | undefined;
                     maxCachePoints?: number | undefined;
@@ -13929,9 +14469,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ollamaBaseUrl?: string | undefined;
                 vsCodeLmModelSelector?: {
                     id?: string | undefined;
+                    version?: string | undefined;
                     vendor?: string | undefined;
                     family?: string | undefined;
-                    version?: string | undefined;
                 } | undefined;
                 lmStudioModelId?: string | undefined;
                 lmStudioBaseUrl?: string | undefined;
@@ -13976,7 +14516,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
                 language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
@@ -14002,17 +14541,17 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastShownAnnouncementId?: string | undefined;
                 taskHistory?: {
                     number: number;
-                    ts: number;
-                    totalCost: number;
                     id: string;
                     task: string;
+                    ts: number;
+                    totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    mode?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
-                    mode?: string | undefined;
                     terminalNo?: number | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
@@ -14110,7 +14649,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
                     codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
                 } | undefined;
-                telemetrySetting?: "unset" | "enabled" | "disabled" | undefined;
+                telemetrySetting?: "enabled" | "unset" | "disabled" | undefined;
                 mcpEnabled?: boolean | undefined;
                 enableMcpServerCreation?: boolean | undefined;
                 remoteControlEnabled?: boolean | undefined;
@@ -14439,6 +14978,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             }, "strip", z.ZodTypeAny, {
                 type: "ask" | "say";
                 ts: number;
+                metadata?: {
+                    gpt5?: {
+                        previous_response_id?: string | undefined;
+                        instructions?: string | undefined;
+                        reasoning_summary?: string | undefined;
+                    } | undefined;
+                } | undefined;
                 text?: string | undefined;
                 reasoning?: string | undefined;
                 ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -14459,16 +15005,16 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 } | undefined;
                 isProtected?: boolean | undefined;
                 apiProtocol?: "openai" | "anthropic" | undefined;
-                metadata?: {
-                    gpt5?: {
-                        previous_response_id?: string | undefined;
-                        instructions?: string | undefined;
-                        reasoning_summary?: string | undefined;
-                    } | undefined;
-                } | undefined;
             }, {
                 type: "ask" | "say";
                 ts: number;
+                metadata?: {
+                    gpt5?: {
+                        previous_response_id?: string | undefined;
+                        instructions?: string | undefined;
+                        reasoning_summary?: string | undefined;
+                    } | undefined;
+                } | undefined;
                 text?: string | undefined;
                 reasoning?: string | undefined;
                 ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -14489,18 +15035,18 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 } | undefined;
                 isProtected?: boolean | undefined;
                 apiProtocol?: "openai" | "anthropic" | undefined;
-                metadata?: {
-                    gpt5?: {
-                        previous_response_id?: string | undefined;
-                        instructions?: string | undefined;
-                        reasoning_summary?: string | undefined;
-                    } | undefined;
-                } | undefined;
             }>;
         }, "strip", z.ZodTypeAny, {
             message: {
                 type: "ask" | "say";
                 ts: number;
+                metadata?: {
+                    gpt5?: {
+                        previous_response_id?: string | undefined;
+                        instructions?: string | undefined;
+                        reasoning_summary?: string | undefined;
+                    } | undefined;
+                } | undefined;
                 text?: string | undefined;
                 reasoning?: string | undefined;
                 ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -14521,13 +15067,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 } | undefined;
                 isProtected?: boolean | undefined;
                 apiProtocol?: "openai" | "anthropic" | undefined;
-                metadata?: {
-                    gpt5?: {
-                        previous_response_id?: string | undefined;
-                        instructions?: string | undefined;
-                        reasoning_summary?: string | undefined;
-                    } | undefined;
-                } | undefined;
             };
             taskId: string;
             action: "created" | "updated";
@@ -14535,6 +15074,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             message: {
                 type: "ask" | "say";
                 ts: number;
+                metadata?: {
+                    gpt5?: {
+                        previous_response_id?: string | undefined;
+                        instructions?: string | undefined;
+                        reasoning_summary?: string | undefined;
+                    } | undefined;
+                } | undefined;
                 text?: string | undefined;
                 reasoning?: string | undefined;
                 ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -14555,13 +15101,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 } | undefined;
                 isProtected?: boolean | undefined;
                 apiProtocol?: "openai" | "anthropic" | undefined;
-                metadata?: {
-                    gpt5?: {
-                        previous_response_id?: string | undefined;
-                        instructions?: string | undefined;
-                        reasoning_summary?: string | undefined;
-                    } | undefined;
-                } | undefined;
             };
             taskId: string;
             action: "created" | "updated";
@@ -14573,6 +15112,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             message: {
                 type: "ask" | "say";
                 ts: number;
+                metadata?: {
+                    gpt5?: {
+                        previous_response_id?: string | undefined;
+                        instructions?: string | undefined;
+                        reasoning_summary?: string | undefined;
+                    } | undefined;
+                } | undefined;
                 text?: string | undefined;
                 reasoning?: string | undefined;
                 ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -14593,13 +15139,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 } | undefined;
                 isProtected?: boolean | undefined;
                 apiProtocol?: "openai" | "anthropic" | undefined;
-                metadata?: {
-                    gpt5?: {
-                        previous_response_id?: string | undefined;
-                        instructions?: string | undefined;
-                        reasoning_summary?: string | undefined;
-                    } | undefined;
-                } | undefined;
             };
             taskId: string;
             action: "created" | "updated";
@@ -14611,6 +15150,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             message: {
                 type: "ask" | "say";
                 ts: number;
+                metadata?: {
+                    gpt5?: {
+                        previous_response_id?: string | undefined;
+                        instructions?: string | undefined;
+                        reasoning_summary?: string | undefined;
+                    } | undefined;
+                } | undefined;
                 text?: string | undefined;
                 reasoning?: string | undefined;
                 ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -14631,13 +15177,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 } | undefined;
                 isProtected?: boolean | undefined;
                 apiProtocol?: "openai" | "anthropic" | undefined;
-                metadata?: {
-                    gpt5?: {
-                        previous_response_id?: string | undefined;
-                        instructions?: string | undefined;
-                        reasoning_summary?: string | undefined;
-                    } | undefined;
-                } | undefined;
             };
             taskId: string;
             action: "created" | "updated";
@@ -14815,6 +15354,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             message: {
                 type: "ask" | "say";
                 ts: number;
+                metadata?: {
+                    gpt5?: {
+                        previous_response_id?: string | undefined;
+                        instructions?: string | undefined;
+                        reasoning_summary?: string | undefined;
+                    } | undefined;
+                } | undefined;
                 text?: string | undefined;
                 reasoning?: string | undefined;
                 ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -14835,13 +15381,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 } | undefined;
                 isProtected?: boolean | undefined;
                 apiProtocol?: "openai" | "anthropic" | undefined;
-                metadata?: {
-                    gpt5?: {
-                        previous_response_id?: string | undefined;
-                        instructions?: string | undefined;
-                        reasoning_summary?: string | undefined;
-                    } | undefined;
-                } | undefined;
             };
             taskId: string;
             action: "created" | "updated";
@@ -14945,6 +15484,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             message: {
                 type: "ask" | "say";
                 ts: number;
+                metadata?: {
+                    gpt5?: {
+                        previous_response_id?: string | undefined;
+                        instructions?: string | undefined;
+                        reasoning_summary?: string | undefined;
+                    } | undefined;
+                } | undefined;
                 text?: string | undefined;
                 reasoning?: string | undefined;
                 ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -14965,13 +15511,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 } | undefined;
                 isProtected?: boolean | undefined;
                 apiProtocol?: "openai" | "anthropic" | undefined;
-                metadata?: {
-                    gpt5?: {
-                        previous_response_id?: string | undefined;
-                        instructions?: string | undefined;
-                        reasoning_summary?: string | undefined;
-                    } | undefined;
-                } | undefined;
             };
             taskId: string;
             action: "created" | "updated";
@@ -15411,8 +15950,8 @@ declare const organizationSettingsSchema: z.ZodObject<{
             }>, "many">>;
             prerequisites: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
         }, "strip", z.ZodTypeAny, {
-            name: string;
             content: string;
+            name: string;
             parameters?: {
                 name: string;
                 key: string;
@@ -15421,8 +15960,8 @@ declare const organizationSettingsSchema: z.ZodObject<{
             }[] | undefined;
             prerequisites?: string[] | undefined;
         }, {
-            name: string;
             content: string;
+            name: string;
             parameters?: {
                 name: string;
                 key: string;
@@ -15448,13 +15987,10 @@ declare const organizationSettingsSchema: z.ZodObject<{
             optional?: boolean | undefined;
         }>, "many">>;
     }, "strip", z.ZodTypeAny, {
-        description: string;
         id: string;
-        name: string;
-        url: string;
         content: string | {
-            name: string;
             content: string;
+            name: string;
             parameters?: {
                 name: string;
                 key: string;
@@ -15463,6 +15999,9 @@ declare const organizationSettingsSchema: z.ZodObject<{
             }[] | undefined;
             prerequisites?: string[] | undefined;
         }[];
+        name: string;
+        description: string;
+        url: string;
         parameters?: {
             name: string;
             key: string;
@@ -15474,13 +16013,10 @@ declare const organizationSettingsSchema: z.ZodObject<{
         authorUrl?: string | undefined;
         tags?: string[] | undefined;
     }, {
-        description: string;
         id: string;
-        name: string;
-        url: string;
         content: string | {
-            name: string;
             content: string;
+            name: string;
             parameters?: {
                 name: string;
                 key: string;
@@ -15489,6 +16025,9 @@ declare const organizationSettingsSchema: z.ZodObject<{
             }[] | undefined;
             prerequisites?: string[] | undefined;
         }[];
+        name: string;
+        description: string;
+        url: string;
         parameters?: {
             name: string;
             key: string;
@@ -15909,6 +16448,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
             cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
             description: z.ZodOptional<z.ZodString>;
+            modelType: z.ZodOptional<z.ZodString>;
             reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
             minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
             maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -15949,6 +16489,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -15977,6 +16518,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -16032,6 +16574,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -16085,6 +16628,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -16173,14 +16717,14 @@ declare const organizationSettingsSchema: z.ZodObject<{
             id: z.ZodOptional<z.ZodString>;
         }, "strip", z.ZodTypeAny, {
             id?: string | undefined;
+            version?: string | undefined;
             vendor?: string | undefined;
             family?: string | undefined;
-            version?: string | undefined;
         }, {
             id?: string | undefined;
+            version?: string | undefined;
             vendor?: string | undefined;
             family?: string | undefined;
-            version?: string | undefined;
         }>>;
     } & {
         apiProvider: z.ZodLiteral<"vscode-lm">;
@@ -16200,9 +16744,9 @@ declare const organizationSettingsSchema: z.ZodObject<{
         verbosity?: "low" | "medium" | "high" | undefined;
         vsCodeLmModelSelector?: {
             id?: string | undefined;
+            version?: string | undefined;
             vendor?: string | undefined;
             family?: string | undefined;
-            version?: string | undefined;
         } | undefined;
     }, {
         apiProvider: "vscode-lm";
@@ -16220,9 +16764,9 @@ declare const organizationSettingsSchema: z.ZodObject<{
         verbosity?: "low" | "medium" | "high" | undefined;
         vsCodeLmModelSelector?: {
             id?: string | undefined;
+            version?: string | undefined;
             vendor?: string | undefined;
             family?: string | undefined;
-            version?: string | undefined;
         } | undefined;
     }>, z.ZodObject<{
         includeMaxTokens: z.ZodOptional<z.ZodBoolean>;
@@ -17425,13 +17969,10 @@ declare const organizationSettingsSchema: z.ZodObject<{
     hiddenMcps?: string[] | undefined;
     hideMarketplaceMcps?: boolean | undefined;
     mcps?: {
-        description: string;
         id: string;
-        name: string;
-        url: string;
         content: string | {
-            name: string;
             content: string;
+            name: string;
             parameters?: {
                 name: string;
                 key: string;
@@ -17440,6 +17981,9 @@ declare const organizationSettingsSchema: z.ZodObject<{
             }[] | undefined;
             prerequisites?: string[] | undefined;
         }[];
+        name: string;
+        description: string;
+        url: string;
         parameters?: {
             name: string;
             key: string;
@@ -17608,6 +18152,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -17657,9 +18202,9 @@ declare const organizationSettingsSchema: z.ZodObject<{
         verbosity?: "low" | "medium" | "high" | undefined;
         vsCodeLmModelSelector?: {
             id?: string | undefined;
+            version?: string | undefined;
             vendor?: string | undefined;
             family?: string | undefined;
-            version?: string | undefined;
         } | undefined;
     } | {
         apiProvider: "lmstudio";
@@ -18062,13 +18607,10 @@ declare const organizationSettingsSchema: z.ZodObject<{
     hiddenMcps?: string[] | undefined;
     hideMarketplaceMcps?: boolean | undefined;
     mcps?: {
-        description: string;
         id: string;
-        name: string;
-        url: string;
         content: string | {
-            name: string;
             content: string;
+            name: string;
             parameters?: {
                 name: string;
                 key: string;
@@ -18077,6 +18619,9 @@ declare const organizationSettingsSchema: z.ZodObject<{
             }[] | undefined;
             prerequisites?: string[] | undefined;
         }[];
+        name: string;
+        description: string;
+        url: string;
         parameters?: {
             name: string;
             key: string;
@@ -18245,6 +18790,7 @@ declare const organizationSettingsSchema: z.ZodObject<{
             cacheWritesPrice?: number | undefined;
             cacheReadsPrice?: number | undefined;
             description?: string | undefined;
+            modelType?: string | undefined;
             reasoningEffort?: "low" | "medium" | "high" | undefined;
             minTokensPerCachePoint?: number | undefined;
             maxCachePoints?: number | undefined;
@@ -18294,9 +18840,9 @@ declare const organizationSettingsSchema: z.ZodObject<{
         verbosity?: "low" | "medium" | "high" | undefined;
         vsCodeLmModelSelector?: {
             id?: string | undefined;
+            version?: string | undefined;
             vendor?: string | undefined;
             family?: string | undefined;
-            version?: string | undefined;
         } | undefined;
     } | {
         apiProvider: "lmstudio";
@@ -18961,31 +19507,31 @@ declare const historyItemSchema: z.ZodObject<{
     terminalNo: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     number: number;
-    ts: number;
-    totalCost: number;
     id: string;
     task: string;
+    ts: number;
+    totalCost: number;
     tokensIn: number;
     tokensOut: number;
+    mode?: string | undefined;
     cacheWrites?: number | undefined;
     cacheReads?: number | undefined;
     size?: number | undefined;
     workspace?: string | undefined;
-    mode?: string | undefined;
     terminalNo?: number | undefined;
 }, {
     number: number;
-    ts: number;
-    totalCost: number;
     id: string;
     task: string;
+    ts: number;
+    totalCost: number;
     tokensIn: number;
     tokensOut: number;
+    mode?: string | undefined;
     cacheWrites?: number | undefined;
     cacheReads?: number | undefined;
     size?: number | undefined;
     workspace?: string | undefined;
-    mode?: string | undefined;
     terminalNo?: number | undefined;
 }>;
 type HistoryItem = z.infer<typeof historyItemSchema>;
@@ -19034,8 +19580,8 @@ declare const mcpInstallationMethodSchema: z.ZodObject<{
     }>, "many">>;
     prerequisites: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
 }, "strip", z.ZodTypeAny, {
-    name: string;
     content: string;
+    name: string;
     parameters?: {
         name: string;
         key: string;
@@ -19044,8 +19590,8 @@ declare const mcpInstallationMethodSchema: z.ZodObject<{
     }[] | undefined;
     prerequisites?: string[] | undefined;
 }, {
-    name: string;
     content: string;
+    name: string;
     parameters?: {
         name: string;
         key: string;
@@ -19074,19 +19620,19 @@ declare const modeMarketplaceItemSchema: z.ZodObject<{
 } & {
     content: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    description: string;
     id: string;
-    name: string;
     content: string;
+    name: string;
+    description: string;
     prerequisites?: string[] | undefined;
     author?: string | undefined;
     authorUrl?: string | undefined;
     tags?: string[] | undefined;
 }, {
-    description: string;
     id: string;
-    name: string;
     content: string;
+    name: string;
+    description: string;
     prerequisites?: string[] | undefined;
     author?: string | undefined;
     authorUrl?: string | undefined;
@@ -19124,8 +19670,8 @@ declare const mcpMarketplaceItemSchema: z.ZodObject<{
         }>, "many">>;
         prerequisites: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
     }, "strip", z.ZodTypeAny, {
-        name: string;
         content: string;
+        name: string;
         parameters?: {
             name: string;
             key: string;
@@ -19134,8 +19680,8 @@ declare const mcpMarketplaceItemSchema: z.ZodObject<{
         }[] | undefined;
         prerequisites?: string[] | undefined;
     }, {
-        name: string;
         content: string;
+        name: string;
         parameters?: {
             name: string;
             key: string;
@@ -19161,13 +19707,10 @@ declare const mcpMarketplaceItemSchema: z.ZodObject<{
         optional?: boolean | undefined;
     }>, "many">>;
 }, "strip", z.ZodTypeAny, {
-    description: string;
     id: string;
-    name: string;
-    url: string;
     content: string | {
-        name: string;
         content: string;
+        name: string;
         parameters?: {
             name: string;
             key: string;
@@ -19176,6 +19719,9 @@ declare const mcpMarketplaceItemSchema: z.ZodObject<{
         }[] | undefined;
         prerequisites?: string[] | undefined;
     }[];
+    name: string;
+    description: string;
+    url: string;
     parameters?: {
         name: string;
         key: string;
@@ -19187,13 +19733,10 @@ declare const mcpMarketplaceItemSchema: z.ZodObject<{
     authorUrl?: string | undefined;
     tags?: string[] | undefined;
 }, {
-    description: string;
     id: string;
-    name: string;
-    url: string;
     content: string | {
-        name: string;
         content: string;
+        name: string;
         parameters?: {
             name: string;
             key: string;
@@ -19202,6 +19745,9 @@ declare const mcpMarketplaceItemSchema: z.ZodObject<{
         }[] | undefined;
         prerequisites?: string[] | undefined;
     }[];
+    name: string;
+    description: string;
+    url: string;
     parameters?: {
         name: string;
         key: string;
@@ -19231,20 +19777,20 @@ declare const marketplaceItemSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObjec
     type: z.ZodLiteral<"mode">;
 }, "strip", z.ZodTypeAny, {
     type: "mode";
-    description: string;
     id: string;
-    name: string;
     content: string;
+    name: string;
+    description: string;
     prerequisites?: string[] | undefined;
     author?: string | undefined;
     authorUrl?: string | undefined;
     tags?: string[] | undefined;
 }, {
     type: "mode";
-    description: string;
     id: string;
-    name: string;
     content: string;
+    name: string;
+    description: string;
     prerequisites?: string[] | undefined;
     author?: string | undefined;
     authorUrl?: string | undefined;
@@ -19280,8 +19826,8 @@ declare const marketplaceItemSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObjec
         }>, "many">>;
         prerequisites: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
     }, "strip", z.ZodTypeAny, {
-        name: string;
         content: string;
+        name: string;
         parameters?: {
             name: string;
             key: string;
@@ -19290,8 +19836,8 @@ declare const marketplaceItemSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObjec
         }[] | undefined;
         prerequisites?: string[] | undefined;
     }, {
-        name: string;
         content: string;
+        name: string;
         parameters?: {
             name: string;
             key: string;
@@ -19320,13 +19866,10 @@ declare const marketplaceItemSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObjec
     type: z.ZodLiteral<"mcp">;
 }, "strip", z.ZodTypeAny, {
     type: "mcp";
-    description: string;
     id: string;
-    name: string;
-    url: string;
     content: string | {
-        name: string;
         content: string;
+        name: string;
         parameters?: {
             name: string;
             key: string;
@@ -19335,6 +19878,9 @@ declare const marketplaceItemSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObjec
         }[] | undefined;
         prerequisites?: string[] | undefined;
     }[];
+    name: string;
+    description: string;
+    url: string;
     parameters?: {
         name: string;
         key: string;
@@ -19347,13 +19893,10 @@ declare const marketplaceItemSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObjec
     tags?: string[] | undefined;
 }, {
     type: "mcp";
-    description: string;
     id: string;
-    name: string;
-    url: string;
     content: string | {
-        name: string;
         content: string;
+        name: string;
         parameters?: {
             name: string;
             key: string;
@@ -19362,6 +19905,9 @@ declare const marketplaceItemSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObjec
         }[] | undefined;
         prerequisites?: string[] | undefined;
     }[];
+    name: string;
+    description: string;
+    url: string;
     parameters?: {
         name: string;
         key: string;
@@ -19624,6 +20170,13 @@ declare const clineMessageSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     type: "ask" | "say";
     ts: number;
+    metadata?: {
+        gpt5?: {
+            previous_response_id?: string | undefined;
+            instructions?: string | undefined;
+            reasoning_summary?: string | undefined;
+        } | undefined;
+    } | undefined;
     text?: string | undefined;
     reasoning?: string | undefined;
     ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -19644,16 +20197,16 @@ declare const clineMessageSchema: z.ZodObject<{
     } | undefined;
     isProtected?: boolean | undefined;
     apiProtocol?: "openai" | "anthropic" | undefined;
-    metadata?: {
-        gpt5?: {
-            previous_response_id?: string | undefined;
-            instructions?: string | undefined;
-            reasoning_summary?: string | undefined;
-        } | undefined;
-    } | undefined;
 }, {
     type: "ask" | "say";
     ts: number;
+    metadata?: {
+        gpt5?: {
+            previous_response_id?: string | undefined;
+            instructions?: string | undefined;
+            reasoning_summary?: string | undefined;
+        } | undefined;
+    } | undefined;
     text?: string | undefined;
     reasoning?: string | undefined;
     ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -19674,13 +20227,6 @@ declare const clineMessageSchema: z.ZodObject<{
     } | undefined;
     isProtected?: boolean | undefined;
     apiProtocol?: "openai" | "anthropic" | undefined;
-    metadata?: {
-        gpt5?: {
-            previous_response_id?: string | undefined;
-            instructions?: string | undefined;
-            reasoning_summary?: string | undefined;
-        } | undefined;
-    } | undefined;
 }>;
 type ClineMessage = z.infer<typeof clineMessageSchema>;
 /**
@@ -19998,6 +20544,7 @@ declare const modelInfoSchema: z.ZodObject<{
     cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
     cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
     description: z.ZodOptional<z.ZodString>;
+    modelType: z.ZodOptional<z.ZodString>;
     reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
     minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
     maxCachePoints: z.ZodOptional<z.ZodNumber>;
@@ -20038,6 +20585,7 @@ declare const modelInfoSchema: z.ZodObject<{
     cacheWritesPrice?: number | undefined;
     cacheReadsPrice?: number | undefined;
     description?: string | undefined;
+    modelType?: string | undefined;
     reasoningEffort?: "low" | "medium" | "high" | undefined;
     minTokensPerCachePoint?: number | undefined;
     maxCachePoints?: number | undefined;
@@ -20066,6 +20614,7 @@ declare const modelInfoSchema: z.ZodObject<{
     cacheWritesPrice?: number | undefined;
     cacheReadsPrice?: number | undefined;
     description?: string | undefined;
+    modelType?: string | undefined;
     reasoningEffort?: "low" | "medium" | "high" | undefined;
     minTokensPerCachePoint?: number | undefined;
     maxCachePoints?: number | undefined;
@@ -20197,11 +20746,11 @@ declare const todoItemSchema: z.ZodObject<{
     content: z.ZodString;
     status: z.ZodEnum<["pending", "in_progress", "completed"]>;
 }, "strip", z.ZodTypeAny, {
-    status: "completed" | "pending" | "in_progress";
+    status: "pending" | "in_progress" | "completed";
     id: string;
     content: string;
 }, {
-    status: "completed" | "pending" | "in_progress";
+    status: "pending" | "in_progress" | "completed";
     id: string;
     content: string;
 }>;
@@ -20299,40 +20848,40 @@ declare const taskPropertiesSchema: z.ZodObject<{
         inProgress: z.ZodNumber;
         pending: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        total: number;
-        completed: number;
-        inProgress: number;
         pending: number;
+        completed: number;
+        total: number;
+        inProgress: number;
     }, {
-        total: number;
-        completed: number;
-        inProgress: number;
         pending: number;
+        completed: number;
+        total: number;
+        inProgress: number;
     }>>;
 }, "strip", z.ZodTypeAny, {
-    isSubtask?: boolean | undefined;
     taskId?: string | undefined;
+    todos?: {
+        pending: number;
+        completed: number;
+        total: number;
+        inProgress: number;
+    } | undefined;
+    isSubtask?: boolean | undefined;
     apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
     modelId?: string | undefined;
     diffStrategy?: string | undefined;
-    todos?: {
-        total: number;
-        completed: number;
-        inProgress: number;
-        pending: number;
-    } | undefined;
 }, {
-    isSubtask?: boolean | undefined;
     taskId?: string | undefined;
+    todos?: {
+        pending: number;
+        completed: number;
+        total: number;
+        inProgress: number;
+    } | undefined;
+    isSubtask?: boolean | undefined;
     apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
     modelId?: string | undefined;
     diffStrategy?: string | undefined;
-    todos?: {
-        total: number;
-        completed: number;
-        inProgress: number;
-        pending: number;
-    } | undefined;
 }>;
 declare const gitPropertiesSchema: z.ZodObject<{
     repositoryUrl: z.ZodOptional<z.ZodString>;
@@ -20362,15 +20911,15 @@ declare const telemetryPropertiesSchema: z.ZodObject<{
         inProgress: z.ZodNumber;
         pending: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        total: number;
-        completed: number;
-        inProgress: number;
         pending: number;
+        completed: number;
+        total: number;
+        inProgress: number;
     }, {
-        total: number;
-        completed: number;
-        inProgress: number;
         pending: number;
+        completed: number;
+        total: number;
+        inProgress: number;
     }>>;
     appName: z.ZodString;
     appVersion: z.ZodString;
@@ -20388,18 +20937,18 @@ declare const telemetryPropertiesSchema: z.ZodObject<{
     platform: string;
     editorName: string;
     language: string;
-    isSubtask?: boolean | undefined;
     taskId?: string | undefined;
+    todos?: {
+        pending: number;
+        completed: number;
+        total: number;
+        inProgress: number;
+    } | undefined;
+    isSubtask?: boolean | undefined;
     apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
     cloudIsAuthenticated?: boolean | undefined;
     modelId?: string | undefined;
     diffStrategy?: string | undefined;
-    todos?: {
-        total: number;
-        completed: number;
-        inProgress: number;
-        pending: number;
-    } | undefined;
     repositoryUrl?: string | undefined;
     repositoryName?: string | undefined;
     defaultBranch?: string | undefined;
@@ -20411,18 +20960,18 @@ declare const telemetryPropertiesSchema: z.ZodObject<{
     platform: string;
     editorName: string;
     language: string;
-    isSubtask?: boolean | undefined;
     taskId?: string | undefined;
+    todos?: {
+        pending: number;
+        completed: number;
+        total: number;
+        inProgress: number;
+    } | undefined;
+    isSubtask?: boolean | undefined;
     apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
     cloudIsAuthenticated?: boolean | undefined;
     modelId?: string | undefined;
     diffStrategy?: string | undefined;
-    todos?: {
-        total: number;
-        completed: number;
-        inProgress: number;
-        pending: number;
-    } | undefined;
     repositoryUrl?: string | undefined;
     repositoryName?: string | undefined;
     defaultBranch?: string | undefined;
@@ -20456,15 +21005,15 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             inProgress: z.ZodNumber;
             pending: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
-            total: number;
-            completed: number;
-            inProgress: number;
             pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
         }, {
-            total: number;
-            completed: number;
-            inProgress: number;
             pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
         }>>;
         appName: z.ZodString;
         appVersion: z.ZodString;
@@ -20482,18 +21031,18 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         platform: string;
         editorName: string;
         language: string;
-        isSubtask?: boolean | undefined;
         taskId?: string | undefined;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
+        isSubtask?: boolean | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -20505,18 +21054,18 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         platform: string;
         editorName: string;
         language: string;
-        isSubtask?: boolean | undefined;
         taskId?: string | undefined;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
+        isSubtask?: boolean | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -20531,18 +21080,18 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         platform: string;
         editorName: string;
         language: string;
-        isSubtask?: boolean | undefined;
         taskId?: string | undefined;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
+        isSubtask?: boolean | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -20557,18 +21106,18 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         platform: string;
         editorName: string;
         language: string;
-        isSubtask?: boolean | undefined;
         taskId?: string | undefined;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
+        isSubtask?: boolean | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -20646,6 +21195,13 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         }, "strip", z.ZodTypeAny, {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -20666,16 +21222,16 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         }, {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -20696,13 +21252,6 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         }>;
         repositoryUrl: z.ZodOptional<z.ZodString>;
         repositoryName: z.ZodOptional<z.ZodString>;
@@ -20717,15 +21266,15 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             inProgress: z.ZodNumber;
             pending: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
-            total: number;
-            completed: number;
-            inProgress: number;
             pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
         }, {
-            total: number;
-            completed: number;
-            inProgress: number;
             pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
         }>>;
         appName: z.ZodString;
         appVersion: z.ZodString;
@@ -20739,6 +21288,13 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -20759,13 +21315,6 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         mode: string;
@@ -20775,17 +21324,17 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         platform: string;
         editorName: string;
         language: string;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
         isSubtask?: boolean | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -20793,6 +21342,13 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -20813,13 +21369,6 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         mode: string;
@@ -20829,17 +21378,17 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         platform: string;
         editorName: string;
         language: string;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
         isSubtask?: boolean | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -20850,6 +21399,13 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -20870,13 +21426,6 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         mode: string;
@@ -20886,17 +21435,17 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         platform: string;
         editorName: string;
         language: string;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
         isSubtask?: boolean | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -20907,6 +21456,13 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         message: {
             type: "ask" | "say";
             ts: number;
+            metadata?: {
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
             text?: string | undefined;
             reasoning?: string | undefined;
             ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
@@ -20927,13 +21483,6 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             } | undefined;
             isProtected?: boolean | undefined;
             apiProtocol?: "openai" | "anthropic" | undefined;
-            metadata?: {
-                gpt5?: {
-                    previous_response_id?: string | undefined;
-                    instructions?: string | undefined;
-                    reasoning_summary?: string | undefined;
-                } | undefined;
-            } | undefined;
         };
         taskId: string;
         mode: string;
@@ -20943,17 +21492,17 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         platform: string;
         editorName: string;
         language: string;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
         isSubtask?: boolean | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -20980,15 +21529,15 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             inProgress: z.ZodNumber;
             pending: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
-            total: number;
-            completed: number;
-            inProgress: number;
             pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
         }, {
-            total: number;
-            completed: number;
-            inProgress: number;
             pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
         }>>;
         appName: z.ZodString;
         appVersion: z.ZodString;
@@ -21008,19 +21557,19 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         language: string;
         inputTokens: number;
         outputTokens: number;
+        taskId?: string | undefined;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
         cost?: number | undefined;
         isSubtask?: boolean | undefined;
-        taskId?: string | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -21036,19 +21585,19 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         language: string;
         inputTokens: number;
         outputTokens: number;
+        taskId?: string | undefined;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
         cost?: number | undefined;
         isSubtask?: boolean | undefined;
-        taskId?: string | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -21067,19 +21616,19 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         language: string;
         inputTokens: number;
         outputTokens: number;
+        taskId?: string | undefined;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
         cost?: number | undefined;
         isSubtask?: boolean | undefined;
-        taskId?: string | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -21098,19 +21647,19 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         language: string;
         inputTokens: number;
         outputTokens: number;
+        taskId?: string | undefined;
+        todos?: {
+            pending: number;
+            completed: number;
+            total: number;
+            inProgress: number;
+        } | undefined;
         cost?: number | undefined;
         isSubtask?: boolean | undefined;
-        taskId?: string | undefined;
         apiProvider?: "openai" | "anthropic" | "ollama" | "gemini" | "mistral" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
         cloudIsAuthenticated?: boolean | undefined;
         modelId?: string | undefined;
         diffStrategy?: string | undefined;
-        todos?: {
-            total: number;
-            completed: number;
-            inProgress: number;
-            pending: number;
-        } | undefined;
         repositoryUrl?: string | undefined;
         repositoryName?: string | undefined;
         defaultBranch?: string | undefined;
@@ -21156,13 +21705,13 @@ declare const commandExecutionStatusSchema: z.ZodDiscriminatedUnion<"status", [z
     pid: z.ZodOptional<z.ZodNumber>;
     command: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    command: string;
     status: "started";
+    command: string;
     executionId: string;
     pid?: number | undefined;
 }, {
-    command: string;
     status: "started";
+    command: string;
     executionId: string;
     pid?: number | undefined;
 }>, z.ZodObject<{
@@ -21226,7 +21775,7 @@ type TerminalActionPromptType = `TERMINAL_${TerminalActionName}`;
 /**
  * Command
  */
-declare const commandIds: readonly ["activationCompleted", "plusButtonClicked", "promptsButtonClicked", "mcpButtonClicked", "historyButtonClicked", "marketplaceButtonClicked", "popoutButtonClicked", "accountButtonClicked", "settingsButtonClicked", "openInNewTab", "showHumanRelayDialog", "registerHumanRelayCallback", "unregisterHumanRelayCallback", "handleHumanRelayResponse", "newTask", "executeTask", "executeTaskWithMode", "setCustomStoragePath", "importSettings", "focusInput", "acceptInput", "focusPanel", "imPlatform.manageToken", "imPlatform.setToken", "imPlatform.clearToken", "debugResetAllProfiles", "autoConfigureProvider", "switchToDefaultConfig", "receiveUserInfo", "sendCloudPCNotification", "testSetTerminalNo"];
+declare const commandIds: readonly ["activationCompleted", "plusButtonClicked", "promptsButtonClicked", "mcpButtonClicked", "historyButtonClicked", "marketplaceButtonClicked", "popoutButtonClicked", "accountButtonClicked", "settingsButtonClicked", "agentsButtonClicked", "openInNewTab", "showHumanRelayDialog", "registerHumanRelayCallback", "unregisterHumanRelayCallback", "handleHumanRelayResponse", "newTask", "executeTask", "executeTaskWithMode", "setCustomStoragePath", "importSettings", "focusInput", "acceptInput", "focusPanel", "imPlatform.manageToken", "imPlatform.setToken", "imPlatform.clearToken", "debugResetAllProfiles", "autoConfigureProvider", "switchToDefaultConfig", "receiveUserInfo", "sendCloudPCNotification", "testSetTerminalNo"];
 type CommandId = (typeof commandIds)[number];
 /**
  * Language
@@ -22478,6 +23027,16 @@ declare const geminiModels: {
         readonly cacheWritesPrice: 1;
         readonly supportsReasoningBudget: true;
         readonly maxThinkingTokens: 24576;
+    };
+    readonly "imagen-2": {
+        readonly maxTokens: 0;
+        readonly contextWindow: 0;
+        readonly supportsImages: true;
+        readonly supportsPromptCache: false;
+        readonly inputPrice: 0.02;
+        readonly outputPrice: 0;
+        readonly modelType: "image-generation";
+        readonly description: "Google Imagen 3 via Gemini API for image generation";
     };
 };
 
@@ -23802,4 +24361,4 @@ declare const fireworksModels: {
     };
 };
 
-export { ANTHROPIC_DEFAULT_MAX_TOKENS, ANTHROPIC_STYLE_PROVIDERS, AWS_INFERENCE_PROFILE_MAPPING, type Ack, type AnthropicModelId, type AssertEqual, BEDROCK_DEFAULT_CONTEXT, BEDROCK_DEFAULT_TEMPERATURE, BEDROCK_MAX_TOKENS, BEDROCK_REGIONS, type BedrockModelId, type BlockingAsk, CLAUDE_CODE_DEFAULT_MAX_OUTPUT_TOKENS, CODEBASE_INDEX_DEFAULTS, type CerebrasModelId, type ChutesModelId, type ClaudeCodeModelId, type ClineAsk, type ClineMessage, type ClineSay, type CloudOrganization, type CloudOrganizationMembership, type CloudUserInfo, type CodeActionId, type CodeActionName, type CodebaseIndexConfig, type CodebaseIndexModels, type CodebaseIndexProvider, type CommandExecutionStatus, type CommandId, type ContextCondense, type CustomModePrompts, type CustomModesSettings, type CustomSupportPrompts, DEEP_SEEK_DEFAULT_TEMPERATURE, DEFAULT_CONSECUTIVE_MISTAKE_LIMIT, DEFAULT_MODES, DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT, DEFAULT_USAGE_COLLECTION_TIMEOUT_MS, DEFAULT_WRITE_DELAY_MS, DOUBAO_API_BASE_URL, DOUBAO_API_CHAT_PATH, type DeepSeekModelId, EVALS_SETTINGS, EVALS_TIMEOUT, type Equals, type ExperimentId, type Experiments, type FireworksModelId, type FollowUpData, type FollowUpDataType, GLAMA_DEFAULT_TEMPERATURE, GLOBAL_SETTINGS_KEYS, GLOBAL_STATE_KEYS, GPT5_DEFAULT_TEMPERATURE, type GeminiModelId, type GitProperties, type GlobalSettings, type GlobalState, type GroqModelId, type GroupEntry, type GroupOptions, HUGGINGFACE_API_URL, HUGGINGFACE_CACHE_DURATION, HUGGINGFACE_DEFAULT_CONTEXT_WINDOW, HUGGINGFACE_DEFAULT_MAX_TOKENS, HUGGINGFACE_MAX_TOKENS_FALLBACK, HUGGINGFACE_SLIDER_MIN, HUGGINGFACE_SLIDER_STEP, HUGGINGFACE_TEMPERATURE_MAX_VALUE, type HistoryItem, type IOIntelligenceModelId, IO_INTELLIGENCE_CACHE_DURATION, type InstallMarketplaceItemOptions, type InternationalZAiModelId, type IpcClientEvents, type IpcMessage, IpcMessageType, IpcOrigin, type IpcServerEvents, type Keys, LITELLM_COMPUTER_USE_MODELS, LMSTUDIO_DEFAULT_TEMPERATURE, type Language, MISTRAL_DEFAULT_TEMPERATURE, MODEL_ID_KEYS, MOONSHOT_DEFAULT_TEMPERATURE, type MainlandZAiModelId, type MarketplaceItem, type MarketplaceItemType, type McpExecutionStatus, type McpInstallationMethod, type McpMarketplaceItem, type McpParameter, type MistralModelId, type ModeConfig, type ModeMarketplaceItem, type ModelInfo, type ModelParameter, type MoonshotModelId, OPENAI_AZURE_AI_INFERENCE_PATH, OPENAI_NATIVE_DEFAULT_TEMPERATURE, OPENROUTER_DEFAULT_PROVIDER_NAME, OPEN_ROUTER_COMPUTER_USE_MODELS, OPEN_ROUTER_PROMPT_CACHING_MODELS, OPEN_ROUTER_REASONING_BUDGET_MODELS, OPEN_ROUTER_REQUIRED_REASONING_BUDGET_MODELS, ORGANIZATION_ALLOW_ALL, ORGANIZATION_DEFAULT, type OpenAiNativeModelId, type OrganizationAllowList, type OrganizationCloudSettings, type OrganizationDefaultSettings, type OrganizationSettings, PROVIDER_SETTINGS_KEYS, type PromptComponent, type ProviderName, type ProviderSettings, type ProviderSettingsEntry, type ProviderSettingsWithId, type QueuedMessage, type ReasoningEffort, type ReasoningEffortWithMinimal, type RooCodeAPI, type RooCodeAPIEvents, RooCodeEventName, type RooCodeEvents, type RooCodeIpcServer, type RooCodeSettings, type RooCodeTelemetryEvent, SECRET_STATE_KEYS, type SambaNovaModelId, type SecretState, type ShareResponse, type ShareVisibility, type SuggestionItem, type TaskCommand, TaskCommandName, type TaskEvent, type TaskEvents, type TaskLike, type TaskProviderEvents, type TaskProviderLike, type TaskProviderState, type TelemetryClient, type TelemetryEvent, TelemetryEventName, type TelemetryEventSubscription, type TelemetryProperties, type TelemetryPropertiesProvider, type TelemetrySetting, type TerminalActionId, type TerminalActionName, type TerminalActionPromptType, type TodoItem, type TodoStatus, type TokenUsage, type ToolGroup, type ToolName, type ToolProgressStatus, type ToolUsage, VERTEX_REGIONS, type Values, type VerbosityLevel, type VertexModelId, type VscodeLlmModelId, type XAIModelId, ZAI_DEFAULT_TEMPERATURE, ackSchema, anthropicDefaultModelId, anthropicModels, appPropertiesSchema, azureOpenAiDefaultApiVersion, bedrockDefaultModelId, bedrockDefaultPromptRouterModelId, bedrockModels, blockingAsks, cerebrasDefaultModelId, cerebrasModels, chutesDefaultModelId, chutesModels, claudeCodeDefaultModelId, claudeCodeModels, clineAskSchema, clineAsks, clineMessageSchema, clineSaySchema, clineSays, codeActionIds, codebaseIndexConfigSchema, codebaseIndexModelsSchema, codebaseIndexProviderSchema, commandExecutionStatusSchema, commandIds, contextCondenseSchema, convertModelNameForVertex, customModePromptsSchema, customModesSettingsSchema, customSupportPromptsSchema, deepSeekDefaultModelId, deepSeekModels, discriminatedProviderSettingsWithIdSchema, doubaoDefaultModelId, doubaoDefaultModelInfo, doubaoModels, experimentIds, experimentIdsSchema, experimentsSchema, extendedReasoningEffortsSchema, fireworksDefaultModelId, fireworksModels, followUpDataSchema, geminiDefaultModelId, geminiModels, getApiProtocol, getClaudeCodeModelId, getModelId, gitPropertiesSchema, glamaDefaultModelId, glamaDefaultModelInfo, globalSettingsSchema, groqDefaultModelId, groqModels, groupEntrySchema, groupOptionsSchema, historyItemSchema, installMarketplaceItemOptionsSchema, internationalZAiDefaultModelId, internationalZAiModels, ioIntelligenceDefaultBaseUrl, ioIntelligenceDefaultModelId, ioIntelligenceModels, ipcMessageSchema, isBlockingAsk, isGlobalStateKey, isLanguage, isModelParameter, isSecretStateKey, lMStudioDefaultModelId, lMStudioDefaultModelInfo, languages, languagesSchema, litellmDefaultModelId, litellmDefaultModelInfo, mainlandZAiDefaultModelId, mainlandZAiModels, marketplaceItemSchema, marketplaceItemTypeSchema, mcpExecutionStatusSchema, mcpInstallationMethodSchema, mcpMarketplaceItemSchema, mcpParameterSchema, mistralDefaultModelId, mistralModels, modeConfigSchema, modeMarketplaceItemSchema, modelInfoSchema, modelParameters, modelParametersSchema, moonshotDefaultModelId, moonshotModels, ollamaDefaultModelId, ollamaDefaultModelInfo, openAiModelInfoSaneDefaults, openAiNativeDefaultModelId, openAiNativeModels, openRouterDefaultModelId, openRouterDefaultModelInfo, organizationAllowListSchema, organizationCloudSettingsSchema, organizationDefaultSettingsSchema, organizationSettingsSchema, promptComponentSchema, providerNames, providerNamesSchema, providerSettingsEntrySchema, providerSettingsSchema, providerSettingsSchemaDiscriminated, providerSettingsWithIdSchema, reasoningEfforts, reasoningEffortsSchema, requestyDefaultModelId, requestyDefaultModelInfo, rooCodeEventsSchema, rooCodeSettingsSchema, rooCodeTelemetryEventSchema, sambaNovaDefaultModelId, sambaNovaModels, shareResponseSchema, suggestionItemSchema, taskCommandSchema, taskEventSchema, taskPropertiesSchema, telemetryPropertiesSchema, telemetrySettings, telemetrySettingsSchema, terminalActionIds, todoItemSchema, todoStatusSchema, tokenUsageSchema, toolGroups, toolGroupsSchema, toolNames, toolNamesSchema, toolProgressStatusSchema, toolUsageSchema, unboundDefaultModelId, unboundDefaultModelInfo, verbosityLevels, verbosityLevelsSchema, vertexDefaultModelId, vertexModels, vscodeLlmDefaultModelId, vscodeLlmModels, xaiDefaultModelId, xaiModels };
+export { ANTHROPIC_DEFAULT_MAX_TOKENS, ANTHROPIC_STYLE_PROVIDERS, AWS_INFERENCE_PROFILE_MAPPING, type Ack, type AgentConfig, type AgentExportData, type AgentListOptions, type AgentTemplateData, type AgentTemplateSource, type AgentTodo, type AgentToolConfig, type AnthropicModelId, type AssertEqual, BEDROCK_DEFAULT_CONTEXT, BEDROCK_DEFAULT_TEMPERATURE, BEDROCK_MAX_TOKENS, BEDROCK_REGIONS, type BedrockModelId, type BlockingAsk, CLAUDE_CODE_DEFAULT_MAX_OUTPUT_TOKENS, CODEBASE_INDEX_DEFAULTS, type CerebrasModelId, type ChutesModelId, type ClaudeCodeModelId, type ClineAsk, type ClineMessage, type ClineSay, type CloudOrganization, type CloudOrganizationMembership, type CloudUserInfo, type CodeActionId, type CodeActionName, type CodebaseIndexConfig, type CodebaseIndexModels, type CodebaseIndexProvider, type CommandExecutionStatus, type CommandId, type ContextCondense, type CustomModePrompts, type CustomModesSettings, type CustomSupportPrompts, DEEP_SEEK_DEFAULT_TEMPERATURE, DEFAULT_CONSECUTIVE_MISTAKE_LIMIT, DEFAULT_MODES, DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT, DEFAULT_USAGE_COLLECTION_TIMEOUT_MS, DEFAULT_WRITE_DELAY_MS, DOUBAO_API_BASE_URL, DOUBAO_API_CHAT_PATH, type DeepSeekModelId, EVALS_SETTINGS, EVALS_TIMEOUT, type Equals, type ExperimentId, type Experiments, type FireworksModelId, type FollowUpData, type FollowUpDataType, GLAMA_DEFAULT_TEMPERATURE, GLOBAL_SETTINGS_KEYS, GLOBAL_STATE_KEYS, GPT5_DEFAULT_TEMPERATURE, type GeminiModelId, type GitProperties, type GlobalSettings, type GlobalState, type GroqModelId, type GroupEntry, type GroupOptions, HUGGINGFACE_API_URL, HUGGINGFACE_CACHE_DURATION, HUGGINGFACE_DEFAULT_CONTEXT_WINDOW, HUGGINGFACE_DEFAULT_MAX_TOKENS, HUGGINGFACE_MAX_TOKENS_FALLBACK, HUGGINGFACE_SLIDER_MIN, HUGGINGFACE_SLIDER_STEP, HUGGINGFACE_TEMPERATURE_MAX_VALUE, type HistoryItem, type IOIntelligenceModelId, IO_INTELLIGENCE_CACHE_DURATION, type InstallMarketplaceItemOptions, type InternationalZAiModelId, type IpcClientEvents, type IpcMessage, IpcMessageType, IpcOrigin, type IpcServerEvents, type Keys, LITELLM_COMPUTER_USE_MODELS, LMSTUDIO_DEFAULT_TEMPERATURE, type Language, MISTRAL_DEFAULT_TEMPERATURE, MODEL_ID_KEYS, MOONSHOT_DEFAULT_TEMPERATURE, type MainlandZAiModelId, type MarketplaceItem, type MarketplaceItemType, type McpExecutionStatus, type McpInstallationMethod, type McpMarketplaceItem, type McpParameter, type MistralModelId, type ModeConfig, type ModeMarketplaceItem, type ModelInfo, type ModelParameter, type MoonshotModelId, OPENAI_AZURE_AI_INFERENCE_PATH, OPENAI_NATIVE_DEFAULT_TEMPERATURE, OPENROUTER_DEFAULT_PROVIDER_NAME, OPEN_ROUTER_COMPUTER_USE_MODELS, OPEN_ROUTER_PROMPT_CACHING_MODELS, OPEN_ROUTER_REASONING_BUDGET_MODELS, OPEN_ROUTER_REQUIRED_REASONING_BUDGET_MODELS, ORGANIZATION_ALLOW_ALL, ORGANIZATION_DEFAULT, type OpenAiNativeModelId, type OrganizationAllowList, type OrganizationCloudSettings, type OrganizationDefaultSettings, type OrganizationSettings, PROVIDER_SETTINGS_KEYS, type PromptComponent, type ProviderName, type ProviderSettings, type ProviderSettingsEntry, type ProviderSettingsWithId, type QueuedMessage, type ReasoningEffort, type ReasoningEffortWithMinimal, type RooCodeAPI, type RooCodeAPIEvents, RooCodeEventName, type RooCodeEvents, type RooCodeIpcServer, type RooCodeSettings, type RooCodeTelemetryEvent, SECRET_STATE_KEYS, type SambaNovaModelId, type SecretState, type ShareResponse, type ShareVisibility, type SuggestionItem, type TaskCommand, TaskCommandName, type TaskEvent, type TaskEvents, type TaskLike, type TaskProviderEvents, type TaskProviderLike, type TaskProviderState, type TelemetryClient, type TelemetryEvent, TelemetryEventName, type TelemetryEventSubscription, type TelemetryProperties, type TelemetryPropertiesProvider, type TelemetrySetting, type TerminalActionId, type TerminalActionName, type TerminalActionPromptType, type TodoItem, type TodoStatus, type TokenUsage, type ToolGroup, type ToolName, type ToolProgressStatus, type ToolUsage, VERTEX_REGIONS, type Values, type VerbosityLevel, type VertexModelId, type VscodeLlmModelId, type XAIModelId, ZAI_DEFAULT_TEMPERATURE, ackSchema, agentConfigSchema, agentExportDataSchema, agentListOptionsSchema, agentTemplateDataSchema, agentTemplateSourceSchema, agentTodoSchema, agentToolConfigSchema, anthropicDefaultModelId, anthropicModels, appPropertiesSchema, azureOpenAiDefaultApiVersion, bedrockDefaultModelId, bedrockDefaultPromptRouterModelId, bedrockModels, blockingAsks, cerebrasDefaultModelId, cerebrasModels, chutesDefaultModelId, chutesModels, claudeCodeDefaultModelId, claudeCodeModels, clineAskSchema, clineAsks, clineMessageSchema, clineSaySchema, clineSays, codeActionIds, codebaseIndexConfigSchema, codebaseIndexModelsSchema, codebaseIndexProviderSchema, commandExecutionStatusSchema, commandIds, contextCondenseSchema, convertModelNameForVertex, customModePromptsSchema, customModesSettingsSchema, customSupportPromptsSchema, deepSeekDefaultModelId, deepSeekModels, discriminatedProviderSettingsWithIdSchema, doubaoDefaultModelId, doubaoDefaultModelInfo, doubaoModels, experimentIds, experimentIdsSchema, experimentsSchema, extendedReasoningEffortsSchema, fireworksDefaultModelId, fireworksModels, followUpDataSchema, geminiDefaultModelId, geminiModels, getApiProtocol, getClaudeCodeModelId, getModelId, gitPropertiesSchema, glamaDefaultModelId, glamaDefaultModelInfo, globalSettingsSchema, groqDefaultModelId, groqModels, groupEntrySchema, groupOptionsSchema, historyItemSchema, installMarketplaceItemOptionsSchema, internationalZAiDefaultModelId, internationalZAiModels, ioIntelligenceDefaultBaseUrl, ioIntelligenceDefaultModelId, ioIntelligenceModels, ipcMessageSchema, isBlockingAsk, isGlobalStateKey, isLanguage, isModelParameter, isSecretStateKey, lMStudioDefaultModelId, lMStudioDefaultModelInfo, languages, languagesSchema, litellmDefaultModelId, litellmDefaultModelInfo, mainlandZAiDefaultModelId, mainlandZAiModels, marketplaceItemSchema, marketplaceItemTypeSchema, mcpExecutionStatusSchema, mcpInstallationMethodSchema, mcpMarketplaceItemSchema, mcpParameterSchema, mistralDefaultModelId, mistralModels, modeConfigSchema, modeMarketplaceItemSchema, modelInfoSchema, modelParameters, modelParametersSchema, moonshotDefaultModelId, moonshotModels, ollamaDefaultModelId, ollamaDefaultModelInfo, openAiModelInfoSaneDefaults, openAiNativeDefaultModelId, openAiNativeModels, openRouterDefaultModelId, openRouterDefaultModelInfo, organizationAllowListSchema, organizationCloudSettingsSchema, organizationDefaultSettingsSchema, organizationSettingsSchema, promptComponentSchema, providerNames, providerNamesSchema, providerSettingsEntrySchema, providerSettingsSchema, providerSettingsSchemaDiscriminated, providerSettingsWithIdSchema, reasoningEfforts, reasoningEffortsSchema, requestyDefaultModelId, requestyDefaultModelInfo, rooCodeEventsSchema, rooCodeSettingsSchema, rooCodeTelemetryEventSchema, sambaNovaDefaultModelId, sambaNovaModels, shareResponseSchema, suggestionItemSchema, taskCommandSchema, taskEventSchema, taskPropertiesSchema, telemetryPropertiesSchema, telemetrySettings, telemetrySettingsSchema, terminalActionIds, todoItemSchema, todoStatusSchema, tokenUsageSchema, toolGroups, toolGroupsSchema, toolNames, toolNamesSchema, toolProgressStatusSchema, toolUsageSchema, unboundDefaultModelId, unboundDefaultModelInfo, verbosityLevels, verbosityLevelsSchema, vertexDefaultModelId, vertexModels, vscodeLlmDefaultModelId, vscodeLlmModels, xaiDefaultModelId, xaiModels };

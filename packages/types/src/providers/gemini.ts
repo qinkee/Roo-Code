@@ -295,4 +295,14 @@ export const geminiModels = {
 		supportsReasoningBudget: true,
 		maxThinkingTokens: 24_576,
 	},
+	"imagen-2": {
+		maxTokens: 0,
+		contextWindow: 0,
+		supportsImages: true,
+		supportsPromptCache: false,
+		inputPrice: 0.02,
+		outputPrice: 0,
+		modelType: "image-generation",
+		description: "Google Imagen 3 via Gemini API for image generation",
+	},
 } as const satisfies Record<string, ModelInfo>

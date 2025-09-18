@@ -111,6 +111,11 @@
 				"icon": "$(settings-gear)"
 			},
 			{
+				"command": "roo-cline.agentsButtonClicked",
+				"title": "%command.agents.title%",
+				"icon": "$(robot)"
+			},
+			{
 				"command": "roo-cline.openInNewTab",
 				"title": "%command.openInNewTab.title%",
 				"category": "%configuration.title%"
@@ -378,6 +383,11 @@
 					"when": "view == roo-cline.SidebarProvider"
 				},
 				{
+					"command": "roo-cline.agentsButtonClicked",
+					"group": "navigation@5",
+					"when": "view == roo-cline.SidebarProvider"
+				},
+				{
 					"command": "roo-cline.historyButtonClicked",
 					"group": "overflow@1",
 					"when": "view == roo-cline.SidebarProvider"
@@ -417,6 +427,11 @@
 				{
 					"command": "roo-cline.accountButtonClicked",
 					"group": "navigation@4",
+					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
+				},
+				{
+					"command": "roo-cline.agentsButtonClicked",
+					"group": "navigation@5",
 					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
 				},
 				{

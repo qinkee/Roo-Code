@@ -1,56 +1,118 @@
+// src/agent.ts
+import { z } from "zod";
+var agentToolConfigSchema = z.object({
+  toolId: z.string(),
+  enabled: z.boolean(),
+  config: z.record(z.string(), z.any()).optional()
+});
+var agentTodoSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  status: z.enum(["pending", "in_progress", "completed"]),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+  priority: z.enum(["low", "medium", "high"]).optional()
+});
+var agentTemplateSourceSchema = z.object({
+  type: z.enum(["manual", "task"]),
+  taskId: z.string().optional(),
+  taskDescription: z.string().optional(),
+  timestamp: z.number()
+});
+var agentConfigSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  name: z.string(),
+  avatar: z.string(),
+  roleDescription: z.string(),
+  apiConfigId: z.string(),
+  mode: z.string(),
+  tools: z.array(agentToolConfigSchema),
+  todos: z.array(agentTodoSchema),
+  templateSource: agentTemplateSourceSchema.optional(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+  lastUsedAt: z.number().optional(),
+  isActive: z.boolean(),
+  version: z.number()
+});
+var agentListOptionsSchema = z.object({
+  sortBy: z.enum(["name", "createdAt", "updatedAt", "lastUsedAt"]).optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+  filterByMode: z.string().optional(),
+  onlyActive: z.boolean().optional(),
+  limit: z.number().optional(),
+  offset: z.number().optional()
+});
+var agentExportDataSchema = z.object({
+  agent: agentConfigSchema,
+  metadata: z.object({
+    exportedAt: z.number(),
+    exportedBy: z.string(),
+    version: z.string()
+  })
+});
+var agentTemplateDataSchema = z.object({
+  apiConfigId: z.string().optional(),
+  mode: z.string().optional(),
+  tools: z.array(z.string()).optional(),
+  templateSource: agentTemplateSourceSchema
+});
+
 // src/cloud.ts
-import { z as z13 } from "zod";
+import { z as z14 } from "zod";
 
 // src/global-settings.ts
-import { z as z11 } from "zod";
+import { z as z12 } from "zod";
 
 // src/provider-settings.ts
-import { z as z3 } from "zod";
+import { z as z4 } from "zod";
 
 // src/model.ts
-import { z } from "zod";
+import { z as z2 } from "zod";
 var reasoningEfforts = ["low", "medium", "high"];
-var reasoningEffortsSchema = z.enum(reasoningEfforts);
+var reasoningEffortsSchema = z2.enum(reasoningEfforts);
 var verbosityLevels = ["low", "medium", "high"];
-var verbosityLevelsSchema = z.enum(verbosityLevels);
+var verbosityLevelsSchema = z2.enum(verbosityLevels);
 var modelParameters = ["max_tokens", "temperature", "reasoning", "include_reasoning"];
-var modelParametersSchema = z.enum(modelParameters);
+var modelParametersSchema = z2.enum(modelParameters);
 var isModelParameter = (value) => modelParameters.includes(value);
-var modelInfoSchema = z.object({
-  maxTokens: z.number().nullish(),
-  maxThinkingTokens: z.number().nullish(),
-  contextWindow: z.number(),
-  supportsImages: z.boolean().optional(),
-  supportsComputerUse: z.boolean().optional(),
-  supportsPromptCache: z.boolean(),
+var modelInfoSchema = z2.object({
+  maxTokens: z2.number().nullish(),
+  maxThinkingTokens: z2.number().nullish(),
+  contextWindow: z2.number(),
+  supportsImages: z2.boolean().optional(),
+  supportsComputerUse: z2.boolean().optional(),
+  supportsPromptCache: z2.boolean(),
   // Capability flag to indicate whether the model supports an output verbosity parameter
-  supportsVerbosity: z.boolean().optional(),
-  supportsReasoningBudget: z.boolean().optional(),
-  requiredReasoningBudget: z.boolean().optional(),
-  supportsReasoningEffort: z.boolean().optional(),
-  supportedParameters: z.array(modelParametersSchema).optional(),
-  inputPrice: z.number().optional(),
-  outputPrice: z.number().optional(),
-  cacheWritesPrice: z.number().optional(),
-  cacheReadsPrice: z.number().optional(),
-  description: z.string().optional(),
+  supportsVerbosity: z2.boolean().optional(),
+  supportsReasoningBudget: z2.boolean().optional(),
+  requiredReasoningBudget: z2.boolean().optional(),
+  supportsReasoningEffort: z2.boolean().optional(),
+  supportedParameters: z2.array(modelParametersSchema).optional(),
+  inputPrice: z2.number().optional(),
+  outputPrice: z2.number().optional(),
+  cacheWritesPrice: z2.number().optional(),
+  cacheReadsPrice: z2.number().optional(),
+  description: z2.string().optional(),
+  modelType: z2.string().optional(),
   reasoningEffort: reasoningEffortsSchema.optional(),
-  minTokensPerCachePoint: z.number().optional(),
-  maxCachePoints: z.number().optional(),
-  cachableFields: z.array(z.string()).optional(),
-  tiers: z.array(
-    z.object({
-      contextWindow: z.number(),
-      inputPrice: z.number().optional(),
-      outputPrice: z.number().optional(),
-      cacheWritesPrice: z.number().optional(),
-      cacheReadsPrice: z.number().optional()
+  minTokensPerCachePoint: z2.number().optional(),
+  maxCachePoints: z2.number().optional(),
+  cachableFields: z2.array(z2.string()).optional(),
+  tiers: z2.array(
+    z2.object({
+      contextWindow: z2.number(),
+      inputPrice: z2.number().optional(),
+      outputPrice: z2.number().optional(),
+      cacheWritesPrice: z2.number().optional(),
+      cacheReadsPrice: z2.number().optional()
     })
   ).optional()
 });
 
 // src/codebase-index.ts
-import { z as z2 } from "zod";
+import { z as z3 } from "zod";
 var CODEBASE_INDEX_DEFAULTS = {
   MIN_SEARCH_RESULTS: 10,
   MAX_SEARCH_RESULTS: 200,
@@ -61,38 +123,38 @@ var CODEBASE_INDEX_DEFAULTS = {
   DEFAULT_SEARCH_MIN_SCORE: 0.4,
   SEARCH_SCORE_STEP: 0.05
 };
-var codebaseIndexConfigSchema = z2.object({
-  codebaseIndexEnabled: z2.boolean().optional(),
-  codebaseIndexQdrantUrl: z2.string().optional(),
-  codebaseIndexEmbedderProvider: z2.enum(["openai", "ollama", "openai-compatible", "gemini", "mistral"]).optional(),
-  codebaseIndexEmbedderBaseUrl: z2.string().optional(),
-  codebaseIndexEmbedderModelId: z2.string().optional(),
-  codebaseIndexEmbedderModelDimension: z2.number().optional(),
-  codebaseIndexSearchMinScore: z2.number().min(0).max(1).optional(),
-  codebaseIndexSearchMaxResults: z2.number().min(CODEBASE_INDEX_DEFAULTS.MIN_SEARCH_RESULTS).max(CODEBASE_INDEX_DEFAULTS.MAX_SEARCH_RESULTS).optional(),
+var codebaseIndexConfigSchema = z3.object({
+  codebaseIndexEnabled: z3.boolean().optional(),
+  codebaseIndexQdrantUrl: z3.string().optional(),
+  codebaseIndexEmbedderProvider: z3.enum(["openai", "ollama", "openai-compatible", "gemini", "mistral"]).optional(),
+  codebaseIndexEmbedderBaseUrl: z3.string().optional(),
+  codebaseIndexEmbedderModelId: z3.string().optional(),
+  codebaseIndexEmbedderModelDimension: z3.number().optional(),
+  codebaseIndexSearchMinScore: z3.number().min(0).max(1).optional(),
+  codebaseIndexSearchMaxResults: z3.number().min(CODEBASE_INDEX_DEFAULTS.MIN_SEARCH_RESULTS).max(CODEBASE_INDEX_DEFAULTS.MAX_SEARCH_RESULTS).optional(),
   // OpenAI Compatible specific fields
-  codebaseIndexOpenAiCompatibleBaseUrl: z2.string().optional(),
-  codebaseIndexOpenAiCompatibleModelDimension: z2.number().optional()
+  codebaseIndexOpenAiCompatibleBaseUrl: z3.string().optional(),
+  codebaseIndexOpenAiCompatibleModelDimension: z3.number().optional()
 });
-var codebaseIndexModelsSchema = z2.object({
-  openai: z2.record(z2.string(), z2.object({ dimension: z2.number() })).optional(),
-  ollama: z2.record(z2.string(), z2.object({ dimension: z2.number() })).optional(),
-  "openai-compatible": z2.record(z2.string(), z2.object({ dimension: z2.number() })).optional(),
-  gemini: z2.record(z2.string(), z2.object({ dimension: z2.number() })).optional(),
-  mistral: z2.record(z2.string(), z2.object({ dimension: z2.number() })).optional()
+var codebaseIndexModelsSchema = z3.object({
+  openai: z3.record(z3.string(), z3.object({ dimension: z3.number() })).optional(),
+  ollama: z3.record(z3.string(), z3.object({ dimension: z3.number() })).optional(),
+  "openai-compatible": z3.record(z3.string(), z3.object({ dimension: z3.number() })).optional(),
+  gemini: z3.record(z3.string(), z3.object({ dimension: z3.number() })).optional(),
+  mistral: z3.record(z3.string(), z3.object({ dimension: z3.number() })).optional()
 });
-var codebaseIndexProviderSchema = z2.object({
-  codeIndexOpenAiKey: z2.string().optional(),
-  codeIndexQdrantApiKey: z2.string().optional(),
-  codebaseIndexOpenAiCompatibleBaseUrl: z2.string().optional(),
-  codebaseIndexOpenAiCompatibleApiKey: z2.string().optional(),
-  codebaseIndexOpenAiCompatibleModelDimension: z2.number().optional(),
-  codebaseIndexGeminiApiKey: z2.string().optional(),
-  codebaseIndexMistralApiKey: z2.string().optional()
+var codebaseIndexProviderSchema = z3.object({
+  codeIndexOpenAiKey: z3.string().optional(),
+  codeIndexQdrantApiKey: z3.string().optional(),
+  codebaseIndexOpenAiCompatibleBaseUrl: z3.string().optional(),
+  codebaseIndexOpenAiCompatibleApiKey: z3.string().optional(),
+  codebaseIndexOpenAiCompatibleModelDimension: z3.number().optional(),
+  codebaseIndexGeminiApiKey: z3.string().optional(),
+  codebaseIndexMistralApiKey: z3.string().optional()
 });
 
 // src/provider-settings.ts
-var extendedReasoningEffortsSchema = z3.union([reasoningEffortsSchema, z3.literal("minimal")]);
+var extendedReasoningEffortsSchema = z4.union([reasoningEffortsSchema, z4.literal("minimal")]);
 var providerNames = [
   "anthropic",
   "claude-code",
@@ -126,226 +188,226 @@ var providerNames = [
   "fireworks",
   "io-intelligence"
 ];
-var providerNamesSchema = z3.enum(providerNames);
-var providerSettingsEntrySchema = z3.object({
-  id: z3.string(),
-  name: z3.string(),
+var providerNamesSchema = z4.enum(providerNames);
+var providerSettingsEntrySchema = z4.object({
+  id: z4.string(),
+  name: z4.string(),
   apiProvider: providerNamesSchema.optional()
 });
 var DEFAULT_CONSECUTIVE_MISTAKE_LIMIT = 3;
-var baseProviderSettingsSchema = z3.object({
-  includeMaxTokens: z3.boolean().optional(),
-  diffEnabled: z3.boolean().optional(),
-  todoListEnabled: z3.boolean().optional(),
-  fuzzyMatchThreshold: z3.number().optional(),
-  modelTemperature: z3.number().nullish(),
-  rateLimitSeconds: z3.number().optional(),
-  consecutiveMistakeLimit: z3.number().min(0).optional(),
+var baseProviderSettingsSchema = z4.object({
+  includeMaxTokens: z4.boolean().optional(),
+  diffEnabled: z4.boolean().optional(),
+  todoListEnabled: z4.boolean().optional(),
+  fuzzyMatchThreshold: z4.number().optional(),
+  modelTemperature: z4.number().nullish(),
+  rateLimitSeconds: z4.number().optional(),
+  consecutiveMistakeLimit: z4.number().min(0).optional(),
   // Model reasoning.
-  enableReasoningEffort: z3.boolean().optional(),
+  enableReasoningEffort: z4.boolean().optional(),
   reasoningEffort: extendedReasoningEffortsSchema.optional(),
-  modelMaxTokens: z3.number().optional(),
-  modelMaxThinkingTokens: z3.number().optional(),
+  modelMaxTokens: z4.number().optional(),
+  modelMaxThinkingTokens: z4.number().optional(),
   // Model verbosity.
   verbosity: verbosityLevelsSchema.optional()
 });
 var apiModelIdProviderModelSchema = baseProviderSettingsSchema.extend({
-  apiModelId: z3.string().optional()
+  apiModelId: z4.string().optional()
 });
 var anthropicSchema = apiModelIdProviderModelSchema.extend({
-  apiKey: z3.string().optional(),
-  anthropicBaseUrl: z3.string().optional(),
-  anthropicUseAuthToken: z3.boolean().optional(),
-  anthropicBeta1MContext: z3.boolean().optional()
+  apiKey: z4.string().optional(),
+  anthropicBaseUrl: z4.string().optional(),
+  anthropicUseAuthToken: z4.boolean().optional(),
+  anthropicBeta1MContext: z4.boolean().optional()
   // Enable 'context-1m-2025-08-07' beta for 1M context window
 });
 var claudeCodeSchema = apiModelIdProviderModelSchema.extend({
-  claudeCodePath: z3.string().optional(),
-  claudeCodeMaxOutputTokens: z3.number().int().min(1).max(2e5).optional()
+  claudeCodePath: z4.string().optional(),
+  claudeCodeMaxOutputTokens: z4.number().int().min(1).max(2e5).optional()
 });
 var glamaSchema = baseProviderSettingsSchema.extend({
-  glamaModelId: z3.string().optional(),
-  glamaApiKey: z3.string().optional()
+  glamaModelId: z4.string().optional(),
+  glamaApiKey: z4.string().optional()
 });
 var openRouterSchema = baseProviderSettingsSchema.extend({
-  openRouterApiKey: z3.string().optional(),
-  openRouterModelId: z3.string().optional(),
-  openRouterBaseUrl: z3.string().optional(),
-  openRouterSpecificProvider: z3.string().optional(),
-  openRouterUseMiddleOutTransform: z3.boolean().optional()
+  openRouterApiKey: z4.string().optional(),
+  openRouterModelId: z4.string().optional(),
+  openRouterBaseUrl: z4.string().optional(),
+  openRouterSpecificProvider: z4.string().optional(),
+  openRouterUseMiddleOutTransform: z4.boolean().optional()
 });
 var bedrockSchema = apiModelIdProviderModelSchema.extend({
-  awsAccessKey: z3.string().optional(),
-  awsSecretKey: z3.string().optional(),
-  awsSessionToken: z3.string().optional(),
-  awsRegion: z3.string().optional(),
-  awsUseCrossRegionInference: z3.boolean().optional(),
-  awsUsePromptCache: z3.boolean().optional(),
-  awsProfile: z3.string().optional(),
-  awsUseProfile: z3.boolean().optional(),
-  awsApiKey: z3.string().optional(),
-  awsUseApiKey: z3.boolean().optional(),
-  awsCustomArn: z3.string().optional(),
-  awsModelContextWindow: z3.number().optional(),
-  awsBedrockEndpointEnabled: z3.boolean().optional(),
-  awsBedrockEndpoint: z3.string().optional()
+  awsAccessKey: z4.string().optional(),
+  awsSecretKey: z4.string().optional(),
+  awsSessionToken: z4.string().optional(),
+  awsRegion: z4.string().optional(),
+  awsUseCrossRegionInference: z4.boolean().optional(),
+  awsUsePromptCache: z4.boolean().optional(),
+  awsProfile: z4.string().optional(),
+  awsUseProfile: z4.boolean().optional(),
+  awsApiKey: z4.string().optional(),
+  awsUseApiKey: z4.boolean().optional(),
+  awsCustomArn: z4.string().optional(),
+  awsModelContextWindow: z4.number().optional(),
+  awsBedrockEndpointEnabled: z4.boolean().optional(),
+  awsBedrockEndpoint: z4.string().optional()
 });
 var vertexSchema = apiModelIdProviderModelSchema.extend({
-  vertexKeyFile: z3.string().optional(),
-  vertexJsonCredentials: z3.string().optional(),
-  vertexProjectId: z3.string().optional(),
-  vertexRegion: z3.string().optional()
+  vertexKeyFile: z4.string().optional(),
+  vertexJsonCredentials: z4.string().optional(),
+  vertexProjectId: z4.string().optional(),
+  vertexRegion: z4.string().optional()
 });
 var openAiSchema = baseProviderSettingsSchema.extend({
-  openAiBaseUrl: z3.string().optional(),
-  openAiApiKey: z3.string().optional(),
-  openAiLegacyFormat: z3.boolean().optional(),
-  openAiR1FormatEnabled: z3.boolean().optional(),
-  openAiModelId: z3.string().optional(),
+  openAiBaseUrl: z4.string().optional(),
+  openAiApiKey: z4.string().optional(),
+  openAiLegacyFormat: z4.boolean().optional(),
+  openAiR1FormatEnabled: z4.boolean().optional(),
+  openAiModelId: z4.string().optional(),
   openAiCustomModelInfo: modelInfoSchema.nullish(),
-  openAiUseAzure: z3.boolean().optional(),
-  azureApiVersion: z3.string().optional(),
-  openAiStreamingEnabled: z3.boolean().optional(),
-  openAiHostHeader: z3.string().optional(),
+  openAiUseAzure: z4.boolean().optional(),
+  azureApiVersion: z4.string().optional(),
+  openAiStreamingEnabled: z4.boolean().optional(),
+  openAiHostHeader: z4.string().optional(),
   // Keep temporarily for backward compatibility during migration.
-  openAiHeaders: z3.record(z3.string(), z3.string()).optional()
+  openAiHeaders: z4.record(z4.string(), z4.string()).optional()
 });
 var ollamaSchema = baseProviderSettingsSchema.extend({
-  ollamaModelId: z3.string().optional(),
-  ollamaBaseUrl: z3.string().optional()
+  ollamaModelId: z4.string().optional(),
+  ollamaBaseUrl: z4.string().optional()
 });
 var vsCodeLmSchema = baseProviderSettingsSchema.extend({
-  vsCodeLmModelSelector: z3.object({
-    vendor: z3.string().optional(),
-    family: z3.string().optional(),
-    version: z3.string().optional(),
-    id: z3.string().optional()
+  vsCodeLmModelSelector: z4.object({
+    vendor: z4.string().optional(),
+    family: z4.string().optional(),
+    version: z4.string().optional(),
+    id: z4.string().optional()
   }).optional()
 });
 var lmStudioSchema = baseProviderSettingsSchema.extend({
-  lmStudioModelId: z3.string().optional(),
-  lmStudioBaseUrl: z3.string().optional(),
-  lmStudioDraftModelId: z3.string().optional(),
-  lmStudioSpeculativeDecodingEnabled: z3.boolean().optional()
+  lmStudioModelId: z4.string().optional(),
+  lmStudioBaseUrl: z4.string().optional(),
+  lmStudioDraftModelId: z4.string().optional(),
+  lmStudioSpeculativeDecodingEnabled: z4.boolean().optional()
 });
 var geminiSchema = apiModelIdProviderModelSchema.extend({
-  geminiApiKey: z3.string().optional(),
-  googleGeminiBaseUrl: z3.string().optional(),
-  enableUrlContext: z3.boolean().optional(),
-  enableGrounding: z3.boolean().optional()
+  geminiApiKey: z4.string().optional(),
+  googleGeminiBaseUrl: z4.string().optional(),
+  enableUrlContext: z4.boolean().optional(),
+  enableGrounding: z4.boolean().optional()
 });
 var geminiCliSchema = apiModelIdProviderModelSchema.extend({
-  geminiCliOAuthPath: z3.string().optional(),
-  geminiCliProjectId: z3.string().optional()
+  geminiCliOAuthPath: z4.string().optional(),
+  geminiCliProjectId: z4.string().optional()
 });
 var openAiNativeSchema = apiModelIdProviderModelSchema.extend({
-  openAiNativeApiKey: z3.string().optional(),
-  openAiNativeBaseUrl: z3.string().optional()
+  openAiNativeApiKey: z4.string().optional(),
+  openAiNativeBaseUrl: z4.string().optional()
 });
 var mistralSchema = apiModelIdProviderModelSchema.extend({
-  mistralApiKey: z3.string().optional(),
-  mistralCodestralUrl: z3.string().optional()
+  mistralApiKey: z4.string().optional(),
+  mistralCodestralUrl: z4.string().optional()
 });
 var deepSeekSchema = apiModelIdProviderModelSchema.extend({
-  deepSeekBaseUrl: z3.string().optional(),
-  deepSeekApiKey: z3.string().optional()
+  deepSeekBaseUrl: z4.string().optional(),
+  deepSeekApiKey: z4.string().optional()
 });
 var doubaoSchema = apiModelIdProviderModelSchema.extend({
-  doubaoBaseUrl: z3.string().optional(),
-  doubaoApiKey: z3.string().optional()
+  doubaoBaseUrl: z4.string().optional(),
+  doubaoApiKey: z4.string().optional()
 });
 var moonshotSchema = apiModelIdProviderModelSchema.extend({
-  moonshotBaseUrl: z3.union([z3.literal("https://api.moonshot.ai/v1"), z3.literal("https://api.moonshot.cn/v1")]).optional(),
-  moonshotApiKey: z3.string().optional()
+  moonshotBaseUrl: z4.union([z4.literal("https://api.moonshot.ai/v1"), z4.literal("https://api.moonshot.cn/v1")]).optional(),
+  moonshotApiKey: z4.string().optional()
 });
 var unboundSchema = baseProviderSettingsSchema.extend({
-  unboundApiKey: z3.string().optional(),
-  unboundModelId: z3.string().optional()
+  unboundApiKey: z4.string().optional(),
+  unboundModelId: z4.string().optional()
 });
 var requestySchema = baseProviderSettingsSchema.extend({
-  requestyBaseUrl: z3.string().optional(),
-  requestyApiKey: z3.string().optional(),
-  requestyModelId: z3.string().optional()
+  requestyBaseUrl: z4.string().optional(),
+  requestyApiKey: z4.string().optional(),
+  requestyModelId: z4.string().optional()
 });
 var humanRelaySchema = baseProviderSettingsSchema;
 var fakeAiSchema = baseProviderSettingsSchema.extend({
-  fakeAi: z3.unknown().optional()
+  fakeAi: z4.unknown().optional()
 });
 var xaiSchema = apiModelIdProviderModelSchema.extend({
-  xaiApiKey: z3.string().optional()
+  xaiApiKey: z4.string().optional()
 });
 var groqSchema = apiModelIdProviderModelSchema.extend({
-  groqApiKey: z3.string().optional()
+  groqApiKey: z4.string().optional()
 });
 var huggingFaceSchema = baseProviderSettingsSchema.extend({
-  huggingFaceApiKey: z3.string().optional(),
-  huggingFaceModelId: z3.string().optional(),
-  huggingFaceInferenceProvider: z3.string().optional()
+  huggingFaceApiKey: z4.string().optional(),
+  huggingFaceModelId: z4.string().optional(),
+  huggingFaceInferenceProvider: z4.string().optional()
 });
 var chutesSchema = apiModelIdProviderModelSchema.extend({
-  chutesApiKey: z3.string().optional()
+  chutesApiKey: z4.string().optional()
 });
 var litellmSchema = baseProviderSettingsSchema.extend({
-  litellmBaseUrl: z3.string().optional(),
-  litellmApiKey: z3.string().optional(),
-  litellmModelId: z3.string().optional(),
-  litellmUsePromptCache: z3.boolean().optional()
+  litellmBaseUrl: z4.string().optional(),
+  litellmApiKey: z4.string().optional(),
+  litellmModelId: z4.string().optional(),
+  litellmUsePromptCache: z4.boolean().optional()
 });
 var cerebrasSchema = apiModelIdProviderModelSchema.extend({
-  cerebrasApiKey: z3.string().optional()
+  cerebrasApiKey: z4.string().optional()
 });
 var sambaNovaSchema = apiModelIdProviderModelSchema.extend({
-  sambaNovaApiKey: z3.string().optional()
+  sambaNovaApiKey: z4.string().optional()
 });
 var zaiSchema = apiModelIdProviderModelSchema.extend({
-  zaiApiKey: z3.string().optional(),
-  zaiApiLine: z3.union([z3.literal("china"), z3.literal("international")]).optional()
+  zaiApiKey: z4.string().optional(),
+  zaiApiLine: z4.union([z4.literal("china"), z4.literal("international")]).optional()
 });
 var fireworksSchema = apiModelIdProviderModelSchema.extend({
-  fireworksApiKey: z3.string().optional()
+  fireworksApiKey: z4.string().optional()
 });
 var ioIntelligenceSchema = apiModelIdProviderModelSchema.extend({
-  ioIntelligenceModelId: z3.string().optional(),
-  ioIntelligenceApiKey: z3.string().optional()
+  ioIntelligenceModelId: z4.string().optional(),
+  ioIntelligenceApiKey: z4.string().optional()
 });
-var defaultSchema = z3.object({
-  apiProvider: z3.undefined()
+var defaultSchema = z4.object({
+  apiProvider: z4.undefined()
 });
-var providerSettingsSchemaDiscriminated = z3.discriminatedUnion("apiProvider", [
-  anthropicSchema.merge(z3.object({ apiProvider: z3.literal("anthropic") })),
-  claudeCodeSchema.merge(z3.object({ apiProvider: z3.literal("claude-code") })),
-  glamaSchema.merge(z3.object({ apiProvider: z3.literal("glama") })),
-  openRouterSchema.merge(z3.object({ apiProvider: z3.literal("openrouter") })),
-  bedrockSchema.merge(z3.object({ apiProvider: z3.literal("bedrock") })),
-  vertexSchema.merge(z3.object({ apiProvider: z3.literal("vertex") })),
-  openAiSchema.merge(z3.object({ apiProvider: z3.literal("openai") })),
-  ollamaSchema.merge(z3.object({ apiProvider: z3.literal("ollama") })),
-  vsCodeLmSchema.merge(z3.object({ apiProvider: z3.literal("vscode-lm") })),
-  lmStudioSchema.merge(z3.object({ apiProvider: z3.literal("lmstudio") })),
-  geminiSchema.merge(z3.object({ apiProvider: z3.literal("gemini") })),
-  geminiCliSchema.merge(z3.object({ apiProvider: z3.literal("gemini-cli") })),
-  openAiNativeSchema.merge(z3.object({ apiProvider: z3.literal("openai-native") })),
-  mistralSchema.merge(z3.object({ apiProvider: z3.literal("mistral") })),
-  deepSeekSchema.merge(z3.object({ apiProvider: z3.literal("deepseek") })),
-  doubaoSchema.merge(z3.object({ apiProvider: z3.literal("doubao") })),
-  moonshotSchema.merge(z3.object({ apiProvider: z3.literal("moonshot") })),
-  unboundSchema.merge(z3.object({ apiProvider: z3.literal("unbound") })),
-  requestySchema.merge(z3.object({ apiProvider: z3.literal("requesty") })),
-  humanRelaySchema.merge(z3.object({ apiProvider: z3.literal("human-relay") })),
-  fakeAiSchema.merge(z3.object({ apiProvider: z3.literal("fake-ai") })),
-  xaiSchema.merge(z3.object({ apiProvider: z3.literal("xai") })),
-  groqSchema.merge(z3.object({ apiProvider: z3.literal("groq") })),
-  huggingFaceSchema.merge(z3.object({ apiProvider: z3.literal("huggingface") })),
-  chutesSchema.merge(z3.object({ apiProvider: z3.literal("chutes") })),
-  litellmSchema.merge(z3.object({ apiProvider: z3.literal("litellm") })),
-  cerebrasSchema.merge(z3.object({ apiProvider: z3.literal("cerebras") })),
-  sambaNovaSchema.merge(z3.object({ apiProvider: z3.literal("sambanova") })),
-  zaiSchema.merge(z3.object({ apiProvider: z3.literal("zai") })),
-  fireworksSchema.merge(z3.object({ apiProvider: z3.literal("fireworks") })),
-  ioIntelligenceSchema.merge(z3.object({ apiProvider: z3.literal("io-intelligence") })),
+var providerSettingsSchemaDiscriminated = z4.discriminatedUnion("apiProvider", [
+  anthropicSchema.merge(z4.object({ apiProvider: z4.literal("anthropic") })),
+  claudeCodeSchema.merge(z4.object({ apiProvider: z4.literal("claude-code") })),
+  glamaSchema.merge(z4.object({ apiProvider: z4.literal("glama") })),
+  openRouterSchema.merge(z4.object({ apiProvider: z4.literal("openrouter") })),
+  bedrockSchema.merge(z4.object({ apiProvider: z4.literal("bedrock") })),
+  vertexSchema.merge(z4.object({ apiProvider: z4.literal("vertex") })),
+  openAiSchema.merge(z4.object({ apiProvider: z4.literal("openai") })),
+  ollamaSchema.merge(z4.object({ apiProvider: z4.literal("ollama") })),
+  vsCodeLmSchema.merge(z4.object({ apiProvider: z4.literal("vscode-lm") })),
+  lmStudioSchema.merge(z4.object({ apiProvider: z4.literal("lmstudio") })),
+  geminiSchema.merge(z4.object({ apiProvider: z4.literal("gemini") })),
+  geminiCliSchema.merge(z4.object({ apiProvider: z4.literal("gemini-cli") })),
+  openAiNativeSchema.merge(z4.object({ apiProvider: z4.literal("openai-native") })),
+  mistralSchema.merge(z4.object({ apiProvider: z4.literal("mistral") })),
+  deepSeekSchema.merge(z4.object({ apiProvider: z4.literal("deepseek") })),
+  doubaoSchema.merge(z4.object({ apiProvider: z4.literal("doubao") })),
+  moonshotSchema.merge(z4.object({ apiProvider: z4.literal("moonshot") })),
+  unboundSchema.merge(z4.object({ apiProvider: z4.literal("unbound") })),
+  requestySchema.merge(z4.object({ apiProvider: z4.literal("requesty") })),
+  humanRelaySchema.merge(z4.object({ apiProvider: z4.literal("human-relay") })),
+  fakeAiSchema.merge(z4.object({ apiProvider: z4.literal("fake-ai") })),
+  xaiSchema.merge(z4.object({ apiProvider: z4.literal("xai") })),
+  groqSchema.merge(z4.object({ apiProvider: z4.literal("groq") })),
+  huggingFaceSchema.merge(z4.object({ apiProvider: z4.literal("huggingface") })),
+  chutesSchema.merge(z4.object({ apiProvider: z4.literal("chutes") })),
+  litellmSchema.merge(z4.object({ apiProvider: z4.literal("litellm") })),
+  cerebrasSchema.merge(z4.object({ apiProvider: z4.literal("cerebras") })),
+  sambaNovaSchema.merge(z4.object({ apiProvider: z4.literal("sambanova") })),
+  zaiSchema.merge(z4.object({ apiProvider: z4.literal("zai") })),
+  fireworksSchema.merge(z4.object({ apiProvider: z4.literal("fireworks") })),
+  ioIntelligenceSchema.merge(z4.object({ apiProvider: z4.literal("io-intelligence") })),
   defaultSchema
 ]);
-var providerSettingsSchema = z3.object({
+var providerSettingsSchema = z4.object({
   apiProvider: providerNamesSchema.optional(),
   ...anthropicSchema.shape,
   ...claudeCodeSchema.shape,
@@ -380,9 +442,9 @@ var providerSettingsSchema = z3.object({
   ...ioIntelligenceSchema.shape,
   ...codebaseIndexProviderSchema.shape
 });
-var providerSettingsWithIdSchema = providerSettingsSchema.extend({ id: z3.string().optional() });
+var providerSettingsWithIdSchema = providerSettingsSchema.extend({ id: z4.string().optional() });
 var discriminatedProviderSettingsWithIdSchema = providerSettingsSchemaDiscriminated.and(
-  z3.object({ id: z3.string().optional() })
+  z4.object({ id: z4.string().optional() })
 );
 var PROVIDER_SETTINGS_KEYS = providerSettingsSchema.keyof().options;
 var MODEL_ID_KEYS = [
@@ -415,39 +477,39 @@ var getApiProtocol = (provider, modelId) => {
 };
 
 // src/history.ts
-import { z as z4 } from "zod";
-var historyItemSchema = z4.object({
-  id: z4.string(),
-  number: z4.number(),
-  ts: z4.number(),
-  task: z4.string(),
-  tokensIn: z4.number(),
-  tokensOut: z4.number(),
-  cacheWrites: z4.number().optional(),
-  cacheReads: z4.number().optional(),
-  totalCost: z4.number(),
-  size: z4.number().optional(),
-  workspace: z4.string().optional(),
-  mode: z4.string().optional(),
-  terminalNo: z4.number().optional()
+import { z as z5 } from "zod";
+var historyItemSchema = z5.object({
+  id: z5.string(),
+  number: z5.number(),
+  ts: z5.number(),
+  task: z5.string(),
+  tokensIn: z5.number(),
+  tokensOut: z5.number(),
+  cacheWrites: z5.number().optional(),
+  cacheReads: z5.number().optional(),
+  totalCost: z5.number(),
+  size: z5.number().optional(),
+  workspace: z5.string().optional(),
+  mode: z5.string().optional(),
+  terminalNo: z5.number().optional()
 });
 
 // src/experiment.ts
-import { z as z5 } from "zod";
+import { z as z6 } from "zod";
 var experimentIds = ["powerSteering", "multiFileApplyDiff", "preventFocusDisruption", "assistantMessageParser"];
-var experimentIdsSchema = z5.enum(experimentIds);
-var experimentsSchema = z5.object({
-  powerSteering: z5.boolean().optional(),
-  multiFileApplyDiff: z5.boolean().optional(),
-  preventFocusDisruption: z5.boolean().optional(),
-  assistantMessageParser: z5.boolean().optional()
+var experimentIdsSchema = z6.enum(experimentIds);
+var experimentsSchema = z6.object({
+  powerSteering: z6.boolean().optional(),
+  multiFileApplyDiff: z6.boolean().optional(),
+  preventFocusDisruption: z6.boolean().optional(),
+  assistantMessageParser: z6.boolean().optional()
 });
 
 // src/telemetry.ts
-import { z as z7 } from "zod";
+import { z as z8 } from "zod";
 
 // src/message.ts
-import { z as z6 } from "zod";
+import { z as z7 } from "zod";
 var clineAsks = [
   "followup",
   "command",
@@ -462,7 +524,7 @@ var clineAsks = [
   "use_mcp_server",
   "auto_approval_max_req_reached"
 ];
-var clineAskSchema = z6.enum(clineAsks);
+var clineAskSchema = z7.enum(clineAsks);
 var blockingAsks = [
   "api_req_failed",
   "mistake_limit_reached",
@@ -502,52 +564,52 @@ var clineSays = [
   "codebase_search_result",
   "user_edit_todos"
 ];
-var clineSaySchema = z6.enum(clineSays);
-var toolProgressStatusSchema = z6.object({
-  icon: z6.string().optional(),
-  text: z6.string().optional()
+var clineSaySchema = z7.enum(clineSays);
+var toolProgressStatusSchema = z7.object({
+  icon: z7.string().optional(),
+  text: z7.string().optional()
 });
-var contextCondenseSchema = z6.object({
-  cost: z6.number(),
-  prevContextTokens: z6.number(),
-  newContextTokens: z6.number(),
-  summary: z6.string()
+var contextCondenseSchema = z7.object({
+  cost: z7.number(),
+  prevContextTokens: z7.number(),
+  newContextTokens: z7.number(),
+  summary: z7.string()
 });
-var clineMessageSchema = z6.object({
-  ts: z6.number(),
-  type: z6.union([z6.literal("ask"), z6.literal("say")]),
+var clineMessageSchema = z7.object({
+  ts: z7.number(),
+  type: z7.union([z7.literal("ask"), z7.literal("say")]),
   ask: clineAskSchema.optional(),
   say: clineSaySchema.optional(),
-  text: z6.string().optional(),
-  images: z6.array(z6.string()).optional(),
-  partial: z6.boolean().optional(),
-  reasoning: z6.string().optional(),
-  conversationHistoryIndex: z6.number().optional(),
-  checkpoint: z6.record(z6.string(), z6.unknown()).optional(),
+  text: z7.string().optional(),
+  images: z7.array(z7.string()).optional(),
+  partial: z7.boolean().optional(),
+  reasoning: z7.string().optional(),
+  conversationHistoryIndex: z7.number().optional(),
+  checkpoint: z7.record(z7.string(), z7.unknown()).optional(),
   progressStatus: toolProgressStatusSchema.optional(),
   contextCondense: contextCondenseSchema.optional(),
-  isProtected: z6.boolean().optional(),
-  apiProtocol: z6.union([z6.literal("openai"), z6.literal("anthropic")]).optional(),
-  metadata: z6.object({
-    gpt5: z6.object({
-      previous_response_id: z6.string().optional(),
-      instructions: z6.string().optional(),
-      reasoning_summary: z6.string().optional()
+  isProtected: z7.boolean().optional(),
+  apiProtocol: z7.union([z7.literal("openai"), z7.literal("anthropic")]).optional(),
+  metadata: z7.object({
+    gpt5: z7.object({
+      previous_response_id: z7.string().optional(),
+      instructions: z7.string().optional(),
+      reasoning_summary: z7.string().optional()
     }).optional()
   }).optional()
 });
-var tokenUsageSchema = z6.object({
-  totalTokensIn: z6.number(),
-  totalTokensOut: z6.number(),
-  totalCacheWrites: z6.number().optional(),
-  totalCacheReads: z6.number().optional(),
-  totalCost: z6.number(),
-  contextTokens: z6.number()
+var tokenUsageSchema = z7.object({
+  totalTokensIn: z7.number(),
+  totalTokensOut: z7.number(),
+  totalCacheWrites: z7.number().optional(),
+  totalCacheReads: z7.number().optional(),
+  totalCost: z7.number(),
+  contextTokens: z7.number()
 });
 
 // src/telemetry.ts
 var telemetrySettings = ["unset", "enabled", "disabled"];
-var telemetrySettingsSchema = z7.enum(telemetrySettings);
+var telemetrySettingsSchema = z8.enum(telemetrySettings);
 var TelemetryEventName = /* @__PURE__ */ ((TelemetryEventName2) => {
   TelemetryEventName2["TASK_CREATED"] = "Task Created";
   TelemetryEventName2["TASK_RESTARTED"] = "Task Reopened";
@@ -589,42 +651,42 @@ var TelemetryEventName = /* @__PURE__ */ ((TelemetryEventName2) => {
   TelemetryEventName2["CODE_INDEX_ERROR"] = "Code Index Error";
   return TelemetryEventName2;
 })(TelemetryEventName || {});
-var appPropertiesSchema = z7.object({
-  appName: z7.string(),
-  appVersion: z7.string(),
-  vscodeVersion: z7.string(),
-  platform: z7.string(),
-  editorName: z7.string(),
-  language: z7.string(),
-  mode: z7.string(),
-  cloudIsAuthenticated: z7.boolean().optional()
+var appPropertiesSchema = z8.object({
+  appName: z8.string(),
+  appVersion: z8.string(),
+  vscodeVersion: z8.string(),
+  platform: z8.string(),
+  editorName: z8.string(),
+  language: z8.string(),
+  mode: z8.string(),
+  cloudIsAuthenticated: z8.boolean().optional()
 });
-var taskPropertiesSchema = z7.object({
-  taskId: z7.string().optional(),
-  apiProvider: z7.enum(providerNames).optional(),
-  modelId: z7.string().optional(),
-  diffStrategy: z7.string().optional(),
-  isSubtask: z7.boolean().optional(),
-  todos: z7.object({
-    total: z7.number(),
-    completed: z7.number(),
-    inProgress: z7.number(),
-    pending: z7.number()
+var taskPropertiesSchema = z8.object({
+  taskId: z8.string().optional(),
+  apiProvider: z8.enum(providerNames).optional(),
+  modelId: z8.string().optional(),
+  diffStrategy: z8.string().optional(),
+  isSubtask: z8.boolean().optional(),
+  todos: z8.object({
+    total: z8.number(),
+    completed: z8.number(),
+    inProgress: z8.number(),
+    pending: z8.number()
   }).optional()
 });
-var gitPropertiesSchema = z7.object({
-  repositoryUrl: z7.string().optional(),
-  repositoryName: z7.string().optional(),
-  defaultBranch: z7.string().optional()
+var gitPropertiesSchema = z8.object({
+  repositoryUrl: z8.string().optional(),
+  repositoryName: z8.string().optional(),
+  defaultBranch: z8.string().optional()
 });
-var telemetryPropertiesSchema = z7.object({
+var telemetryPropertiesSchema = z8.object({
   ...appPropertiesSchema.shape,
   ...taskPropertiesSchema.shape,
   ...gitPropertiesSchema.shape
 });
-var rooCodeTelemetryEventSchema = z7.discriminatedUnion("type", [
-  z7.object({
-    type: z7.enum([
+var rooCodeTelemetryEventSchema = z8.discriminatedUnion("type", [
+  z8.object({
+    type: z8.enum([
       "Task Created" /* TASK_CREATED */,
       "Task Reopened" /* TASK_RESTARTED */,
       "Task Completed" /* TASK_COMPLETED */,
@@ -664,34 +726,34 @@ var rooCodeTelemetryEventSchema = z7.discriminatedUnion("type", [
     ]),
     properties: telemetryPropertiesSchema
   }),
-  z7.object({
-    type: z7.literal("Task Message" /* TASK_MESSAGE */),
-    properties: z7.object({
+  z8.object({
+    type: z8.literal("Task Message" /* TASK_MESSAGE */),
+    properties: z8.object({
       ...telemetryPropertiesSchema.shape,
-      taskId: z7.string(),
+      taskId: z8.string(),
       message: clineMessageSchema
     })
   }),
-  z7.object({
-    type: z7.literal("LLM Completion" /* LLM_COMPLETION */),
-    properties: z7.object({
+  z8.object({
+    type: z8.literal("LLM Completion" /* LLM_COMPLETION */),
+    properties: z8.object({
       ...telemetryPropertiesSchema.shape,
-      inputTokens: z7.number(),
-      outputTokens: z7.number(),
-      cacheReadTokens: z7.number().optional(),
-      cacheWriteTokens: z7.number().optional(),
-      cost: z7.number().optional()
+      inputTokens: z8.number(),
+      outputTokens: z8.number(),
+      cacheReadTokens: z8.number().optional(),
+      cacheWriteTokens: z8.number().optional(),
+      cost: z8.number().optional()
     })
   })
 ]);
 
 // src/mode.ts
-import { z as z9 } from "zod";
+import { z as z10 } from "zod";
 
 // src/tool.ts
-import { z as z8 } from "zod";
+import { z as z9 } from "zod";
 var toolGroups = ["read", "edit", "browser", "command", "mcp", "modes"];
-var toolGroupsSchema = z8.enum(toolGroups);
+var toolGroupsSchema = z9.enum(toolGroups);
 var toolNames = [
   "execute_command",
   "read_file",
@@ -713,18 +775,18 @@ var toolNames = [
   "codebase_search",
   "update_todo_list"
 ];
-var toolNamesSchema = z8.enum(toolNames);
-var toolUsageSchema = z8.record(
+var toolNamesSchema = z9.enum(toolNames);
+var toolUsageSchema = z9.record(
   toolNamesSchema,
-  z8.object({
-    attempts: z8.number(),
-    failures: z8.number()
+  z9.object({
+    attempts: z9.number(),
+    failures: z9.number()
   })
 );
 
 // src/mode.ts
-var groupOptionsSchema = z9.object({
-  fileRegex: z9.string().optional().refine(
+var groupOptionsSchema = z10.object({
+  fileRegex: z10.string().optional().refine(
     (pattern) => {
       if (!pattern) {
         return true;
@@ -738,10 +800,10 @@ var groupOptionsSchema = z9.object({
     },
     { message: "Invalid regular expression pattern" }
   ),
-  description: z9.string().optional()
+  description: z10.string().optional()
 });
-var groupEntrySchema = z9.union([toolGroupsSchema, z9.tuple([toolGroupsSchema, groupOptionsSchema])]);
-var groupEntryArraySchema = z9.array(groupEntrySchema).refine(
+var groupEntrySchema = z10.union([toolGroupsSchema, z10.tuple([toolGroupsSchema, groupOptionsSchema])]);
+var groupEntryArraySchema = z10.array(groupEntrySchema).refine(
   (groups) => {
     const seen = /* @__PURE__ */ new Set();
     return groups.every((group) => {
@@ -755,18 +817,18 @@ var groupEntryArraySchema = z9.array(groupEntrySchema).refine(
   },
   { message: "Duplicate groups are not allowed" }
 );
-var modeConfigSchema = z9.object({
-  slug: z9.string().regex(/^[a-zA-Z0-9-]+$/, "Slug must contain only letters numbers and dashes"),
-  name: z9.string().min(1, "Name is required"),
-  roleDefinition: z9.string().min(1, "Role definition is required"),
-  whenToUse: z9.string().optional(),
-  description: z9.string().optional(),
-  customInstructions: z9.string().optional(),
+var modeConfigSchema = z10.object({
+  slug: z10.string().regex(/^[a-zA-Z0-9-]+$/, "Slug must contain only letters numbers and dashes"),
+  name: z10.string().min(1, "Name is required"),
+  roleDefinition: z10.string().min(1, "Role definition is required"),
+  whenToUse: z10.string().optional(),
+  description: z10.string().optional(),
+  customInstructions: z10.string().optional(),
   groups: groupEntryArraySchema,
-  source: z9.enum(["global", "project"]).optional()
+  source: z10.enum(["global", "project"]).optional()
 });
-var customModesSettingsSchema = z9.object({
-  customModes: z9.array(modeConfigSchema).refine(
+var customModesSettingsSchema = z10.object({
+  customModes: z10.array(modeConfigSchema).refine(
     (modes) => {
       const slugs = /* @__PURE__ */ new Set();
       return modes.every((mode) => {
@@ -782,14 +844,14 @@ var customModesSettingsSchema = z9.object({
     }
   )
 });
-var promptComponentSchema = z9.object({
-  roleDefinition: z9.string().optional(),
-  whenToUse: z9.string().optional(),
-  description: z9.string().optional(),
-  customInstructions: z9.string().optional()
+var promptComponentSchema = z10.object({
+  roleDefinition: z10.string().optional(),
+  whenToUse: z10.string().optional(),
+  description: z10.string().optional(),
+  customInstructions: z10.string().optional()
 });
-var customModePromptsSchema = z9.record(z9.string(), promptComponentSchema.optional());
-var customSupportPromptsSchema = z9.record(z9.string(), z9.string().optional());
+var customModePromptsSchema = z10.record(z10.string(), promptComponentSchema.optional());
+var customSupportPromptsSchema = z10.record(z10.string(), z10.string().optional());
 var DEFAULT_MODES = [
   {
     slug: "architect",
@@ -838,7 +900,7 @@ var DEFAULT_MODES = [
 ];
 
 // src/vscode.ts
-import { z as z10 } from "zod";
+import { z as z11 } from "zod";
 var codeActionIds = ["explainCode", "fixCode", "improveCode", "addToContext", "newTask"];
 var terminalActionIds = ["terminalAddToContext", "terminalFixCommand", "terminalExplainCommand"];
 var commandIds = [
@@ -851,6 +913,7 @@ var commandIds = [
   "popoutButtonClicked",
   "accountButtonClicked",
   "settingsButtonClicked",
+  "agentsButtonClicked",
   "openInNewTab",
   "showHumanRelayDialog",
   "registerHumanRelayCallback",
@@ -894,143 +957,143 @@ var languages = [
   "zh-CN",
   "zh-TW"
 ];
-var languagesSchema = z10.enum(languages);
+var languagesSchema = z11.enum(languages);
 var isLanguage = (value) => languages.includes(value);
 
 // src/global-settings.ts
 var DEFAULT_WRITE_DELAY_MS = 1e3;
 var DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT = 5e4;
 var DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 3e4;
-var globalSettingsSchema = z11.object({
-  currentApiConfigName: z11.string().optional(),
-  listApiConfigMeta: z11.array(providerSettingsEntrySchema).optional(),
-  pinnedApiConfigs: z11.record(z11.string(), z11.boolean()).optional(),
-  lastShownAnnouncementId: z11.string().optional(),
-  customInstructions: z11.string().optional(),
-  taskHistory: z11.array(historyItemSchema).optional(),
-  condensingApiConfigId: z11.string().optional(),
-  customCondensingPrompt: z11.string().optional(),
-  autoApprovalEnabled: z11.boolean().optional(),
-  alwaysAllowReadOnly: z11.boolean().optional(),
-  alwaysAllowReadOnlyOutsideWorkspace: z11.boolean().optional(),
-  alwaysAllowWrite: z11.boolean().optional(),
-  alwaysAllowWriteOutsideWorkspace: z11.boolean().optional(),
-  alwaysAllowWriteProtected: z11.boolean().optional(),
-  writeDelayMs: z11.number().min(0).optional(),
-  alwaysAllowBrowser: z11.boolean().optional(),
-  alwaysApproveResubmit: z11.boolean().optional(),
-  requestDelaySeconds: z11.number().optional(),
-  alwaysAllowMcp: z11.boolean().optional(),
-  alwaysAllowModeSwitch: z11.boolean().optional(),
-  alwaysAllowSubtasks: z11.boolean().optional(),
-  alwaysAllowExecute: z11.boolean().optional(),
-  alwaysAllowFollowupQuestions: z11.boolean().optional(),
-  followupAutoApproveTimeoutMs: z11.number().optional(),
-  alwaysAllowUpdateTodoList: z11.boolean().optional(),
-  allowedCommands: z11.array(z11.string()).optional(),
-  deniedCommands: z11.array(z11.string()).optional(),
-  commandExecutionTimeout: z11.number().optional(),
-  commandTimeoutAllowlist: z11.array(z11.string()).optional(),
-  preventCompletionWithOpenTodos: z11.boolean().optional(),
-  allowedMaxRequests: z11.number().nullish(),
-  allowedMaxCost: z11.number().nullish(),
-  autoCondenseContext: z11.boolean().optional(),
-  autoCondenseContextPercent: z11.number().optional(),
-  maxConcurrentFileReads: z11.number().optional(),
+var globalSettingsSchema = z12.object({
+  currentApiConfigName: z12.string().optional(),
+  listApiConfigMeta: z12.array(providerSettingsEntrySchema).optional(),
+  pinnedApiConfigs: z12.record(z12.string(), z12.boolean()).optional(),
+  lastShownAnnouncementId: z12.string().optional(),
+  customInstructions: z12.string().optional(),
+  taskHistory: z12.array(historyItemSchema).optional(),
+  condensingApiConfigId: z12.string().optional(),
+  customCondensingPrompt: z12.string().optional(),
+  autoApprovalEnabled: z12.boolean().optional(),
+  alwaysAllowReadOnly: z12.boolean().optional(),
+  alwaysAllowReadOnlyOutsideWorkspace: z12.boolean().optional(),
+  alwaysAllowWrite: z12.boolean().optional(),
+  alwaysAllowWriteOutsideWorkspace: z12.boolean().optional(),
+  alwaysAllowWriteProtected: z12.boolean().optional(),
+  writeDelayMs: z12.number().min(0).optional(),
+  alwaysAllowBrowser: z12.boolean().optional(),
+  alwaysApproveResubmit: z12.boolean().optional(),
+  requestDelaySeconds: z12.number().optional(),
+  alwaysAllowMcp: z12.boolean().optional(),
+  alwaysAllowModeSwitch: z12.boolean().optional(),
+  alwaysAllowSubtasks: z12.boolean().optional(),
+  alwaysAllowExecute: z12.boolean().optional(),
+  alwaysAllowFollowupQuestions: z12.boolean().optional(),
+  followupAutoApproveTimeoutMs: z12.number().optional(),
+  alwaysAllowUpdateTodoList: z12.boolean().optional(),
+  allowedCommands: z12.array(z12.string()).optional(),
+  deniedCommands: z12.array(z12.string()).optional(),
+  commandExecutionTimeout: z12.number().optional(),
+  commandTimeoutAllowlist: z12.array(z12.string()).optional(),
+  preventCompletionWithOpenTodos: z12.boolean().optional(),
+  allowedMaxRequests: z12.number().nullish(),
+  allowedMaxCost: z12.number().nullish(),
+  autoCondenseContext: z12.boolean().optional(),
+  autoCondenseContextPercent: z12.number().optional(),
+  maxConcurrentFileReads: z12.number().optional(),
   /**
    * Whether to include diagnostic messages (errors, warnings) in tool outputs
    * @default true
    */
-  includeDiagnosticMessages: z11.boolean().optional(),
+  includeDiagnosticMessages: z12.boolean().optional(),
   /**
    * Maximum number of diagnostic messages to include in tool outputs
    * @default 50
    */
-  maxDiagnosticMessages: z11.number().optional(),
-  browserToolEnabled: z11.boolean().optional(),
-  browserViewportSize: z11.string().optional(),
-  screenshotQuality: z11.number().optional(),
-  remoteBrowserEnabled: z11.boolean().optional(),
-  remoteBrowserHost: z11.string().optional(),
-  cachedChromeHostUrl: z11.string().optional(),
-  enableCheckpoints: z11.boolean().optional(),
-  ttsEnabled: z11.boolean().optional(),
-  ttsSpeed: z11.number().optional(),
-  soundEnabled: z11.boolean().optional(),
-  soundVolume: z11.number().optional(),
-  maxOpenTabsContext: z11.number().optional(),
-  maxWorkspaceFiles: z11.number().optional(),
-  showRooIgnoredFiles: z11.boolean().optional(),
-  maxReadFileLine: z11.number().optional(),
-  maxImageFileSize: z11.number().optional(),
-  maxTotalImageSize: z11.number().optional(),
-  terminalOutputLineLimit: z11.number().optional(),
-  terminalOutputCharacterLimit: z11.number().optional(),
-  terminalShellIntegrationTimeout: z11.number().optional(),
-  terminalShellIntegrationDisabled: z11.boolean().optional(),
-  terminalCommandDelay: z11.number().optional(),
-  terminalPowershellCounter: z11.boolean().optional(),
-  terminalZshClearEolMark: z11.boolean().optional(),
-  terminalZshOhMy: z11.boolean().optional(),
-  terminalZshP10k: z11.boolean().optional(),
-  terminalZdotdir: z11.boolean().optional(),
-  terminalCompressProgressBar: z11.boolean().optional(),
-  diagnosticsEnabled: z11.boolean().optional(),
-  rateLimitSeconds: z11.number().optional(),
-  diffEnabled: z11.boolean().optional(),
-  fuzzyMatchThreshold: z11.number().optional(),
+  maxDiagnosticMessages: z12.number().optional(),
+  browserToolEnabled: z12.boolean().optional(),
+  browserViewportSize: z12.string().optional(),
+  screenshotQuality: z12.number().optional(),
+  remoteBrowserEnabled: z12.boolean().optional(),
+  remoteBrowserHost: z12.string().optional(),
+  cachedChromeHostUrl: z12.string().optional(),
+  enableCheckpoints: z12.boolean().optional(),
+  ttsEnabled: z12.boolean().optional(),
+  ttsSpeed: z12.number().optional(),
+  soundEnabled: z12.boolean().optional(),
+  soundVolume: z12.number().optional(),
+  maxOpenTabsContext: z12.number().optional(),
+  maxWorkspaceFiles: z12.number().optional(),
+  showRooIgnoredFiles: z12.boolean().optional(),
+  maxReadFileLine: z12.number().optional(),
+  maxImageFileSize: z12.number().optional(),
+  maxTotalImageSize: z12.number().optional(),
+  terminalOutputLineLimit: z12.number().optional(),
+  terminalOutputCharacterLimit: z12.number().optional(),
+  terminalShellIntegrationTimeout: z12.number().optional(),
+  terminalShellIntegrationDisabled: z12.boolean().optional(),
+  terminalCommandDelay: z12.number().optional(),
+  terminalPowershellCounter: z12.boolean().optional(),
+  terminalZshClearEolMark: z12.boolean().optional(),
+  terminalZshOhMy: z12.boolean().optional(),
+  terminalZshP10k: z12.boolean().optional(),
+  terminalZdotdir: z12.boolean().optional(),
+  terminalCompressProgressBar: z12.boolean().optional(),
+  diagnosticsEnabled: z12.boolean().optional(),
+  rateLimitSeconds: z12.number().optional(),
+  diffEnabled: z12.boolean().optional(),
+  fuzzyMatchThreshold: z12.number().optional(),
   experiments: experimentsSchema.optional(),
   codebaseIndexModels: codebaseIndexModelsSchema.optional(),
   codebaseIndexConfig: codebaseIndexConfigSchema.optional(),
   language: languagesSchema.optional(),
   telemetrySetting: telemetrySettingsSchema.optional(),
-  mcpEnabled: z11.boolean().optional(),
-  enableMcpServerCreation: z11.boolean().optional(),
-  remoteControlEnabled: z11.boolean().optional(),
-  mode: z11.string().optional(),
-  modeApiConfigs: z11.record(z11.string(), z11.string()).optional(),
-  customModes: z11.array(modeConfigSchema).optional(),
+  mcpEnabled: z12.boolean().optional(),
+  enableMcpServerCreation: z12.boolean().optional(),
+  remoteControlEnabled: z12.boolean().optional(),
+  mode: z12.string().optional(),
+  modeApiConfigs: z12.record(z12.string(), z12.string()).optional(),
+  customModes: z12.array(modeConfigSchema).optional(),
   customModePrompts: customModePromptsSchema.optional(),
   customSupportPrompts: customSupportPromptsSchema.optional(),
-  enhancementApiConfigId: z11.string().optional(),
-  includeTaskHistoryInEnhance: z11.boolean().optional(),
-  historyPreviewCollapsed: z11.boolean().optional(),
-  profileThresholds: z11.record(z11.string(), z11.number()).optional(),
-  hasOpenedModeSelector: z11.boolean().optional(),
-  lastModeExportPath: z11.string().optional(),
-  lastModeImportPath: z11.string().optional(),
+  enhancementApiConfigId: z12.string().optional(),
+  includeTaskHistoryInEnhance: z12.boolean().optional(),
+  historyPreviewCollapsed: z12.boolean().optional(),
+  profileThresholds: z12.record(z12.string(), z12.number()).optional(),
+  hasOpenedModeSelector: z12.boolean().optional(),
+  lastModeExportPath: z12.string().optional(),
+  lastModeImportPath: z12.string().optional(),
   // IM integration data
-  imContacts: z11.object({
-    friends: z11.array(
-      z11.object({
-        id: z11.number(),
-        nickName: z11.string(),
-        headImage: z11.string(),
-        deleted: z11.boolean(),
-        online: z11.boolean(),
-        onlineWeb: z11.boolean(),
-        onlineApp: z11.boolean()
+  imContacts: z12.object({
+    friends: z12.array(
+      z12.object({
+        id: z12.number(),
+        nickName: z12.string(),
+        headImage: z12.string(),
+        deleted: z12.boolean(),
+        online: z12.boolean(),
+        onlineWeb: z12.boolean(),
+        onlineApp: z12.boolean()
       })
     ).optional(),
-    groups: z11.array(
-      z11.object({
-        id: z11.number(),
-        name: z11.string(),
-        ownerId: z11.number(),
-        headImage: z11.string(),
-        headImageThumb: z11.string(),
-        notice: z11.string(),
-        remarkNickName: z11.string(),
-        showNickName: z11.string(),
-        showGroupName: z11.string(),
-        remarkGroupName: z11.string(),
-        dissolve: z11.boolean(),
-        quit: z11.boolean(),
-        isBanned: z11.boolean(),
-        reason: z11.string()
+    groups: z12.array(
+      z12.object({
+        id: z12.number(),
+        name: z12.string(),
+        ownerId: z12.number(),
+        headImage: z12.string(),
+        headImageThumb: z12.string(),
+        notice: z12.string(),
+        remarkNickName: z12.string(),
+        showNickName: z12.string(),
+        showGroupName: z12.string(),
+        remarkGroupName: z12.string(),
+        dissolve: z12.boolean(),
+        quit: z12.boolean(),
+        isBanned: z12.boolean(),
+        reason: z12.string()
       })
     ).optional(),
-    lastUpdated: z11.number().optional()
+    lastUpdated: z12.number().optional()
   }).optional()
 });
 var GLOBAL_SETTINGS_KEYS = globalSettingsSchema.keyof().options;
@@ -1139,62 +1202,62 @@ var EVALS_SETTINGS = {
 var EVALS_TIMEOUT = 5 * 60 * 1e3;
 
 // src/marketplace.ts
-import { z as z12 } from "zod";
-var mcpParameterSchema = z12.object({
-  name: z12.string().min(1),
-  key: z12.string().min(1),
-  placeholder: z12.string().optional(),
-  optional: z12.boolean().optional().default(false)
+import { z as z13 } from "zod";
+var mcpParameterSchema = z13.object({
+  name: z13.string().min(1),
+  key: z13.string().min(1),
+  placeholder: z13.string().optional(),
+  optional: z13.boolean().optional().default(false)
 });
-var mcpInstallationMethodSchema = z12.object({
-  name: z12.string().min(1),
-  content: z12.string().min(1),
-  parameters: z12.array(mcpParameterSchema).optional(),
-  prerequisites: z12.array(z12.string()).optional()
+var mcpInstallationMethodSchema = z13.object({
+  name: z13.string().min(1),
+  content: z13.string().min(1),
+  parameters: z13.array(mcpParameterSchema).optional(),
+  prerequisites: z13.array(z13.string()).optional()
 });
-var marketplaceItemTypeSchema = z12.enum(["mode", "mcp"]);
-var baseMarketplaceItemSchema = z12.object({
-  id: z12.string().min(1),
-  name: z12.string().min(1, "Name is required"),
-  description: z12.string(),
-  author: z12.string().optional(),
-  authorUrl: z12.string().url("Author URL must be a valid URL").optional(),
-  tags: z12.array(z12.string()).optional(),
-  prerequisites: z12.array(z12.string()).optional()
+var marketplaceItemTypeSchema = z13.enum(["mode", "mcp"]);
+var baseMarketplaceItemSchema = z13.object({
+  id: z13.string().min(1),
+  name: z13.string().min(1, "Name is required"),
+  description: z13.string(),
+  author: z13.string().optional(),
+  authorUrl: z13.string().url("Author URL must be a valid URL").optional(),
+  tags: z13.array(z13.string()).optional(),
+  prerequisites: z13.array(z13.string()).optional()
 });
 var modeMarketplaceItemSchema = baseMarketplaceItemSchema.extend({
-  content: z12.string().min(1)
+  content: z13.string().min(1)
   // YAML content for modes
 });
 var mcpMarketplaceItemSchema = baseMarketplaceItemSchema.extend({
-  url: z12.string().url(),
+  url: z13.string().url(),
   // Required url field
-  content: z12.union([z12.string().min(1), z12.array(mcpInstallationMethodSchema)]),
+  content: z13.union([z13.string().min(1), z13.array(mcpInstallationMethodSchema)]),
   // Single config or array of methods
-  parameters: z12.array(mcpParameterSchema).optional()
+  parameters: z13.array(mcpParameterSchema).optional()
 });
-var marketplaceItemSchema = z12.discriminatedUnion("type", [
+var marketplaceItemSchema = z13.discriminatedUnion("type", [
   // Mode marketplace item
   modeMarketplaceItemSchema.extend({
-    type: z12.literal("mode")
+    type: z13.literal("mode")
   }),
   // MCP marketplace item
   mcpMarketplaceItemSchema.extend({
-    type: z12.literal("mcp")
+    type: z13.literal("mcp")
   })
 ]);
-var installMarketplaceItemOptionsSchema = z12.object({
-  target: z12.enum(["global", "project"]).optional().default("project"),
-  parameters: z12.record(z12.string(), z12.any()).optional()
+var installMarketplaceItemOptionsSchema = z13.object({
+  target: z13.enum(["global", "project"]).optional().default("project"),
+  parameters: z13.record(z13.string(), z13.any()).optional()
 });
 
 // src/cloud.ts
-var organizationAllowListSchema = z13.object({
-  allowAll: z13.boolean(),
-  providers: z13.record(
-    z13.object({
-      allowAll: z13.boolean(),
-      models: z13.array(z13.string()).optional()
+var organizationAllowListSchema = z14.object({
+  allowAll: z14.boolean(),
+  providers: z14.record(
+    z14.object({
+      allowAll: z14.boolean(),
+      models: z14.array(z14.string()).optional()
     })
   )
 });
@@ -1212,30 +1275,30 @@ var organizationDefaultSettingsSchema = globalSettingsSchema.pick({
   terminalShellIntegrationTimeout: true,
   terminalZshClearEolMark: true
 }).merge(
-  z13.object({
-    maxOpenTabsContext: z13.number().int().nonnegative().optional(),
-    maxReadFileLine: z13.number().int().gte(-1).optional(),
-    maxWorkspaceFiles: z13.number().int().nonnegative().optional(),
-    terminalCommandDelay: z13.number().int().nonnegative().optional(),
-    terminalOutputLineLimit: z13.number().int().nonnegative().optional(),
-    terminalShellIntegrationTimeout: z13.number().int().nonnegative().optional()
+  z14.object({
+    maxOpenTabsContext: z14.number().int().nonnegative().optional(),
+    maxReadFileLine: z14.number().int().gte(-1).optional(),
+    maxWorkspaceFiles: z14.number().int().nonnegative().optional(),
+    terminalCommandDelay: z14.number().int().nonnegative().optional(),
+    terminalOutputLineLimit: z14.number().int().nonnegative().optional(),
+    terminalShellIntegrationTimeout: z14.number().int().nonnegative().optional()
   })
 );
-var organizationCloudSettingsSchema = z13.object({
-  recordTaskMessages: z13.boolean().optional(),
-  enableTaskSharing: z13.boolean().optional(),
-  taskShareExpirationDays: z13.number().int().positive().optional(),
-  allowMembersViewAllTasks: z13.boolean().optional()
+var organizationCloudSettingsSchema = z14.object({
+  recordTaskMessages: z14.boolean().optional(),
+  enableTaskSharing: z14.boolean().optional(),
+  taskShareExpirationDays: z14.number().int().positive().optional(),
+  allowMembersViewAllTasks: z14.boolean().optional()
 });
-var organizationSettingsSchema = z13.object({
-  version: z13.number(),
+var organizationSettingsSchema = z14.object({
+  version: z14.number(),
   cloudSettings: organizationCloudSettingsSchema.optional(),
   defaultSettings: organizationDefaultSettingsSchema,
   allowList: organizationAllowListSchema,
-  hiddenMcps: z13.array(z13.string()).optional(),
-  hideMarketplaceMcps: z13.boolean().optional(),
-  mcps: z13.array(mcpMarketplaceItemSchema).optional(),
-  providerProfiles: z13.record(z13.string(), discriminatedProviderSettingsWithIdSchema).optional()
+  hiddenMcps: z14.array(z14.string()).optional(),
+  hideMarketplaceMcps: z14.boolean().optional(),
+  mcps: z14.array(mcpMarketplaceItemSchema).optional(),
+  providerProfiles: z14.record(z14.string(), discriminatedProviderSettingsWithIdSchema).optional()
 });
 var ORGANIZATION_ALLOW_ALL = {
   allowAll: true,
@@ -1252,16 +1315,16 @@ var ORGANIZATION_DEFAULT = {
   defaultSettings: {},
   allowList: ORGANIZATION_ALLOW_ALL
 };
-var shareResponseSchema = z13.object({
-  success: z13.boolean(),
-  shareUrl: z13.string().optional(),
-  error: z13.string().optional(),
-  isNewShare: z13.boolean().optional(),
-  manageUrl: z13.string().optional()
+var shareResponseSchema = z14.object({
+  success: z14.boolean(),
+  shareUrl: z14.string().optional(),
+  error: z14.string().optional(),
+  isNewShare: z14.boolean().optional(),
+  manageUrl: z14.string().optional()
 });
 
 // src/events.ts
-import { z as z14 } from "zod";
+import { z as z15 } from "zod";
 var RooCodeEventName = /* @__PURE__ */ ((RooCodeEventName2) => {
   RooCodeEventName2["TaskCreated"] = "taskCreated";
   RooCodeEventName2["TaskStarted"] = "taskStarted";
@@ -1283,149 +1346,149 @@ var RooCodeEventName = /* @__PURE__ */ ((RooCodeEventName2) => {
   RooCodeEventName2["EvalFail"] = "evalFail";
   return RooCodeEventName2;
 })(RooCodeEventName || {});
-var rooCodeEventsSchema = z14.object({
-  ["taskCreated" /* TaskCreated */]: z14.tuple([z14.string()]),
-  ["taskStarted" /* TaskStarted */]: z14.tuple([z14.string()]),
-  ["taskCompleted" /* TaskCompleted */]: z14.tuple([
-    z14.string(),
+var rooCodeEventsSchema = z15.object({
+  ["taskCreated" /* TaskCreated */]: z15.tuple([z15.string()]),
+  ["taskStarted" /* TaskStarted */]: z15.tuple([z15.string()]),
+  ["taskCompleted" /* TaskCompleted */]: z15.tuple([
+    z15.string(),
     tokenUsageSchema,
     toolUsageSchema,
-    z14.object({
-      isSubtask: z14.boolean()
+    z15.object({
+      isSubtask: z15.boolean()
     })
   ]),
-  ["taskAborted" /* TaskAborted */]: z14.tuple([z14.string()]),
-  ["taskFocused" /* TaskFocused */]: z14.tuple([z14.string()]),
-  ["taskUnfocused" /* TaskUnfocused */]: z14.tuple([z14.string()]),
-  ["taskActive" /* TaskActive */]: z14.tuple([z14.string()]),
-  ["taskIdle" /* TaskIdle */]: z14.tuple([z14.string()]),
-  ["taskPaused" /* TaskPaused */]: z14.tuple([z14.string()]),
-  ["taskUnpaused" /* TaskUnpaused */]: z14.tuple([z14.string()]),
-  ["taskSpawned" /* TaskSpawned */]: z14.tuple([z14.string(), z14.string()]),
-  ["message" /* Message */]: z14.tuple([
-    z14.object({
-      taskId: z14.string(),
-      action: z14.union([z14.literal("created"), z14.literal("updated")]),
+  ["taskAborted" /* TaskAborted */]: z15.tuple([z15.string()]),
+  ["taskFocused" /* TaskFocused */]: z15.tuple([z15.string()]),
+  ["taskUnfocused" /* TaskUnfocused */]: z15.tuple([z15.string()]),
+  ["taskActive" /* TaskActive */]: z15.tuple([z15.string()]),
+  ["taskIdle" /* TaskIdle */]: z15.tuple([z15.string()]),
+  ["taskPaused" /* TaskPaused */]: z15.tuple([z15.string()]),
+  ["taskUnpaused" /* TaskUnpaused */]: z15.tuple([z15.string()]),
+  ["taskSpawned" /* TaskSpawned */]: z15.tuple([z15.string(), z15.string()]),
+  ["message" /* Message */]: z15.tuple([
+    z15.object({
+      taskId: z15.string(),
+      action: z15.union([z15.literal("created"), z15.literal("updated")]),
       message: clineMessageSchema
     })
   ]),
-  ["taskModeSwitched" /* TaskModeSwitched */]: z14.tuple([z14.string(), z14.string()]),
-  ["taskAskResponded" /* TaskAskResponded */]: z14.tuple([z14.string()]),
-  ["taskToolFailed" /* TaskToolFailed */]: z14.tuple([z14.string(), toolNamesSchema, z14.string()]),
-  ["taskTokenUsageUpdated" /* TaskTokenUsageUpdated */]: z14.tuple([z14.string(), tokenUsageSchema])
+  ["taskModeSwitched" /* TaskModeSwitched */]: z15.tuple([z15.string(), z15.string()]),
+  ["taskAskResponded" /* TaskAskResponded */]: z15.tuple([z15.string()]),
+  ["taskToolFailed" /* TaskToolFailed */]: z15.tuple([z15.string(), toolNamesSchema, z15.string()]),
+  ["taskTokenUsageUpdated" /* TaskTokenUsageUpdated */]: z15.tuple([z15.string(), tokenUsageSchema])
 });
-var taskEventSchema = z14.discriminatedUnion("eventName", [
+var taskEventSchema = z15.discriminatedUnion("eventName", [
   // Task Provider Lifecycle
-  z14.object({
-    eventName: z14.literal("taskCreated" /* TaskCreated */),
+  z15.object({
+    eventName: z15.literal("taskCreated" /* TaskCreated */),
     payload: rooCodeEventsSchema.shape["taskCreated" /* TaskCreated */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
   // Task Lifecycle
-  z14.object({
-    eventName: z14.literal("taskStarted" /* TaskStarted */),
+  z15.object({
+    eventName: z15.literal("taskStarted" /* TaskStarted */),
     payload: rooCodeEventsSchema.shape["taskStarted" /* TaskStarted */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskCompleted" /* TaskCompleted */),
+  z15.object({
+    eventName: z15.literal("taskCompleted" /* TaskCompleted */),
     payload: rooCodeEventsSchema.shape["taskCompleted" /* TaskCompleted */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskAborted" /* TaskAborted */),
+  z15.object({
+    eventName: z15.literal("taskAborted" /* TaskAborted */),
     payload: rooCodeEventsSchema.shape["taskAborted" /* TaskAborted */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskFocused" /* TaskFocused */),
+  z15.object({
+    eventName: z15.literal("taskFocused" /* TaskFocused */),
     payload: rooCodeEventsSchema.shape["taskFocused" /* TaskFocused */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskUnfocused" /* TaskUnfocused */),
+  z15.object({
+    eventName: z15.literal("taskUnfocused" /* TaskUnfocused */),
     payload: rooCodeEventsSchema.shape["taskUnfocused" /* TaskUnfocused */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskActive" /* TaskActive */),
+  z15.object({
+    eventName: z15.literal("taskActive" /* TaskActive */),
     payload: rooCodeEventsSchema.shape["taskActive" /* TaskActive */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskIdle" /* TaskIdle */),
+  z15.object({
+    eventName: z15.literal("taskIdle" /* TaskIdle */),
     payload: rooCodeEventsSchema.shape["taskIdle" /* TaskIdle */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
   // Subtask Lifecycle
-  z14.object({
-    eventName: z14.literal("taskPaused" /* TaskPaused */),
+  z15.object({
+    eventName: z15.literal("taskPaused" /* TaskPaused */),
     payload: rooCodeEventsSchema.shape["taskPaused" /* TaskPaused */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskUnpaused" /* TaskUnpaused */),
+  z15.object({
+    eventName: z15.literal("taskUnpaused" /* TaskUnpaused */),
     payload: rooCodeEventsSchema.shape["taskUnpaused" /* TaskUnpaused */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskSpawned" /* TaskSpawned */),
+  z15.object({
+    eventName: z15.literal("taskSpawned" /* TaskSpawned */),
     payload: rooCodeEventsSchema.shape["taskSpawned" /* TaskSpawned */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
   // Task Execution
-  z14.object({
-    eventName: z14.literal("message" /* Message */),
+  z15.object({
+    eventName: z15.literal("message" /* Message */),
     payload: rooCodeEventsSchema.shape["message" /* Message */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskModeSwitched" /* TaskModeSwitched */),
+  z15.object({
+    eventName: z15.literal("taskModeSwitched" /* TaskModeSwitched */),
     payload: rooCodeEventsSchema.shape["taskModeSwitched" /* TaskModeSwitched */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskAskResponded" /* TaskAskResponded */),
+  z15.object({
+    eventName: z15.literal("taskAskResponded" /* TaskAskResponded */),
     payload: rooCodeEventsSchema.shape["taskAskResponded" /* TaskAskResponded */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
   // Task Analytics
-  z14.object({
-    eventName: z14.literal("taskToolFailed" /* TaskToolFailed */),
+  z15.object({
+    eventName: z15.literal("taskToolFailed" /* TaskToolFailed */),
     payload: rooCodeEventsSchema.shape["taskToolFailed" /* TaskToolFailed */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
-  z14.object({
-    eventName: z14.literal("taskTokenUsageUpdated" /* TaskTokenUsageUpdated */),
+  z15.object({
+    eventName: z15.literal("taskTokenUsageUpdated" /* TaskTokenUsageUpdated */),
     payload: rooCodeEventsSchema.shape["taskTokenUsageUpdated" /* TaskTokenUsageUpdated */],
-    taskId: z14.number().optional()
+    taskId: z15.number().optional()
   }),
   // Evals
-  z14.object({
-    eventName: z14.literal("evalPass" /* EvalPass */),
-    payload: z14.undefined(),
-    taskId: z14.number()
+  z15.object({
+    eventName: z15.literal("evalPass" /* EvalPass */),
+    payload: z15.undefined(),
+    taskId: z15.number()
   }),
-  z14.object({
-    eventName: z14.literal("evalFail" /* EvalFail */),
-    payload: z14.undefined(),
-    taskId: z14.number()
+  z15.object({
+    eventName: z15.literal("evalFail" /* EvalFail */),
+    payload: z15.undefined(),
+    taskId: z15.number()
   })
 ]);
 
 // src/followup.ts
-import { z as z15 } from "zod";
-var suggestionItemSchema = z15.object({
-  answer: z15.string(),
-  mode: z15.string().optional()
+import { z as z16 } from "zod";
+var suggestionItemSchema = z16.object({
+  answer: z16.string(),
+  mode: z16.string().optional()
 });
-var followUpDataSchema = z15.object({
-  question: z15.string().optional(),
-  suggest: z15.array(suggestionItemSchema).optional()
+var followUpDataSchema = z16.object({
+  question: z16.string().optional(),
+  suggest: z16.array(suggestionItemSchema).optional()
 });
 
 // src/ipc.ts
-import { z as z16 } from "zod";
+import { z as z17 } from "zod";
 var IpcMessageType = /* @__PURE__ */ ((IpcMessageType2) => {
   IpcMessageType2["Connect"] = "Connect";
   IpcMessageType2["Disconnect"] = "Disconnect";
@@ -1439,10 +1502,10 @@ var IpcOrigin = /* @__PURE__ */ ((IpcOrigin2) => {
   IpcOrigin2["Server"] = "server";
   return IpcOrigin2;
 })(IpcOrigin || {});
-var ackSchema = z16.object({
-  clientId: z16.string(),
-  pid: z16.number(),
-  ppid: z16.number()
+var ackSchema = z17.object({
+  clientId: z17.string(),
+  pid: z17.number(),
+  ppid: z17.number()
 });
 var TaskCommandName = /* @__PURE__ */ ((TaskCommandName2) => {
   TaskCommandName2["StartNewTask"] = "StartNewTask";
@@ -1450,106 +1513,106 @@ var TaskCommandName = /* @__PURE__ */ ((TaskCommandName2) => {
   TaskCommandName2["CloseTask"] = "CloseTask";
   return TaskCommandName2;
 })(TaskCommandName || {});
-var taskCommandSchema = z16.discriminatedUnion("commandName", [
-  z16.object({
-    commandName: z16.literal("StartNewTask" /* StartNewTask */),
-    data: z16.object({
+var taskCommandSchema = z17.discriminatedUnion("commandName", [
+  z17.object({
+    commandName: z17.literal("StartNewTask" /* StartNewTask */),
+    data: z17.object({
       configuration: rooCodeSettingsSchema,
-      text: z16.string(),
-      images: z16.array(z16.string()).optional(),
-      newTab: z16.boolean().optional()
+      text: z17.string(),
+      images: z17.array(z17.string()).optional(),
+      newTab: z17.boolean().optional()
     })
   }),
-  z16.object({
-    commandName: z16.literal("CancelTask" /* CancelTask */),
-    data: z16.string()
+  z17.object({
+    commandName: z17.literal("CancelTask" /* CancelTask */),
+    data: z17.string()
   }),
-  z16.object({
-    commandName: z16.literal("CloseTask" /* CloseTask */),
-    data: z16.string()
+  z17.object({
+    commandName: z17.literal("CloseTask" /* CloseTask */),
+    data: z17.string()
   })
 ]);
-var ipcMessageSchema = z16.discriminatedUnion("type", [
-  z16.object({
-    type: z16.literal("Ack" /* Ack */),
-    origin: z16.literal("server" /* Server */),
+var ipcMessageSchema = z17.discriminatedUnion("type", [
+  z17.object({
+    type: z17.literal("Ack" /* Ack */),
+    origin: z17.literal("server" /* Server */),
     data: ackSchema
   }),
-  z16.object({
-    type: z16.literal("TaskCommand" /* TaskCommand */),
-    origin: z16.literal("client" /* Client */),
-    clientId: z16.string(),
+  z17.object({
+    type: z17.literal("TaskCommand" /* TaskCommand */),
+    origin: z17.literal("client" /* Client */),
+    clientId: z17.string(),
     data: taskCommandSchema
   }),
-  z16.object({
-    type: z16.literal("TaskEvent" /* TaskEvent */),
-    origin: z16.literal("server" /* Server */),
-    relayClientId: z16.string().optional(),
+  z17.object({
+    type: z17.literal("TaskEvent" /* TaskEvent */),
+    origin: z17.literal("server" /* Server */),
+    relayClientId: z17.string().optional(),
     data: taskEventSchema
   })
 ]);
 
 // src/mcp.ts
-import { z as z17 } from "zod";
-var mcpExecutionStatusSchema = z17.discriminatedUnion("status", [
-  z17.object({
-    executionId: z17.string(),
-    status: z17.literal("started"),
-    serverName: z17.string(),
-    toolName: z17.string()
+import { z as z18 } from "zod";
+var mcpExecutionStatusSchema = z18.discriminatedUnion("status", [
+  z18.object({
+    executionId: z18.string(),
+    status: z18.literal("started"),
+    serverName: z18.string(),
+    toolName: z18.string()
   }),
-  z17.object({
-    executionId: z17.string(),
-    status: z17.literal("output"),
-    response: z17.string()
+  z18.object({
+    executionId: z18.string(),
+    status: z18.literal("output"),
+    response: z18.string()
   }),
-  z17.object({
-    executionId: z17.string(),
-    status: z17.literal("completed"),
-    response: z17.string().optional()
+  z18.object({
+    executionId: z18.string(),
+    status: z18.literal("completed"),
+    response: z18.string().optional()
   }),
-  z17.object({
-    executionId: z17.string(),
-    status: z17.literal("error"),
-    error: z17.string().optional()
+  z18.object({
+    executionId: z18.string(),
+    status: z18.literal("error"),
+    error: z18.string().optional()
   })
 ]);
 
 // src/todo.ts
-import { z as z18 } from "zod";
-var todoStatusSchema = z18.enum(["pending", "in_progress", "completed"]);
-var todoItemSchema = z18.object({
-  id: z18.string(),
-  content: z18.string(),
+import { z as z19 } from "zod";
+var todoStatusSchema = z19.enum(["pending", "in_progress", "completed"]);
+var todoItemSchema = z19.object({
+  id: z19.string(),
+  content: z19.string(),
   status: todoStatusSchema
 });
 
 // src/terminal.ts
-import { z as z19 } from "zod";
-var commandExecutionStatusSchema = z19.discriminatedUnion("status", [
-  z19.object({
-    executionId: z19.string(),
-    status: z19.literal("started"),
-    pid: z19.number().optional(),
-    command: z19.string()
+import { z as z20 } from "zod";
+var commandExecutionStatusSchema = z20.discriminatedUnion("status", [
+  z20.object({
+    executionId: z20.string(),
+    status: z20.literal("started"),
+    pid: z20.number().optional(),
+    command: z20.string()
   }),
-  z19.object({
-    executionId: z19.string(),
-    status: z19.literal("output"),
-    output: z19.string()
+  z20.object({
+    executionId: z20.string(),
+    status: z20.literal("output"),
+    output: z20.string()
   }),
-  z19.object({
-    executionId: z19.string(),
-    status: z19.literal("exited"),
-    exitCode: z19.number().optional()
+  z20.object({
+    executionId: z20.string(),
+    status: z20.literal("exited"),
+    exitCode: z20.number().optional()
   }),
-  z19.object({
-    executionId: z19.string(),
-    status: z19.literal("fallback")
+  z20.object({
+    executionId: z20.string(),
+    status: z20.literal("fallback")
   }),
-  z19.object({
-    executionId: z19.string(),
-    status: z19.literal("timeout")
+  z20.object({
+    executionId: z20.string(),
+    status: z20.literal("timeout")
   })
 ]);
 
@@ -2853,6 +2916,16 @@ var geminiModels = {
     cacheWritesPrice: 1,
     supportsReasoningBudget: true,
     maxThinkingTokens: 24576
+  },
+  "imagen-2": {
+    maxTokens: 0,
+    contextWindow: 0,
+    supportsImages: true,
+    supportsPromptCache: false,
+    inputPrice: 0.02,
+    outputPrice: 0,
+    modelType: "image-generation",
+    description: "Google Imagen 3 via Gemini API for image generation"
   }
 };
 
@@ -4470,6 +4543,13 @@ export {
   VERTEX_REGIONS,
   ZAI_DEFAULT_TEMPERATURE,
   ackSchema,
+  agentConfigSchema,
+  agentExportDataSchema,
+  agentListOptionsSchema,
+  agentTemplateDataSchema,
+  agentTemplateSourceSchema,
+  agentTodoSchema,
+  agentToolConfigSchema,
   anthropicDefaultModelId,
   anthropicModels,
   appPropertiesSchema,

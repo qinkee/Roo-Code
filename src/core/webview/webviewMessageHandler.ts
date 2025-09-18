@@ -2441,6 +2441,217 @@ export const webviewMessageHandler = async (
 			}
 			break
 		}
+
+		case "createAgentFromTask": {
+			// Switch to agents tab and pass template data for creating agent from task
+			await provider.postMessageToWebview({
+				type: "action",
+				action: "switchTab",
+				tab: "agents"
+			})
+
+			// Send template data to pre-populate agent creation form
+			if (message.templateData) {
+				await provider.postMessageToWebview({
+					type: "createAgentFromTask",
+					templateData: message.templateData
+				})
+			}
+			break
+		}
+
+		// 智能体相关消息处理
+		case "createAgent": {
+			try {
+				if (!message.agentConfig) {
+					await provider.postMessageToWebview({
+						type: "action",
+						action: "createAgentResult",
+						success: false,
+						error: "Agent configuration is required"
+					})
+					break
+				}
+
+				const VoidBridge = require("../../api/void-bridge").VoidBridge
+				const userId = VoidBridge.getCurrentUserId() || "default"
+				const result = await vscode.commands.executeCommand("roo-cline.createAgent", {
+					userId,
+					agentConfig: message.agentConfig
+				}) as any
+
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "createAgentResult",
+					...result
+				})
+			} catch (error) {
+				provider.log(`Error creating agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "createAgentResult",
+					success: false,
+					error: error instanceof Error ? error.message : String(error)
+				})
+			}
+			break
+		}
+
+		case "listAgents": {
+			try {
+				const VoidBridge = require("../../api/void-bridge").VoidBridge
+				const userId = VoidBridge.getCurrentUserId() || "default"
+				const result = await vscode.commands.executeCommand("roo-cline.getAgents", {
+					userId,
+					options: message.agentListOptions
+				}) as any
+
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "listAgentsResult",
+					...result
+				})
+			} catch (error) {
+				provider.log(`Error listing agents: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "listAgentsResult",
+					success: false,
+					agents: [],
+					error: error instanceof Error ? error.message : String(error)
+				})
+			}
+			break
+		}
+
+		case "getAgent": {
+			try {
+				const VoidBridge = require("../../api/void-bridge").VoidBridge
+				const userId = VoidBridge.getCurrentUserId() || "default"
+				const result = await vscode.commands.executeCommand("roo-cline.getAgent", {
+					userId,
+					agentId: message.agentId
+				}) as any
+
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "getAgentResult",
+					...result
+				})
+			} catch (error) {
+				provider.log(`Error getting agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "getAgentResult",
+					success: false,
+					agent: null,
+					error: error instanceof Error ? error.message : String(error)
+				})
+			}
+			break
+		}
+
+		case "updateAgent": {
+			try {
+				const VoidBridge = require("../../api/void-bridge").VoidBridge
+				const userId = VoidBridge.getCurrentUserId() || "default"
+				const result = await vscode.commands.executeCommand("roo-cline.updateAgent", {
+					userId,
+					agentId: message.agentId,
+					agentConfig: message.agentConfig
+				}) as any
+
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "updateAgentResult",
+					...result
+				})
+			} catch (error) {
+				provider.log(`Error updating agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "updateAgentResult",
+					success: false,
+					error: error instanceof Error ? error.message : String(error)
+				})
+			}
+			break
+		}
+
+		case "startAgentTask": {
+			try {
+				const VoidBridge = require("../../api/void-bridge").VoidBridge
+				const userId = VoidBridge.getCurrentUserId() || "default"
+				
+				// 获取智能体配置
+				const result = await vscode.commands.executeCommand("roo-cline.getAgent", {
+					userId,
+					agentId: message.agentId
+				}) as any
+
+				if (result.success && result.agent) {
+					const agent = result.agent
+					
+					// 使用智能体的配置启动新任务
+					// 1. 首先获取API配置名称
+					let apiConfigName: string | undefined
+					if (agent.apiConfigId) {
+						const apiConfigs = provider.contextProxy.getValues().listApiConfigMeta || []
+						const targetConfig = apiConfigs.find(config => config.id === agent.apiConfigId)
+						if (targetConfig) {
+							apiConfigName = targetConfig.name
+						}
+					}
+					
+					// 2. 设置API配置（通过本地updateGlobalState函数）
+					if (apiConfigName) {
+						await updateGlobalState("currentApiConfigName", apiConfigName)
+						provider.log(`[startAgentTask] Set API configuration to: ${apiConfigName}`)
+					}
+					
+					// 3. 设置模式
+					if (agent.mode) {
+						await updateGlobalState("mode", agent.mode)
+						provider.log(`[startAgentTask] Set mode to: ${agent.mode}`)
+					}
+					
+					// 4. 同步状态到webview，确保配置更改生效
+					await provider.postStateToWebview()
+					provider.log(`[startAgentTask] State synchronized with agent configuration`)
+					
+					// 5. 启动新任务（这会使用上面设置的配置）
+					await vscode.commands.executeCommand("roo-cline.newTask")
+					
+					// 发送成功响应，前端会切换到聊天界面
+					await provider.postMessageToWebview({
+						type: "action",
+						action: "startAgentTaskResult",
+						success: true,
+						agentId: message.agentId,
+						agentName: agent.name
+					})
+					
+					provider.log(`[startAgentTask] Started new task with agent: ${agent.name}`)
+				} else {
+					await provider.postMessageToWebview({
+						type: "action",
+						action: "startAgentTaskResult",
+						success: false,
+						error: "智能体未找到"
+					})
+				}
+			} catch (error) {
+				provider.log(`Error starting agent task: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "startAgentTaskResult",
+					success: false,
+					error: error instanceof Error ? error.message : String(error)
+				})
+			}
+			break
+		}
+		
 		case "getImContacts": {
 			try {
 				// First try to get current user ID from void

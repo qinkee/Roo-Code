@@ -79,7 +79,7 @@ export class IMAuthService {
             this.outputChannel.appendLine(`[IMAuth] Token payload: terminal=6, userId=${loginData.userId || 'unknown'}`);
             
             // 显示成功消息
-            vscode.window.showInformationMessage('Roo-Code IM connection established (terminal=6)');
+            // vscode.window.showInformationMessage('Roo-Code IM connection established (terminal=6)');
             
             return loginData.accessToken;
             

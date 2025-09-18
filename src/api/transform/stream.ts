@@ -1,6 +1,12 @@
 export type ApiStream = AsyncGenerator<ApiStreamChunk>
 
-export type ApiStreamChunk = ApiStreamTextChunk | ApiStreamUsageChunk | ApiStreamReasoningChunk | ApiStreamError
+export type ApiStreamChunk = 
+	| ApiStreamTextChunk 
+	| ApiStreamUsageChunk 
+	| ApiStreamReasoningChunk 
+	| ApiStreamError
+	| ApiStreamImageChunk
+	| ApiStreamProgressChunk
 
 export interface ApiStreamError {
 	type: "error"
@@ -26,4 +32,19 @@ export interface ApiStreamUsageChunk {
 	cacheReadTokens?: number
 	reasoningTokens?: number
 	totalCost?: number
+}
+
+export interface ApiStreamImageChunk {
+	type: "image-chunk"
+	data: string
+	progress: number
+	isComplete: boolean
+	// Optional workspace file URI for VSCode webview display
+	fileUri?: string
+	fileName?: string
+}
+
+export interface ApiStreamProgressChunk {
+	type: "progress"
+	text: string
 }

@@ -8,7 +8,7 @@ import { useCopyToClipboard } from "@/utils/clipboard"
 
 import { DeleteTaskDialog } from "../history/DeleteTaskDialog"
 import { IconButton } from "./IconButton"
-import { ShareButton } from "./ShareButton"
+import { CreateAgentButton } from "./CreateAgentButton"
 
 interface TaskActionsProps {
 	item?: HistoryItem
@@ -61,7 +61,7 @@ export const TaskActions = ({ item, buttonsDisabled }: TaskActionsProps) => {
 					)}
 				</>
 			)}
-			<ShareButton item={item} disabled={false} showLabel={false} />
+			<CreateAgentButton item={item} disabled={buttonsDisabled} showLabel={false} />
 		</div>
 	)
 }
