@@ -86,10 +86,13 @@ export class CustomModesManager {
 	}
 
 	/**
-	 * 初始化同步流程：确保首次加载时同步到 Redis
+	 * 初始化同步流程：确保首次加载时同步到 Redis 并验证模式选择
 	 */
 	private async initializeSync(): Promise<void> {
 		try {
+			// 确保有有效的模式选择
+			await this.ensureValidModeSelection()
+			
 			// 无论如何都尝试同步当前数据到 Redis（如果有用户的话）
 			await this.syncModesToRedis()
 		} catch (error) {
@@ -1305,8 +1308,39 @@ export class CustomModesManager {
 			// 清除缓存，强制重新加载
 			this.clearCache()
 			await this.syncFromRedis()
+			
+			// 确保同步后有有效的模式选择
+			await this.ensureValidModeSelection()
 		} catch (error) {
 			logger.error("[CustomModesManager] Failed to force sync from Redis:", error)
+		}
+	}
+
+	/**
+	 * 确保当前有有效的模式选择，如果没有则设置为默认模式（orchestrator）
+	 */
+	public async ensureValidModeSelection(): Promise<void> {
+		try {
+			const { defaultModeSlug, getModeBySlug } = await import("../../shared/modes")
+			const currentMode = await this.context.globalState.get("mode") as string | undefined
+			
+			// 如果没有当前模式，直接设置为默认模式
+			if (!currentMode) {
+				logger.info(`[CustomModesManager] No mode selected, setting default mode: ${defaultModeSlug}`)
+				await this.context.globalState.update("mode", defaultModeSlug)
+				return
+			}
+			
+			// 检查当前模式是否存在于可用模式中
+			const allModes = await this.getCustomModes()
+			const modeExists = getModeBySlug(currentMode, allModes)
+			
+			if (!modeExists) {
+				logger.info(`[CustomModesManager] Current mode '${currentMode}' not found, setting default mode: ${defaultModeSlug}`)
+				await this.context.globalState.update("mode", defaultModeSlug)
+			}
+		} catch (error) {
+			logger.error("[CustomModesManager] Failed to ensure valid mode selection:", error)
 		}
 	}
 

@@ -63,8 +63,8 @@ export function getToolsForMode(groups: readonly GroupEntry[]): string[] {
 // Main modes configuration as an ordered array
 export const modes = DEFAULT_MODES
 
-// Export the default mode slug
-export const defaultModeSlug = modes[0].slug
+// Export the default mode slug - always use orchestrator
+export const defaultModeSlug = "orchestrator"
 
 // Helper functions
 export function getModeBySlug(slug: string, customModes?: ModeConfig[]): ModeConfig | undefined {

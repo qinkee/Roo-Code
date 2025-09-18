@@ -291,6 +291,9 @@ export class VoidBridge {
 							terminalNo: data.terminalNo,
 						})
 
+						// Update webview state after mode sync (ensures correct mode selection)
+						await VoidBridge.provider.postStateToWebview()
+
 						// Send IM contacts to webview
 						if (userContacts) {
 							await VoidBridge.provider.postMessageToWebview({
