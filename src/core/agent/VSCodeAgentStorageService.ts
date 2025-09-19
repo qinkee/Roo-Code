@@ -1,5 +1,5 @@
 import * as vscode from "vscode"
-import { AgentConfig, AgentTodo, AgentListOptions, AgentExportData } from "@roo-code/types"
+import { AgentConfig, AgentTodo, AgentListOptions, AgentExportData, A2AAgentCard } from "@roo-code/types"
 import { AgentStorageService } from "./AgentStorageService"
 import { logger } from "../../utils/logging"
 
@@ -24,7 +24,39 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 	 */
 	private async getUserAgents(userId: string): Promise<Record<string, AgentConfig>> {
 		const key = this.getUserAgentsKey(userId)
-		return (await this.context.globalState.get(key, {})) as Record<string, AgentConfig>
+		const agents = (await this.context.globalState.get(key, {})) as Record<string, AgentConfig>
+		
+		// 向后兼容性：为旧的智能体添加默认的新字段
+		Object.values(agents).forEach(agent => {
+			this.migrateAgentConfig(agent)
+		})
+		
+		return agents
+	}
+
+	/**
+	 * 迁移智能体配置以支持新字段（向后兼容性）
+	 */
+	private migrateAgentConfig(agent: AgentConfig): void {
+		// 为旧的智能体添加新的字段默认值
+		if (agent.isPrivate === undefined) {
+			agent.isPrivate = true
+		}
+		if (agent.shareLevel === undefined) {
+			agent.shareLevel = 0
+		}
+		if (!agent.permissions) {
+			agent.permissions = []
+		}
+		if (!agent.allowedUsers) {
+			agent.allowedUsers = []
+		}
+		if (!agent.allowedGroups) {
+			agent.allowedGroups = []
+		}
+		if (!agent.deniedUsers) {
+			agent.deniedUsers = []
+		}
 	}
 
 	/**
@@ -342,6 +374,167 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 		} catch (error) {
 			logger.error("[VSCodeAgentStorageService] Failed to import agent:", error)
 			throw new Error(`Failed to import agent: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	}
+
+	/**
+	 * 更新智能体的共享配置
+	 */
+	async updateAgentSharing(
+		userId: string, 
+		agentId: string, 
+		sharing: {
+			isPrivate?: boolean
+			shareScope?: 'friends' | 'groups' | 'public'
+			shareLevel?: number
+			allowedUsers?: string[]
+			allowedGroups?: string[]
+			deniedUsers?: string[]
+		}
+	): Promise<AgentConfig> {
+		try {
+			const agent = await this.getAgent(userId, agentId)
+			if (!agent) {
+				throw new Error(`Agent ${agentId} not found for user ${userId}`)
+			}
+
+			// 确保只有所有者可以修改共享设置
+			if (agent.userId !== userId) {
+				throw new Error(`Only the owner can modify sharing settings`)
+			}
+
+			const updates: Partial<AgentConfig> = {
+				isPrivate: sharing.isPrivate ?? agent.isPrivate,
+				shareScope: sharing.shareScope ?? agent.shareScope,
+				shareLevel: sharing.shareLevel ?? agent.shareLevel,
+				allowedUsers: sharing.allowedUsers ?? agent.allowedUsers,
+				allowedGroups: sharing.allowedGroups ?? agent.allowedGroups,
+				deniedUsers: sharing.deniedUsers ?? agent.deniedUsers,
+			}
+
+			// 如果设置为私有，清除其他共享配置
+			if (updates.isPrivate) {
+				updates.shareScope = undefined
+				updates.shareLevel = 0
+				updates.allowedUsers = []
+				updates.allowedGroups = []
+			}
+
+			return await this.updateAgent(userId, agentId, updates)
+		} catch (error) {
+			logger.error(`[VSCodeAgentStorageService] Failed to update agent sharing ${agentId}:`, error)
+			throw new Error(`Failed to update agent sharing: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	}
+
+	/**
+	 * 更新智能体的A2A配置
+	 */
+	async updateAgentA2AConfig(
+		userId: string, 
+		agentId: string, 
+		a2aConfig: {
+			a2aAgentCard?: A2AAgentCard
+			a2aEndpoint?: string
+		}
+	): Promise<AgentConfig> {
+		try {
+			const agent = await this.getAgent(userId, agentId)
+			if (!agent) {
+				throw new Error(`Agent ${agentId} not found for user ${userId}`)
+			}
+
+			// 确保只有所有者可以修改A2A配置
+			if (agent.userId !== userId) {
+				throw new Error(`Only the owner can modify A2A configuration`)
+			}
+
+			const updates: Partial<AgentConfig> = {
+				a2aAgentCard: a2aConfig.a2aAgentCard ?? agent.a2aAgentCard,
+				a2aEndpoint: a2aConfig.a2aEndpoint ?? agent.a2aEndpoint,
+			}
+
+			return await this.updateAgent(userId, agentId, updates)
+		} catch (error) {
+			logger.error(`[VSCodeAgentStorageService] Failed to update agent A2A config ${agentId}:`, error)
+			throw new Error(`Failed to update agent A2A config: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	}
+
+	/**
+	 * 搜索可访问的智能体（包括共享的智能体）
+	 */
+	async searchAccessibleAgents(
+		userId: string, 
+		query: string, 
+		includeShared: boolean = true
+	): Promise<AgentConfig[]> {
+		try {
+			// 首先获取用户自己的智能体
+			const userAgents = await this.searchAgents(userId, query)
+			
+			if (!includeShared) {
+				return userAgents
+			}
+
+			// TODO: 这里需要实现跨用户的共享智能体搜索
+			// 当前阶段只返回用户自己的智能体
+			// 后续需要集成Redis注册中心来支持共享智能体发现
+			
+			logger.debug(`[VSCodeAgentStorageService] Searched ${userAgents.length} accessible agents for user ${userId}`)
+			return userAgents
+		} catch (error) {
+			logger.error(`[VSCodeAgentStorageService] Failed to search accessible agents for user ${userId}:`, error)
+			return []
+		}
+	}
+
+	/**
+	 * 获取智能体的基本信息（用于公开展示）
+	 */
+	async getAgentPublicInfo(agentId: string): Promise<{
+		id: string
+		name: string
+		description: string
+		avatar: string
+		isPrivate: boolean
+		shareScope?: string
+		tags?: string[]
+		capabilities?: string[]
+	} | null> {
+		try {
+			// TODO: 这里需要实现从Redis注册中心获取智能体公开信息
+			// 当前阶段返回null，后续集成注册中心后实现
+			logger.debug(`[VSCodeAgentStorageService] Get public info for agent ${agentId} - not implemented yet`)
+			return null
+		} catch (error) {
+			logger.error(`[VSCodeAgentStorageService] Failed to get agent public info ${agentId}:`, error)
+			return null
+		}
+	}
+
+	/**
+	 * 检查用户是否有权限访问指定智能体
+	 */
+	async checkAgentAccess(
+		userId: string, 
+		agentId: string, 
+		action: 'read' | 'execute' | 'modify' = 'read'
+	): Promise<boolean> {
+		try {
+			// 首先检查是否是用户自己的智能体
+			const agent = await this.getAgent(userId, agentId)
+			if (agent) {
+				return true // 所有者有所有权限
+			}
+
+			// TODO: 这里需要实现共享智能体的权限检查
+			// 需要从Redis注册中心获取智能体信息并检查权限
+			logger.debug(`[VSCodeAgentStorageService] Check agent access for ${agentId} - shared agent access not implemented yet`)
+			return false
+		} catch (error) {
+			logger.error(`[VSCodeAgentStorageService] Failed to check agent access ${agentId}:`, error)
+			return false
 		}
 	}
 }

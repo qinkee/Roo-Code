@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能体删除UI示例</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--vscode-editor-background, #1e1e1e);
+            color: var(--vscode-editor-foreground, #d4d4d4);
+        }
+        .agent-card {
+            border: 1px solid var(--vscode-panel-border, #3c3c3c);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            background-color: var(--vscode-editor-background, #252526);
+        }
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .agent-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .agent-avatar {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+        .agent-description {
+            color: var(--vscode-descriptionForeground, #cccccc);
+            margin-bottom: 12px;
+        }
+        .agent-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .btn-delete {
+            background-color: var(--vscode-errorBackground, #f14c4c);
+            color: var(--vscode-errorForeground, #ffffff);
+        }
+        .btn-delete:hover {
+            background-color: var(--vscode-errorHover, #d32f2f);
+        }
+        .btn-edit {
+            background-color: var(--vscode-button-background, #0e639c);
+            color: var(--vscode-button-foreground, #ffffff);
+        }
+        .btn-edit:hover {
+            background-color: var(--vscode-button-hoverBackground, #1177bb);
+        }
+        .btn-start {
+            background-color: var(--vscode-button-secondaryBackground, #5a5d5e);
+            color: var(--vscode-button-secondaryForeground, #ffffff);
+        }
+        .btn-start:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground, #6c7172);
+        }
+        .status-message {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 16px 0;
+        }
+        .success {
+            background-color: var(--vscode-testing-iconPassed, #73c991);
+            color: var(--vscode-editor-background, #1e1e1e);
+        }
+        .error {
+            background-color: var(--vscode-errorBackground, #f14c4c);
+            color: var(--vscode-errorForeground, #ffffff);
+        }
+        .loading {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .confirmation-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .dialog-content {
+            background-color: var(--vscode-editor-background, #1e1e1e);
+            border: 1px solid var(--vscode-panel-border, #3c3c3c);
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+        }
+        .dialog-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .dialog-message {
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .btn-cancel {
+            background-color: transparent;
+            border: 1px solid var(--vscode-panel-border, #3c3c3c);
+            color: var(--vscode-editor-foreground, #d4d4d4);
+        }
+        .btn-cancel:hover {
+            background-color: var(--vscode-list-hoverBackground, #2a2d2e);
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 智能体管理</h1>
+    
+    <div id="status-message" class="status-message" style="display: none;"></div>
+    
+    <div id="agents-container">
+        <!-- 智能体列表将在这里动态加载 -->
+        <div class="agent-card">
+            <div class="agent-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="agent-avatar">🤖</span>
+                    <span class="agent-name">代码助手</span>
+                </div>
+            </div>
+            <div class="agent-description">专业的代码分析和优化助手，擅长多种编程语言</div>
+            <div class="agent-actions">
+                <button class="btn btn-start" onclick="startAgent('agent-1', '代码助手')">
+                    启动任务
+                </button>
+                <button class="btn btn-edit" onclick="editAgent('agent-1')">
+                    编辑
+                </button>
+                <button class="btn btn-delete" onclick="showDeleteConfirmation('agent-1', '代码助手')">
+                    删除
+                </button>
+            </div>
+        </div>
+
+        <div class="agent-card">
+            <div class="agent-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="agent-avatar">📝</span>
+                    <span class="agent-name">文档助手</span>
+                </div>
+            </div>
+            <div class="agent-description">帮助生成和维护技术文档的专业助手</div>
+            <div class="agent-actions">
+                <button class="btn btn-start" onclick="startAgent('agent-2', '文档助手')">
+                    启动任务
+                </button>
+                <button class="btn btn-edit" onclick="editAgent('agent-2')">
+                    编辑
+                </button>
+                <button class="btn btn-delete" onclick="showDeleteConfirmation('agent-2', '文档助手')">
+                    删除
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除对话框 -->
+    <div id="delete-confirmation" class="confirmation-dialog" style="display: none;">
+        <div class="dialog-content">
+            <div class="dialog-title">⚠️ 确认删除</div>
+            <div class="dialog-message" id="delete-message">
+                <!-- 删除确认消息将在这里显示 -->
+            </div>
+            <div class="dialog-actions">
+                <button class="btn btn-cancel" onclick="cancelDelete()">取消</button>
+                <button class="btn btn-delete" onclick="confirmDelete()">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量存储要删除的智能体信息
+        let deleteAgentId = null;
+        let deleteAgentName = null;
+
+        /**
+         * 显示状态消息
+         */
+        function showStatusMessage(message, type = 'success') {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type}`;
+            statusEl.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        }
+
+        /**
+         * 显示删除确认对话框
+         */
+        function showDeleteConfirmation(agentId, agentName) {
+            deleteAgentId = agentId;
+            deleteAgentName = agentName;
+            
+            const messageEl = document.getElementById('delete-message');
+            messageEl.textContent = `确定要删除智能体 "${agentName}" 吗？此操作无法撤销，智能体的所有配置和数据都将被永久删除。`;
+            
+            document.getElementById('delete-confirmation').style.display = 'flex';
+        }
+
+        /**
+         * 取消删除
+         */
+        function cancelDelete() {
+            deleteAgentId = null;
+            deleteAgentName = null;
+            document.getElementById('delete-confirmation').style.display = 'none';
+        }
+
+        /**
+         * 确认删除智能体
+         */
+        function confirmDelete() {
+            if (!deleteAgentId || !deleteAgentName) {
+                showStatusMessage('删除操作异常：缺少智能体信息', 'error');
+                return;
+            }
+            
+            // 隐藏确认对话框
+            document.getElementById('delete-confirmation').style.display = 'none';
+            
+            // 发送删除消息到VSCode扩展
+            deleteAgent(deleteAgentId, deleteAgentName);
+        }
+
+        /**
+         * 发送删除智能体消息到VSCode
+         */
+        function deleteAgent(agentId, agentName) {
+            console.log(`🗑️ 删除智能体: ${agentName} (${agentId})`);
+            
+            // 显示loading状态
+            showStatusMessage('正在删除智能体...', 'loading');
+            
+            // 构建删除消息
+            const message = {
+                type: "deleteAgent",
+                agentId: agentId,
+                agentName: agentName
+            };
+            
+            try {
+                // 发送消息到VSCode扩展后端
+                if (typeof vscode !== 'undefined') {
+                    vscode.postMessage(message);
+                } else {
+                    // 如果在非VSCode环境中测试，模拟处理
+                    console.log('模拟删除消息发送:', message);
+                    
+                    // 模拟延迟响应
+                    setTimeout(() => {
+                        handleDeleteAgentResult({ success: true });
+                        removeAgentFromUI(agentId);
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error('发送删除消息失败:', error);
+                showStatusMessage('删除请求发送失败', 'error');
+            }
+        }
+
+        /**
+         * 处理删除结果
+         */
+        function handleDeleteAgentResult(result) {
+            if (result.success) {
+                showStatusMessage(`智能体 "${deleteAgentName}" 已成功删除`, 'success');
+            } else {
+                const errorMessage = result.error || '未知错误';
+                showStatusMessage(`删除失败: ${errorMessage}`, 'error');
+            }
+            
+            // 清理全局变量
+            deleteAgentId = null;
+            deleteAgentName = null;
+        }
+
+        /**
+         * 从UI中移除智能体卡片
+         */
+        function removeAgentFromUI(agentId) {
+            // 这里应该根据实际的DOM结构来移除对应的智能体卡片
+            // 由于这是示例，我们只是添加一个"已删除"标记
+            const cards = document.querySelectorAll('.agent-card');
+            cards.forEach(card => {
+                const deleteBtn = card.querySelector('.btn-delete');
+                if (deleteBtn && deleteBtn.onclick.toString().includes(agentId)) {
+                    card.style.opacity = '0.5';
+                    card.style.pointerEvents = 'none';
+                    
+                    const nameEl = card.querySelector('.agent-name');
+                    if (nameEl) {
+                        nameEl.textContent += ' (已删除)';
+                    }
+                }
+            });
+        }
+
+        /**
+         * 启动智能体任务
+         */
+        function startAgent(agentId, agentName) {
+            console.log(`🚀 启动智能体任务: ${agentName}`);
+            
+            const message = {
+                type: "startAgentTask",
+                agentId: agentId
+            };
+            
+            if (typeof vscode !== 'undefined') {
+                vscode.postMessage(message);
+            } else {
+                console.log('模拟启动任务消息:', message);
+                showStatusMessage(`正在启动 "${agentName}" 的任务...`, 'success');
+            }
+        }
+
+        /**
+         * 编辑智能体
+         */
+        function editAgent(agentId) {
+            console.log(`✏️ 编辑智能体: ${agentId}`);
+            
+            const message = {
+                type: "getAgent",
+                agentId: agentId
+            };
+            
+            if (typeof vscode !== 'undefined') {
+                vscode.postMessage(message);
+            } else {
+                console.log('模拟编辑消息:', message);
+                showStatusMessage('正在打开编辑界面...', 'success');
+            }
+        }
+
+        /**
+         * 监听来自VSCode扩展的消息
+         */
+        if (typeof window !== 'undefined') {
+            window.addEventListener('message', event => {
+                const message = event.data;
+                
+                switch (message.type) {
+                    case 'action':
+                        if (message.action === 'deleteAgentResult') {
+                            handleDeleteAgentResult(message);
+                        }
+                        break;
+                }
+            });
+        }
+
+        /**
+         * 页面加载完成后的初始化
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎬 智能体管理页面已加载');
+            
+            // 如果需要，可以在这里加载智能体列表
+            // loadAgentsList();
+        });
+
+        /**
+         * 加载智能体列表（示例）
+         */
+        function loadAgentsList() {
+            const message = {
+                type: "listAgents",
+                agentListOptions: {}
+            };
+            
+            if (typeof vscode !== 'undefined') {
+                vscode.postMessage(message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -75,10 +75,18 @@ __export(index_exports, {
   TelemetryEventName: () => TelemetryEventName,
   VERTEX_REGIONS: () => VERTEX_REGIONS,
   ZAI_DEFAULT_TEMPERATURE: () => ZAI_DEFAULT_TEMPERATURE,
+  a2aAgentCardSchema: () => a2aAgentCardSchema,
   ackSchema: () => ackSchema,
   agentConfigSchema: () => agentConfigSchema,
+  agentDiscoveryQuerySchema: () => agentDiscoveryQuerySchema,
+  agentDiscoveryResultSchema: () => agentDiscoveryResultSchema,
+  agentEndpointSchema: () => agentEndpointSchema,
   agentExportDataSchema: () => agentExportDataSchema,
+  agentInstanceSchema: () => agentInstanceSchema,
   agentListOptionsSchema: () => agentListOptionsSchema,
+  agentPermissionSchema: () => agentPermissionSchema,
+  agentRequestSchema: () => agentRequestSchema,
+  agentResponseSchema: () => agentResponseSchema,
   agentTemplateDataSchema: () => agentTemplateDataSchema,
   agentTemplateSourceSchema: () => agentTemplateSourceSchema,
   agentTodoSchema: () => agentTodoSchema,
@@ -197,6 +205,8 @@ __export(index_exports, {
   reasoningEffortsSchema: () => reasoningEffortsSchema,
   requestyDefaultModelId: () => requestyDefaultModelId,
   requestyDefaultModelInfo: () => requestyDefaultModelInfo,
+  resourceQuotaSchema: () => resourceQuotaSchema,
+  resourceUsageSchema: () => resourceUsageSchema,
   rooCodeEventsSchema: () => rooCodeEventsSchema,
   rooCodeSettingsSchema: () => rooCodeSettingsSchema,
   rooCodeTelemetryEventSchema: () => rooCodeTelemetryEventSchema,
@@ -222,6 +232,7 @@ __export(index_exports, {
   toolUsageSchema: () => toolUsageSchema,
   unboundDefaultModelId: () => unboundDefaultModelId,
   unboundDefaultModelInfo: () => unboundDefaultModelInfo,
+  unifiedAgentRegistrySchema: () => unifiedAgentRegistrySchema,
   verbosityLevels: () => verbosityLevels,
   verbosityLevelsSchema: () => verbosityLevelsSchema,
   vertexDefaultModelId: () => vertexDefaultModelId,
@@ -254,6 +265,54 @@ var agentTemplateSourceSchema = import_zod.z.object({
   taskDescription: import_zod.z.string().optional(),
   timestamp: import_zod.z.number()
 });
+var a2aAgentCardSchema = import_zod.z.object({
+  name: import_zod.z.string(),
+  description: import_zod.z.string(),
+  skills: import_zod.z.array(import_zod.z.string()),
+  url: import_zod.z.string().optional(),
+  // 公网可访问的 A2A 端点
+  capabilities: import_zod.z.object({
+    messageTypes: import_zod.z.array(import_zod.z.string()),
+    // 支持的消息类型
+    taskTypes: import_zod.z.array(import_zod.z.string()),
+    // 支持的任务类型
+    dataFormats: import_zod.z.array(import_zod.z.string()),
+    // 支持的数据格式
+    maxConcurrency: import_zod.z.number().optional()
+    // 最大并发数
+  }),
+  // 部署信息
+  deployment: import_zod.z.object({
+    type: import_zod.z.enum(["pc", "cloud", "docker"]),
+    platform: import_zod.z.string(),
+    region: import_zod.z.string().optional(),
+    networkReachable: import_zod.z.boolean().optional()
+    // 网络是否可达
+  }).optional(),
+  auth: import_zod.z.object({
+    apiKey: import_zod.z.string().optional(),
+    authType: import_zod.z.enum(["none", "apikey", "oauth"])
+  }).optional()
+});
+var agentPermissionSchema = import_zod.z.object({
+  action: import_zod.z.enum(["read", "execute", "modify", "admin"]),
+  resource: import_zod.z.string(),
+  // 资源路径或标识
+  conditions: import_zod.z.object({
+    timeRange: import_zod.z.tuple([import_zod.z.number(), import_zod.z.number()]).optional(),
+    // 时间范围限制
+    ipRange: import_zod.z.array(import_zod.z.string()).optional(),
+    // IP范围限制
+    userAgent: import_zod.z.string().optional(),
+    // User-Agent限制
+    maxUsage: import_zod.z.number().optional(),
+    // 最大使用次数限制
+    rateLimit: import_zod.z.number().optional()
+    // 速率限制（每分钟）
+  }).optional(),
+  description: import_zod.z.string().optional()
+  // 权限描述
+});
 var agentConfigSchema = import_zod.z.object({
   id: import_zod.z.string(),
   userId: import_zod.z.string(),
@@ -264,6 +323,43 @@ var agentConfigSchema = import_zod.z.object({
   mode: import_zod.z.string(),
   tools: import_zod.z.array(agentToolConfigSchema),
   todos: import_zod.z.array(agentTodoSchema),
+  // 新增：A2A 和共享配置
+  isPrivate: import_zod.z.boolean().optional().default(true),
+  // 私有/共享标识，默认true
+  shareScope: import_zod.z.enum(["friends", "groups", "public"]).optional(),
+  // 共享范围：好友、群组、公开
+  shareLevel: import_zod.z.number().optional(),
+  // 共享级别：0=私有，1=好友，2=群组，3=公开
+  a2aAgentCard: a2aAgentCardSchema.optional(),
+  // A2A 协议智能体卡片
+  a2aEndpoint: import_zod.z.string().optional(),
+  // A2A 服务端点URL
+  permissions: import_zod.z.array(agentPermissionSchema).optional(),
+  // 访问权限列表
+  allowedUsers: import_zod.z.array(import_zod.z.string()).optional(),
+  // 好友级别：白名单用户ID
+  allowedGroups: import_zod.z.array(import_zod.z.string()).optional(),
+  // 群组级别：白名单群组ID
+  deniedUsers: import_zod.z.array(import_zod.z.string()).optional(),
+  // 用户黑名单
+  // 发布状态相关字段
+  isPublished: import_zod.z.boolean().optional().default(false),
+  // 是否已发布
+  publishInfo: import_zod.z.object({
+    // 发布信息
+    terminalType: import_zod.z.enum(["local", "cloud"]).optional(),
+    // 发布终端类型
+    serverPort: import_zod.z.number().optional(),
+    // A2A服务器端口
+    serverUrl: import_zod.z.string().optional(),
+    // A2A服务器URL
+    publishedAt: import_zod.z.string().optional(),
+    // 发布时间
+    serviceStatus: import_zod.z.enum(["online", "offline", "error"]).optional(),
+    // 服务状态
+    lastHeartbeat: import_zod.z.number().optional()
+    // 最后心跳时间
+  }).optional(),
   templateSource: agentTemplateSourceSchema.optional(),
   createdAt: import_zod.z.number(),
   updatedAt: import_zod.z.number(),
@@ -292,6 +388,259 @@ var agentTemplateDataSchema = import_zod.z.object({
   mode: import_zod.z.string().optional(),
   tools: import_zod.z.array(import_zod.z.string()).optional(),
   templateSource: agentTemplateSourceSchema
+});
+var resourceQuotaSchema = import_zod.z.object({
+  maxMemory: import_zod.z.number(),
+  // 最大内存使用 (MB)
+  maxCpuTime: import_zod.z.number(),
+  // 最大CPU时间 (ms)
+  maxFileOperations: import_zod.z.number(),
+  // 最大文件操作次数
+  maxNetworkRequests: import_zod.z.number(),
+  // 最大网络请求次数
+  maxExecutionTime: import_zod.z.number(),
+  // 最大执行时间 (ms)
+  workspaceAccess: import_zod.z.object({
+    readOnly: import_zod.z.boolean(),
+    allowedPaths: import_zod.z.array(import_zod.z.string()),
+    deniedPaths: import_zod.z.array(import_zod.z.string()),
+    tempDirectory: import_zod.z.string()
+  })
+});
+var resourceUsageSchema = import_zod.z.object({
+  memory: import_zod.z.number(),
+  // 当前内存使用 (MB)
+  cpuTime: import_zod.z.number(),
+  // 当前CPU时间 (ms)
+  fileOperations: import_zod.z.number(),
+  // 当前文件操作次数
+  networkRequests: import_zod.z.number(),
+  // 当前网络请求次数
+  startTime: import_zod.z.number(),
+  // 启动时间戳
+  lastUpdate: import_zod.z.number()
+  // 最后更新时间戳
+});
+var agentInstanceSchema = import_zod.z.object({
+  agentId: import_zod.z.string(),
+  // 关联的智能体定义ID
+  instanceId: import_zod.z.string(),
+  // 实例唯一标识
+  userId: import_zod.z.string(),
+  // 实例所属用户
+  // 部署信息
+  deployment: import_zod.z.object({
+    type: import_zod.z.enum(["pc", "cloud", "docker", "k8s"]),
+    platform: import_zod.z.string(),
+    // 'vscode' | 'docker' | 'k8s'
+    location: import_zod.z.string().optional(),
+    // 部署位置描述
+    version: import_zod.z.string(),
+    // void版本
+    region: import_zod.z.string().optional()
+    // 地理区域
+  }),
+  // 网络端点
+  endpoint: import_zod.z.object({
+    type: import_zod.z.enum(["local_only", "network_reachable", "hybrid"]),
+    // 直连信息
+    direct: import_zod.z.object({
+      url: import_zod.z.string(),
+      // HTTP服务端点
+      protocol: import_zod.z.enum(["http", "https"]),
+      port: import_zod.z.number().optional(),
+      apiKey: import_zod.z.string().optional(),
+      // API密钥
+      healthCheckPath: import_zod.z.string()
+      // 健康检查路径
+    }).optional(),
+    // IM桥接信息
+    imBridge: import_zod.z.object({
+      proxyId: import_zod.z.string(),
+      // 代理标识
+      channelId: import_zod.z.string().optional(),
+      // 通道标识
+      priority: import_zod.z.number()
+      // 路由优先级
+    }),
+    networkReachable: import_zod.z.boolean().optional(),
+    // 是否网络可达
+    lastProbeTime: import_zod.z.number().optional()
+    // 最后探测时间
+  }),
+  // 实例状态
+  status: import_zod.z.object({
+    state: import_zod.z.enum(["starting", "online", "offline", "error", "maintenance"]),
+    startTime: import_zod.z.number(),
+    lastSeen: import_zod.z.number(),
+    currentLoad: import_zod.z.number(),
+    // 当前负载 0-1
+    errorCount: import_zod.z.number(),
+    // 错误计数
+    errorRate: import_zod.z.number(),
+    // 错误率 0-1
+    uptime: import_zod.z.number()
+    // 运行时间
+  }),
+  // 性能指标
+  metrics: import_zod.z.object({
+    avgResponseTime: import_zod.z.number(),
+    // 平均响应时间 (ms)
+    successRate: import_zod.z.number(),
+    // 成功率 0-1
+    throughput: import_zod.z.number(),
+    // 吞吐量 (req/s)
+    memoryUsage: import_zod.z.number().optional(),
+    // 内存使用率 0-1
+    cpuUsage: import_zod.z.number().optional(),
+    // CPU使用率 0-1
+    lastUpdate: import_zod.z.number()
+    // 最后更新时间
+  }),
+  // 资源配额
+  resourceQuota: resourceQuotaSchema.optional(),
+  // 元数据
+  metadata: import_zod.z.object({
+    createdAt: import_zod.z.number(),
+    updatedAt: import_zod.z.number(),
+    version: import_zod.z.number(),
+    tags: import_zod.z.array(import_zod.z.string()).optional()
+  })
+});
+var agentRequestSchema = import_zod.z.object({
+  method: import_zod.z.string(),
+  params: import_zod.z.any(),
+  timeout: import_zod.z.number().optional(),
+  priority: import_zod.z.enum(["low", "normal", "high"]).optional(),
+  retries: import_zod.z.number().optional(),
+  sourceAgentId: import_zod.z.string().optional(),
+  sourceUserId: import_zod.z.string().optional()
+});
+var agentResponseSchema = import_zod.z.object({
+  success: import_zod.z.boolean(),
+  data: import_zod.z.any().optional(),
+  error: import_zod.z.string().optional(),
+  agentId: import_zod.z.string(),
+  route: import_zod.z.enum(["direct", "im_bridge", "hybrid"]).optional(),
+  timestamp: import_zod.z.number(),
+  duration: import_zod.z.number().optional()
+});
+var agentEndpointSchema = import_zod.z.object({
+  agentId: import_zod.z.string(),
+  userId: import_zod.z.string(),
+  type: import_zod.z.enum(["local_only", "network_reachable", "hybrid"]),
+  directUrl: import_zod.z.string().optional(),
+  // 直连URL
+  apiKey: import_zod.z.string().optional(),
+  // API密钥
+  imProxyId: import_zod.z.string(),
+  // IM代理标识
+  networkReachable: import_zod.z.boolean().optional(),
+  // 网络可达性
+  lastProbeTime: import_zod.z.number().optional(),
+  // 最后探测时间
+  status: import_zod.z.object({
+    state: import_zod.z.enum(["online", "offline", "busy", "error"]),
+    lastSeen: import_zod.z.number(),
+    currentLoad: import_zod.z.number(),
+    errorRate: import_zod.z.number(),
+    avgResponseTime: import_zod.z.number()
+  }),
+  deploymentType: import_zod.z.enum(["pc", "cloud", "docker"])
+});
+var agentDiscoveryQuerySchema = import_zod.z.object({
+  userId: import_zod.z.string(),
+  capabilities: import_zod.z.array(import_zod.z.string()).optional(),
+  categories: import_zod.z.array(import_zod.z.string()).optional(),
+  tags: import_zod.z.array(import_zod.z.string()).optional(),
+  deploymentTypes: import_zod.z.array(import_zod.z.string()).optional(),
+  regions: import_zod.z.array(import_zod.z.string()).optional(),
+  keywords: import_zod.z.string().optional(),
+  onlyOnline: import_zod.z.boolean().optional(),
+  visibility: import_zod.z.enum(["private", "friends", "groups", "public", "all"]).optional(),
+  shareScope: import_zod.z.enum(["friends", "groups", "public"]).optional(),
+  shareLevel: import_zod.z.number().optional(),
+  sortBy: import_zod.z.enum(["relevance", "performance", "popularity", "rating"]).optional(),
+  sortOrder: import_zod.z.enum(["asc", "desc"]).optional(),
+  offset: import_zod.z.number().optional(),
+  limit: import_zod.z.number().optional()
+});
+var agentDiscoveryResultSchema = import_zod.z.object({
+  agentId: import_zod.z.string(),
+  userId: import_zod.z.string(),
+  name: import_zod.z.string(),
+  description: import_zod.z.string(),
+  avatar: import_zod.z.string(),
+  // 匹配信息
+  matchedCapabilities: import_zod.z.array(import_zod.z.string()),
+  relevanceScore: import_zod.z.number(),
+  // 部署信息
+  deploymentType: import_zod.z.enum(["pc", "cloud", "docker", "serverless"]),
+  region: import_zod.z.string().optional(),
+  endpointType: import_zod.z.enum(["local_only", "network_reachable", "hybrid"]),
+  // 性能指标
+  currentLoad: import_zod.z.number(),
+  avgResponseTime: import_zod.z.number(),
+  errorRate: import_zod.z.number(),
+  availability: import_zod.z.number(),
+  // 使用统计
+  totalCalls: import_zod.z.number(),
+  successRate: import_zod.z.number(),
+  rating: import_zod.z.number().optional(),
+  // 权限信息
+  isPrivate: import_zod.z.boolean(),
+  hasAccess: import_zod.z.boolean(),
+  // 元数据
+  category: import_zod.z.string().optional(),
+  tags: import_zod.z.array(import_zod.z.string()),
+  createdAt: import_zod.z.number(),
+  lastUsed: import_zod.z.number().optional()
+});
+var unifiedAgentRegistrySchema = import_zod.z.object({
+  agentId: import_zod.z.string(),
+  userId: import_zod.z.string(),
+  name: import_zod.z.string(),
+  avatar: import_zod.z.string(),
+  description: import_zod.z.string(),
+  // 能力信息
+  capabilities: import_zod.z.object({
+    tools: import_zod.z.array(import_zod.z.string()),
+    skills: import_zod.z.array(import_zod.z.string()),
+    categories: import_zod.z.array(import_zod.z.string())
+  }),
+  // 部署信息
+  deployment: import_zod.z.object({
+    type: import_zod.z.enum(["pc", "cloud", "docker", "serverless"]),
+    region: import_zod.z.string().optional(),
+    endpointType: import_zod.z.enum(["local_only", "network_reachable", "hybrid"]),
+    directUrl: import_zod.z.string().optional(),
+    imProxyId: import_zod.z.string().optional()
+  }),
+  // 状态信息
+  status: import_zod.z.object({
+    state: import_zod.z.enum(["online", "offline", "busy", "maintenance"]),
+    lastSeen: import_zod.z.number(),
+    currentLoad: import_zod.z.number(),
+    errorRate: import_zod.z.number(),
+    avgResponseTime: import_zod.z.number()
+  }),
+  // 共享配置
+  sharing: import_zod.z.object({
+    isPrivate: import_zod.z.boolean(),
+    shareScope: import_zod.z.enum(["none", "friends", "groups", "public"]),
+    shareLevel: import_zod.z.number().min(0).max(3),
+    permissions: import_zod.z.array(import_zod.z.enum(["read", "execute", "modify"])),
+    allowedUsers: import_zod.z.array(import_zod.z.string()),
+    allowedGroups: import_zod.z.array(import_zod.z.string()),
+    deniedUsers: import_zod.z.array(import_zod.z.string())
+  }),
+  // 元数据
+  metadata: import_zod.z.object({
+    createdAt: import_zod.z.number(),
+    updatedAt: import_zod.z.number(),
+    version: import_zod.z.string(),
+    tags: import_zod.z.array(import_zod.z.string())
+  })
 });
 
 // src/cloud.ts
@@ -4778,10 +5127,18 @@ var fireworksModels = {
   TelemetryEventName,
   VERTEX_REGIONS,
   ZAI_DEFAULT_TEMPERATURE,
+  a2aAgentCardSchema,
   ackSchema,
   agentConfigSchema,
+  agentDiscoveryQuerySchema,
+  agentDiscoveryResultSchema,
+  agentEndpointSchema,
   agentExportDataSchema,
+  agentInstanceSchema,
   agentListOptionsSchema,
+  agentPermissionSchema,
+  agentRequestSchema,
+  agentResponseSchema,
   agentTemplateDataSchema,
   agentTemplateSourceSchema,
   agentTodoSchema,
@@ -4900,6 +5257,8 @@ var fireworksModels = {
   reasoningEffortsSchema,
   requestyDefaultModelId,
   requestyDefaultModelInfo,
+  resourceQuotaSchema,
+  resourceUsageSchema,
   rooCodeEventsSchema,
   rooCodeSettingsSchema,
   rooCodeTelemetryEventSchema,
@@ -4925,6 +5284,7 @@ var fireworksModels = {
   toolUsageSchema,
   unboundDefaultModelId,
   unboundDefaultModelInfo,
+  unifiedAgentRegistrySchema,
   verbosityLevels,
   verbosityLevelsSchema,
   vertexDefaultModelId,

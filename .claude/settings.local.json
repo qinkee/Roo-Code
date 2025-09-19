@@ -34,7 +34,9 @@
       "Bash(pnpm add:*)",
       "Bash(pnpm run check-types:*)",
       "Bash(pnpm run lint:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(pnpm run:*)",
+      "WebFetch(domain:github.com)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [

@@ -233,6 +233,8 @@ export interface WebviewMessage {
 		| "addAgentTodo"
 		| "updateAgentTodo"
 		| "deleteAgentTodo"
+		| "publishAgent"
+		| "stopAgent"
 	text?: string
 	editedMessageContent?: string
 	tab?: "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "account" | "agents"
@@ -264,6 +266,7 @@ export interface WebviewMessage {
 	source?: "global" | "project"
 	// 智能体相关字段
 	agentId?: string
+	agentName?: string
 	agentConfig?: Partial<AgentConfig>
 	agentListOptions?: AgentListOptions
 	agentExportData?: AgentExportData
@@ -281,6 +284,7 @@ export interface WebviewMessage {
 	url?: string // For openExternal
 	mpItem?: MarketplaceItem
 	mpInstallOptions?: InstallMarketplaceItemOptions
+	terminal?: any // For publishAgent
 	config?: Record<string, any> // Add config to the payload
 	visibility?: ShareVisibility // For share visibility
 	hasContent?: boolean // For checkRulesDirectoryResult

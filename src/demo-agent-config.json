@@ -1,0 +1,56 @@
+{
+  "agentSystem": {
+    "redis": {
+      "enabled": true,
+      "host": "192.168.10.254",
+      "port": 30611,
+      "password": "p2@mR4RVeYQcWutx",
+      "database": 0,
+      "syncInterval": 300000
+    },
+    "workers": {
+      "maxWorkers": 5,
+      "defaultResourceQuota": {
+        "maxMemory": 256,
+        "maxCpuTime": 5000,
+        "maxFileOperations": 50,
+        "maxNetworkRequests": 20,
+        "maxExecutionTime": 30000
+      }
+    },
+    "routing": {
+      "defaultTimeout": 30000,
+      "retryAttempts": 3,
+      "fallbackToIMBridge": true
+    },
+    "defaultAgents": [
+      {
+        "name": "代码助手",
+        "roleDescription": "专业的代码分析和优化助手",
+        "apiConfigId": "claude-3-5-sonnet",
+        "mode": "assistant",
+        "tools": [
+          { "toolId": "code-analysis", "enabled": true },
+          { "toolId": "file-operations", "enabled": true },
+          { "toolId": "git-operations", "enabled": false }
+        ],
+        "shareScope": "public",
+        "shareLevel": 3,
+        "autoStart": true
+      },
+      {
+        "name": "文档助手",
+        "roleDescription": "帮助生成和维护技术文档",
+        "apiConfigId": "claude-3-5-sonnet",
+        "mode": "assistant", 
+        "tools": [
+          { "toolId": "markdown-generation", "enabled": true },
+          { "toolId": "documentation", "enabled": true }
+        ],
+        "shareScope": "public",
+        "shareLevel": 2,
+        "autoStart": false
+      }
+    ]
+  }
+}

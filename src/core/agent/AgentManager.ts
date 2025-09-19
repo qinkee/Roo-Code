@@ -1,6 +1,4 @@
 import * as vscode from "vscode"
-import { VSCodeAgentStorageService } from "./VSCodeAgentStorageService"
-import { AgentRedisSyncService } from "./AgentRedisSyncService"
 import { EnhancedAgentStorageService } from "./EnhancedAgentStorageService"
 import { AgentCommands } from "./AgentCommands"
 import { logger } from "../../utils/logging"
@@ -10,18 +8,11 @@ import { logger } from "../../utils/logging"
  * 负责初始化和管理所有智能体相关服务
  */
 export class AgentManager {
-	private baseStorageService: VSCodeAgentStorageService
-	private syncService: AgentRedisSyncService
 	private enhancedStorageService: EnhancedAgentStorageService
 
 	constructor(private context: vscode.ExtensionContext) {
-		// 初始化服务
-		this.baseStorageService = new VSCodeAgentStorageService(context)
-		this.syncService = new AgentRedisSyncService()
-		this.enhancedStorageService = new EnhancedAgentStorageService(
-			this.baseStorageService,
-			this.syncService
-		)
+		// 初始化增强存储服务（包含本地存储和Redis同步）
+		this.enhancedStorageService = new EnhancedAgentStorageService(context)
 
 		// 注册命令
 		AgentCommands.register(context, this.enhancedStorageService)
@@ -45,17 +36,17 @@ export class AgentManager {
 	}
 
 	/**
-	 * 获取同步服务
+	 * 获取Redis同步服务
 	 */
-	getSyncService(): AgentRedisSyncService {
-		return this.syncService
+	getSyncService() {
+		return this.enhancedStorageService.getSyncService()
 	}
 
 	/**
 	 * 获取基础存储服务
 	 */
-	getBaseStorageService(): VSCodeAgentStorageService {
-		return this.baseStorageService
+	getBaseStorageService() {
+		return this.enhancedStorageService.getBaseStorageService()
 	}
 
 	/**

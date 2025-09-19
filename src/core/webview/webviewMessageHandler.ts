@@ -56,6 +56,181 @@ const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 import { MarketplaceManager, MarketplaceItemType } from "../../services/marketplace"
 import { setPendingTodoList } from "../tools/updateTodoListTool"
 
+/**
+ * 智能体初始化工作流
+ * 在终端上发布智能体后执行的初始化步骤
+ */
+async function initializeAgentOnTerminal(agent: any, terminal: any, provider: any): Promise<void> {
+	try {
+		console.log(`[AgentInitializer] Initializing agent "${agent.name}" on terminal "${terminal.name}"`)
+		
+		if (terminal.id === 'local-computer') {
+			// 本地电脑发布逻辑
+			await initializeLocalAgent(agent, provider)
+		} else if (terminal.id === 'cloud-computer') {
+			// 云电脑发布逻辑（待实现）
+			await initializeCloudAgent(agent)
+		} else {
+			throw new Error(`Unsupported terminal type: ${terminal.id}`)
+		}
+		
+		console.log(`[AgentInitializer] Agent "${agent.name}" initialized successfully on "${terminal.name}"`)
+		
+	} catch (error) {
+		console.error(`[AgentInitializer] Failed to initialize agent "${agent.name}":`, error)
+		throw error
+	}
+}
+
+/**
+ * 初始化本地智能体
+ */
+async function initializeLocalAgent(agent: any, provider: any): Promise<void> {
+	try {
+		// 1. 获取A2A服务器管理器实例
+		const { A2AServerManager } = require("../agent/A2AServerManager")
+		const serverManager = A2AServerManager.getInstance()
+		
+		// 2. 初始化管理器（如果尚未初始化）
+		// 从当前provider获取共享的存储服务实例
+		const sharedStorageService = (provider as any).agentManager?.getStorageService()
+		if (sharedStorageService) {
+			console.log(`[AgentInitializer] Using shared storage service from AgentManager`)
+			await serverManager.initialize(sharedStorageService)
+		} else {
+			console.log(`[AgentInitializer] Warning: No shared storage service found, creating new instance`)
+			await serverManager.initialize()
+		}
+		
+		// 3. 为智能体启动专用的A2A服务器
+		console.log(`[AgentInitializer] Starting A2A server for agent ${agent.id}`)
+		const serverInfo = await serverManager.startAgentServer(agent.id)
+		
+		console.log(`[AgentInitializer] A2A server started:`, {
+			agentId: agent.id,
+			port: serverInfo.port,
+			url: serverInfo.url
+		})
+		
+		// 3. 更新本地智能体状态为"已发布"（先更新，避免覆盖服务信息）
+		console.log(`[AgentInitializer] Updating agent status to published`)
+		await updateAgentPublishStatus(agent.id, true, {
+			terminalType: 'local',
+			serverPort: serverInfo.port,
+			serverUrl: serverInfo.url,
+			publishedAt: new Date().toISOString()
+		})
+		
+		// 4. 向Redis注册智能体服务（后注册，确保包含完整服务信息）
+		console.log(`[AgentInitializer] Registering agent ${agent.id} in Redis`)
+		await registerAgentInRedis(agent, serverInfo)
+		
+		console.log(`[AgentInitializer] Local agent ${agent.id} initialized successfully`)
+		
+	} catch (error) {
+		console.error(`[AgentInitializer] Failed to initialize local agent:`, error)
+		throw error
+	}
+}
+
+/**
+ * 初始化云智能体（待实现）
+ */
+async function initializeCloudAgent(agent: any): Promise<void> {
+	throw new Error('Cloud agent initialization not implemented yet')
+}
+
+/**
+ * 向Redis注册智能体服务
+ */
+async function registerAgentInRedis(agent: any, serverInfo: any): Promise<void> {
+	try {
+		const { AgentRedisAdapter } = require("../agent/AgentRedisAdapter")
+		const redisAdapter = new AgentRedisAdapter()
+		
+		// 扩展智能体信息，加入服务注册相关字段
+		const serviceAgent = {
+			...agent,
+			// 服务发现信息
+			serviceEndpoint: serverInfo.url,
+			servicePort: serverInfo.port,
+			serviceStatus: 'online',
+			publishedAt: new Date().toISOString(),
+			terminalType: 'local',
+			
+			// A2A服务信息
+			a2aCard: serverInfo.agentCard,
+			capabilities: serverInfo.agentCard.capabilities,
+			deployment: serverInfo.agentCard.deployment,
+			
+			// 运行时状态
+			isPublished: true,
+			lastHeartbeat: Date.now()
+		}
+		
+		// 同步到Redis
+		await redisAdapter.syncAgentToRegistry(serviceAgent)
+		
+		// 添加到在线智能体服务列表
+		await redisAdapter.updateAgentOnlineStatus(agent.id, true)
+		
+		console.log(`[AgentInitializer] Agent ${agent.id} registered in Redis successfully`)
+		
+	} catch (error) {
+		console.error(`[AgentInitializer] Failed to register agent in Redis:`, error)
+		throw error
+	}
+}
+
+/**
+ * 从Redis中移除智能体注册信息
+ */
+async function removeAgentFromRedis(agentId: string, userId: string): Promise<void> {
+	try {
+		const { AgentRedisAdapter } = require("../agent/AgentRedisAdapter")
+		const redisAdapter = new AgentRedisAdapter()
+		
+		// 从Redis移除智能体信息
+		await redisAdapter.removeAgentFromRegistry(userId, agentId)
+		
+		// 从在线智能体列表移除
+		await redisAdapter.updateAgentOnlineStatus(agentId, false)
+		
+		console.log(`[AgentManager] Agent ${agentId} removed from Redis successfully`)
+		
+	} catch (error) {
+		console.error(`[AgentManager] Failed to remove agent from Redis:`, error)
+		throw error
+	}
+}
+
+/**
+ * 更新智能体发布状态
+ */
+async function updateAgentPublishStatus(agentId: string, isPublished: boolean, publishInfo?: any): Promise<void> {
+	try {
+		const VoidBridge = require("../../api/void-bridge").VoidBridge
+		const userId = VoidBridge.getCurrentUserId() || "default"
+		
+		// 更新智能体配置
+		await vscode.commands.executeCommand("roo-cline.updateAgent", {
+			userId,
+			agentId,
+			updates: {
+				isPublished,
+				publishInfo,
+				updatedAt: new Date().toISOString()
+			}
+		})
+		
+		console.log(`[AgentInitializer] Updated publish status for agent ${agentId}: ${isPublished}`)
+		
+	} catch (error) {
+		console.error(`[AgentInitializer] Failed to update publish status:`, error)
+		throw error
+	}
+}
+
 export const webviewMessageHandler = async (
 	provider: ClineProvider,
 	message: WebviewMessage,
@@ -2571,6 +2746,171 @@ export const webviewMessageHandler = async (
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "updateAgentResult",
+					success: false,
+					error: error instanceof Error ? error.message : String(error)
+				})
+			}
+			break
+		}
+
+		case "deleteAgent": {
+			try {
+				const VoidBridge = require("../../api/void-bridge").VoidBridge
+				const userId = VoidBridge.getCurrentUserId() || "default"
+				
+				// 显示确认对话框
+				const agentName = message.agentName || message.agentId
+				const answer = await vscode.window.showWarningMessage(
+					`确定要删除智能体 "${agentName}" 吗？此操作无法撤销。`,
+					{ modal: true },
+					"删除",
+					"取消"
+				)
+
+				if (answer !== "删除") {
+					await provider.postMessageToWebview({
+						type: "action",
+						action: "deleteAgentResult",
+						success: false,
+						error: "用户取消操作"
+					})
+					break
+				}
+
+				const result = await vscode.commands.executeCommand("roo-cline.deleteAgent", {
+					userId,
+					agentId: message.agentId
+				}) as any
+
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "deleteAgentResult",
+					...result
+				})
+
+				if (result.success) {
+					vscode.window.showInformationMessage(`智能体 "${agentName}" 已成功删除`)
+				}
+			} catch (error) {
+				provider.log(`Error deleting agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "deleteAgentResult",
+					success: false,
+					error: error instanceof Error ? error.message : String(error)
+				})
+			}
+			break
+		}
+
+		case "publishAgent": {
+			try {
+				const VoidBridge = require("../../api/void-bridge").VoidBridge
+				const userId = VoidBridge.getCurrentUserId() || "default"
+				
+				// 获取智能体配置
+				const result = await vscode.commands.executeCommand("roo-cline.getAgent", {
+					userId,
+					agentId: message.agentId
+				}) as any
+
+				if (result.success && result.agent) {
+					const agent = result.agent
+					const terminal = message.terminal
+					
+					console.log(`[PublishAgent] Successfully got agent from storage:`, {
+						agentId: agent.id,
+						agentName: agent.name,
+						userId: agent.userId
+					})
+					
+					// 执行智能体初始化工作
+					await initializeAgentOnTerminal(agent, terminal, provider)
+					
+					// 初始化完成后发送成功消息
+					await provider.postMessageToWebview({
+						type: "action",
+						action: "publishAgentResult",
+						success: true,
+						agentId: message.agentId,
+						terminal: terminal.id
+					})
+
+					// 显示成功消息
+					vscode.window.showInformationMessage(
+						`智能体 "${agent.name}" 已成功发布到 ${terminal.name}`
+					)
+				} else {
+					await provider.postMessageToWebview({
+						type: "action", 
+						action: "publishAgentResult",
+						success: false,
+						error: "未找到智能体配置"
+					})
+				}
+			} catch (error) {
+				provider.log(`Error publishing agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "publishAgentResult", 
+					success: false,
+					error: error instanceof Error ? error.message : String(error)
+				})
+			}
+			break
+		}
+
+		case "stopAgent": {
+			try {
+				// 先显示确认对话框
+				const confirmed = await vscode.window.showWarningMessage(
+					`确定要停止智能体 "${message.agentName}" 吗？`,
+					{ modal: true },
+					"确定"
+				)
+				
+				if (confirmed !== "确定") {
+					await provider.postMessageToWebview({
+						type: "action",
+						action: "stopAgentResult",
+						success: false,
+						agentId: message.agentId,
+						error: "用户取消操作"
+					})
+					return
+				}
+				
+				const VoidBridge = require("../../api/void-bridge").VoidBridge
+				const userId = VoidBridge.getCurrentUserId() || "default"
+				
+				// 停止A2A服务器
+				const { A2AServerManager } = require("../agent/A2AServerManager")
+				const serverManager = A2AServerManager.getInstance()
+				await serverManager.stopAgentServer(message.agentId)
+				
+				// 更新智能体状态为未发布
+				await updateAgentPublishStatus(message.agentId, false, null)
+				
+				// 从Redis移除服务注册
+				await removeAgentFromRedis(message.agentId, userId)
+				
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "stopAgentResult",
+					success: true,
+					agentId: message.agentId
+				})
+				
+				// 显示成功消息
+				vscode.window.showInformationMessage(
+					`智能体 "${message.agentName}" 已成功停止`
+				)
+				
+			} catch (error) {
+				provider.log(`Error stopping agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "stopAgentResult",
 					success: false,
 					error: error instanceof Error ? error.message : String(error)
 				})

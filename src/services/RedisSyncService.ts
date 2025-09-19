@@ -166,6 +166,31 @@ export class RedisSyncService {
 		})
 	}
 	
+	async delete(key: string): Promise<boolean> {
+		if (!this.isConnected || !this.client) {
+			console.debug('[Redis] Not connected, cannot delete key:', key)
+			return false
+		}
+		
+		return new Promise((resolve) => {
+			const timeout = setTimeout(() => {
+				console.debug('[Redis] Delete timeout for key:', key)
+				resolve(false)
+			}, 5000)
+			
+			this.client!.del(key)
+				.then((result) => {
+					clearTimeout(timeout)
+					resolve(result > 0)
+				})
+				.catch((err) => {
+					clearTimeout(timeout)
+					console.debug('[Redis] Delete failed:', err.message)
+					resolve(false)
+				})
+		})
+	}
+	
 	startHealthCheck() {
 		// 健康检查定时器
 		setInterval(async () => {
@@ -200,6 +225,10 @@ export class RedisSyncService {
 		
 		// 重新连接
 		await this.connect()
+	}
+	
+	getConnectionStatus(): boolean {
+		return this.isConnected
 	}
 	
 	async disconnect() {

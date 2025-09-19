@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { Plus, MoreHorizontal, Settings, Info, Play, Edit, Trash2, Share } from "lucide-react"
+import { Plus, MoreHorizontal, Settings, Info, Play, Edit, Trash2, Share, Upload, Square } from "lucide-react"
 import ActionBar from "./ActionBar"
 import TaskListModal from "./TaskListModal"
+import TerminalSelectionModal from "./TerminalSelectionModal"
 import type { AgentTemplateData } from "./utils/taskToAgentTemplate"
 
 import { vscode } from "@src/utils/vscode"
@@ -26,6 +27,69 @@ interface Agent {
 
 interface AgentsViewProps {
 	onDone: () => void
+}
+
+// 发布状态组件
+const PublishStatusBadge = ({ agent }: { agent: any }) => {
+	const publishInfo = agent.publishInfo || {}
+	const isPublished = agent.isPublished || false
+	
+	if (!isPublished) {
+		return null
+	}
+	
+	const terminalIcon = publishInfo.terminalType === 'cloud' ? '☁️' : '💻'
+	const terminalText = publishInfo.terminalType === 'cloud' ? '云端' : '本地'
+	
+	return (
+		<div className="flex items-center gap-1.5">
+			<span className="px-1.5 py-0.5 text-xs bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+				<span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+				运行中
+			</span>
+			<span className="px-1.5 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded flex items-center gap-1">
+				{terminalIcon} {terminalText}
+			</span>
+		</div>
+	)
+}
+
+// 发布详情组件
+const PublishDetails = ({ agent, isExpanded }: { agent: any; isExpanded: boolean }) => {
+	const publishInfo = agent.publishInfo || {}
+	const isPublished = agent.isPublished || false
+	
+	if (!isPublished || !publishInfo.serverUrl || !isExpanded) {
+		return null
+	}
+	
+	return (
+		<div className="mt-2 p-2 bg-vscode-list-hoverBackground/30 rounded border border-vscode-input-border">
+			<div className="grid grid-cols-2 gap-2 text-xs">
+				<div className="flex justify-between">
+					<span className="text-vscode-foreground/70">地址:</span>
+					<span className="font-mono text-blue-400 truncate ml-1">{publishInfo.serverUrl}</span>
+				</div>
+				<div className="flex justify-between">
+					<span className="text-vscode-foreground/70">端口:</span>
+					<span className="font-mono text-blue-400">{publishInfo.serverPort}</span>
+				</div>
+				{publishInfo.publishedAt && (
+					<div className="col-span-2 flex justify-between">
+						<span className="text-vscode-foreground/70">发布时间:</span>
+						<span className="text-vscode-foreground/70">
+							{new Date(publishInfo.publishedAt).toLocaleString('zh-CN', {
+								month: '2-digit',
+								day: '2-digit',
+								hour: '2-digit',
+								minute: '2-digit'
+							})}
+						</span>
+					</div>
+				)}
+			</div>
+		</div>
+	)
 }
 
 const mockBuiltinAgents: Agent[] = [
@@ -61,6 +125,9 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	const [soundVolume, setSoundVolume] = useState(100)
 	const [blacklistCommands] = useState(["rm", "kill", "chmod"])
 	const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
+	const [showTerminalModal, setShowTerminalModal] = useState(false)
+	const [selectedAgentForPublish, setSelectedAgentForPublish] = useState<Agent | null>(null)
+	const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null)
 
 	// 加载智能体列表
 	const loadAgents = useCallback(() => {
@@ -100,7 +167,10 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 								description: agent.roleDescription || "",
 								type: "custom" as const,
 								status: agent.isActive ? "active" as const : "inactive" as const,
-								icon: agent.avatar
+								icon: agent.avatar,
+								// 发布状态相关字段
+								isPublished: agent.isPublished || false,
+								publishInfo: agent.publishInfo || null
 							}))
 							setCustomAgents(transformedAgents)
 						} else {
@@ -131,6 +201,43 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 							loadAgents() // 重新加载智能体列表
 						} else {
 							console.error("Failed to update agent:", message.error)
+						}
+						break
+					
+					case "deleteAgentResult":
+						setLoading(false)
+						if (message.success) {
+							// 智能体删除成功，刷新列表
+							loadAgents() // 重新加载智能体列表
+						} else {
+							console.error("Failed to delete agent:", message.error)
+						}
+						break
+					
+					case "publishAgentResult":
+						setLoading(false)
+						if (message.success) {
+							// 智能体发布成功
+							console.log("Agent published successfully:", message.agentId)
+							// 重新加载智能体列表以更新发布状态
+							loadAgents()
+						} else {
+							console.error("Failed to publish agent:", message.error)
+						}
+						break
+					
+					case "stopAgentResult":
+						setLoading(false)
+						if (message.success) {
+							// 智能体停止成功
+							console.log("Agent stopped successfully:", message.agentId)
+							// 重新加载智能体列表以更新状态
+							loadAgents()
+						} else {
+							// 停止失败或用户取消
+							if (message.error !== "用户取消操作") {
+								console.error("Failed to stop agent:", message.error)
+							}
 						}
 						break
 				}
@@ -179,14 +286,33 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	}, [])
 
 	const handleDeleteAgent = useCallback(async (agent: Agent) => {
-		if (confirm(`确定要删除智能体 "${agent.name}" 吗？`)) {
-			setLoading(true)
-			vscode.postMessage({
-				type: "deleteAgent",
-				agentId: agent.id
-			})
-			setOpenDropdownId(null)
+		setLoading(true)
+		vscode.postMessage({
+			type: "deleteAgent",
+			agentId: agent.id,
+			agentName: agent.name
+		})
+		setOpenDropdownId(null)
+	}, [])
+
+	const handlePublishAgent = useCallback(async (agent: Agent) => {
+		// 如果已经发布，显示停止选项；否则显示发布选项
+		if ((agent as any).isPublished) {
+			handleStopAgent(agent)
+		} else {
+			setSelectedAgentForPublish(agent)
+			setShowTerminalModal(true)
 		}
+		setOpenDropdownId(null)
+	}, [])
+
+	const handleStopAgent = useCallback(async (agent: Agent) => {
+		setLoading(true)
+		vscode.postMessage({
+			type: "stopAgent",
+			agentId: agent.id,
+			agentName: agent.name
+		})
 	}, [])
 
 	const handleShareAgent = useCallback(async (agent: Agent) => {
@@ -198,6 +324,10 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	const handleDropdownToggle = useCallback((agentId: string) => {
 		setOpenDropdownId(openDropdownId === agentId ? null : agentId)
 	}, [openDropdownId])
+
+	const handleCardExpand = useCallback((agentId: string) => {
+		setExpandedAgentId(expandedAgentId === agentId ? null : agentId)
+	}, [expandedAgentId])
 
 	// 点击外部关闭下拉菜单
 	useEffect(() => {
@@ -247,6 +377,25 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 			setEditAgentData(null)
 		}
 	}, [editMode])
+
+	const handleTerminalSelect = useCallback((terminal: any) => {
+		if (selectedAgentForPublish) {
+			setLoading(true)
+			vscode.postMessage({
+				type: "publishAgent",
+				agentId: selectedAgentForPublish.id,
+				agentName: selectedAgentForPublish.name,
+				terminal: terminal
+			})
+		}
+		setShowTerminalModal(false)
+		setSelectedAgentForPublish(null)
+	}, [selectedAgentForPublish])
+
+	const handleTerminalModalClose = useCallback(() => {
+		setShowTerminalModal(false)
+		setSelectedAgentForPublish(null)
+	}, [])
 
 	const handleCreateAgentSubmit = useCallback((agentData: any) => {
 		// CreateAgentView已经发送了createAgent消息，这里只需要设置loading状态
@@ -371,17 +520,24 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 							return (
 								<div
 									key={agent.id}
-									className="flex items-center justify-between p-3 bg-vscode-input-background hover:bg-vscode-list-hoverBackground rounded-md border border-vscode-input-border transition-colors cursor-pointer group"
+									className="bg-vscode-input-background hover:bg-vscode-list-hoverBackground rounded-md border border-vscode-input-border transition-colors group"
 								>
-									<div className="flex items-center gap-3 flex-1 min-w-0">
-										<div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm flex-shrink-0", agentStyle.bg)}>
-											{agentStyle.icon}
+									<div 
+										className="flex items-center justify-between p-3 cursor-pointer"
+										onClick={() => handleCardExpand(agent.id)}
+									>
+										<div className="flex items-center gap-3 flex-1 min-w-0">
+											<div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm flex-shrink-0", agentStyle.bg)}>
+												{agentStyle.icon}
+											</div>
+											<div className="flex-1 min-w-0">
+												<div className="flex items-center gap-2">
+													<div className="font-bold text-sm text-vscode-foreground truncate">{agent.name}</div>
+													<PublishStatusBadge agent={agent} />
+												</div>
+												<div className="text-xs text-vscode-foreground/70 truncate mt-0.5">{agent.description}</div>
+											</div>
 										</div>
-										<div className="flex-1 min-w-0">
-											<div className="font-bold text-sm text-vscode-foreground truncate">{agent.name}</div>
-											<div className="text-xs text-vscode-foreground/70 truncate mt-0.5">{agent.description}</div>
-										</div>
-									</div>
 									<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 										{/* 运行按钮 */}
 										<StandardTooltip content="运行智能体">
@@ -428,7 +584,31 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 														修改
 													</button>
 													<button
-														onClick={() => handleDeleteAgent(agent)}
+														onClick={(e) => {
+															e.preventDefault()
+															e.stopPropagation()
+															handlePublishAgent(agent)
+														}}
+														className="w-full px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground flex items-center gap-2"
+													>
+														{(agent as any).isPublished ? (
+															<>
+																<Square size={12} />
+																停止
+															</>
+														) : (
+															<>
+																<Upload size={12} />
+																发布
+															</>
+														)}
+													</button>
+													<button
+														onClick={(e) => {
+															e.preventDefault()
+															e.stopPropagation()
+															handleDeleteAgent(agent)
+														}}
 														className="w-full px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground flex items-center gap-2"
 													>
 														<Trash2 size={12} />
@@ -446,6 +626,8 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 											)}
 										</div>
 									</div>
+									</div>
+									<PublishDetails agent={agent} isExpanded={expandedAgentId === agent.id} />
 								</div>
 							)
 						})
@@ -647,6 +829,14 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 			isOpen={showTaskModal}
 			onClose={handleTaskModalClose}
 			onSelectTask={handleTaskSelect}
+		/>
+
+		{/* Terminal Selection Modal */}
+		<TerminalSelectionModal
+			isOpen={showTerminalModal}
+			onClose={handleTerminalModalClose}
+			onSelect={handleTerminalSelect}
+			agentName={selectedAgentForPublish?.name || ""}
 		/>
 		</>
 	)

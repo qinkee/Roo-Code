@@ -1,255 +1,437 @@
-import * as vscode from "vscode"
-import { AgentConfig, AgentTodo, AgentListOptions, AgentExportData } from "@roo-code/types"
-import { AgentStorageService } from "./AgentStorageService"
+import { AgentConfig, AgentTodo, AgentListOptions, AgentExportData, A2AAgentCard } from "@roo-code/types"
 import { VSCodeAgentStorageService } from "./VSCodeAgentStorageService"
-import { AgentRedisSyncService } from "./AgentRedisSyncService"
+import { AgentRedisAdapter } from "./AgentRedisAdapter"
+import { AgentStorageService } from "./AgentStorageService"
 import { logger } from "../../utils/logging"
+import * as vscode from "vscode"
 
 /**
  * 增强的智能体存储服务
- * 集成本地VSCode存储和Redis云端同步功能
+ * 集成本地存储和Redis同步功能
  */
 export class EnhancedAgentStorageService implements AgentStorageService {
-	constructor(
-		private baseStorageService: VSCodeAgentStorageService,
-		private syncService: AgentRedisSyncService
-	) {}
+	private localStorage: VSCodeAgentStorageService
+	private redisAdapter: AgentRedisAdapter
+	private syncEnabled: boolean = false
 
+	constructor(context: vscode.ExtensionContext) {
+		this.localStorage = new VSCodeAgentStorageService(context)
+		this.redisAdapter = new AgentRedisAdapter()
+		this.initializeRedisSync()
+	}
+
+	/**
+	 * 初始化Redis同步
+	 */
+	private async initializeRedisSync(): Promise<void> {
+		try {
+			// 尝试初始化Redis连接
+			await this.redisAdapter.initialize()
+			this.syncEnabled = this.redisAdapter.isEnabled()
+			
+			if (this.syncEnabled) {
+				logger.info(`[EnhancedAgentStorageService] Redis sync enabled`)
+			} else {
+				logger.info(`[EnhancedAgentStorageService] Running in local-only mode`)
+			}
+		} catch (error) {
+			logger.warn(`[EnhancedAgentStorageService] Redis sync initialization failed:`, error)
+			this.syncEnabled = false
+		}
+	}
+
+	/**
+	 * 创建智能体（本地存储 + Redis同步）
+	 */
 	async createAgent(userId: string, config: Omit<AgentConfig, "id" | "createdAt" | "updatedAt">): Promise<AgentConfig> {
 		try {
-			// 1. 本地创建
-			const agent = await this.baseStorageService.createAgent(userId, config)
+			// 1. 先保存到本地存储
+			const agent = await this.localStorage.createAgent(userId, config)
 
-			// 2. 异步同步到Redis
-			this.syncService.syncSingleAgent(agent).catch(error =>
-				logger.debug("[EnhancedAgentStorageService] Sync failed:", error)
-			)
-
-			// 3. 触发事件通知
-			this.emitAgentEvent("created", agent)
+			// 2. 检查Redis连接状态并同步
+			const redisEnabled = this.redisAdapter.isEnabled()
+			logger.info(`[EnhancedAgentStorageService] Creating agent ${agent.id}, Redis enabled: ${redisEnabled}, syncEnabled: ${this.syncEnabled}`)
+			
+			if (this.syncEnabled && redisEnabled) {
+				logger.info(`[EnhancedAgentStorageService] Syncing agent ${agent.id} to Redis...`)
+				this.redisAdapter.syncAgentToRegistry(agent).catch(error => {
+					logger.error(`[EnhancedAgentStorageService] Failed to sync created agent ${agent.id} to Redis:`, error)
+				})
+			} else {
+				logger.warn(`[EnhancedAgentStorageService] Skipping Redis sync for agent ${agent.id} - syncEnabled: ${this.syncEnabled}, redisEnabled: ${redisEnabled}`)
+			}
 
 			return agent
 		} catch (error) {
-			logger.error("[EnhancedAgentStorageService] Failed to create agent:", error)
+			logger.error(`[EnhancedAgentStorageService] Failed to create agent:`, error)
 			throw error
 		}
 	}
 
+	/**
+	 * 获取智能体
+	 */
 	async getAgent(userId: string, agentId: string): Promise<AgentConfig | null> {
-		try {
-			return await this.baseStorageService.getAgent(userId, agentId)
-		} catch (error) {
-			logger.error(`[EnhancedAgentStorageService] Failed to get agent ${agentId}:`, error)
-			return null
-		}
+		// 从本地存储获取（可能需要后续支持从Redis获取共享智能体）
+		return this.localStorage.getAgent(userId, agentId)
 	}
 
+	/**
+	 * 更新智能体（本地存储 + Redis同步）
+	 */
 	async updateAgent(userId: string, agentId: string, updates: Partial<AgentConfig>): Promise<AgentConfig> {
 		try {
-			// 1. 本地更新
-			const agent = await this.baseStorageService.updateAgent(userId, agentId, updates)
+			// 1. 先更新本地存储
+			const updatedAgent = await this.localStorage.updateAgent(userId, agentId, updates)
 
-			// 2. 异步同步到Redis
-			this.syncService.syncSingleAgent(agent).catch(error =>
-				logger.debug("[EnhancedAgentStorageService] Sync failed:", error)
-			)
+			// 2. 检查Redis连接状态并同步
+			const redisEnabled = this.redisAdapter.isEnabled()
+			if (this.syncEnabled && redisEnabled) {
+				this.redisAdapter.syncAgentToRegistry(updatedAgent).catch(error => {
+					logger.error(`[EnhancedAgentStorageService] Failed to sync updated agent ${agentId} to Redis:`, error)
+				})
+			}
 
-			// 3. 触发事件通知
-			this.emitAgentEvent("updated", agent)
-
-			return agent
+			return updatedAgent
 		} catch (error) {
 			logger.error(`[EnhancedAgentStorageService] Failed to update agent ${agentId}:`, error)
 			throw error
 		}
 	}
 
+	/**
+	 * 删除智能体（本地存储 + Redis同步）
+	 */
 	async deleteAgent(userId: string, agentId: string): Promise<boolean> {
 		try {
-			// 1. 本地删除
-			const result = await this.baseStorageService.deleteAgent(userId, agentId)
+			// 1. 先从本地存储删除
+			const deleted = await this.localStorage.deleteAgent(userId, agentId)
 
-			if (result) {
-				// 2. 从Redis删除
-				this.syncService.deleteAgentFromRedis(agentId, userId).catch(error =>
-					logger.debug("[EnhancedAgentStorageService] Redis delete failed:", error)
-				)
-
-				// 3. 触发事件通知
-				this.emitAgentEvent("deleted", { id: agentId, userId })
+			// 2. 检查Redis连接状态并删除
+			const redisEnabled = this.redisAdapter.isEnabled()
+			if (deleted && this.syncEnabled && redisEnabled) {
+				this.redisAdapter.removeAgentFromRegistry(userId, agentId).catch(error => {
+					logger.error(`[EnhancedAgentStorageService] Failed to remove agent ${agentId} from Redis:`, error)
+				})
 			}
 
-			return result
+			return deleted
 		} catch (error) {
 			logger.error(`[EnhancedAgentStorageService] Failed to delete agent ${agentId}:`, error)
 			return false
 		}
 	}
 
+	/**
+	 * 列出用户智能体
+	 */
 	async listUserAgents(userId: string, options?: AgentListOptions): Promise<AgentConfig[]> {
-		try {
-			// 优先本地数据
-			let agents = await this.baseStorageService.listUserAgents(userId, options)
-
-			// 如果本地为空且网络可用，尝试从Redis恢复
-			if (agents.length === 0) {
-				try {
-					const isRedisAvailable = await this.syncService.isRedisAvailable()
-					if (isRedisAvailable) {
-						const redisAgents = await this.syncService.loadUserAgentsFromRedis(userId)
-						if (redisAgents.length > 0) {
-							// 批量恢复到本地
-							await this.restoreAgentsToLocal(userId, redisAgents)
-							// 重新查询本地数据（应用过滤和排序）
-							agents = await this.baseStorageService.listUserAgents(userId, options)
-						}
-					}
-				} catch (error) {
-					logger.debug("[EnhancedAgentStorageService] Redis restore failed:", error)
-				}
-			}
-
-			return agents
-		} catch (error) {
-			logger.error(`[EnhancedAgentStorageService] Failed to list agents for user ${userId}:`, error)
-			return []
-		}
+		return this.localStorage.listUserAgents(userId, options)
 	}
 
+	/**
+	 * 搜索智能体
+	 */
 	async searchAgents(userId: string, query: string): Promise<AgentConfig[]> {
+		return this.localStorage.searchAgents(userId, query)
+	}
+
+	/**
+	 * 添加Todo
+	 */
+	async addTodo(userId: string, agentId: string, todo: Omit<AgentTodo, "id" | "createdAt" | "updatedAt">): Promise<AgentTodo> {
+		const result = await this.localStorage.addTodo(userId, agentId, todo)
+		
+		// 同步更新（异步）
+		if (this.syncEnabled) {
+			this.syncAgentAfterTodoChange(userId, agentId)
+		}
+		
+		return result
+	}
+
+	/**
+	 * 更新Todo
+	 */
+	async updateTodo(userId: string, agentId: string, todoId: string, updates: Partial<AgentTodo>): Promise<AgentTodo> {
+		const result = await this.localStorage.updateTodo(userId, agentId, todoId, updates)
+		
+		// 同步更新（异步）
+		if (this.syncEnabled) {
+			this.syncAgentAfterTodoChange(userId, agentId)
+		}
+		
+		return result
+	}
+
+	/**
+	 * 删除Todo
+	 */
+	async deleteTodo(userId: string, agentId: string, todoId: string): Promise<boolean> {
+		const result = await this.localStorage.deleteTodo(userId, agentId, todoId)
+		
+		// 同步更新（异步）
+		if (result && this.syncEnabled) {
+			this.syncAgentAfterTodoChange(userId, agentId)
+		}
+		
+		return result
+	}
+
+	/**
+	 * 导出智能体
+	 */
+	async exportAgent(userId: string, agentId: string): Promise<AgentExportData> {
+		return this.localStorage.exportAgent(userId, agentId)
+	}
+
+	/**
+	 * 导入智能体
+	 */
+	async importAgent(userId: string, data: AgentExportData): Promise<AgentConfig> {
+		const agent = await this.localStorage.importAgent(userId, data)
+		
+		// 同步到Redis（异步）
+		if (this.syncEnabled) {
+			this.redisAdapter.syncAgentToRegistry(agent).catch(error => {
+				logger.error(`[EnhancedAgentStorageService] Failed to sync imported agent ${agent.id} to Redis:`, error)
+			})
+		}
+		
+		return agent
+	}
+
+	/**
+	 * 更新智能体共享配置
+	 */
+	async updateAgentSharing(
+		userId: string, 
+		agentId: string, 
+		sharing: {
+			isPrivate?: boolean
+			shareScope?: 'friends' | 'groups' | 'public'
+			shareLevel?: number
+			allowedUsers?: string[]
+			allowedGroups?: string[]
+			deniedUsers?: string[]
+		}
+	): Promise<AgentConfig> {
 		try {
-			return await this.baseStorageService.searchAgents(userId, query)
+			// 使用本地存储的方法（如果支持）
+			if ('updateAgentSharing' in this.localStorage) {
+				const result = await (this.localStorage as any).updateAgentSharing(userId, agentId, sharing)
+				
+				// 同步到Redis（异步）
+				if (this.syncEnabled) {
+					this.redisAdapter.syncAgentToRegistry(result).catch(error => {
+						logger.error(`[EnhancedAgentStorageService] Failed to sync sharing update for agent ${agentId}:`, error)
+					})
+				}
+				
+				return result
+			} else {
+				// 降级到普通更新
+				return this.updateAgent(userId, agentId, sharing)
+			}
 		} catch (error) {
-			logger.error(`[EnhancedAgentStorageService] Failed to search agents for user ${userId}:`, error)
+			logger.error(`[EnhancedAgentStorageService] Failed to update agent sharing ${agentId}:`, error)
+			throw error
+		}
+	}
+
+	/**
+	 * 更新智能体A2A配置
+	 */
+	async updateAgentA2AConfig(
+		userId: string, 
+		agentId: string, 
+		a2aConfig: {
+			a2aAgentCard?: A2AAgentCard
+			a2aEndpoint?: string
+		}
+	): Promise<AgentConfig> {
+		try {
+			// 使用本地存储的方法（如果支持）
+			if ('updateAgentA2AConfig' in this.localStorage) {
+				const result = await (this.localStorage as any).updateAgentA2AConfig(userId, agentId, a2aConfig)
+				
+				// 同步到Redis（异步）
+				if (this.syncEnabled) {
+					this.redisAdapter.syncAgentToRegistry(result).catch(error => {
+						logger.error(`[EnhancedAgentStorageService] Failed to sync A2A config update for agent ${agentId}:`, error)
+					})
+				}
+				
+				return result
+			} else {
+				// 降级到普通更新
+				return this.updateAgent(userId, agentId, a2aConfig)
+			}
+		} catch (error) {
+			logger.error(`[EnhancedAgentStorageService] Failed to update agent A2A config ${agentId}:`, error)
+			throw error
+		}
+	}
+
+	/**
+	 * 搜索可访问的智能体（包括共享的智能体）
+	 */
+	async searchAccessibleAgents(
+		userId: string, 
+		query: string, 
+		includeShared: boolean = true
+	): Promise<AgentConfig[]> {
+		try {
+			// 使用本地存储的方法（如果支持）
+			if ('searchAccessibleAgents' in this.localStorage) {
+				return await (this.localStorage as any).searchAccessibleAgents(userId, query, includeShared)
+			} else {
+				// 降级到普通搜索
+				return this.searchAgents(userId, query)
+			}
+		} catch (error) {
+			logger.error(`[EnhancedAgentStorageService] Failed to search accessible agents:`, error)
 			return []
 		}
 	}
 
-	async addTodo(
-		userId: string,
-		agentId: string,
-		todo: Omit<AgentTodo, "id" | "createdAt" | "updatedAt">
-	): Promise<AgentTodo> {
+	/**
+	 * 检查智能体访问权限
+	 */
+	async checkAgentAccess(
+		userId: string, 
+		agentId: string, 
+		action: 'read' | 'execute' | 'modify' = 'read'
+	): Promise<boolean> {
 		try {
-			// 1. 本地添加
-			const newTodo = await this.baseStorageService.addTodo(userId, agentId, todo)
-
-			// 2. 获取更新后的智能体并同步
-			const updatedAgent = await this.baseStorageService.getAgent(userId, agentId)
-			if (updatedAgent) {
-				this.syncService.syncSingleAgent(updatedAgent).catch(error =>
-					logger.debug("[EnhancedAgentStorageService] Sync failed:", error)
-				)
+			// 使用本地存储的方法（如果支持）
+			if ('checkAgentAccess' in this.localStorage) {
+				return await (this.localStorage as any).checkAgentAccess(userId, agentId, action)
+			} else {
+				// 降级检查：只检查是否是自己的智能体
+				const agent = await this.getAgent(userId, agentId)
+				return agent !== null
 			}
-
-			return newTodo
 		} catch (error) {
-			logger.error(`[EnhancedAgentStorageService] Failed to add todo to agent ${agentId}:`, error)
-			throw error
-		}
-	}
-
-	async updateTodo(
-		userId: string,
-		agentId: string,
-		todoId: string,
-		updates: Partial<AgentTodo>
-	): Promise<AgentTodo> {
-		try {
-			// 1. 本地更新
-			const updatedTodo = await this.baseStorageService.updateTodo(userId, agentId, todoId, updates)
-
-			// 2. 获取更新后的智能体并同步
-			const updatedAgent = await this.baseStorageService.getAgent(userId, agentId)
-			if (updatedAgent) {
-				this.syncService.syncSingleAgent(updatedAgent).catch(error =>
-					logger.debug("[EnhancedAgentStorageService] Sync failed:", error)
-				)
-			}
-
-			return updatedTodo
-		} catch (error) {
-			logger.error(`[EnhancedAgentStorageService] Failed to update todo ${todoId}:`, error)
-			throw error
-		}
-	}
-
-	async deleteTodo(userId: string, agentId: string, todoId: string): Promise<boolean> {
-		try {
-			// 1. 本地删除
-			const result = await this.baseStorageService.deleteTodo(userId, agentId, todoId)
-
-			if (result) {
-				// 2. 获取更新后的智能体并同步
-				const updatedAgent = await this.baseStorageService.getAgent(userId, agentId)
-				if (updatedAgent) {
-					this.syncService.syncSingleAgent(updatedAgent).catch(error =>
-						logger.debug("[EnhancedAgentStorageService] Sync failed:", error)
-					)
-				}
-			}
-
-			return result
-		} catch (error) {
-			logger.error(`[EnhancedAgentStorageService] Failed to delete todo ${todoId}:`, error)
+			logger.error(`[EnhancedAgentStorageService] Failed to check agent access:`, error)
 			return false
 		}
 	}
 
-	async exportAgent(userId: string, agentId: string): Promise<AgentExportData> {
+	/**
+	 * Todo变更后同步智能体
+	 */
+	private async syncAgentAfterTodoChange(userId: string, agentId: string): Promise<void> {
 		try {
-			return await this.baseStorageService.exportAgent(userId, agentId)
+			const agent = await this.getAgent(userId, agentId)
+			if (agent) {
+				await this.redisAdapter.syncAgentToRegistry(agent)
+			}
 		} catch (error) {
-			logger.error(`[EnhancedAgentStorageService] Failed to export agent ${agentId}:`, error)
-			throw error
+			logger.error(`[EnhancedAgentStorageService] Failed to sync agent after todo change:`, error)
 		}
 	}
 
-	async importAgent(userId: string, data: AgentExportData): Promise<AgentConfig> {
+	/**
+	 * 发送心跳（用于维持Redis中的在线状态）
+	 */
+	async sendHeartbeat(agentId: string, metrics?: {
+		currentLoad?: number
+		avgResponseTime?: number
+		errorRate?: number
+		memoryUsage?: number
+		cpuUsage?: number
+	}): Promise<void> {
+		if (this.syncEnabled) {
+			await this.redisAdapter.updateHeartbeat(agentId, metrics)
+		}
+	}
+
+	/**
+	 * 获取在线智能体列表
+	 */
+	async getOnlineAgents(): Promise<string[]> {
+		if (this.syncEnabled) {
+			return this.redisAdapter.getOnlineAgents()
+		}
+		return []
+	}
+
+	/**
+	 * 检查Redis同步是否启用
+	 */
+	isSyncEnabled(): boolean {
+		return this.syncEnabled
+	}
+
+	/**
+	 * 手动触发同步
+	 */
+	async manualSync(userId: string): Promise<void> {
+		if (!this.syncEnabled) {
+			throw new Error('Redis sync is not enabled')
+		}
+
 		try {
-			// 1. 本地导入
-			const agent = await this.baseStorageService.importAgent(userId, data)
-
-			// 2. 异步同步到Redis
-			this.syncService.syncSingleAgent(agent).catch(error =>
-				logger.debug("[EnhancedAgentStorageService] Sync failed:", error)
-			)
-
-			// 3. 触发事件通知
-			this.emitAgentEvent("imported", agent)
-
-			return agent
+			const agents = await this.listUserAgents(userId)
+			
+			for (const agent of agents) {
+				await this.redisAdapter.syncAgentToRegistry(agent)
+			}
+			
+			logger.info(`[EnhancedAgentStorageService] Manual sync completed for ${agents.length} agents`)
 		} catch (error) {
-			logger.error("[EnhancedAgentStorageService] Failed to import agent:", error)
+			logger.error(`[EnhancedAgentStorageService] Manual sync failed:`, error)
 			throw error
 		}
 	}
 
 	/**
-	 * 手动触发全量同步到Redis
+	 * 设置当前用户ID（for AgentManager compatibility）
+	 */
+	setCurrentUserId(userId: string): void {
+		// This method is used by AgentManager for compatibility
+		// Since we now pass userId explicitly in all methods, this is a no-op
+		logger.debug(`[EnhancedAgentStorageService] setCurrentUserId called with: ${userId}`)
+	}
+
+	/**
+	 * 强制同步到Redis
 	 */
 	async forceSyncToRedis(userId: string): Promise<void> {
+		if (!this.syncEnabled) {
+			throw new Error('Redis sync is not enabled')
+		}
+
 		try {
-			const agents = await this.baseStorageService.listUserAgents(userId)
-			await this.syncService.forceSyncUserAgents(userId, agents)
-			logger.info(`[EnhancedAgentStorageService] Force synced ${agents.length} agents to Redis`)
+			const agents = await this.listUserAgents(userId)
+			
+			for (const agent of agents) {
+				await this.redisAdapter.syncAgentToRegistry(agent)
+			}
+			
+			logger.info(`[EnhancedAgentStorageService] Force sync completed for ${agents.length} agents`)
 		} catch (error) {
-			logger.error("[EnhancedAgentStorageService] Failed to force sync to Redis:", error)
+			logger.error(`[EnhancedAgentStorageService] Force sync failed:`, error)
 			throw error
 		}
 	}
 
 	/**
-	 * 从Redis恢复所有智能体到本地
+	 * 从Redis恢复数据
 	 */
-	async restoreFromRedis(userId: string): Promise<number> {
+	async restoreFromRedis(userId: string): Promise<void> {
+		if (!this.syncEnabled) {
+			throw new Error('Redis sync is not enabled')
+		}
+
 		try {
-			const redisAgents = await this.syncService.loadUserAgentsFromRedis(userId)
-			await this.restoreAgentsToLocal(userId, redisAgents)
-			logger.info(`[EnhancedAgentStorageService] Restored ${redisAgents.length} agents from Redis`)
-			return redisAgents.length
+			// This would need to be implemented in RedisSyncService
+			// For now, just log that it was called
+			logger.info(`[EnhancedAgentStorageService] Restore from Redis requested for user: ${userId}`)
+			// TODO: Implement actual restore logic
 		} catch (error) {
-			logger.error("[EnhancedAgentStorageService] Failed to restore from Redis:", error)
+			logger.error(`[EnhancedAgentStorageService] Restore from Redis failed:`, error)
 			throw error
 		}
 	}
@@ -260,83 +442,70 @@ export class EnhancedAgentStorageService implements AgentStorageService {
 	async checkDataConsistency(userId: string): Promise<{
 		localCount: number
 		redisCount: number
-		consistent: boolean
+		missingInRedis: string[]
+		missingInLocal: string[]
 	}> {
-		try {
-			const localAgents = await this.baseStorageService.listUserAgents(userId)
-			const redisAgents = await this.syncService.loadUserAgentsFromRedis(userId)
-
-			const consistent = localAgents.length === redisAgents.length
-
-			return {
-				localCount: localAgents.length,
-				redisCount: redisAgents.length,
-				consistent,
-			}
-		} catch (error) {
-			logger.error("[EnhancedAgentStorageService] Failed to check data consistency:", error)
+		if (!this.syncEnabled) {
 			return {
 				localCount: 0,
 				redisCount: 0,
-				consistent: false,
+				missingInRedis: [],
+				missingInLocal: []
 			}
 		}
-	}
 
-	/**
-	 * 从Redis恢复智能体到本地存储
-	 */
-	private async restoreAgentsToLocal(userId: string, agents: AgentConfig[]): Promise<void> {
-		for (const agent of agents) {
-			try {
-				const existing = await this.baseStorageService.getAgent(userId, agent.id)
-				if (!existing) {
-					// 本地不存在，直接创建
-					await this.baseStorageService.createAgent(userId, agent)
-				} else if (existing.updatedAt < agent.updatedAt) {
-					// 本地数据较旧，更新
-					await this.baseStorageService.updateAgent(userId, agent.id, agent)
-				}
-				// 如果本地数据较新，保持不变
-			} catch (error) {
-				logger.error(`[EnhancedAgentStorageService] Failed to restore agent ${agent.id}:`, error)
-			}
-		}
-		logger.info(`[EnhancedAgentStorageService] Restored ${agents.length} agents from Redis`)
-	}
-
-	/**
-	 * 触发智能体事件
-	 */
-	private emitAgentEvent(event: string, data: any): void {
 		try {
-			// 触发VSCode命令事件，供其他模块监听
-			Promise.resolve(vscode.commands.executeCommand("roo-cline.agentEvent", { event, data })).catch((error: any) =>
-				logger.debug("[EnhancedAgentStorageService] Failed to emit event:", error)
-			)
+			const localAgents = await this.listUserAgents(userId)
+			const localAgentIds = localAgents.map(a => a.id)
+			
+			// This would need proper implementation in RedisSyncService
+			// For now, return basic info
+			return {
+				localCount: localAgents.length,
+				redisCount: 0, // TODO: Get from Redis
+				missingInRedis: [],
+				missingInLocal: []
+			}
 		} catch (error) {
-			logger.debug("[EnhancedAgentStorageService] Failed to emit event:", error)
+			logger.error(`[EnhancedAgentStorageService] Data consistency check failed:`, error)
+			throw error
 		}
 	}
 
 	/**
-	 * 设置当前用户ID（用于Redis同步）
+	 * 获取Redis同步服务
 	 */
-	setCurrentUserId(userId: string): void {
-		this.syncService.setCurrentUserId(userId)
+	getSyncService(): AgentRedisAdapter {
+		return this.redisAdapter
 	}
 
 	/**
-	 * 获取底层存储服务（供测试或特殊需求使用）
+	 * 获取基础存储服务
 	 */
 	getBaseStorageService(): VSCodeAgentStorageService {
-		return this.baseStorageService
+		return this.localStorage
 	}
 
 	/**
-	 * 获取同步服务（供测试或特殊需求使用）
+	 * 导出智能体数据
 	 */
-	getSyncService(): AgentRedisSyncService {
-		return this.syncService
+	async exportAgents(userId: string): Promise<AgentExportData> {
+		return this.localStorage.exportAgents(userId)
+	}
+
+	/**
+	 * 导入智能体数据
+	 */
+	async importAgents(userId: string, data: AgentExportData): Promise<AgentConfig[]> {
+		return this.localStorage.importAgents(userId, data)
+	}
+
+	/**
+	 * 关闭服务
+	 */
+	async close(): Promise<void> {
+		if (this.syncEnabled) {
+			await this.redisAdapter.close()
+		}
 	}
 }
