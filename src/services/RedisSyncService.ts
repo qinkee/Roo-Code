@@ -91,15 +91,21 @@ export class RedisSyncService {
 		}
 	}
 	
-	async set(key: string, value: any): Promise<void> {
+	async set(key: string, value: any, immediate: boolean = false): Promise<void> {
 		// 降级检查 - 连续失败5次后暂停1分钟
 		if (this.failureCount >= 5) {
 			const now = Date.now()
 			if (now - this.lastFailureTime < 60000) {
+				console.debug(`[Redis] Skipping operation due to circuit breaker (${this.failureCount} failures)`)
 				return // 降级期间跳过Redis
 			} else {
 				this.failureCount = 0 // 重置计数
 			}
+		}
+		
+		// 如果要求立即写入，直接执行
+		if (immediate) {
+			return this.setImmediate(key, value)
 		}
 		
 		// 加入缓冲区
@@ -108,6 +114,24 @@ export class RedisSyncService {
 		// 延迟批量写入
 		if (!this.flushTimer) {
 			this.flushTimer = setTimeout(() => this.flush(), 100)
+		}
+	}
+	
+	async setImmediate(key: string, value: any): Promise<void> {
+		if (!this.isConnected || !this.client) {
+			console.debug(`[Redis] Cannot perform immediate write - not connected`)
+			throw new Error('Redis not connected')
+		}
+		
+		try {
+			await this.client.setEx(key, 7 * 24 * 60 * 60, JSON.stringify(value))
+			this.failureCount = 0
+			console.debug(`[Redis] Immediate write successful for key: ${key}`)
+		} catch (error) {
+			this.failureCount++
+			this.lastFailureTime = Date.now()
+			console.error(`[Redis] Immediate write failed for key ${key}:`, error instanceof Error ? error.message : 'Unknown error')
+			throw error
 		}
 	}
 	

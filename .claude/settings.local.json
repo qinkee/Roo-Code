@@ -36,7 +36,13 @@
       "Bash(pnpm run lint:*)",
       "Bash(pkill:*)",
       "Bash(pnpm run:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(curl:*)",
+      "Bash(node:*)",
+      "Bash(pnpm turbo build:*)",
+      "Bash(echo $NODE_ENV)",
+      "Bash(pnpm turbo bundle:*)",
+      "Bash(pnpm run:*)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [

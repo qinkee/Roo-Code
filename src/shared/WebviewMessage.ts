@@ -235,6 +235,9 @@ export interface WebviewMessage {
 		| "deleteAgentTodo"
 		| "publishAgent"
 		| "stopAgent"
+		| "checkAgentHealth"
+		| "getCurrentA2AMode"
+		| "currentA2AModeResponse"
 	text?: string
 	editedMessageContent?: string
 	tab?: "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "account" | "agents"
@@ -245,7 +248,7 @@ export interface WebviewMessage {
 	apiConfiguration?: ProviderSettings
 	images?: string[]
 	bool?: boolean
-	value?: number
+	value?: any
 	commands?: string[]
 	audioType?: AudioType
 	serverName?: string
@@ -269,6 +272,19 @@ export interface WebviewMessage {
 	agentName?: string
 	agentConfig?: Partial<AgentConfig>
 	agentListOptions?: AgentListOptions
+	// A2A测试相关字段
+	executionMode?: "direct" | "a2a"
+	a2aServerUrl?: string | null
+	a2aServerPort?: number | null
+	isA2ACall?: boolean
+	agentA2AMode?: {
+		enabled: boolean
+		agentId: string
+		agentName: string
+		serverUrl: string
+		serverPort: number
+		lastUpdated?: number
+	} | null
 	agentExportData?: AgentExportData
 	templateData?: AgentTemplateData
 	todoId?: string
@@ -289,6 +305,7 @@ export interface WebviewMessage {
 	visibility?: ShareVisibility // For share visibility
 	hasContent?: boolean // For checkRulesDirectoryResult
 	checkOnly?: boolean // For deleteCustomMode check
+	error?: string // For error responses
 	codeIndexSettings?: {
 		// Global state settings
 		codebaseIndexEnabled: boolean

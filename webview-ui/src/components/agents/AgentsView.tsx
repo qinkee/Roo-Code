@@ -31,8 +31,36 @@ interface AgentsViewProps {
 
 // 发布状态组件
 const PublishStatusBadge = ({ agent }: { agent: any }) => {
+	const [serverStatus, setServerStatus] = useState<'checking' | 'running' | 'stopped'>('checking')
 	const publishInfo = agent.publishInfo || {}
 	const isPublished = agent.isPublished || false
+	
+	useEffect(() => {
+		if (!isPublished || !publishInfo.serverUrl) {
+			setServerStatus('stopped')
+			return
+		}
+
+		const checkServerHealth = async () => {
+			try {
+				const response = await fetch(`${publishInfo.serverUrl}/health`, {
+					method: 'GET',
+					signal: AbortSignal.timeout(3000) // 3秒超时
+				})
+				setServerStatus(response.ok ? 'running' : 'stopped')
+			} catch (error) {
+				setServerStatus('stopped')
+			}
+		}
+
+		// 立即检查一次
+		checkServerHealth()
+		
+		// 每10秒检查一次
+		const interval = setInterval(checkServerHealth, 10000)
+		
+		return () => clearInterval(interval)
+	}, [isPublished, publishInfo.serverUrl])
 	
 	if (!isPublished) {
 		return null
@@ -41,12 +69,35 @@ const PublishStatusBadge = ({ agent }: { agent: any }) => {
 	const terminalIcon = publishInfo.terminalType === 'cloud' ? '☁️' : '💻'
 	const terminalText = publishInfo.terminalType === 'cloud' ? '云端' : '本地'
 	
+	const getStatusBadge = () => {
+		switch (serverStatus) {
+			case 'checking':
+				return (
+					<span className="px-1.5 py-0.5 text-xs bg-yellow-500/20 text-yellow-400 rounded flex items-center gap-1">
+						<span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></span>
+						检查中
+					</span>
+				)
+			case 'running':
+				return (
+					<span className="px-1.5 py-0.5 text-xs bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+						<span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+						运行中
+					</span>
+				)
+			case 'stopped':
+				return (
+					<span className="px-1.5 py-0.5 text-xs bg-red-500/20 text-red-400 rounded flex items-center gap-1">
+						<span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+						已停止
+					</span>
+				)
+		}
+	}
+	
 	return (
 		<div className="flex items-center gap-1.5">
-			<span className="px-1.5 py-0.5 text-xs bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-				<span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-				运行中
-			</span>
+			{getStatusBadge()}
 			<span className="px-1.5 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded flex items-center gap-1">
 				{terminalIcon} {terminalText}
 			</span>
@@ -131,6 +182,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 
 	// 加载智能体列表
 	const loadAgents = useCallback(() => {
+		console.log("📤 [AgentsView] Loading agents list...")
 		setLoading(true)
 		vscode.postMessage({
 			type: "listAgents",
@@ -160,6 +212,14 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 					case "listAgentsResult":
 						setLoading(false)
 						if (message.success && message.agents) {
+							console.log("📋 [AgentsView] Received agents list from backend:", {
+								count: message.agents.length,
+								agentIds: message.agents.map((a: any) => a.id),
+								agentIdsDetailed: message.agents.map((a: any) => ({ id: a.id, name: a.name })),
+								agents: message.agents
+							})
+							console.log("🔍 [AgentsView] Agent IDs in detail:", message.agents.map((a: any) => a.id))
+							
 							// 转换后端数据为前端格式
 							const transformedAgents = message.agents.map((agent: any) => ({
 								id: agent.id,
@@ -172,9 +232,17 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 								isPublished: agent.isPublished || false,
 								publishInfo: agent.publishInfo || null
 							}))
+							
+							console.log("🔄 [AgentsView] Transformed agents for frontend:", {
+								count: transformedAgents.length,
+								agentIds: transformedAgents.map((a: any) => a.id),
+								transformedAgents
+							})
+							console.log("🔍 [AgentsView] Transformed agent IDs in detail:", transformedAgents.map((a: any) => a.id))
+							
 							setCustomAgents(transformedAgents)
 						} else {
-							console.error("Failed to list agents:", message.error)
+							console.error("❌ [AgentsView] Failed to list agents:", message.error)
 						}
 						break
 					
@@ -218,11 +286,69 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 						setLoading(false)
 						if (message.success) {
 							// 智能体发布成功
-							console.log("Agent published successfully:", message.agentId)
-							// 重新加载智能体列表以更新发布状态
-							loadAgents()
+							console.log("🎉 [AgentsView] Agent published successfully:", message.agentId)
+							
+							// 检查是否有更新后的智能体数据
+							console.log("🔍 [AgentsView] Checking updated agent data:", {
+								hasUpdatedAgent: !!message.updatedAgent,
+								updatedAgentId: message.updatedAgent?.id,
+								isPublished: message.updatedAgent?.isPublished,
+								publishInfo: message.updatedAgent?.publishInfo
+							})
+							
+							// 如果返回了更新后的智能体数据，直接更新列表
+							if (message.updatedAgent) {
+								console.log("🔄 [AgentsView] Updating state with fresh agent data")
+								console.log("🔄 [AgentsView] Before state update, current agents:", agents.length)
+								console.log("🔄 [AgentsView] Updated agent data:", {
+									id: message.updatedAgent.id,
+									name: message.updatedAgent.name,
+									isPublished: message.updatedAgent.isPublished,
+									publishInfo: message.updatedAgent.publishInfo
+								})
+								console.log("🔍 [AgentsView] Debug agentId vs updatedAgent.id:")
+								console.log("  messageAgentId:", message.agentId)
+								console.log("  updatedAgentId:", message.updatedAgent.id)
+								console.log("  areEqual:", message.agentId === message.updatedAgent.id)
+								console.log("🔍 [AgentsView] Current agents IDs:", agents.map(a => a.id))
+								
+								setCustomAgents(prevAgents => {
+									console.log("🔧 [AgentsView] setCustomAgents called, updating custom agent list")
+									const targetId = message.updatedAgent.id // 使用updatedAgent的id
+									const newAgents = prevAgents.map(agent => {
+										if (agent.id === targetId) {
+											const updatedAgent = {
+												...agent,
+												isPublished: message.updatedAgent.isPublished,
+												publishInfo: message.updatedAgent.publishInfo
+											}
+											console.log("🎯 [AgentsView] Found and updated target agent:", {
+												id: updatedAgent.id,
+												isPublished: updatedAgent.isPublished,
+												publishInfo: updatedAgent.publishInfo
+											})
+											return updatedAgent
+										}
+										return agent
+									})
+									console.log("🔄 [AgentsView] After state update, updated custom agents:", newAgents.length)
+									const updatedTarget = newAgents.find(a => a.id === targetId)
+									console.log("🔄 [AgentsView] Found updated agent in new list:", updatedTarget)
+									return newAgents
+								})
+								
+								console.log("✅ [AgentsView] State updated with new server info:", {
+									agentId: message.agentId,
+									serverUrl: message.updatedAgent.publishInfo?.serverUrl,
+									serverPort: message.updatedAgent.publishInfo?.serverPort
+								})
+							} else {
+								console.log("⚠️ [AgentsView] No updated agent data, reloading entire list")
+								// 重新加载智能体列表以更新发布状态
+								loadAgents()
+							}
 						} else {
-							console.error("Failed to publish agent:", message.error)
+							console.error("❌ [AgentsView] Failed to publish agent:", message.error)
 						}
 						break
 					
@@ -259,10 +385,29 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 
 	// 智能体操作处理函数
 	const handleRunAgent = useCallback((agent: Agent) => {
+		// 检查智能体是否已发布，决定执行模式
+		const agentData = agent as any // 转换为包含发布信息的类型
+		const isPublished = agentData.isPublished || false
+		const publishInfo = agentData.publishInfo || null
+		
+		console.log('[AgentsView] 🚀 Running agent:', agent.name)
+		console.log('[AgentsView] 📊 Agent data:', {
+			id: agent.id,
+			name: agent.name,
+			isPublished,
+			publishInfo,
+			executionMode: isPublished ? "a2a" : "direct"
+		})
+		
 		// 在新任务面板中加载智能体，发送消息给扩展
 		vscode.postMessage({
 			type: "startAgentTask",
-			agentId: agent.id
+			agentId: agent.id,
+			agentName: agent.name,
+			// A2A模式相关参数
+			executionMode: isPublished ? "a2a" : "direct",
+			a2aServerUrl: isPublished && publishInfo ? publishInfo.serverUrl : null,
+			a2aServerPort: isPublished && publishInfo ? publishInfo.serverPort : null
 		})
 		// 关闭智能体面板，切换到聊天界面
 		onDone()

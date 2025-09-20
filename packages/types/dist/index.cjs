@@ -1678,7 +1678,15 @@ var globalSettingsSchema = import_zod12.z.object({
       })
     ).optional(),
     lastUpdated: import_zod12.z.number().optional()
-  }).optional()
+  }).optional(),
+  // A2A testing mode configuration
+  agentA2AMode: import_zod12.z.object({
+    enabled: import_zod12.z.boolean(),
+    agentId: import_zod12.z.string(),
+    agentName: import_zod12.z.string(),
+    serverUrl: import_zod12.z.string(),
+    serverPort: import_zod12.z.number()
+  }).nullable().optional()
 });
 var GLOBAL_SETTINGS_KEYS = globalSettingsSchema.keyof().options;
 var rooCodeSettingsSchema = providerSettingsSchema.merge(globalSettingsSchema);

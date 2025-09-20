@@ -129,6 +129,7 @@ export interface ExtensionMessage {
 		| "createAgentFromTask"
 		| "getAgent"
 		| "updateAgent"
+		| "currentA2AModeResponse"
 	text?: string
 	payload?: any // Add a generic payload for now, can refine later
 	action?:
@@ -216,6 +217,14 @@ export interface ExtensionMessage {
 	agentId?: string // For agent operations
 	agentName?: string // For agent operations
 	agentConfig?: any // For agent configuration data
+	agentA2AMode?: {
+		enabled: boolean
+		agentId: string
+		agentName: string
+		serverUrl: string
+		serverPort: number
+		lastUpdated?: number
+	} | null // For currentA2AModeResponse
 	contacts?: {
 		friends: Array<{
 			id: number
@@ -371,6 +380,13 @@ export type ExtensionState = Pick<
 	marketplaceInstalledMetadata?: { project: Record<string, any>; global: Record<string, any> }
 	profileThresholds: Record<string, number>
 	hasOpenedModeSelector: boolean
+	agentA2AMode?: {
+		enabled: boolean
+		agentId: string
+		agentName: string
+		serverUrl: string
+		serverPort: number
+	} | null
 }
 
 export interface ClineSayTool {

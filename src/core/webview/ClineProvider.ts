@@ -931,7 +931,7 @@ export class ClineProvider
 			`img-src ${webview.cspSource} https://storage.googleapis.com https://img.clerk.com data:`,
 			`media-src ${webview.cspSource}`,
 			`script-src 'unsafe-eval' ${webview.cspSource} https://* https://*.posthog.com http://${localServerUrl} http://0.0.0.0:${localPort} 'nonce-${nonce}'`,
-			`connect-src ${webview.cspSource} https://* https://*.posthog.com ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort}`,
+			`connect-src ${webview.cspSource} https://* https://*.posthog.com ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort} http://localhost:* https://localhost:* http://* ws://localhost:*`,
 		]
 
 		return /*html*/ `
@@ -1013,7 +1013,7 @@ export class ClineProvider
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
             <meta name="theme-color" content="#000000">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource} data:; style-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} https://storage.googleapis.com https://img.clerk.com data:; media-src ${webview.cspSource}; script-src ${webview.cspSource} 'wasm-unsafe-eval' 'nonce-${nonce}' https://us-assets.i.posthog.com 'strict-dynamic'; connect-src ${webview.cspSource} https://openrouter.ai https://api.requesty.ai https://us.i.posthog.com https://us-assets.i.posthog.com;">
+            <meta http-equiv="Content-Security-Policy" content="default-src *; font-src * data:; style-src * 'unsafe-inline'; img-src * data:; media-src *; script-src * 'unsafe-eval' 'unsafe-inline' 'nonce-${nonce}'; connect-src *;">
             <link rel="stylesheet" type="text/css" href="${stylesUri}">
 			<link href="${codiconsUri}" rel="stylesheet" />
 			<script nonce="${nonce}">
@@ -1536,7 +1536,9 @@ export class ClineProvider
 	}
 
 	async postStateToWebview() {
+		console.log('[ClineProvider] 🔄 postStateToWebview called')
 		const state = await this.getStateToPostToWebview()
+		console.log('[ClineProvider] 🔄 postStateToWebview sending state with agentA2AMode:', state.agentA2AMode)
 		this.postMessageToWebview({ type: "state", state })
 
 		// Check MDM compliance and send user to account tab if not compliant
@@ -1741,7 +1743,11 @@ export class ClineProvider
 			maxDiagnosticMessages,
 			includeTaskHistoryInEnhance,
 			remoteControlEnabled,
+			agentA2AMode,
 		} = await this.getState()
+
+		// 立即检查解构后的agentA2AMode值
+		console.log('[ClineProvider] 📋 After destructuring agentA2AMode:', agentA2AMode)
 
 		const telemetryKey = process.env.POSTHOG_API_KEY
 		const machineId = vscode.env.machineId
@@ -1870,7 +1876,11 @@ export class ClineProvider
 			maxDiagnosticMessages: maxDiagnosticMessages ?? 50,
 			includeTaskHistoryInEnhance: includeTaskHistoryInEnhance ?? false,
 			remoteControlEnabled: remoteControlEnabled ?? false,
+			agentA2AMode: agentA2AMode ?? null,
 		}
+
+		// 添加调试日志
+		console.log('[ClineProvider] 🚀 getStateToPostToWebview agentA2AMode:', agentA2AMode)
 	}
 
 	/**
@@ -1882,6 +1892,13 @@ export class ClineProvider
 	async getState() {
 		const stateValues = this.contextProxy.getValues()
 		const customModes = await this.customModesManager.getCustomModes()
+		
+		// 调试：检查agentA2AMode值
+		if (stateValues.agentA2AMode) {
+			console.log('[ClineProvider] 🎯 getState - agentA2AMode found:', stateValues.agentA2AMode)
+		} else {
+			console.log('[ClineProvider] ❌ getState - agentA2AMode is null/undefined')
+		}
 
 		// Determine apiProvider with the same logic as before.
 		const apiProvider: ProviderName = stateValues.apiProvider ? stateValues.apiProvider : "anthropic"
@@ -2060,6 +2077,8 @@ export class ClineProvider
 			includeTaskHistoryInEnhance: stateValues.includeTaskHistoryInEnhance ?? false,
 			// Add remoteControlEnabled setting
 			remoteControlEnabled: stateValues.remoteControlEnabled ?? false,
+			// Add agentA2AMode setting
+			agentA2AMode: stateValues.agentA2AMode ?? null,
 		}
 	}
 

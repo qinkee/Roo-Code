@@ -78,7 +78,8 @@ export class AgentRedisAdapter {
 				dataKeys: Object.keys(agentData)
 			})
 			
-			await this.redisService.set(key, agentData)
+			// 🔥 立即写入Redis，确保智能体注册信息第一时间生效
+			await this.redisService.set(key, agentData, true)
 
 			// 同时添加到在线智能体列表
 			if (agent.isActive) {
@@ -86,7 +87,7 @@ export class AgentRedisAdapter {
 				const onlineAgents = await this.getOnlineAgents()
 				if (!onlineAgents.includes(agent.id)) {
 					onlineAgents.push(agent.id)
-					await this.redisService.set(onlineKey, onlineAgents)
+					await this.redisService.set(onlineKey, onlineAgents, true)
 				}
 			}
 
@@ -215,10 +216,10 @@ export class AgentRedisAdapter {
 
 			if (isOnline && !onlineAgents.includes(agentId)) {
 				onlineAgents.push(agentId)
-				await this.redisService.set(onlineKey, onlineAgents)
+				await this.redisService.set(onlineKey, onlineAgents, true)
 			} else if (!isOnline && onlineAgents.includes(agentId)) {
 				const filtered = onlineAgents.filter(id => id !== agentId)
-				await this.redisService.set(onlineKey, filtered)
+				await this.redisService.set(onlineKey, filtered, true)
 			}
 
 			logger.debug(`[AgentRedisAdapter] Updated online status for ${agentId}: ${isOnline}`)

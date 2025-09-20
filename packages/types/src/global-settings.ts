@@ -195,6 +195,18 @@ export const globalSettingsSchema = z.object({
 			lastUpdated: z.number().optional(),
 		})
 		.optional(),
+
+	// A2A testing mode configuration
+	agentA2AMode: z
+		.object({
+			enabled: z.boolean(),
+			agentId: z.string(),
+			agentName: z.string(),
+			serverUrl: z.string(),
+			serverPort: z.number(),
+		})
+		.nullable()
+		.optional(),
 })
 
 export type GlobalSettings = z.infer<typeof globalSettingsSchema>

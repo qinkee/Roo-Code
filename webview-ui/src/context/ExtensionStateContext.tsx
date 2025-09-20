@@ -250,6 +250,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		alwaysAllowUpdateTodoList: true,
 		includeDiagnosticMessages: true,
 		maxDiagnosticMessages: 50,
+		agentA2AMode: null,
 	})
 
 	const [didHydrateState, setDidHydrateState] = useState(false)
@@ -305,6 +306,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					// Update includeTaskHistoryInEnhance if present in state message
 					if ((newState as any).includeTaskHistoryInEnhance !== undefined) {
 						setIncludeTaskHistoryInEnhance((newState as any).includeTaskHistoryInEnhance)
+					}
+					// Update agentA2AMode if present in state message
+					if ((newState as any).agentA2AMode !== undefined) {
+						console.log('[ExtensionStateContext] 🔄 Updating agentA2AMode:', (newState as any).agentA2AMode)
 					}
 					// Handle marketplace data if present in state message
 					if (newState.marketplaceItems !== undefined) {

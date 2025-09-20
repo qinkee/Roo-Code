@@ -1432,7 +1432,15 @@ var globalSettingsSchema = z12.object({
       })
     ).optional(),
     lastUpdated: z12.number().optional()
-  }).optional()
+  }).optional(),
+  // A2A testing mode configuration
+  agentA2AMode: z12.object({
+    enabled: z12.boolean(),
+    agentId: z12.string(),
+    agentName: z12.string(),
+    serverUrl: z12.string(),
+    serverPort: z12.number()
+  }).nullable().optional()
 });
 var GLOBAL_SETTINGS_KEYS = globalSettingsSchema.keyof().options;
 var rooCodeSettingsSchema = providerSettingsSchema.merge(globalSettingsSchema);
