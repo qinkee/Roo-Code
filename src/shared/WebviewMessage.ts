@@ -301,6 +301,7 @@ export interface WebviewMessage {
 	mpItem?: MarketplaceItem
 	mpInstallOptions?: InstallMarketplaceItemOptions
 	terminal?: any // For publishAgent
+	preferredPort?: number // For publishAgent port reuse optimization
 	config?: Record<string, any> // Add config to the payload
 	visibility?: ShareVisibility // For share visibility
 	hasContent?: boolean // For checkRulesDirectoryResult

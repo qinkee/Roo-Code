@@ -60,22 +60,28 @@ import { setPendingTodoList } from "../tools/updateTodoListTool"
  * 智能体初始化工作流
  * 在终端上发布智能体后执行的初始化步骤
  */
-async function initializeAgentOnTerminal(agent: any, terminal: any, provider: any): Promise<void> {
+async function initializeAgentOnTerminal(
+	agent: any,
+	terminal: any,
+	provider: any,
+	preferredPort?: number,
+): Promise<void> {
 	try {
-		console.log(`[AgentInitializer] Initializing agent "${agent.name}" on terminal "${terminal.name}"`)
-		
-		if (terminal.id === 'local-computer') {
+		console.log(`[AgentInitializer] Initializing agent "${agent.name}" on terminal "${terminal.name}"`, {
+			preferredPort,
+		})
+
+		if (terminal.id === "local-computer") {
 			// 本地电脑发布逻辑
-			await initializeLocalAgent(agent, provider)
-		} else if (terminal.id === 'cloud-computer') {
+			await initializeLocalAgent(agent, provider, preferredPort)
+		} else if (terminal.id === "cloud-computer") {
 			// 云电脑发布逻辑（待实现）
 			await initializeCloudAgent(agent)
 		} else {
 			throw new Error(`Unsupported terminal type: ${terminal.id}`)
 		}
-		
+
 		console.log(`[AgentInitializer] Agent "${agent.name}" initialized successfully on "${terminal.name}"`)
-		
 	} catch (error) {
 		console.error(`[AgentInitializer] Failed to initialize agent "${agent.name}":`, error)
 		throw error
@@ -85,12 +91,12 @@ async function initializeAgentOnTerminal(agent: any, terminal: any, provider: an
 /**
  * 初始化本地智能体
  */
-async function initializeLocalAgent(agent: any, provider: any): Promise<void> {
+async function initializeLocalAgent(agent: any, provider: any, preferredPort?: number): Promise<void> {
 	try {
 		// 1. 获取A2A服务器管理器实例
 		const { A2AServerManager } = require("../agent/A2AServerManager")
 		const serverManager = A2AServerManager.getInstance()
-		
+
 		// 2. 初始化管理器（如果尚未初始化）
 		// 从当前provider获取共享的存储服务实例
 		const sharedStorageService = (provider as any).agentManager?.getStorageService()
@@ -101,17 +107,17 @@ async function initializeLocalAgent(agent: any, provider: any): Promise<void> {
 			console.log(`[AgentInitializer] Warning: No shared storage service found, creating new instance`)
 			await serverManager.initialize()
 		}
-		
-		// 3. 为智能体启动专用的A2A服务器
-		console.log(`[AgentInitializer] Starting A2A server for agent ${agent.id}`)
-		const serverInfo = await serverManager.startAgentServer(agent.id)
-		
+
+		// 3. 为智能体启动专用的A2A服务器，🎯 传递首选端口
+		console.log(`[AgentInitializer] Starting A2A server for agent ${agent.id}`, { preferredPort })
+		const serverInfo = await serverManager.startAgentServer(agent.id, preferredPort)
+
 		console.log(`[AgentInitializer] A2A server started:`, {
 			agentId: agent.id,
 			port: serverInfo.port,
-			url: serverInfo.url
+			url: serverInfo.url,
 		})
-		
+
 		// 🔥 CRITICAL: 立即更新ClineProvider的agentA2AMode状态到最新端口
 		console.log(`[AgentInitializer] 🔥 Updating ClineProvider agentA2AMode with new port ${serverInfo.port}`)
 		const updatedA2AConfig = {
@@ -120,52 +126,60 @@ async function initializeLocalAgent(agent: any, provider: any): Promise<void> {
 			agentName: agent.name,
 			serverUrl: serverInfo.url,
 			serverPort: serverInfo.port,
-			lastUpdated: Date.now()
+			lastUpdated: Date.now(),
 		}
-		
-		console.log(`[AgentInitializer] 🔧 About to call provider.contextProxy.setValue with:`, JSON.stringify(updatedA2AConfig))
+
+		console.log(
+			`[AgentInitializer] 🔧 About to call provider.contextProxy.setValue with:`,
+			JSON.stringify(updatedA2AConfig),
+		)
 		await provider.contextProxy.setValue("agentA2AMode", updatedA2AConfig)
 		console.log(`[AgentInitializer] 🔍 Called setValue, now checking if it worked...`)
-		
+
 		// 验证状态是否正确设置
 		const currentState = await provider.getState()
 		console.log(`[AgentInitializer] 🔍 State after updateGlobalState:`, JSON.stringify(currentState.agentA2AMode))
-		
+
 		if (currentState.agentA2AMode?.serverPort !== serverInfo.port) {
-			console.error(`[AgentInitializer] ❌ CRITICAL ERROR: updateGlobalState failed! Expected port ${serverInfo.port}, got ${currentState.agentA2AMode?.serverPort}`)
-			
+			console.error(
+				`[AgentInitializer] ❌ CRITICAL ERROR: updateGlobalState failed! Expected port ${serverInfo.port}, got ${currentState.agentA2AMode?.serverPort}`,
+			)
+
 			// 尝试直接通过provider设置状态
 			console.log(`[AgentInitializer] 🚨 Attempting direct state update via provider...`)
 			const allState = await provider.getState()
 			allState.agentA2AMode = updatedA2AConfig
 			await provider.setState(allState)
-			
+
 			// 再次验证
 			const finalState = await provider.getState()
-			console.log(`[AgentInitializer] 🔍 Final state after direct update:`, JSON.stringify(finalState.agentA2AMode))
+			console.log(
+				`[AgentInitializer] 🔍 Final state after direct update:`,
+				JSON.stringify(finalState.agentA2AMode),
+			)
 		} else {
 			console.log(`[AgentInitializer] ✅ State update successful!`)
 		}
-		
+
 		// 立即同步状态到webview
 		await provider.postStateToWebview()
 		console.log(`[AgentInitializer] ✅ State synchronized to webview`)
-		
+
 		// 3. 更新本地智能体状态为"已发布"（先更新，避免覆盖服务信息）
 		console.log(`[AgentInitializer] Updating agent status to published`)
+
 		await updateAgentPublishStatus(agent.id, true, {
-			terminalType: 'local',
+			terminalType: "local",
 			serverPort: serverInfo.port,
 			serverUrl: serverInfo.url,
-			publishedAt: new Date().toISOString()
+			publishedAt: new Date().toISOString(),
 		})
-		
+
 		// 4. 向Redis注册智能体服务（后注册，确保包含完整服务信息）
 		console.log(`[AgentInitializer] Registering agent ${agent.id} in Redis`)
 		await registerAgentInRedis(agent, serverInfo)
-		
+
 		console.log(`[AgentInitializer] Local agent ${agent.id} initialized successfully`)
-	
 	} catch (error) {
 		console.error(`[AgentInitializer] Failed to initialize local agent ${agent.id}:`, error)
 		throw error
@@ -179,28 +193,30 @@ async function updateAgentPublishStatus(agentId: string, isPublished: boolean, p
 	try {
 		const VoidBridge = require("../../api/void-bridge").VoidBridge
 		const userId = VoidBridge.getCurrentUserId() || "default"
-		
+
 		console.log(`[updateAgentPublishStatus] Updating agent ${agentId} publish status:`, {
 			isPublished,
-			publishInfo
+			publishInfo,
 		})
-		
-		const result = await vscode.commands.executeCommand("roo-cline.updateAgent", {
+
+		const result = (await vscode.commands.executeCommand("roo-cline.updateAgent", {
 			userId,
 			agentId,
 			updates: {
 				isPublished,
 				publishInfo,
-				updatedAt: new Date().toISOString()
-			}
-		}) as any
-		
+				updatedAt: new Date().toISOString(),
+			},
+		})) as any
+
 		if (result.success) {
 			console.log(`[updateAgentPublishStatus] ✅ Agent ${agentId} publish status updated successfully`)
 		} else {
-			console.error(`[updateAgentPublishStatus] ❌ Failed to update agent ${agentId} publish status:`, result.error)
+			console.error(
+				`[updateAgentPublishStatus] ❌ Failed to update agent ${agentId} publish status:`,
+				result.error,
+			)
 		}
-		
 	} catch (error) {
 		console.error(`[updateAgentPublishStatus] ❌ Error updating agent publish status:`, error)
 		throw error
@@ -211,7 +227,7 @@ async function updateAgentPublishStatus(agentId: string, isPublished: boolean, p
  * 初始化云智能体（待实现）
  */
 async function initializeCloudAgent(agent: any): Promise<void> {
-	throw new Error('Cloud agent initialization not implemented yet')
+	throw new Error("Cloud agent initialization not implemented yet")
 }
 
 /**
@@ -220,62 +236,67 @@ async function initializeCloudAgent(agent: any): Promise<void> {
 async function registerAgentInRedis(agent: any, serverInfo: any): Promise<void> {
 	try {
 		console.log(`[AgentInitializer] 🔄 Starting Redis registration for agent ${agent.id}`)
-		
+
 		const { AgentRedisAdapter } = require("../agent/AgentRedisAdapter")
 		const redisAdapter = new AgentRedisAdapter()
-		
+
 		// 🔍 检查Redis连接状态
 		if (!redisAdapter.isEnabled()) {
-			console.warn(`[AgentInitializer] ⚠️ Redis is not enabled/connected, skipping registration for agent ${agent.id}`)
+			console.warn(
+				`[AgentInitializer] ⚠️ Redis is not enabled/connected, skipping registration for agent ${agent.id}`,
+			)
 			return
 		}
-		
+
 		// 扩展智能体信息，加入服务注册相关字段
 		const serviceAgent = {
 			...agent,
 			// 服务发现信息
 			serviceEndpoint: serverInfo.url,
 			servicePort: serverInfo.port,
-			serviceStatus: 'online',
+			serviceStatus: "online",
 			publishedAt: new Date().toISOString(),
-			terminalType: 'local',
-			
+			terminalType: "local",
+
 			// A2A服务信息
 			a2aCard: serverInfo.agentCard,
 			capabilities: serverInfo.agentCard?.capabilities,
 			deployment: serverInfo.agentCard?.deployment,
-			
+
 			// 运行时状态
 			isPublished: true,
-			lastHeartbeat: Date.now()
+			lastHeartbeat: Date.now(),
 		}
-		
+
 		console.log(`[AgentInitializer] 📋 Agent data prepared for Redis:`, {
 			agentId: agent.id,
 			serviceEndpoint: serviceAgent.serviceEndpoint,
 			servicePort: serviceAgent.servicePort,
 			serviceStatus: serviceAgent.serviceStatus,
-			hasA2ACard: !!serviceAgent.a2aCard
+			hasA2ACard: !!serviceAgent.a2aCard,
 		})
-		
+
 		// 🔥 立即同步到Redis（强制即时写入）
 		await redisAdapter.syncAgentToRegistry(serviceAgent)
 		console.log(`[AgentInitializer] ✅ Agent ${agent.id} synced to Redis`)
-		
+
 		// 添加到在线智能体服务列表
 		await redisAdapter.updateAgentOnlineStatus(agent.id, true)
 		console.log(`[AgentInitializer] ✅ Agent ${agent.id} marked as online in Redis`)
-		
+
 		// 🔍 验证Redis中的数据
 		const retrievedAgent = await redisAdapter.getAgentFromRegistry(agent.userId, agent.id)
 		if (retrievedAgent && retrievedAgent.serviceEndpoint) {
-			console.log(`[AgentInitializer] 🎯 Redis verification successful - agent ${agent.id} found with serviceEndpoint: ${retrievedAgent.serviceEndpoint}`)
+			console.log(
+				`[AgentInitializer] 🎯 Redis verification successful - agent ${agent.id} found with serviceEndpoint: ${retrievedAgent.serviceEndpoint}`,
+			)
 		} else {
-			console.error(`[AgentInitializer] ❌ Redis verification failed - agent ${agent.id} not found or missing serviceEndpoint`)
+			console.error(
+				`[AgentInitializer] ❌ Redis verification failed - agent ${agent.id} not found or missing serviceEndpoint`,
+			)
 		}
-		
+
 		console.log(`[AgentInitializer] ✅ Agent ${agent.id} registered in Redis successfully`)
-		
 	} catch (error) {
 		console.error(`[AgentInitializer] ❌ CRITICAL: Failed to register agent in Redis:`, error)
 		// 不抛出错误，避免阻塞整个发布流程
@@ -290,21 +311,19 @@ async function removeAgentFromRedis(agentId: string, userId: string): Promise<vo
 	try {
 		const { AgentRedisAdapter } = require("../agent/AgentRedisAdapter")
 		const redisAdapter = new AgentRedisAdapter()
-		
+
 		// 从Redis移除智能体信息
 		await redisAdapter.removeAgentFromRegistry(userId, agentId)
-		
+
 		// 从在线智能体列表移除
 		await redisAdapter.updateAgentOnlineStatus(agentId, false)
-		
+
 		console.log(`[AgentManager] Agent ${agentId} removed from Redis successfully`)
-		
 	} catch (error) {
 		console.error(`[AgentManager] Failed to remove agent from Redis:`, error)
 		throw error
 	}
 }
-
 
 export const webviewMessageHandler = async (
 	provider: ClineProvider,
@@ -770,11 +789,11 @@ export const webviewMessageHandler = async (
 			// Get debug information from VoidBridge and ImPlatformTokenManager
 			const VoidBridge = require("../../api/void-bridge").VoidBridge
 			const { ImPlatformTokenManager } = require("../../services/im-platform/ImPlatformTokenManager")
-			
+
 			// Get skToken from ImPlatformTokenManager
 			const tokenManager = ImPlatformTokenManager.getInstance()
 			const skToken = tokenManager.getTokenKey()
-			
+
 			const debugInfo = {
 				userId: VoidBridge.getCurrentUserId() || undefined,
 				terminal: VoidBridge.getCurrentTerminalNo(),
@@ -782,9 +801,9 @@ export const webviewMessageHandler = async (
 				skToken: skToken || undefined,
 			}
 			// Send debug info back to webview
-			provider.postMessageToWebview({ 
-				type: "debugInfo", 
-				data: debugInfo 
+			provider.postMessageToWebview({
+				type: "debugInfo",
+				data: debugInfo,
 			})
 			break
 		}
@@ -2702,14 +2721,14 @@ export const webviewMessageHandler = async (
 			await provider.postMessageToWebview({
 				type: "action",
 				action: "switchTab",
-				tab: "agents"
+				tab: "agents",
 			})
 
 			// Send template data to pre-populate agent creation form
 			if (message.templateData) {
 				await provider.postMessageToWebview({
 					type: "createAgentFromTask",
-					templateData: message.templateData
+					templateData: message.templateData,
 				})
 			}
 			break
@@ -2723,22 +2742,22 @@ export const webviewMessageHandler = async (
 						type: "action",
 						action: "createAgentResult",
 						success: false,
-						error: "Agent configuration is required"
+						error: "Agent configuration is required",
 					})
 					break
 				}
 
 				const VoidBridge = require("../../api/void-bridge").VoidBridge
 				const userId = VoidBridge.getCurrentUserId() || "default"
-				const result = await vscode.commands.executeCommand("roo-cline.createAgent", {
+				const result = (await vscode.commands.executeCommand("roo-cline.createAgent", {
 					userId,
-					agentConfig: message.agentConfig
-				}) as any
+					agentConfig: message.agentConfig,
+				})) as any
 
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "createAgentResult",
-					...result
+					...result,
 				})
 			} catch (error) {
 				provider.log(`Error creating agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
@@ -2746,7 +2765,7 @@ export const webviewMessageHandler = async (
 					type: "action",
 					action: "createAgentResult",
 					success: false,
-					error: error instanceof Error ? error.message : String(error)
+					error: error instanceof Error ? error.message : String(error),
 				})
 			}
 			break
@@ -2756,15 +2775,15 @@ export const webviewMessageHandler = async (
 			try {
 				const VoidBridge = require("../../api/void-bridge").VoidBridge
 				const userId = VoidBridge.getCurrentUserId() || "default"
-				const result = await vscode.commands.executeCommand("roo-cline.getAgents", {
+				const result = (await vscode.commands.executeCommand("roo-cline.getAgents", {
 					userId,
-					options: message.agentListOptions
-				}) as any
+					options: message.agentListOptions,
+				})) as any
 
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "listAgentsResult",
-					...result
+					...result,
 				})
 			} catch (error) {
 				provider.log(`Error listing agents: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
@@ -2773,7 +2792,7 @@ export const webviewMessageHandler = async (
 					action: "listAgentsResult",
 					success: false,
 					agents: [],
-					error: error instanceof Error ? error.message : String(error)
+					error: error instanceof Error ? error.message : String(error),
 				})
 			}
 			break
@@ -2783,15 +2802,15 @@ export const webviewMessageHandler = async (
 			try {
 				const VoidBridge = require("../../api/void-bridge").VoidBridge
 				const userId = VoidBridge.getCurrentUserId() || "default"
-				const result = await vscode.commands.executeCommand("roo-cline.getAgent", {
+				const result = (await vscode.commands.executeCommand("roo-cline.getAgent", {
 					userId,
-					agentId: message.agentId
-				}) as any
+					agentId: message.agentId,
+				})) as any
 
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "getAgentResult",
-					...result
+					...result,
 				})
 			} catch (error) {
 				provider.log(`Error getting agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
@@ -2800,7 +2819,7 @@ export const webviewMessageHandler = async (
 					action: "getAgentResult",
 					success: false,
 					agent: null,
-					error: error instanceof Error ? error.message : String(error)
+					error: error instanceof Error ? error.message : String(error),
 				})
 			}
 			break
@@ -2810,16 +2829,16 @@ export const webviewMessageHandler = async (
 			try {
 				const VoidBridge = require("../../api/void-bridge").VoidBridge
 				const userId = VoidBridge.getCurrentUserId() || "default"
-				const result = await vscode.commands.executeCommand("roo-cline.updateAgent", {
+				const result = (await vscode.commands.executeCommand("roo-cline.updateAgent", {
 					userId,
 					agentId: message.agentId,
-					agentConfig: message.agentConfig
-				}) as any
+					agentConfig: message.agentConfig,
+				})) as any
 
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "updateAgentResult",
-					...result
+					...result,
 				})
 			} catch (error) {
 				provider.log(`Error updating agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
@@ -2827,7 +2846,7 @@ export const webviewMessageHandler = async (
 					type: "action",
 					action: "updateAgentResult",
 					success: false,
-					error: error instanceof Error ? error.message : String(error)
+					error: error instanceof Error ? error.message : String(error),
 				})
 			}
 			break
@@ -2837,14 +2856,14 @@ export const webviewMessageHandler = async (
 			try {
 				const VoidBridge = require("../../api/void-bridge").VoidBridge
 				const userId = VoidBridge.getCurrentUserId() || "default"
-				
+
 				// 显示确认对话框
 				const agentName = message.agentName || message.agentId
 				const answer = await vscode.window.showWarningMessage(
 					`确定要删除智能体 "${agentName}" 吗？此操作无法撤销。`,
 					{ modal: true },
 					"删除",
-					"取消"
+					"取消",
 				)
 
 				if (answer !== "删除") {
@@ -2852,20 +2871,20 @@ export const webviewMessageHandler = async (
 						type: "action",
 						action: "deleteAgentResult",
 						success: false,
-						error: "用户取消操作"
+						error: "用户取消操作",
 					})
 					break
 				}
 
-				const result = await vscode.commands.executeCommand("roo-cline.deleteAgent", {
+				const result = (await vscode.commands.executeCommand("roo-cline.deleteAgent", {
 					userId,
-					agentId: message.agentId
-				}) as any
+					agentId: message.agentId,
+				})) as any
 
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "deleteAgentResult",
-					...result
+					...result,
 				})
 
 				if (result.success) {
@@ -2877,7 +2896,7 @@ export const webviewMessageHandler = async (
 					type: "action",
 					action: "deleteAgentResult",
 					success: false,
-					error: error instanceof Error ? error.message : String(error)
+					error: error instanceof Error ? error.message : String(error),
 				})
 			}
 			break
@@ -2887,41 +2906,43 @@ export const webviewMessageHandler = async (
 			try {
 				const VoidBridge = require("../../api/void-bridge").VoidBridge
 				const userId = VoidBridge.getCurrentUserId() || "default"
-				
+
 				// 获取智能体配置
-				const result = await vscode.commands.executeCommand("roo-cline.getAgent", {
+				const result = (await vscode.commands.executeCommand("roo-cline.getAgent", {
 					userId,
-					agentId: message.agentId
-				}) as any
+					agentId: message.agentId,
+				})) as any
 
 				if (result.success && result.agent) {
 					const agent = result.agent
 					const terminal = message.terminal
-					
+					const preferredPort = message.preferredPort // 🎯 获取首选端口
+
 					console.log(`[PublishAgent] Successfully got agent from storage:`, {
 						agentId: agent.id,
 						agentName: agent.name,
-						userId: agent.userId
+						userId: agent.userId,
+						preferredPort: preferredPort,
 					})
-					
-					// 执行智能体初始化工作
-					await initializeAgentOnTerminal(agent, terminal, provider)
-					
+
+					// 执行智能体初始化工作，传递首选端口
+					await initializeAgentOnTerminal(agent, terminal, provider, preferredPort)
+
 					// 获取更新后的智能体数据
 					console.log(`[PublishAgent] 🔍 Getting updated agent data for ${message.agentId}`)
-					const updatedAgentResult = await vscode.commands.executeCommand("roo-cline.getAgent", {
+					const updatedAgentResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
 						userId,
-						agentId: message.agentId
-					}) as any
-					
+						agentId: message.agentId,
+					})) as any
+
 					console.log(`[PublishAgent] 🔍 Updated agent result:`, {
 						success: updatedAgentResult.success,
 						hasAgent: !!updatedAgentResult.agent,
 						isPublished: updatedAgentResult.agent?.isPublished,
 						publishInfo: updatedAgentResult.agent?.publishInfo,
-						error: updatedAgentResult.error
+						error: updatedAgentResult.error,
 					})
-					
+
 					// 初始化完成后发送成功消息，包含最新智能体数据
 					const messageToSend = {
 						type: "action",
@@ -2929,36 +2950,34 @@ export const webviewMessageHandler = async (
 						success: true,
 						agentId: message.agentId,
 						terminal: terminal.id,
-						updatedAgent: updatedAgentResult.success ? updatedAgentResult.agent : null
+						updatedAgent: updatedAgentResult.success ? updatedAgentResult.agent : null,
 					}
-					
+
 					console.log(`[PublishAgent] 📤 Sending publishAgentResult to frontend:`, {
 						hasUpdatedAgent: !!messageToSend.updatedAgent,
 						updatedAgentId: messageToSend.updatedAgent?.id,
-						updatedAgentIsPublished: messageToSend.updatedAgent?.isPublished
+						updatedAgentIsPublished: messageToSend.updatedAgent?.isPublished,
 					})
-					
+
 					await provider.postMessageToWebview(messageToSend)
 
 					// 显示成功消息
-					vscode.window.showInformationMessage(
-						`智能体 "${agent.name}" 已成功发布到 ${terminal.name}`
-					)
+					vscode.window.showInformationMessage(`智能体 "${agent.name}" 已成功发布到 ${terminal.name}`)
 				} else {
 					await provider.postMessageToWebview({
-						type: "action", 
+						type: "action",
 						action: "publishAgentResult",
 						success: false,
-						error: "未找到智能体配置"
+						error: "未找到智能体配置",
 					})
 				}
 			} catch (error) {
 				provider.log(`Error publishing agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
 				await provider.postMessageToWebview({
 					type: "action",
-					action: "publishAgentResult", 
+					action: "publishAgentResult",
 					success: false,
-					error: error instanceof Error ? error.message : String(error)
+					error: error instanceof Error ? error.message : String(error),
 				})
 			}
 			break
@@ -2970,53 +2989,75 @@ export const webviewMessageHandler = async (
 				const confirmed = await vscode.window.showWarningMessage(
 					`确定要停止智能体 "${message.agentName}" 吗？`,
 					{ modal: true },
-					"确定"
+					"确定",
 				)
-				
+
 				if (confirmed !== "确定") {
 					await provider.postMessageToWebview({
 						type: "action",
 						action: "stopAgentResult",
 						success: false,
 						agentId: message.agentId,
-						error: "用户取消操作"
+						error: "用户取消操作",
 					})
 					return
 				}
-				
+
 				const VoidBridge = require("../../api/void-bridge").VoidBridge
 				const userId = VoidBridge.getCurrentUserId() || "default"
-				
+
 				// 停止A2A服务器
 				const { A2AServerManager } = require("../agent/A2AServerManager")
 				const serverManager = A2AServerManager.getInstance()
 				await serverManager.stopAgentServer(message.agentId)
-				
-				// 更新智能体状态为未发布
-				await updateAgentPublishStatus(message.agentId, false, null)
-				
+
+				// 🎯 UX优化：停止时保留发布信息，只更新运行状态
+				console.log(`🛑 [stopAgent] Starting stop process for agent ${message.agentId}`)
+
+				// 先获取当前智能体的发布信息
+				console.log(`🛑 [stopAgent] Getting current agent data for ${message.agentId}`)
+				const currentAgentResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
+					userId,
+					agentId: message.agentId,
+				})) as any
+
+				console.log(`🛑 [stopAgent] Current agent result:`, currentAgentResult)
+
+				if (currentAgentResult.success && currentAgentResult.agent?.publishInfo) {
+					// 保留发布信息，只更新运行状态
+					console.log(
+						`🎯 [stopAgent] Preserving publishInfo, setting isPublished=false for agent ${message.agentId}`,
+					)
+					await updateAgentPublishStatus(message.agentId, false, currentAgentResult.agent.publishInfo)
+					console.log(
+						`🎯 [stopAgent] Preserved publishInfo for agent ${message.agentId}:`,
+						currentAgentResult.agent.publishInfo,
+					)
+				} else {
+					// 如果没有发布信息，则清除
+					console.log(`🛑 [stopAgent] No publishInfo found, clearing for agent ${message.agentId}`)
+					await updateAgentPublishStatus(message.agentId, false, null)
+				}
+
 				// 从Redis移除服务注册
 				await removeAgentFromRedis(message.agentId, userId)
-				
+
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "stopAgentResult",
 					success: true,
-					agentId: message.agentId
+					agentId: message.agentId,
 				})
-				
+
 				// 显示成功消息
-				vscode.window.showInformationMessage(
-					`智能体 "${message.agentName}" 已成功停止`
-				)
-				
+				vscode.window.showInformationMessage(`智能体 "${message.agentName}" 已成功停止`)
 			} catch (error) {
 				provider.log(`Error stopping agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "stopAgentResult",
 					success: false,
-					error: error instanceof Error ? error.message : String(error)
+					error: error instanceof Error ? error.message : String(error),
 				})
 			}
 			break
@@ -3024,49 +3065,52 @@ export const webviewMessageHandler = async (
 
 		case "startAgentTask": {
 			try {
-				provider.log(`[startAgentTask] 🚀 Received message:`, JSON.stringify({
-					agentId: message.agentId,
-					agentName: message.agentName,
-					executionMode: message.executionMode,
-					a2aServerUrl: message.a2aServerUrl,
-					a2aServerPort: message.a2aServerPort
-				}))
-				
+				provider.log(
+					`[startAgentTask] 🚀 Received message:`,
+					JSON.stringify({
+						agentId: message.agentId,
+						agentName: message.agentName,
+						executionMode: message.executionMode,
+						a2aServerUrl: message.a2aServerUrl,
+						a2aServerPort: message.a2aServerPort,
+					}),
+				)
+
 				const VoidBridge = require("../../api/void-bridge").VoidBridge
 				const userId = VoidBridge.getCurrentUserId() || "default"
-				
+
 				// 获取智能体配置
-				const result = await vscode.commands.executeCommand("roo-cline.getAgent", {
+				const result = (await vscode.commands.executeCommand("roo-cline.getAgent", {
 					userId,
-					agentId: message.agentId
-				}) as any
+					agentId: message.agentId,
+				})) as any
 
 				if (result.success && result.agent) {
 					const agent = result.agent
-					
+
 					// 使用智能体的配置启动新任务
 					// 1. 首先获取API配置名称
 					let apiConfigName: string | undefined
 					if (agent.apiConfigId) {
 						const apiConfigs = provider.contextProxy.getValues().listApiConfigMeta || []
-						const targetConfig = apiConfigs.find(config => config.id === agent.apiConfigId)
+						const targetConfig = apiConfigs.find((config) => config.id === agent.apiConfigId)
 						if (targetConfig) {
 							apiConfigName = targetConfig.name
 						}
 					}
-					
+
 					// 2. 设置API配置（通过本地updateGlobalState函数）
 					if (apiConfigName) {
 						await updateGlobalState("currentApiConfigName", apiConfigName)
 						provider.log(`[startAgentTask] Set API configuration to: ${apiConfigName}`)
 					}
-					
+
 					// 3. 设置模式
 					if (agent.mode) {
 						await updateGlobalState("mode", agent.mode)
 						provider.log(`[startAgentTask] Set mode to: ${agent.mode}`)
 					}
-					
+
 					// 4. 设置A2A测试模式参数（如果是A2A模式）
 					if (message.executionMode === "a2a" && message.a2aServerUrl) {
 						const a2aConfig = {
@@ -3074,7 +3118,7 @@ export const webviewMessageHandler = async (
 							agentId: message.agentId,
 							agentName: message.agentName || agent.name,
 							serverUrl: message.a2aServerUrl,
-							serverPort: message.a2aServerPort
+							serverPort: message.a2aServerPort,
 						}
 						await updateGlobalState("agentA2AMode", a2aConfig)
 						provider.log(`[startAgentTask] ✅ Set A2A mode:`, JSON.stringify(a2aConfig))
@@ -3083,22 +3127,25 @@ export const webviewMessageHandler = async (
 						await updateGlobalState("agentA2AMode", null)
 						provider.log(`[startAgentTask] ❌ Set direct mode`)
 					}
-					
+
 					// 5. 同步状态到webview，确保配置更改生效
 					await provider.postStateToWebview()
 					provider.log(`[startAgentTask] State synchronized with agent configuration`)
-					
+
 					// 6. 验证状态是否正确保存
 					const currentState = await provider.getState()
-					provider.log(`[startAgentTask] 🔍 Current agentA2AMode in state:`, JSON.stringify(currentState.agentA2AMode))
-					
+					provider.log(
+						`[startAgentTask] 🔍 Current agentA2AMode in state:`,
+						JSON.stringify(currentState.agentA2AMode),
+					)
+
 					// 7. 等待较长时间确保状态完全同步
-					await new Promise(resolve => setTimeout(resolve, 500))
-					
+					await new Promise((resolve) => setTimeout(resolve, 500))
+
 					// 8. 启动新任务（这会使用上面设置的配置）
 					await vscode.commands.executeCommand("roo-cline.newTask")
 					provider.log(`[startAgentTask] New task command executed`)
-					
+
 					// 发送成功响应，前端会切换到聊天界面
 					await provider.postMessageToWebview({
 						type: "action",
@@ -3107,30 +3154,32 @@ export const webviewMessageHandler = async (
 						agentId: message.agentId,
 						agentName: agent.name,
 						executionMode: message.executionMode || "direct",
-						a2aServerUrl: message.a2aServerUrl
+						a2aServerUrl: message.a2aServerUrl,
 					})
-					
+
 					provider.log(`[startAgentTask] Started new task with agent: ${agent.name}`)
 				} else {
 					await provider.postMessageToWebview({
 						type: "action",
 						action: "startAgentTaskResult",
 						success: false,
-						error: "智能体未找到"
+						error: "智能体未找到",
 					})
 				}
 			} catch (error) {
-				provider.log(`Error starting agent task: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+				provider.log(
+					`Error starting agent task: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+				)
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "startAgentTaskResult",
 					success: false,
-					error: error instanceof Error ? error.message : String(error)
+					error: error instanceof Error ? error.message : String(error),
 				})
 			}
 			break
 		}
-		
+
 		case "getImContacts": {
 			try {
 				// First try to get current user ID from void
@@ -3382,17 +3431,17 @@ export const webviewMessageHandler = async (
 		case "getCurrentA2AMode": {
 			try {
 				provider.log(`[getCurrentA2AMode] 📥 Received getCurrentA2AMode request`)
-				
+
 				// 获取当前最新的agentA2AMode状态
 				const currentState = await provider.getState()
 				provider.log(`[getCurrentA2AMode] 🎯 Current agentA2AMode:`, JSON.stringify(currentState.agentA2AMode))
-				
+
 				// 发送当前状态给前端
 				provider.log(`[getCurrentA2AMode] 📤 Sending currentA2AModeResponse to frontend...`)
 				await provider.postMessageToWebview({
 					type: "currentA2AModeResponse",
 					agentA2AMode: currentState.agentA2AMode,
-					requestId: message.requestId
+					requestId: message.requestId,
 				})
 				provider.log(`[getCurrentA2AMode] ✅ Response sent successfully`)
 			} catch (error) {
@@ -3401,7 +3450,7 @@ export const webviewMessageHandler = async (
 					type: "currentA2AModeResponse",
 					agentA2AMode: null,
 					error: error instanceof Error ? error.message : String(error),
-					requestId: message.requestId
+					requestId: message.requestId,
 				})
 			}
 			break

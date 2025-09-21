@@ -34,7 +34,9 @@ export class A2AServerManager {
 				} else {
 					// 降级到创建新实例（不推荐）
 					this.storageService = new EnhancedAgentStorageService()
-					logger.warn("[A2AServerManager] Creating new storage service instance - this may cause inconsistencies")
+					logger.warn(
+						"[A2AServerManager] Creating new storage service instance - this may cause inconsistencies",
+					)
 				}
 			}
 
@@ -52,37 +54,75 @@ export class A2AServerManager {
 	/**
 	 * 为智能体启动A2A服务器
 	 */
-	async startAgentServer(agentIdOrData: string | any): Promise<{
+	async startAgentServer(
+		agentIdOrData: string | any,
+		preferredPort?: number,
+	): Promise<{
 		port: number
 		url: string
 		agentCard: any
 	}> {
 		// 处理输入参数（在try外定义以便错误处理时使用）
-		const agentId = typeof agentIdOrData === 'string' ? agentIdOrData : agentIdOrData.id
-		
+		const agentId = typeof agentIdOrData === "string" ? agentIdOrData : agentIdOrData.id
+
 		try {
 			if (!this.a2aServer) {
 				await this.initialize()
 			}
 
-			logger.info(`[A2AServerManager] Starting server for agent: ${agentId}, input type: ${typeof agentIdOrData}`)
-			
+			logger.info(
+				`[A2AServerManager] Starting server for agent: ${agentId}, input type: ${typeof agentIdOrData}, preferredPort: ${preferredPort}`,
+			)
+
 			// 检查是否已经运行
 			if (this.runningServers.has(agentId)) {
 				logger.warn(`[A2AServerManager] Server for agent ${agentId} is already running`)
 				return this.runningServers.get(agentId)
 			}
 
-			// 启动服务器 - 目前只支持ID方式，稍后分析为什么查询失败
-			const serverInfo = await this.a2aServer!.startAgentServer(agentId)
-			
+			// 🎯 UX优化：如果没有指定首选端口，尝试从智能体的发布信息中获取
+			let targetPort = preferredPort
+			if (!targetPort && this.storageService) {
+				try {
+					const VoidBridge = require("../../api/void-bridge").VoidBridge
+					const userId = VoidBridge.getCurrentUserId() || "default"
+
+					// 获取智能体配置以检查是否有历史端口信息
+					const result = await (this.storageService as any).getAgent(userId, agentId)
+					if (result?.publishInfo?.serverPort) {
+						targetPort = result.publishInfo.serverPort
+						logger.info(
+							`[A2AServerManager] 🎯 Found previous port ${targetPort} for agent ${agentId}, attempting to reuse`,
+						)
+					}
+				} catch (error) {
+					logger.warn(`[A2AServerManager] Failed to get agent config for port reuse:`, error)
+				}
+			}
+
+			// 启动服务器 - 传递首选端口
+			const serverInfo = await this.a2aServer!.startAgentServer(agentId, targetPort)
+
 			// 记录运行状态
 			this.runningServers.set(agentId, serverInfo)
 
+			const isPortReused = targetPort && serverInfo.port === targetPort
 			logger.info(`[A2AServerManager] Started server for agent ${agentId}`, {
 				port: serverInfo.port,
-				url: serverInfo.url
+				url: serverInfo.url,
+				portReused: isPortReused,
+				preferredPort: targetPort,
 			})
+
+			if (isPortReused) {
+				logger.info(
+					`[A2AServerManager] ✅ Successfully reused previous port ${targetPort} for agent ${agentId}`,
+				)
+			} else if (targetPort) {
+				logger.info(
+					`[A2AServerManager] ⚠️ Port ${targetPort} was not available, used ${serverInfo.port} instead for agent ${agentId}`,
+				)
+			}
 
 			return serverInfo
 		} catch (error) {
@@ -103,7 +143,7 @@ export class A2AServerManager {
 
 			// 停止服务器
 			await this.a2aServer.stopAgentServer(agentId)
-			
+
 			// 移除运行状态记录
 			this.runningServers.delete(agentId)
 
@@ -132,10 +172,10 @@ export class A2AServerManager {
 
 		return {
 			agentId,
-			status: 'running',
+			status: "running",
 			port: serverInfo.port,
 			url: serverInfo.url,
-			startedAt: serverInfo.startedAt || Date.now()
+			startedAt: serverInfo.startedAt || Date.now(),
 		}
 	}
 
@@ -184,10 +224,10 @@ export class A2AServerManager {
 		try {
 			// 先停止
 			await this.stopAgentServer(agentId)
-			
+
 			// 稍等一下
-			await new Promise(resolve => setTimeout(resolve, 1000))
-			
+			await new Promise((resolve) => setTimeout(resolve, 1000))
+
 			// 重新启动
 			await this.startAgentServer(agentId)
 

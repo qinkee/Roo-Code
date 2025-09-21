@@ -178,7 +178,7 @@ export class ClineProvider
 			})
 
 		this.marketplaceManager = new MarketplaceManager(this.context, this.customModesManager)
-		
+
 		// Initialize Agent Manager
 		this.agentManager = new AgentManager(this.context)
 
@@ -931,7 +931,7 @@ export class ClineProvider
 			`img-src ${webview.cspSource} https://storage.googleapis.com https://img.clerk.com data:`,
 			`media-src ${webview.cspSource}`,
 			`script-src 'unsafe-eval' ${webview.cspSource} https://* https://*.posthog.com http://${localServerUrl} http://0.0.0.0:${localPort} 'nonce-${nonce}'`,
-			`connect-src ${webview.cspSource} https://* https://*.posthog.com ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort} http://localhost:* https://localhost:* http://* ws://localhost:*`,
+			`connect-src * 'self' 'unsafe-inline' data: blob:`,
 		]
 
 		return /*html*/ `
@@ -1536,9 +1536,9 @@ export class ClineProvider
 	}
 
 	async postStateToWebview() {
-		console.log('[ClineProvider] 🔄 postStateToWebview called')
+		console.log("[ClineProvider] 🔄 postStateToWebview called")
 		const state = await this.getStateToPostToWebview()
-		console.log('[ClineProvider] 🔄 postStateToWebview sending state with agentA2AMode:', state.agentA2AMode)
+		console.log("[ClineProvider] 🔄 postStateToWebview sending state with agentA2AMode:", state.agentA2AMode)
 		this.postMessageToWebview({ type: "state", state })
 
 		// Check MDM compliance and send user to account tab if not compliant
@@ -1747,7 +1747,7 @@ export class ClineProvider
 		} = await this.getState()
 
 		// 立即检查解构后的agentA2AMode值
-		console.log('[ClineProvider] 📋 After destructuring agentA2AMode:', agentA2AMode)
+		console.log("[ClineProvider] 📋 After destructuring agentA2AMode:", agentA2AMode)
 
 		const telemetryKey = process.env.POSTHOG_API_KEY
 		const machineId = vscode.env.machineId
@@ -1880,7 +1880,7 @@ export class ClineProvider
 		}
 
 		// 添加调试日志
-		console.log('[ClineProvider] 🚀 getStateToPostToWebview agentA2AMode:', agentA2AMode)
+		console.log("[ClineProvider] 🚀 getStateToPostToWebview agentA2AMode:", agentA2AMode)
 	}
 
 	/**
@@ -1892,12 +1892,12 @@ export class ClineProvider
 	async getState() {
 		const stateValues = this.contextProxy.getValues()
 		const customModes = await this.customModesManager.getCustomModes()
-		
+
 		// 调试：检查agentA2AMode值
 		if (stateValues.agentA2AMode) {
-			console.log('[ClineProvider] 🎯 getState - agentA2AMode found:', stateValues.agentA2AMode)
+			console.log("[ClineProvider] 🎯 getState - agentA2AMode found:", stateValues.agentA2AMode)
 		} else {
-			console.log('[ClineProvider] ❌ getState - agentA2AMode is null/undefined')
+			console.log("[ClineProvider] ❌ getState - agentA2AMode is null/undefined")
 		}
 
 		// Determine apiProvider with the same logic as before.
