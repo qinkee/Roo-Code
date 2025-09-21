@@ -19,7 +19,7 @@ export class AgentRedisAdapter {
 	async syncAgentToRegistry(agent: any): Promise<void> {
 		try {
 			const key = `roo:${agent.userId}:agents:${agent.id}`
-			
+
 			// 调试：打印收到的agent数据
 			logger.info(`[AgentRedisAdapter] Syncing agent to Redis:`, {
 				agentId: agent.id,
@@ -29,9 +29,9 @@ export class AgentRedisAdapter {
 				serviceStatus: agent.serviceStatus,
 				terminalType: agent.terminalType,
 				isPublished: agent.isPublished,
-				agentKeys: Object.keys(agent)
+				agentKeys: Object.keys(agent),
 			})
-			
+
 			// 保存完整的智能体信息，包括服务注册相关字段
 			const agentData = {
 				// 基础智能体信息
@@ -44,7 +44,7 @@ export class AgentRedisAdapter {
 				mode: agent.mode,
 				tools: agent.tools,
 				isPrivate: agent.isPrivate ?? true,
-				shareScope: agent.shareScope || 'none',
+				shareScope: agent.shareScope || "none",
 				shareLevel: agent.shareLevel || 0,
 				permissions: agent.permissions || [],
 				allowedUsers: agent.allowedUsers || [],
@@ -55,7 +55,7 @@ export class AgentRedisAdapter {
 				lastUsedAt: agent.lastUsedAt,
 				isActive: agent.isActive ?? true,
 				version: agent.version || 1,
-				
+
 				// 服务注册相关字段（如果存在）
 				...(agent.serviceEndpoint && {
 					serviceEndpoint: agent.serviceEndpoint,
@@ -67,17 +67,17 @@ export class AgentRedisAdapter {
 					capabilities: agent.capabilities,
 					deployment: agent.deployment,
 					isPublished: agent.isPublished,
-					lastHeartbeat: agent.lastHeartbeat
-				})
+					lastHeartbeat: agent.lastHeartbeat,
+				}),
 			}
-			
+
 			// 调试：打印将要保存的数据
 			logger.info(`[AgentRedisAdapter] Data to be saved:`, {
 				agentId: agent.id,
 				hasServiceFields: !!agentData.serviceEndpoint,
-				dataKeys: Object.keys(agentData)
+				dataKeys: Object.keys(agentData),
 			})
-			
+
 			// 🔥 立即写入Redis，确保智能体注册信息第一时间生效
 			await this.redisService.set(key, agentData, true)
 
@@ -92,7 +92,6 @@ export class AgentRedisAdapter {
 			}
 
 			logger.debug(`[AgentRedisAdapter] Synced agent ${agent.id} to Redis`)
-
 		} catch (error) {
 			logger.error(`[AgentRedisAdapter] Failed to sync agent ${agent.id}:`, error)
 			throw error
@@ -111,11 +110,10 @@ export class AgentRedisAdapter {
 			// 从在线列表移除
 			const onlineKey = `roo:online_agents`
 			const onlineAgents = await this.getOnlineAgents()
-			const filtered = onlineAgents.filter(id => id !== agentId)
+			const filtered = onlineAgents.filter((id) => id !== agentId)
 			await this.redisService.set(onlineKey, filtered)
 
 			logger.debug(`[AgentRedisAdapter] Removed agent ${agentId} from Redis`)
-
 		} catch (error) {
 			logger.error(`[AgentRedisAdapter] Failed to remove agent ${agentId}:`, error)
 			throw error
@@ -143,7 +141,7 @@ export class AgentRedisAdapter {
 		try {
 			const key = `roo:${userId}:agents:${agentId}`
 			const data = await this.redisService.get(key)
-			
+
 			if (!data || data === null) {
 				return null
 			}
@@ -155,7 +153,6 @@ export class AgentRedisAdapter {
 			}
 
 			return data as AgentConfig
-
 		} catch (error) {
 			logger.error(`[AgentRedisAdapter] Failed to get agent ${agentId}:`, error)
 			return null
@@ -171,7 +168,6 @@ export class AgentRedisAdapter {
 			// 在实际使用中，建议维护一个用户智能体列表的索引
 			logger.debug(`[AgentRedisAdapter] getUserAgentsFromRegistry not fully implemented for Redis`)
 			return []
-
 		} catch (error) {
 			logger.error(`[AgentRedisAdapter] Failed to get user agents for ${userId}:`, error)
 			return []
@@ -218,12 +214,11 @@ export class AgentRedisAdapter {
 				onlineAgents.push(agentId)
 				await this.redisService.set(onlineKey, onlineAgents, true)
 			} else if (!isOnline && onlineAgents.includes(agentId)) {
-				const filtered = onlineAgents.filter(id => id !== agentId)
+				const filtered = onlineAgents.filter((id) => id !== agentId)
 				await this.redisService.set(onlineKey, filtered, true)
 			}
 
 			logger.debug(`[AgentRedisAdapter] Updated online status for ${agentId}: ${isOnline}`)
-
 		} catch (error) {
 			logger.error(`[AgentRedisAdapter] Failed to update online status for ${agentId}:`, error)
 		}
@@ -234,14 +229,132 @@ export class AgentRedisAdapter {
 	 */
 	async batchSyncAgents(agents: AgentConfig[]): Promise<void> {
 		try {
-			const syncPromises = agents.map(agent => this.syncAgentToRegistry(agent))
+			const syncPromises = agents.map((agent) => this.syncAgentToRegistry(agent))
 			await Promise.all(syncPromises)
-			
-			logger.info(`[AgentRedisAdapter] Batch synced ${agents.length} agents`)
 
+			logger.info(`[AgentRedisAdapter] Batch synced ${agents.length} agents`)
 		} catch (error) {
 			logger.error(`[AgentRedisAdapter] Failed to batch sync agents:`, error)
 			throw error
 		}
+	}
+
+	// ===== IM集成相关方法 =====
+
+	/**
+	 * 获取共享智能体列表
+	 */
+	async getSharedAgents(params: {
+		shareScope: string
+		allowedGroups?: string[]
+		allowedUsers?: string[]
+		excludeUserId?: string
+	}): Promise<AgentConfig[]> {
+		try {
+			const sharedAgents: AgentConfig[] = []
+
+			// 根据共享范围获取不同的智能体集合
+			let searchKeys: string[] = []
+
+			switch (params.shareScope) {
+				case "friends":
+					searchKeys = ["roo:shared:agents:friends"]
+					break
+				case "groups":
+					searchKeys = ["roo:shared:agents:groups"]
+					break
+				case "public":
+					searchKeys = ["roo:shared:agents:public"]
+					break
+				default:
+					// 获取所有共享智能体
+					searchKeys = ["roo:shared:agents:friends", "roo:shared:agents:groups", "roo:shared:agents:public"]
+			}
+
+			// 从各个集合中获取智能体ID
+			const agentIds = new Set<string>()
+			for (const key of searchKeys) {
+				try {
+					const ids = await this.redisService.smembers(key)
+					ids.forEach((id) => agentIds.add(id))
+				} catch (error) {
+					logger.warn(`[AgentRedisAdapter] Failed to get agents from ${key}:`, error)
+				}
+			}
+
+			// 获取每个智能体的详细信息
+			for (const agentId of agentIds) {
+				try {
+					const agent = await this.getAgent(agentId)
+					if (agent && this.checkAgentPermissions(agent, params)) {
+						sharedAgents.push(agent)
+					}
+				} catch (error) {
+					logger.warn(`[AgentRedisAdapter] Failed to get agent ${agentId}:`, error)
+				}
+			}
+
+			logger.info(
+				`[AgentRedisAdapter] Found ${sharedAgents.length} shared agents for scope: ${params.shareScope}`,
+			)
+			return sharedAgents
+		} catch (error) {
+			logger.error(`[AgentRedisAdapter] Failed to get shared agents:`, error)
+			return []
+		}
+	}
+
+	/**
+	 * 获取单个智能体详细信息
+	 */
+	async getAgent(agentId: string): Promise<AgentConfig | null> {
+		try {
+			const key = `roo:agent:${agentId}:details`
+			const data = await this.redisService.hget(key, "data")
+
+			if (data) {
+				return JSON.parse(data)
+			}
+
+			return null
+		} catch (error) {
+			logger.error(`[AgentRedisAdapter] Failed to get agent ${agentId}:`, error)
+			return null
+		}
+	}
+
+	/**
+	 * 检查智能体权限
+	 */
+	private checkAgentPermissions(
+		agent: AgentConfig,
+		params: {
+			allowedGroups?: string[]
+			allowedUsers?: string[]
+			excludeUserId?: string
+		},
+	): boolean {
+		// 排除指定用户的智能体
+		if (params.excludeUserId && agent.userId === params.excludeUserId) {
+			return false
+		}
+
+		// 检查群组权限
+		if (params.allowedGroups?.length && agent.allowedGroups?.length) {
+			const hasGroupPermission = agent.allowedGroups.some((group) => params.allowedGroups!.includes(group))
+			if (!hasGroupPermission) {
+				return false
+			}
+		}
+
+		// 检查用户权限
+		if (params.allowedUsers?.length && agent.allowedUsers?.length) {
+			const hasUserPermission = agent.allowedUsers.some((user) => params.allowedUsers!.includes(user))
+			if (!hasUserPermission) {
+				return false
+			}
+		}
+
+		return true
 	}
 }
