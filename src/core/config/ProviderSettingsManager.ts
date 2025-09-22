@@ -69,7 +69,7 @@ export class ProviderSettingsManager {
 		this.userId = userId
 
 		// TODO: We really shouldn't have async methods in the constructor.
-		this.initialize().catch(console.error)
+		this.initialize().catch(() => {})
 	}
 
 	public generateId() {
@@ -177,7 +177,7 @@ export class ProviderSettingsManager {
 			try {
 				rateLimitSeconds = await this.context.globalState.get<number>("rateLimitSeconds")
 			} catch (error) {
-				console.error("[MigrateRateLimitSeconds] Error getting global rate limit:", error)
+				// Error getting global rate limit
 			}
 
 			if (rateLimitSeconds === undefined) {
@@ -191,7 +191,7 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			console.error(`[MigrateRateLimitSeconds] Failed to migrate rate limit settings:`, error)
+			// Failed to migrate rate limit settings
 		}
 	}
 
@@ -204,7 +204,7 @@ export class ProviderSettingsManager {
 				diffEnabled = await this.context.globalState.get<boolean>("diffEnabled")
 				fuzzyMatchThreshold = await this.context.globalState.get<number>("fuzzyMatchThreshold")
 			} catch (error) {
-				console.error("[MigrateDiffSettings] Error getting global diff settings:", error)
+				// Error getting global diff settings
 			}
 
 			if (diffEnabled === undefined) {
@@ -226,7 +226,7 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			console.error(`[MigrateDiffSettings] Failed to migrate diff settings:`, error)
+			// Failed to migrate diff settings
 		}
 	}
 
@@ -250,7 +250,7 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			console.error(`[MigrateOpenAiHeaders] Failed to migrate OpenAI headers:`, error)
+			// Failed to migrate OpenAI headers
 		}
 	}
 
@@ -262,7 +262,7 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			console.error(`[MigrateConsecutiveMistakeLimit] Failed to migrate consecutive mistake limit:`, error)
+			// Failed to migrate consecutive mistake limit
 		}
 	}
 
@@ -274,7 +274,7 @@ export class ProviderSettingsManager {
 				}
 			}
 		} catch (error) {
-			console.error(`[MigrateTodoListEnabled] Failed to migrate todo list enabled setting:`, error)
+			// Failed to migrate todo list enabled setting
 		}
 	}
 
@@ -282,16 +282,6 @@ export class ProviderSettingsManager {
 	 * Extract model ID from provider settings based on provider type
 	 */
 	private extractModelId(apiConfig: any): string | undefined {
-		// 添加调试信息
-		console.log('[ProviderSettingsManager] Extracting model from config:', {
-			id: apiConfig.id,
-			apiProvider: apiConfig.apiProvider,
-			keys: Object.keys(apiConfig),
-			apiModelId: apiConfig.apiModelId,
-			openAiModelId: apiConfig.openAiModelId,
-			ollamaModelId: apiConfig.ollamaModelId
-		})
-		
 		// Try different model field names based on provider
 		const modelId = apiConfig.apiModelId || 
 			   apiConfig.glamaModelId || 
@@ -306,7 +296,6 @@ export class ProviderSettingsManager {
 			   apiConfig.ioIntelligenceModelId ||
 			   undefined
 			   
-		console.log('[ProviderSettingsManager] Extracted modelId:', modelId)
 		return modelId
 	}
 
@@ -325,14 +314,6 @@ export class ProviderSettingsManager {
 						const completeConfig = { name, ...apiConfig }
 						const modelId = this.extractModelId(completeConfig)
 						
-						console.log('[ProviderSettingsManager] Processing config for list:', {
-							name,
-							id: apiConfig.id,
-							apiProvider: apiConfig.apiProvider,
-							extractedModelId: modelId,
-							configKeys: Object.keys(apiConfig)
-						})
-						
 						return {
 							name,
 							id: apiConfig.id || "",
@@ -340,7 +321,6 @@ export class ProviderSettingsManager {
 							modelId,
 						}
 					} catch (error) {
-						console.error('[ProviderSettingsManager] Error processing config:', name, error)
 						return {
 							name,
 							id: apiConfig.id || "",
@@ -559,7 +539,6 @@ export class ProviderSettingsManager {
 					// Restore from Redis to local storage
 					content = typeof redisData === 'string' ? redisData : JSON.stringify(redisData)
 					await this.context.secrets.store(this.secretsKey, content)
-					console.log(`[Redis] Restored provider config from Redis for user ${this.userId}`)
 				}
 			}
 

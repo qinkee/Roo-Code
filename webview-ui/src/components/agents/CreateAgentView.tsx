@@ -65,15 +65,9 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 	const [displayMode, setDisplayMode] = useState<"stack" | "switch">("stack")
 	const [currentSectionIndex, setCurrentSectionIndex] = useState(0)
 	// 为每个profile维护独立的完整配置状态（智能体专用，不影响全局）
+	// 注意：这里只存储用户在当前编辑会话中修改过的配置，不包括从数据库加载的原始配置
 	const [profileConfigs, setProfileConfigs] = useState<Record<string, any>>(() => {
-		// 编辑模式下，如果有内嵌的API配置，预加载到profileConfigs中
-		if (editMode && editData && editData.apiConfig) {
-			const apiConfig = editData.apiConfig
-			console.log('[CreateAgentView] Loading saved API config in edit mode:', apiConfig)
-			return {
-				[apiConfig.originalId]: apiConfig
-			}
-		}
+		// 初始化时不预加载任何配置，只在用户实际修改时才添加
 		return {}
 	})
 	// 记住当前正在编辑的profile ID
@@ -167,6 +161,24 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 			setSelectedApiConfig(currentConfig?.id || listApiConfigMeta[0]?.id || "")
 		}
 	}, [listApiConfigMeta, currentApiConfigName, selectedApiConfig])
+
+	// Update states when editData changes (important for edit mode)
+	useEffect(() => {
+		if (editMode && editData) {
+			// Update profile configs if there's an embedded API config
+			if (editData.apiConfig && editData.apiConfig.originalId) {
+				console.log('[CreateAgentView] Edit mode: setting selected profile to:', editData.apiConfig.originalId)
+				// Only update selected API config to match the saved one, don't add to profileConfigs
+				// profileConfigs should only contain configs modified in the current session
+				setSelectedApiConfig(editData.apiConfig.originalId)
+				// Update agent API config
+				setAgentApiConfig(editData.apiConfig)
+			} else if (editData.apiConfigId) {
+				// If only apiConfigId is available, select it
+				setSelectedApiConfig(editData.apiConfigId)
+			}
+		}
+	}, [editMode, editData])
 
 
 	// TODO: 等待后端提供更完整的profile信息
@@ -314,24 +326,25 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 				console.log('[CreateAgentView] Save - Found profileConfig, apiModelId:', profileConfig.apiModelId)
 				selectedApiConfigDetails = {
 					...profileConfig,
-					originalId: selectedApiConfig,
+					originalId: profileConfig.originalId || selectedApiConfig, // Preserve originalId if it exists
 					originalName: profileConfig.name || listApiConfigMeta?.find(c => c.id === selectedApiConfig)?.name || '',
 					createdAt: profileConfig.createdAt || Date.now()
 				} as AgentApiConfig
 				console.log('[CreateAgentView] Save - Using agent profile config (modified):', selectedApiConfigDetails)
 				console.log('[CreateAgentView] Save - Final apiModelId will be:', selectedApiConfigDetails.apiModelId)
 			} 
-			// 3. 编辑模式下使用已存在的智能体内嵌配置（仅当没有修改时）
-			else if (editMode && agentApiConfig) {
+			// 3. 编辑模式下，如果选择的是原来保存的profile且没有修改
+			else if (editMode && agentApiConfig && agentApiConfig.originalId === selectedApiConfig) {
+				// 使用原有的嵌入配置
 				selectedApiConfigDetails = agentApiConfig
-				console.log('[CreateAgentView] Save - Using existing agent API config (unmodified):', selectedApiConfigDetails)
+				console.log('[CreateAgentView] Save - Using existing agent API config (same profile, unmodified):', selectedApiConfigDetails)
 			} 
-			// 4. 使用原始profile配置创建副本
+			// 4. 如果选择了不同的profile或新创建模式
 			else {
 				const originalConfig = listApiConfigMeta?.find(config => config.id === selectedApiConfig)
 				if (originalConfig) {
 					// 注意：这里只有metadata，没有完整配置。在实际项目中需要获取完整配置
-					console.log('[CreateAgentView] Warning: Using metadata only, missing full API config details')
+					console.log('[CreateAgentView] Save - Creating new config from profile:', selectedApiConfig)
 					selectedApiConfigDetails = {
 						...originalConfig,
 						// 保留原有字段 
@@ -389,10 +402,12 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 			}
 
 			console.log('[CreateAgentView] Save - Final agentConfig being sent:', agentConfig)
+			console.log('[CreateAgentView] Save - apiConfig field:', agentConfig.apiConfig)
 			
 			if (editMode) {
 				// 编辑模式：发送更新消息
 				console.log('[CreateAgentView] Save - Updating agent with config:', agentConfig)
+				console.log('[CreateAgentView] Save - Has apiConfig?', !!agentConfig.apiConfig)
 				vscode.postMessage({
 					type: "updateAgent",
 					agentId: editData?.id,
@@ -626,11 +641,11 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({ onBack, onCancel, onC
 								key={config.id}
 								onClick={() => {
 									console.log('[CreateAgentView] API Config selected:', config.id, config)
-									console.log('[CreateAgentView] Current profileConfigs before selection:', profileConfigs)
+									console.log('[CreateAgentView] Current profileConfigs:', profileConfigs)
+									
+									// Simply switch to the selected profile
 									setSelectedApiConfig(config.id)
 									console.log('[CreateAgentView] Set selectedApiConfig to:', config.id)
-									// 简单选择，不立即创建副本
-									// 副本将在保存智能体时创建
 								}}
 								className={cn(
 									"w-full flex items-center justify-between p-3 rounded-md border transition-colors",

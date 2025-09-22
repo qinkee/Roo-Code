@@ -25,17 +25,24 @@ export class EnhancedAgentStorageService implements AgentStorageService {
 	 */
 	private async initializeRedisSync(): Promise<void> {
 		try {
+			logger.info(`[EnhancedAgentStorageService] Initializing Redis sync...`)
+			
 			// 尝试初始化Redis连接
 			await this.redisAdapter.initialize()
+			
+			// 等待一小段时间让连接完全建立
+			await new Promise(resolve => setTimeout(resolve, 1000))
+			
 			this.syncEnabled = this.redisAdapter.isEnabled()
 
 			if (this.syncEnabled) {
-				logger.info(`[EnhancedAgentStorageService] Redis sync enabled`)
+				logger.info(`[EnhancedAgentStorageService] ✅ Redis sync enabled successfully`)
 			} else {
-				logger.info(`[EnhancedAgentStorageService] Running in local-only mode`)
+				logger.warn(`[EnhancedAgentStorageService] ⚠️ Redis connection failed, running in local-only mode`)
+				logger.warn(`[EnhancedAgentStorageService] Agent data will not be synchronized across instances`)
 			}
 		} catch (error) {
-			logger.warn(`[EnhancedAgentStorageService] Redis sync initialization failed:`, error)
+			logger.error(`[EnhancedAgentStorageService] ❌ Redis sync initialization error:`, error)
 			this.syncEnabled = false
 		}
 	}
@@ -96,13 +103,15 @@ export class EnhancedAgentStorageService implements AgentStorageService {
 
 			// 2. 检查Redis连接状态并同步
 			const redisEnabled = this.redisAdapter.isEnabled()
+			
 			if (this.syncEnabled && redisEnabled) {
-				this.redisAdapter.syncAgentToRegistry(updatedAgent).catch((error) => {
-					logger.error(
-						`[EnhancedAgentStorageService] Failed to sync updated agent ${agentId} to Redis:`,
-						error,
-					)
-				})
+				this.redisAdapter.syncAgentToRegistry(updatedAgent)
+					.catch((error) => {
+						logger.error(
+							`[EnhancedAgentStorageService] Failed to sync updated agent ${agentId} to Redis:`,
+							error,
+						)
+					})
 			}
 
 			return updatedAgent

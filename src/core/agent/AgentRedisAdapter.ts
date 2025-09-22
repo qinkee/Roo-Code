@@ -18,19 +18,15 @@ export class AgentRedisAdapter {
 	 */
 	async syncAgentToRegistry(agent: any): Promise<void> {
 		try {
+			// 首先检查Redis是否可用
+			const redisEnabled = this.isEnabled()
+			
+			if (!redisEnabled) {
+				logger.warn(`[AgentRedisAdapter] Cannot sync agent ${agent.id} - Redis is not connected`)
+				return
+			}
+			
 			const key = `roo:${agent.userId}:agents:${agent.id}`
-
-			// 调试：打印收到的agent数据
-			logger.info(`[AgentRedisAdapter] Syncing agent to Redis:`, {
-				agentId: agent.id,
-				hasServiceEndpoint: !!agent.serviceEndpoint,
-				serviceEndpoint: agent.serviceEndpoint,
-				servicePort: agent.servicePort,
-				serviceStatus: agent.serviceStatus,
-				terminalType: agent.terminalType,
-				isPublished: agent.isPublished,
-				agentKeys: Object.keys(agent),
-			})
 
 			// 保存完整的智能体信息，包括服务注册相关字段
 			const agentData = {
@@ -41,6 +37,7 @@ export class AgentRedisAdapter {
 				avatar: agent.avatar,
 				roleDescription: agent.roleDescription,
 				apiConfigId: agent.apiConfigId,
+				apiConfig: agent.apiConfig, // 保存完整的API配置
 				mode: agent.mode,
 				tools: agent.tools,
 				isPrivate: agent.isPrivate ?? true,
@@ -71,14 +68,8 @@ export class AgentRedisAdapter {
 				}),
 			}
 
-			// 调试：打印将要保存的数据
-			logger.info(`[AgentRedisAdapter] Data to be saved:`, {
-				agentId: agent.id,
-				hasServiceFields: !!agentData.serviceEndpoint,
-				dataKeys: Object.keys(agentData),
-			})
-
-			// 🔥 立即写入Redis，确保智能体注册信息第一时间生效
+			// 立即写入Redis，确保智能体注册信息第一时间生效
+			
 			await this.redisService.set(key, agentData, true)
 
 			// 同时添加到在线智能体列表
@@ -91,9 +82,9 @@ export class AgentRedisAdapter {
 				}
 			}
 
-			logger.debug(`[AgentRedisAdapter] Synced agent ${agent.id} to Redis`)
+			logger.info(`[AgentRedisAdapter] ✅ Successfully synced agent ${agent.id} to Redis`)
 		} catch (error) {
-			logger.error(`[AgentRedisAdapter] Failed to sync agent ${agent.id}:`, error)
+			logger.error(`[AgentRedisAdapter] ❌ Failed to sync agent ${agent.id}:`, error)
 			throw error
 		}
 	}
@@ -186,8 +177,16 @@ export class AgentRedisAdapter {
 	 */
 	async initialize(): Promise<void> {
 		// 现有RedisSyncService在构造时自动连接，这里启动健康检查
+		logger.info(`[AgentRedisAdapter] Starting initialization...`)
 		this.redisService.startHealthCheck()
-		logger.info(`[AgentRedisAdapter] Initialized with existing Redis service`)
+		
+		// 检查连接状态
+		const isConnected = this.redisService.getConnectionStatus()
+		if (isConnected) {
+			logger.info(`[AgentRedisAdapter] ✅ Redis service is connected and ready`)
+		} else {
+			logger.warn(`[AgentRedisAdapter] ⚠️ Redis service is not connected`)
+		}
 	}
 
 	/**

@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"
-import { useDeepCompareEffect, useEvent, useMount } from "react-use"
+import { useEvent, useMount } from "react-use"
 import debounce from "debounce"
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso"
 import removeMd from "remove-markdown"
@@ -252,7 +252,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		vscode.postMessage({ type: "playTts", text })
 	}
 
-	useDeepCompareEffect(() => {
+	useEffect(() => {
 		// if last message is an ask, show user ask UI
 		// if user finished a task, then start a new task with a new conversation history since in this moment that the extension is waiting for user response, the user could close the extension and the conversation history would be lost.
 		// basically as long as a task is active, the conversation history will be persisted

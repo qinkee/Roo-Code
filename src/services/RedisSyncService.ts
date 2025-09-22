@@ -53,16 +53,17 @@ export class RedisSyncService {
 		
 		// 如果配置中禁用了Redis，直接返回
 		if (!config.enabled) {
-			console.log('[Redis] Sync service disabled by configuration')
 			return
 		}
+		
 		
 		try {
 			this.client = createClient({
 				socket: {
 					host: config.host,
 					port: config.port,
-					reconnectStrategy: false // 不自动重连
+					reconnectStrategy: false, // 不自动重连
+					connectTimeout: 5000 // 5秒超时
 				},
 				password: config.password || undefined,
 				database: config.database
@@ -71,22 +72,18 @@ export class RedisSyncService {
 			this.client.on('ready', () => {
 				this.isConnected = true
 				this.failureCount = 0
-				console.log('[Redis] Connected successfully')
 			})
 			
 			this.client.on('error', (err) => {
-				console.debug('[Redis] Connection error:', err.message)
 				this.isConnected = false
 			})
 			
 			this.client.on('end', () => {
 				this.isConnected = false
-				console.debug('[Redis] Connection closed')
 			})
 			
 			await this.client.connect()
 		} catch (error) {
-			console.debug('[Redis] Failed to connect:', error instanceof Error ? error.message : 'Unknown error')
 			this.isConnected = false
 		}
 	}
@@ -119,14 +116,13 @@ export class RedisSyncService {
 	
 	async setImmediate(key: string, value: any): Promise<void> {
 		if (!this.isConnected || !this.client) {
-			console.debug(`[Redis] Cannot perform immediate write - not connected`)
 			throw new Error('Redis not connected')
 		}
 		
 		try {
-			await this.client.setEx(key, 7 * 24 * 60 * 60, JSON.stringify(value))
+			const jsonData = JSON.stringify(value)
+			await this.client.setEx(key, 7 * 24 * 60 * 60, jsonData)
 			this.failureCount = 0
-			console.debug(`[Redis] Immediate write successful for key: ${key}`)
 		} catch (error) {
 			this.failureCount++
 			this.lastFailureTime = Date.now()
@@ -223,7 +219,6 @@ export class RedisSyncService {
 					await this.client.ping()
 					this.isConnected = true
 					this.failureCount = 0
-					console.log('[Redis] Health check: Connection restored')
 				} catch {
 					// Still disconnected
 				}
@@ -233,13 +228,13 @@ export class RedisSyncService {
 		// 监听配置变化
 		vscode.workspace.onDidChangeConfiguration(async (e) => {
 			if (e.affectsConfiguration('roo-cline.redis')) {
-				console.log('[Redis] Configuration changed, reconnecting...')
 				await this.reconnect()
 			}
 		})
 	}
 	
 	private async reconnect() {
+		
 		// 断开现有连接
 		if (this.client) {
 			await this.client.quit().catch(() => {})
@@ -249,6 +244,9 @@ export class RedisSyncService {
 		
 		// 重新连接
 		await this.connect()
+		
+		// 等待连接建立
+		await new Promise(resolve => setTimeout(resolve, 1000))
 	}
 	
 	getConnectionStatus(): boolean {

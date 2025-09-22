@@ -311,8 +311,6 @@ export class ClineProvider
 	// The instance is pushed to the top of the stack (LIFO order).
 	// When the task is completed, the top instance is removed, reactivating the previous task.
 	async addClineToStack(task: Task) {
-		console.log(`[subtasks] adding task ${task.taskId}.${task.instanceId} to stack`)
-
 		// Add this cline instance into the stack that represents the order of all the called tasks.
 		this.clineStack.push(task)
 		task.emit(RooCodeEventName.TaskFocused)
@@ -357,8 +355,6 @@ export class ClineProvider
 		let task = this.clineStack.pop()
 
 		if (task) {
-			console.log(`[subtasks] removing task ${task.taskId}.${task.instanceId} from stack`)
-
 			try {
 				// Abort the running task and set isAbandoned to true so
 				// all running promises will exit as well.
@@ -407,7 +403,6 @@ export class ClineProvider
 	// and resume the previous task/cline instance (if it exists)
 	// this is used when a sub task is finished and the parent task needs to be resumed
 	async finishSubTask(lastMessage: string) {
-		console.log(`[subtasks] finishing subtask ${lastMessage}`)
 		// remove the last cline instance from the stack (this is the finished sub task)
 		await this.removeClineFromStack()
 		// resume the last cline instance in the stack (if it exists - this is the 'parent' calling task)
@@ -650,9 +645,6 @@ export class ClineProvider
 		})
 		this.webviewDisposables.push(activeEditorSubscription)
 
-		// Logs show up in bottom panel > Debug Console
-		//console.log("registering listener")
-
 		// Listen for when the panel becomes visible
 		// https://github.com/microsoft/vscode-discussions/discussions/840
 		if ("onDidChangeViewState" in webviewView) {
@@ -871,14 +863,8 @@ export class ClineProvider
 
 			if (fs.existsSync(portFilePath)) {
 				localPort = fs.readFileSync(portFilePath, "utf8").trim()
-				console.log(`[ClineProvider:Vite] Using Vite server port from ${portFilePath}: ${localPort}`)
-			} else {
-				console.log(
-					`[ClineProvider:Vite] Port file not found at ${portFilePath}, using default port: ${localPort}`,
-				)
 			}
 		} catch (err) {
-			console.error("[ClineProvider:Vite] Failed to read Vite port file:", err)
 			// Continue with default port if file reading fails
 		}
 
@@ -1255,8 +1241,6 @@ export class ClineProvider
 			return
 		}
 
-		console.log(`[subtasks] cancelling task ${cline.taskId}.${cline.instanceId}`)
-
 		const { historyItem } = await this.getTaskWithId(cline.taskId)
 		// Preserve parent and root task information for history item.
 		const rootTask = cline.rootTask
@@ -1277,7 +1261,7 @@ export class ClineProvider
 				timeout: 3_000,
 			},
 		).catch(() => {
-			console.error("Failed to abort task")
+			// Failed to abort task gracefully
 		})
 
 		if (this.getCurrentCline()) {
@@ -1502,10 +1486,8 @@ export class ClineProvider
 			} catch (error) {
 				// Only log as warning if it's a "directory does not exist" error, otherwise log as error
 				const errorMessage = error instanceof Error ? error.message : String(error)
-				if (errorMessage.includes("directory that does not exist")) {
-					console.log(`[deleteTaskWithId${id}] shadow repository already cleaned up or does not exist`)
-				} else {
-					console.error(
+				if (!errorMessage.includes("directory that does not exist")) {
+					this.log(
 						`[deleteTaskWithId${id}] failed to delete associated shadow repository or branch: ${errorMessage}`,
 					)
 				}
@@ -1514,9 +1496,8 @@ export class ClineProvider
 			// delete the entire task directory including checkpoints and all content
 			try {
 				await fs.rm(taskDirPath, { recursive: true, force: true })
-				console.log(`[deleteTaskWithId${id}] removed task directory`)
 			} catch (error) {
-				console.error(
+				this.log(
 					`[deleteTaskWithId${id}] failed to remove task directory: ${error instanceof Error ? error.message : String(error)}`,
 				)
 			}
@@ -1533,10 +1514,8 @@ export class ClineProvider
 	async deleteTaskFromState(id: string) {
 		// Ensure we read and write with the same user context
 		const taskHistory = (await TaskHistoryBridge.getTaskHistory()) ?? []
-		console.log(`[deleteTaskFromState] Before delete: ${taskHistory.length} tasks, removing task: ${id}`)
 
 		const updatedTaskHistory = taskHistory.filter((task) => task.id !== id)
-		console.log(`[deleteTaskFromState] After delete: ${updatedTaskHistory.length} tasks`)
 
 		await TaskHistoryBridge.updateTaskHistory(undefined, updatedTaskHistory)
 
@@ -1548,9 +1527,7 @@ export class ClineProvider
 	}
 
 	async postStateToWebview() {
-		console.log("[ClineProvider] 🔄 postStateToWebview called")
 		const state = await this.getStateToPostToWebview()
-		console.log("[ClineProvider] 🔄 postStateToWebview sending state with agentA2AMode:", state.agentA2AMode)
 		this.postMessageToWebview({ type: "state", state })
 
 		// Check MDM compliance and send user to account tab if not compliant
@@ -1566,11 +1543,9 @@ export class ClineProvider
 		try {
 			const [marketplaceResult, marketplaceInstalledMetadata] = await Promise.all([
 				this.marketplaceManager.getMarketplaceItems().catch((error) => {
-					console.error("Failed to fetch marketplace items:", error)
 					return { organizationMcps: [], marketplaceItems: [], errors: [error.message] }
 				}),
 				this.marketplaceManager.getInstallationMetadata().catch((error) => {
-					console.error("Failed to fetch installation metadata:", error)
 					return { project: {}, global: {} } as MarketplaceInstalledMetadata
 				}),
 			])
@@ -1584,7 +1559,6 @@ export class ClineProvider
 				errors: marketplaceResult.errors,
 			})
 		} catch (error) {
-			console.error("Failed to fetch marketplace data:", error)
 			// Send empty data on error to prevent UI from hanging
 			this.postMessageToWebview({
 				type: "marketplaceData",
@@ -1661,7 +1635,6 @@ export class ClineProvider
 
 			return mergedCommands
 		} catch (error) {
-			console.error(`Error merging ${commandType} commands:`, error)
 			// Return empty array as fallback to prevent crashes
 			return []
 		}
@@ -1757,9 +1730,6 @@ export class ClineProvider
 			remoteControlEnabled,
 			agentA2AMode,
 		} = await this.getState()
-
-		// 立即检查解构后的agentA2AMode值
-		console.log("[ClineProvider] 📋 After destructuring agentA2AMode:", agentA2AMode)
 
 		const telemetryKey = process.env.POSTHOG_API_KEY
 		const machineId = vscode.env.machineId
@@ -1890,9 +1860,6 @@ export class ClineProvider
 			remoteControlEnabled: remoteControlEnabled ?? false,
 			agentA2AMode: agentA2AMode ?? null,
 		}
-
-		// 添加调试日志
-		console.log("[ClineProvider] 🚀 getStateToPostToWebview agentA2AMode:", agentA2AMode)
 	}
 
 	/**
@@ -1904,13 +1871,6 @@ export class ClineProvider
 	async getState() {
 		const stateValues = this.contextProxy.getValues()
 		const customModes = await this.customModesManager.getCustomModes()
-
-		// 调试：检查agentA2AMode值
-		if (stateValues.agentA2AMode) {
-			console.log("[ClineProvider] 🎯 getState - agentA2AMode found:", stateValues.agentA2AMode)
-		} else {
-			console.log("[ClineProvider] ❌ getState - agentA2AMode is null/undefined")
-		}
 
 		// Determine apiProvider with the same logic as before.
 		const apiProvider: ProviderName = stateValues.apiProvider ? stateValues.apiProvider : "anthropic"
@@ -1928,9 +1888,7 @@ export class ClineProvider
 		try {
 			organizationAllowList = await CloudService.instance.getAllowList()
 		} catch (error) {
-			console.error(
-				`[getState] failed to get organization allow list: ${error instanceof Error ? error.message : String(error)}`,
-			)
+			// Failed to get organization allow list
 		}
 
 		let cloudUserInfo: CloudUserInfo | null = null
@@ -1938,9 +1896,7 @@ export class ClineProvider
 		try {
 			cloudUserInfo = CloudService.instance.getUserInfo()
 		} catch (error) {
-			console.error(
-				`[getState] failed to get cloud user info: ${error instanceof Error ? error.message : String(error)}`,
-			)
+			// Failed to get cloud user info
 		}
 
 		let cloudIsAuthenticated: boolean = false
@@ -1948,9 +1904,7 @@ export class ClineProvider
 		try {
 			cloudIsAuthenticated = CloudService.instance.isAuthenticated()
 		} catch (error) {
-			console.error(
-				`[getState] failed to get cloud authentication state: ${error instanceof Error ? error.message : String(error)}`,
-			)
+			// Failed to get cloud authentication state
 		}
 
 		let sharingEnabled: boolean = false
@@ -1958,9 +1912,7 @@ export class ClineProvider
 		try {
 			sharingEnabled = await CloudService.instance.canShareTask()
 		} catch (error) {
-			console.error(
-				`[getState] failed to get sharing enabled state: ${error instanceof Error ? error.message : String(error)}`,
-			)
+			// Failed to get sharing enabled state
 		}
 
 		let organizationSettingsVersion: number = -1
@@ -1971,9 +1923,7 @@ export class ClineProvider
 				organizationSettingsVersion = settings?.version ?? -1
 			}
 		} catch (error) {
-			console.error(
-				`[getState] failed to get organization settings version: ${error instanceof Error ? error.message : String(error)}`,
-			)
+			// Failed to get organization settings version
 		}
 
 		// Return the same structure as before
@@ -2155,8 +2105,6 @@ export class ClineProvider
 	 * Switch to a different context proxy (for user switching)
 	 */
 	async switchContextProxy(newContextProxy: ContextProxy) {
-		console.log("[ClineProvider] Switching context proxy...")
-
 		// Remove current task if exists
 		const currentTask = this.getCurrentCline()
 		if (currentTask) {
@@ -2182,8 +2130,6 @@ export class ClineProvider
 
 		// Post new state to webview
 		await this.postStateToWebview()
-
-		console.log("[ClineProvider] Context proxy switched successfully")
 	}
 
 	async resetState() {
@@ -2209,7 +2155,6 @@ export class ClineProvider
 
 	public log(message: string) {
 		this.outputChannel.appendLine(message)
-		console.log(message)
 	}
 
 	// integration tests
@@ -2281,7 +2226,6 @@ export class ClineProvider
 				} catch (error) {
 					const message = `[ClineProvider#handleRemoteControlToggle] subscribeToTask failed - ${error instanceof Error ? error.message : String(error)}`
 					this.log(message)
-					console.error(message)
 				}
 			}
 		} else {
@@ -2293,7 +2237,6 @@ export class ClineProvider
 					} catch (error) {
 						const message = `[ClineProvider#handleRemoteControlToggle] unsubscribeFromTask failed - ${error instanceof Error ? error.message : String(error)}`
 						this.log(message)
-						console.error(message)
 					}
 				}
 			}

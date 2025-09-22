@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { Plus, MoreHorizontal, Settings, Info, Play, Edit, Trash2, Share, Upload, Square } from "lucide-react"
+import { Plus, MoreHorizontal, Info, Play, Edit, Trash2, Share, Upload, Square } from "lucide-react"
 import ActionBar from "./ActionBar"
 import TaskListModal from "./TaskListModal"
 import TerminalSelectionModal from "./TerminalSelectionModal"
@@ -21,7 +21,7 @@ interface Agent {
 	id: string
 	name: string
 	description: string
-	type: "custom" | "builtin"
+	type: "custom"
 	status: "active" | "inactive"
 	icon?: string
 }
@@ -160,21 +160,9 @@ const PublishDetails = ({ agent, isExpanded }: { agent: any; isExpanded: boolean
 	)
 }
 
-const mockBuiltinAgents: Agent[] = [
-	{
-		id: "text-diagram",
-		name: "文本图",
-		description: "",
-		type: "builtin",
-		status: "inactive",
-		icon: "📄",
-	},
-]
-
 const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	const { t } = useTranslation()
 	const { listApiConfigMeta } = useExtensionState()
-	const [agents, setAgents] = useState<Agent[]>([...mockBuiltinAgents])
 	const [customAgents, setCustomAgents] = useState<Agent[]>([])
 	const [loading, setLoading] = useState(false)
 	const [showCreateAgent, setShowCreateAgent] = useState(false)
@@ -960,51 +948,6 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 									)
 								})
 							)}
-						</div>
-					</div>
-
-					{/* Builtin Agents Section */}
-					<div>
-						<div className="flex items-center gap-2 mb-3">
-							<div className="w-5 h-5 bg-vscode-list-activeSelectionBackground rounded flex items-center justify-center">
-								<span className="text-xs">🏠</span>
-							</div>
-							<h2 className="text-sm font-bold text-vscode-foreground/90">
-								{t("agents:builtinAgents", "内置智能体")}
-							</h2>
-						</div>
-
-						<div className="space-y-1">
-							{agents
-								.filter((agent) => agent.type === "builtin")
-								.map((agent) => (
-									<div
-										key={agent.id}
-										className="flex items-center justify-between p-3 bg-vscode-input-background hover:bg-vscode-list-hoverBackground rounded-md border border-vscode-input-border transition-colors cursor-pointer group">
-										<div className="flex items-center gap-3 flex-1 min-w-0">
-											<div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white text-sm flex-shrink-0">
-												{agent.icon}
-											</div>
-											<div className="flex-1 min-w-0">
-												<div className="font-bold text-sm text-vscode-foreground truncate">
-													{agent.name}
-												</div>
-												{agent.description && (
-													<div className="text-xs text-vscode-foreground/70 truncate mt-0.5">
-														{agent.description}
-													</div>
-												)}
-											</div>
-										</div>
-										<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-											<StandardTooltip content={t("agents:configure", "配置")}>
-												<button className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors">
-													<Settings size={14} />
-												</button>
-											</StandardTooltip>
-										</div>
-									</div>
-								))}
 						</div>
 					</div>
 
