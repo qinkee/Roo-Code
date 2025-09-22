@@ -7,6 +7,7 @@ import {
 	ExecutionEventBus,
 	DefaultExecutionEventBusManager,
 } from "@a2a-js/sdk/server"
+import { RooCodeEventName } from "@roo-code/types"
 import { logger } from "../../utils/logging"
 import { NetworkUtils } from "../../utils/network"
 import { AgentConfig, AgentRequest, AgentResponse } from "@roo-code/types"
@@ -28,9 +29,11 @@ export class A2AServer {
 	private resourceManager: AgentResourceManager
 	private connectionManager: A2AConnectionManager
 	private servers: Map<string, any> = new Map()
+	private provider: any // ClineProvider实例
 
-	constructor(storageService: EnhancedAgentStorageService) {
+	constructor(storageService: EnhancedAgentStorageService, provider?: any) {
 		this.storageService = storageService
+		this.provider = provider
 		this.registry = UnifiedAgentRegistry.getInstance()
 		this.resourceManager = AgentResourceManager.getInstance()
 		this.connectionManager = A2AConnectionManager.getInstance()
@@ -127,7 +130,7 @@ export class A2AServer {
 
 			// 启动服务器（这里需要根据@a2a-js/sdk的实际API调整）
 			// 注意：官方SDK可能有不同的启动方式，这里是示例实现
-			const server = await this.startServerInstance(handler, port)
+			const server = await this.startServerInstance(handler, port, agent)
 			const actualPort = server.port || port
 			const url =
 				server.url || NetworkUtils.buildServerUrl(await NetworkUtils.getRecommendedBindAddress(), actualPort)
@@ -203,7 +206,7 @@ export class A2AServer {
 
 			// 启动服务器（这里需要根据@a2a-js/sdk的实际API调整）
 			// 注意：官方SDK可能有不同的启动方式，这里是示例实现
-			const server = await this.startServerInstance(handler, port)
+			const server = await this.startServerInstance(handler, port, agent)
 			const actualPort = server.port || port
 			const url =
 				server.url || NetworkUtils.buildServerUrl(await NetworkUtils.getRecommendedBindAddress(), actualPort)
@@ -369,7 +372,7 @@ export class A2AServer {
 	 * 启动服务器实例
 	 * 注意：这里需要根据@a2a-js/sdk的实际API进行调整
 	 */
-	private async startServerInstance(handler: any, port: number): Promise<any> {
+	private async startServerInstance(handler: any, port: number, agent?: AgentConfig): Promise<any> {
 		const http = require("http")
 
 		// 获取推荐的绑定地址
@@ -378,6 +381,7 @@ export class A2AServer {
 
 		// 创建真实的HTTP服务器
 		const server = http.createServer(async (req: any, res: any) => {
+			console.log(`[A2AServer] 🌟 RAW HTTP REQUEST: ${req.method} ${req.url}`)
 			try {
 				// 设置CORS头
 				res.setHeader("Access-Control-Allow-Origin", "*")
@@ -425,26 +429,53 @@ export class A2AServer {
 						}),
 					)
 				} else if (url === "/execute" && method === "POST") {
-					// 处理执行请求
+					// 处理执行请求 - 使用真正的智能体执行逻辑
+					console.log(`[A2AServer] 🔥 Received POST /execute request`)
 					let body = ""
-					req.on("data", (chunk: any) => (body += chunk))
+					req.on("data", (chunk: any) => {
+						body += chunk
+						console.log(`[A2AServer] 📥 Received data chunk, total length: ${body.length}`)
+					})
 					req.on("end", async () => {
 						try {
+							console.log(`[A2AServer] 🔄 Request body complete, parsing JSON:`, { bodyLength: body.length, bodyPreview: body.substring(0, 200) })
 							const requestData = JSON.parse(body)
-							logger.info(`[A2AServer] Execute request:`, requestData)
+							console.log(`[A2AServer] ✅ Execute request parsed:`, requestData)
 
-							// 简单的响应处理
+							// 获取智能体配置并执行真正的AI逻辑
+							console.log(`[A2AServer] 🔍 Checking agent availability:`, { agentExists: !!agent, agentId: requestData.agentId })
+							if (!agent) {
+								console.log(`[A2AServer] ❌ Agent not found for ID: ${requestData.agentId}`)
+								res.writeHead(404, { "Content-Type": "application/json" })
+								res.end(JSON.stringify({ 
+									success: false, 
+									error: `Agent not found` 
+								}))
+								return
+							}
+
+							// 执行真正的智能体逻辑（使用Worker）
+							console.log(`[A2AServer] 🚀 Starting agent execution for:`, requestData.agentId)
+							const result = await this.executeAgentLogic(agent, requestData)
+							console.log(`[A2AServer] ✅ Agent execution completed:`, { success: result.success, duration: result.duration })
+
 							const response = {
-								success: true,
-								result: `Received: ${requestData.params?.message || "No message"}`,
+								success: result.success,
+								result: result.data || result.error,
 								timestamp: Date.now(),
+								duration: result.duration,
 							}
 
 							res.writeHead(200, { "Content-Type": "application/json" })
 							res.end(JSON.stringify(response))
 						} catch (error) {
-							res.writeHead(400, { "Content-Type": "application/json" })
-							res.end(JSON.stringify({ error: "Invalid JSON" }))
+							logger.error(`[A2AServer] Execute error:`, error)
+							res.writeHead(500, { "Content-Type": "application/json" })
+							res.end(JSON.stringify({ 
+								success: false, 
+								error: "Agent execution failed",
+								details: error instanceof Error ? error.message : "Unknown error"
+							}))
 						}
 					})
 				} else {
@@ -690,7 +721,7 @@ export class A2AServer {
 	}
 
 	/**
-	 * 执行智能体逻辑
+	 * 执行智能体逻辑 - 直接使用Task类，复用Roo-Code完整逻辑
 	 */
 	private async executeAgentLogic(
 		agent: AgentConfig,
@@ -704,28 +735,528 @@ export class A2AServer {
 		const startTime = Date.now()
 
 		try {
-			// TODO: 实现实际的智能体执行逻辑
-			// 这里是模拟实现
+			// 获取用户消息
+			const userMessage = request.task || request.params?.message || request.message || "Hello"
+			
+			console.log(`[A2AServer] 📝 Executing agent ${agent.id} with message: ${userMessage}`)
+
+			// 直接使用Roo-Code的Task执行引擎
+			console.log(`[A2AServer] 🔧 Starting executeInWorker for agent ${agent.id}`)
+			const taskResponse = await this.executeInWorker(agent, userMessage)
+			console.log(`[A2AServer] ✨ executeInWorker completed:`, { success: taskResponse.success, duration: taskResponse.duration })
+
 			const result = {
-				success: true,
-				data: {
-					message: `Agent ${agent.name} executed successfully`,
-					agentId: agent.id,
-					method: request.method || "execute",
-					params: request.params || {},
-					timestamp: Date.now(),
-				},
+				success: taskResponse.success,
+				data: taskResponse.success ? taskResponse.response : undefined,
+				error: taskResponse.success ? undefined : taskResponse.error,
 				duration: Date.now() - startTime,
 			}
 
 			return result
 		} catch (error) {
+			logger.error(`[A2AServer] Agent execution failed for ${agent.id}:`, error)
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : "Execution failed",
+				error: error instanceof Error ? error.message : "Agent execution failed",
 				duration: Date.now() - startTime,
 			}
 		}
+	}
+
+	/**
+	 * 在Worker进程中执行智能体任务
+	 * 确保任务隔离且不阻塞主进程和UI
+	 */
+	private async executeInWorker(agent: AgentConfig, userMessage: string): Promise<{
+		success: boolean
+		response?: string
+		error?: string
+		duration: number
+		tokensUsed?: number
+		toolsUsed?: string[]
+	}> {
+		const startTime = Date.now()
+		
+		try {
+			console.log(`[A2AServer] 🎯 Starting agent task execution for ${agent.id}`)
+			console.log(`[A2AServer] 📋 Agent config: mode=${agent.mode}, tools=${agent.tools?.length || 0}`)
+			
+			// 1. 获取智能体的API配置
+			console.log(`[A2AServer] 🔧 Getting agent API configuration for ${agent.id}`)
+			const agentApiConfig = await this.getAgentApiConfiguration(agent)
+			console.log(`[A2AServer] ✅ API config loaded: provider=${agentApiConfig.providerSettings.apiProvider}`)
+			
+			// 2. 准备智能体上下文 - 设置Provider状态
+			console.log(`[A2AServer] 🎨 Setting up agent context for ${agent.id}`)
+			await this.setupAgentContext(agent)
+			console.log(`[A2AServer] ✅ Agent context setup completed`)
+			
+			// 3. 动态导入Task类（避免循环依赖）
+			console.log(`[A2AServer] 📦 Importing Task class...`)
+			const { Task } = await import("../task/Task")
+			console.log(`[A2AServer] ✅ Task class imported successfully`)
+			
+			// 4. 创建并自动启动Task实例
+			console.log(`[A2AServer] 🚀 Creating Task with auto-start for agent ${agent.id}`)
+			
+			const task = new Task({
+				provider: this.provider,
+				apiConfiguration: agentApiConfig.providerSettings,
+				enableDiff: false,
+				enableCheckpoints: false,
+				enableTaskBridge: false,
+				task: userMessage,
+				startTask: false, // 不自动启动，等待taskModeReady后启动
+				experiments: {},
+			})
+			
+			console.log(`[A2AServer] ✅ Task created and started for agent ${agent.id}`)
+
+			// 5. 等待任务完成
+			console.log(`[A2AServer] ⏳ Starting executeTaskWithProperFlow...`)
+			return await this.executeTaskWithProperFlow(task, agent, userMessage, startTime)
+
+		} catch (error) {
+			logger.error(`[A2AServer] executeInWorker failed for agent ${agent.id}:`, error)
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : "Task creation failed",
+				duration: Date.now() - startTime
+			}
+		}
+	}
+	
+	/**
+	 * 设置智能体执行上下文
+	 */
+	private async setupAgentContext(agent: AgentConfig): Promise<void> {
+		if (!this.provider || !this.provider.contextProxy) {
+			throw new Error("Provider or contextProxy not available for agent context setup")
+		}
+		
+		try {
+			// 设置智能体的模式
+			await this.provider.contextProxy.setValue('mode', agent.mode)
+			logger.info(`[A2AServer] Set agent mode: ${agent.mode}`)
+			
+			// 设置智能体的工具配置
+			if (agent.tools && agent.tools.length > 0) {
+				const enabledTools = agent.tools
+					.filter(tool => tool.enabled)
+					.map(tool => tool.toolId)
+				
+				logger.info(`[A2AServer] Agent enabled tools: [${enabledTools.join(', ')}]`)
+				
+				// TODO: 根据实际的Provider API设置工具状态
+				// 这里可能需要调用Provider的特定方法来启用/禁用工具
+			}
+			
+		} catch (error) {
+			logger.error(`[A2AServer] Failed to setup agent context:`, error)
+			throw error
+		}
+	}
+	
+	/**
+	 * 按照Roo-Code标准流程执行任务
+	 */
+	private async executeTaskWithProperFlow(
+		task: any, 
+		agent: AgentConfig, 
+		userMessage: string, 
+		startTime: number
+	): Promise<{
+		success: boolean
+		response?: string
+		error?: string
+		duration: number
+		tokensUsed?: number
+		toolsUsed?: string[]
+	}> {
+		console.log(`[A2AServer] 🎬 executeTaskWithProperFlow started for agent ${agent.id}`)
+		return new Promise((resolve, reject) => {
+			let taskResult = ""
+			let finalResponse = ""
+			const toolsUsed: string[] = []
+			let isCompleted = false
+			
+			console.log(`[A2AServer] 🎯 Setting up task execution for agent ${agent.id}`)
+			
+			// 先等待Task初始化完成
+			console.log(`[A2AServer] ⏸️ Waiting for Task initialization...`)
+			task.waitForModeInitialization().then(() => {
+				console.log(`[A2AServer] ✅ Task initialized, starting execution`)
+				task.startTask()
+				console.log(`[A2AServer] 🚀 Task started successfully`)
+			}).catch(error => {
+				console.log(`[A2AServer] ❌ Task initialization failed:`, error)
+				if (!isCompleted) {
+					isCompleted = true
+					clearTimeout(timeout)
+					resolve({
+						success: false,
+						error: `Task initialization failed: ${error.message}`,
+						duration: Date.now() - startTime
+					})
+				}
+			})
+			
+			// 设置合理的超时时间（60秒）
+			const timeout = setTimeout(() => {
+				if (!isCompleted) {
+					console.log(`[A2AServer] ⏰ Task timeout for agent ${agent.id}`)
+					task.abortTask(true)
+					resolve({
+						success: false,
+						error: "Task execution timeout (60s)",
+						duration: Date.now() - startTime
+					})
+				}
+			}, 60000)
+
+			// 监听任务状态变化事件
+			task.on("taskStatusChanged", (status: string) => {
+				console.log(`[A2AServer] 📢 Task status: ${status}`)
+			})
+
+			// 监听Task的消息输出 - 这是获取AI回答的关键
+			task.on(RooCodeEventName.Message, (messageEvent: any) => {
+				console.log(`[A2AServer] 📝 Task Message event:`, messageEvent)
+				if (messageEvent && messageEvent.message) {
+					const message = messageEvent.message
+					console.log(`[A2AServer] 📝 Message details - type: ${message.type}, say: ${message.say}, text: ${message.text?.substring(0, 100)}`)
+					
+					// 处理assistant类型的消息（AI回答）
+					if (message.type === "ask" && message.say === "completion_result" && message.text) {
+						console.log(`[A2AServer] 📝 Capturing AI completion result: ${message.text.substring(0, 200)}...`)
+						finalResponse = message.text
+					}
+					// 处理普通text消息
+					else if (message.type === "text" && message.text && message.say !== "user") {
+						console.log(`[A2AServer] 📝 Capturing text message: ${message.text.substring(0, 100)}...`)
+						taskResult += message.text + "\n"
+					}
+					// 处理say为completion_result的消息
+					else if (message.say === "completion_result" && message.text) {
+						console.log(`[A2AServer] 📝 Capturing completion result: ${message.text.substring(0, 200)}...`)
+						finalResponse = message.text
+					}
+				}
+			})
+
+			// 监听任务完成事件  
+			task.on(RooCodeEventName.TaskCompleted, (_, tokenUsage, toolUsage) => {
+				if (isCompleted) return
+				isCompleted = true
+				clearTimeout(timeout)
+				clearInterval(statusPoller)
+				
+				console.log(`[A2AServer] ✅ Task completed for agent ${agent.id}`)
+				
+				// 最后机会：直接从Task的clineMessages读取AI回答
+				if (!finalResponse && !taskResult && task.clineMessages) {
+					console.log(`[A2AServer] 🔍 Final attempt - scanning all clineMessages:`, task.clineMessages.length)
+					let extractedResponse = ""
+					
+					for (const msg of task.clineMessages) {
+						console.log(`[A2AServer] 🔍 Final scan - type: ${msg.type}, say: ${msg.say}, text: ${msg.text?.substring(0, 100)}`)
+						
+						// 尝试各种可能的AI回答格式
+						if (msg.type === "text" && msg.text && msg.say !== "user") {
+							extractedResponse = msg.text
+							console.log(`[A2AServer] 📝 Final extracted text response: ${extractedResponse.substring(0, 200)}...`)
+						} else if (msg.say === "completion_result" && msg.text) {
+							extractedResponse = msg.text
+							console.log(`[A2AServer] 📝 Final extracted completion result: ${extractedResponse.substring(0, 200)}...`)
+						} else if (msg.type === "ask" && msg.text) {
+							extractedResponse = msg.text
+							console.log(`[A2AServer] 📝 Final extracted ask message: ${extractedResponse.substring(0, 200)}...`)
+						}
+					}
+					
+					if (extractedResponse) {
+						finalResponse = extractedResponse
+					}
+				}
+				
+				console.log(`[A2AServer] 🎯 Final taskResult:`, taskResult?.substring(0, 200))
+				console.log(`[A2AServer] 🎯 Final finalResponse:`, finalResponse?.substring(0, 200))
+				console.log(`[A2AServer] 🎯 TokenUsage:`, tokenUsage, 'ToolUsage:', toolUsage)
+				
+				const actualResponse = finalResponse || taskResult || "任务执行完成"
+				console.log(`[A2AServer] 🎯 Actual response being returned:`, actualResponse?.substring(0, 200))
+				
+				resolve({
+					success: true,
+					response: actualResponse,
+					duration: Date.now() - startTime,
+					tokensUsed: tokenUsage?.totalTokens || 0,
+					toolsUsed: toolUsage ? Object.keys(toolUsage) : []
+				})
+			})
+			
+			// 轮询检查Task状态 - 作为事件监听的备用方案
+			const statusPoller = setInterval(() => {
+				if (isCompleted) {
+					clearInterval(statusPoller)
+					return
+				}
+				
+				console.log(`[A2AServer] 🔄 Polling - state: ${task.state}, isActive: ${task.isActive}, taskResult length: ${taskResult.length}`)
+				
+				// 尝试从clineMessages获取Task的输出内容
+				if (task.clineMessages && task.clineMessages.length > 0) {
+					console.log(`[A2AServer] 🔍 Found clineMessages:`, task.clineMessages.length, 'messages')
+					// 查找最新的AI回答消息
+					for (let i = task.clineMessages.length - 1; i >= 0; i--) {
+						const msg = task.clineMessages[i]
+						console.log(`[A2AServer] 🔍 Message ${i}: type=${msg.type}, say=${msg.say}, hasText=${!!msg.text}`)
+						
+						if (msg.type === "ask" && msg.say === "completion_result" && msg.text && !finalResponse) {
+							finalResponse = msg.text
+							console.log(`[A2AServer] 📝 Found completion result: ${finalResponse.substring(0, 200)}...`)
+							break
+						} else if (msg.type === "text" && msg.text && msg.say !== "user" && !finalResponse) {
+							finalResponse = msg.text
+							console.log(`[A2AServer] 📝 Found text response: ${finalResponse.substring(0, 200)}...`)
+							break
+						}
+					}
+				}
+				
+				// 备用：检查conversationHistory
+				if (!finalResponse && task.conversationHistory && task.conversationHistory.length > 0) {
+					console.log(`[A2AServer] 🔍 Checking conversation history:`, task.conversationHistory.length, 'messages')
+					const lastMessage = task.conversationHistory[task.conversationHistory.length - 1]
+					if (lastMessage && lastMessage.type === 'text' && lastMessage.text) {
+						finalResponse = lastMessage.text
+						console.log(`[A2AServer] 📝 Extracted from conversation history: ${finalResponse.substring(0, 100)}...`)
+					}
+				}
+				
+				// 检查任务是否已完成但没有触发事件
+				if (task.state === 'completed' || task.state === 'finished' || !task.isActive) {
+					console.log(`[A2AServer] 🔍 Task completion detected via polling`)
+					if (!isCompleted) {
+						isCompleted = true
+						clearTimeout(timeout)
+						clearInterval(statusPoller)
+						
+						resolve({
+							success: true,
+							response: finalResponse || taskResult || "任务执行完成",
+							duration: Date.now() - startTime,
+							tokensUsed: task.tokenUsage?.totalTokens || 0,
+							toolsUsed
+						})
+					}
+				}
+			}, 2000)
+
+			// 监听任务错误
+			task.on("taskError", (error: any) => {
+				if (isCompleted) return
+				isCompleted = true
+				clearTimeout(timeout)
+				
+				console.log(`[A2AServer] ❌ Task error for agent ${agent.id}:`, error)
+				resolve({
+					success: false,
+					error: error.message || error.toString(),
+					duration: Date.now() - startTime
+				})
+			})
+
+				// 监听消息更新 - 收集所有AI输出
+				console.log(`[A2AServer] 🎧 Setting up messageUpdate event listener`)
+				task.on("messageUpdate", (message: any) => {
+				try {
+					if (message && message.type === "say" && message.text) {
+						const text = message.text.trim()
+						if (text) {
+							taskResult += text + "\n"
+							finalResponse = text // 保存最后一个有效响应
+							logger.debug(`[A2AServer] Collected response: ${text.substring(0, 100)}...`)
+						}
+					}
+					
+					// 收集工具使用信息
+					if (message && message.type === "tool" && message.toolName) {
+						if (!toolsUsed.includes(message.toolName)) {
+							toolsUsed.push(message.toolName)
+						}
+					}
+				} catch (error) {
+					logger.error(`[A2AServer] Error processing message update:`, error)
+				}
+			})
+			
+			// 监听任务中止事件
+			task.on("taskAborted", () => {
+				if (isCompleted) return
+				isCompleted = true
+				clearTimeout(timeout)
+				
+				logger.warn(`[A2AServer] Task aborted for agent ${agent.id}`)
+				resolve({
+					success: false,
+					error: "Task was aborted",
+					duration: Date.now() - startTime
+				})
+			})
+
+			// 任务已自动启动，只需添加调试监听器
+			logger.info(`[A2AServer] ===== Task auto-started with message: "${userMessage}" =====`)
+			
+			// 添加任务状态监听以便调试
+			task.on("messageIncoming", (msg: any) => {
+				logger.info(`[A2AServer] Task messageIncoming:`, msg)
+			})
+			
+			task.on("messageOutgoing", (msg: any) => {
+				logger.info(`[A2AServer] Task messageOutgoing:`, msg)
+			})
+		})
+	}
+	
+	/**
+	 * 获取智能体的API配置
+	 */
+	private async getAgentApiConfiguration(agent: AgentConfig): Promise<{
+		providerSettings: any
+	}> {
+		try {
+			console.log(`[A2AServer] 🔍 Getting API configuration for agent ${agent.id}`)
+			console.log(`[A2AServer] 📋 Agent details: apiConfigId=${agent.apiConfigId}, mode=${agent.mode}`)
+			console.log(`[A2AServer] 🛠️ Agent tools: ${JSON.stringify(agent.tools?.map(t => ({id: t.toolId, enabled: t.enabled})))}`)
+			
+			// 优先使用嵌入式API配置（避免引用失效问题）
+			if (agent.apiConfig) {
+				console.log(`[A2AServer] ✅ Using embedded API config: provider=${agent.apiConfig.apiProvider}`)
+				
+				// 直接使用完整的ProviderSettings副本
+				const providerSettings = {
+					...agent.apiConfig, // 包含所有字段
+					modelName: agent.apiConfig.apiModelId, // 添加兼容字段
+				}
+				
+				console.log(`[A2AServer] 📊 Embedded API config:`, { 
+					provider: providerSettings.apiProvider, 
+					model: providerSettings.modelName,
+					hasApiKey: !!providerSettings.apiKey,
+					originalName: agent.apiConfig.originalName 
+				})
+				
+				return { providerSettings }
+			}
+			
+			// 降级：从Provider状态中获取API配置（兼容旧版本）
+			console.log(`[A2AServer] 🔎 Fallback: Using apiConfigId lookup for: ${agent.apiConfigId}`)
+			const apiConfig = await this.getApiConfigById(agent.apiConfigId)
+			console.log(`[A2AServer] 📊 Fallback API config result:`, { found: !!apiConfig, provider: apiConfig?.apiProvider })
+			
+			if (!apiConfig) {
+				throw new Error(`API configuration ${agent.apiConfigId} not found for agent ${agent.id}`)
+			}
+			
+			console.log(`[A2AServer] Using fallback API config for agent ${agent.id}:`, {
+				provider: apiConfig.apiProvider,
+				model: apiConfig.modelName
+			})
+			
+			return {
+				providerSettings: apiConfig
+			}
+			
+		} catch (error) {
+			logger.error(`[A2AServer] Failed to get API configuration for agent ${agent.id}:`, error)
+			throw error
+		}
+	}
+	
+	/**
+	 * 根据API配置ID获取配置详情
+	 */
+	private async getApiConfigById(apiConfigId: string): Promise<any> {
+		try {
+			// 从Provider获取当前API配置
+			if (!this.provider) {
+				throw new Error("Provider not available")
+			}
+			
+			logger.info(`[A2AServer] 🔍 Looking for API config ID: "${apiConfigId}"`)
+			
+			// 获取Provider的状态，包含API配置
+			const state = await this.provider.getState()
+			logger.info(`[A2AServer] 📋 Provider state keys:`, Object.keys(state || {}))
+			
+			if (!state) {
+				throw new Error(`Provider state is null/undefined`)
+			}
+			
+			// 检查Provider状态中的API配置相关字段
+			logger.info(`[A2AServer] 🔧 Provider API related fields:`, {
+				hasApiConfiguration: !!state.apiConfiguration,
+				hasCurrentApiConfigName: !!state.currentApiConfigName,
+				hasListApiConfigMeta: !!state.listApiConfigMeta,
+				currentApiConfigName: state.currentApiConfigName,
+				apiProvider: state.apiConfiguration?.apiProvider
+			})
+			
+			// 如果有listApiConfigMeta，尝试从中查找指定ID的配置
+			if (state.listApiConfigMeta && Array.isArray(state.listApiConfigMeta)) {
+				logger.info(`[A2AServer] 📝 Available API configs:`, state.listApiConfigMeta.map((meta: any) => ({
+					id: meta.id,
+					name: meta.name,
+					provider: meta.apiProvider
+				})))
+				
+				const targetConfig = state.listApiConfigMeta.find((meta: any) => meta.id === apiConfigId)
+				if (targetConfig) {
+					logger.info(`[A2AServer] ✅ Found matching API config:`, {
+						id: targetConfig.id,
+						name: targetConfig.name,
+						provider: targetConfig.apiProvider
+					})
+					return targetConfig
+				}
+			}
+			
+			// 如果没有找到特定配置，检查当前配置是否匹配
+			if (state.currentApiConfigName === apiConfigId || !state.listApiConfigMeta) {
+				logger.info(`[A2AServer] 🎯 Using current API configuration as fallback`)
+				if (!state.apiConfiguration) {
+					throw new Error(`No current API configuration found in provider state`)
+				}
+				
+				const apiConfig = state.apiConfiguration
+				logger.info(`[A2AServer] 🔧 Current API config details:`, {
+					provider: apiConfig.apiProvider,
+					modelId: apiConfig.modelId || apiConfig.modelName,
+					hasApiKey: !!(apiConfig.openAiApiKey || apiConfig.anthropicApiKey || apiConfig.requestyApiKey || apiConfig.glamaApiKey),
+					hasBaseUrl: !!(apiConfig.openAiBaseUrl || apiConfig.anthropicBaseUrl)
+				})
+				
+				return apiConfig
+			}
+			
+			throw new Error(`API configuration "${apiConfigId}" not found in provider state`)
+			
+		} catch (error) {
+			logger.error(`[A2AServer] ❌ Failed to get API config "${apiConfigId}":`, error)
+			throw error
+		}
+	}
+
+	/**
+	 * 获取智能体的独立工作空间路径
+	 */
+	private getAgentWorkspacePath(agentId: string): string {
+		const os = require("os")
+		const path = require("path")
+		
+		// 为每个智能体创建独立的工作空间，避免文件冲突
+		return path.join(os.tmpdir(), "roo-code-agents", agentId)
 	}
 
 	/**

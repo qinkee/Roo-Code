@@ -24,7 +24,7 @@ export class A2AServerManager {
 	/**
 	 * 使用共享存储服务初始化A2A服务器管理器
 	 */
-	async initialize(sharedStorageService?: EnhancedAgentStorageService): Promise<void> {
+	async initialize(sharedStorageService?: EnhancedAgentStorageService, provider?: any): Promise<void> {
 		try {
 			if (!this.storageService) {
 				if (sharedStorageService) {
@@ -41,7 +41,7 @@ export class A2AServerManager {
 			}
 
 			if (!this.a2aServer) {
-				this.a2aServer = new A2AServer(this.storageService)
+				this.a2aServer = new A2AServer(this.storageService, provider)
 			}
 
 			logger.info("[A2AServerManager] Initialized successfully")

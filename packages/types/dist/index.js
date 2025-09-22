@@ -1,456 +1,54 @@
 // src/agent.ts
-import { z } from "zod";
-var agentToolConfigSchema = z.object({
-  toolId: z.string(),
-  enabled: z.boolean(),
-  config: z.record(z.string(), z.any()).optional()
-});
-var agentTodoSchema = z.object({
-  id: z.string(),
-  content: z.string(),
-  status: z.enum(["pending", "in_progress", "completed"]),
-  createdAt: z.number(),
-  updatedAt: z.number(),
-  priority: z.enum(["low", "medium", "high"]).optional()
-});
-var agentTemplateSourceSchema = z.object({
-  type: z.enum(["manual", "task"]),
-  taskId: z.string().optional(),
-  taskDescription: z.string().optional(),
-  timestamp: z.number()
-});
-var a2aAgentCardSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  skills: z.array(z.string()),
-  url: z.string().optional(),
-  // 公网可访问的 A2A 端点
-  capabilities: z.object({
-    messageTypes: z.array(z.string()),
-    // 支持的消息类型
-    taskTypes: z.array(z.string()),
-    // 支持的任务类型
-    dataFormats: z.array(z.string()),
-    // 支持的数据格式
-    maxConcurrency: z.number().optional()
-    // 最大并发数
-  }),
-  // 部署信息
-  deployment: z.object({
-    type: z.enum(["pc", "cloud", "docker"]),
-    platform: z.string(),
-    region: z.string().optional(),
-    networkReachable: z.boolean().optional()
-    // 网络是否可达
-  }).optional(),
-  auth: z.object({
-    apiKey: z.string().optional(),
-    authType: z.enum(["none", "apikey", "oauth"])
-  }).optional()
-});
-var agentPermissionSchema = z.object({
-  action: z.enum(["read", "execute", "modify", "admin"]),
-  resource: z.string(),
-  // 资源路径或标识
-  conditions: z.object({
-    timeRange: z.tuple([z.number(), z.number()]).optional(),
-    // 时间范围限制
-    ipRange: z.array(z.string()).optional(),
-    // IP范围限制
-    userAgent: z.string().optional(),
-    // User-Agent限制
-    maxUsage: z.number().optional(),
-    // 最大使用次数限制
-    rateLimit: z.number().optional()
-    // 速率限制（每分钟）
-  }).optional(),
-  description: z.string().optional()
-  // 权限描述
-});
-var agentConfigSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  name: z.string(),
-  avatar: z.string(),
-  roleDescription: z.string(),
-  apiConfigId: z.string(),
-  mode: z.string(),
-  tools: z.array(agentToolConfigSchema),
-  todos: z.array(agentTodoSchema),
-  // 新增：A2A 和共享配置
-  isPrivate: z.boolean().optional().default(true),
-  // 私有/共享标识，默认true
-  shareScope: z.enum(["friends", "groups", "public"]).optional(),
-  // 共享范围：好友、群组、公开
-  shareLevel: z.number().optional(),
-  // 共享级别：0=私有，1=好友，2=群组，3=公开
-  a2aAgentCard: a2aAgentCardSchema.optional(),
-  // A2A 协议智能体卡片
-  a2aEndpoint: z.string().optional(),
-  // A2A 服务端点URL
-  permissions: z.array(agentPermissionSchema).optional(),
-  // 访问权限列表
-  allowedUsers: z.array(z.string()).optional(),
-  // 好友级别：白名单用户ID
-  allowedGroups: z.array(z.string()).optional(),
-  // 群组级别：白名单群组ID
-  deniedUsers: z.array(z.string()).optional(),
-  // 用户黑名单
-  // 发布状态相关字段
-  isPublished: z.boolean().optional().default(false),
-  // 是否已发布
-  publishInfo: z.object({
-    // 发布信息
-    terminalType: z.enum(["local", "cloud"]).optional(),
-    // 发布终端类型
-    serverPort: z.number().optional(),
-    // A2A服务器端口
-    serverUrl: z.string().optional(),
-    // A2A服务器URL
-    publishedAt: z.string().optional(),
-    // 发布时间
-    serviceStatus: z.enum(["online", "offline", "error"]).optional(),
-    // 服务状态
-    lastHeartbeat: z.number().optional()
-    // 最后心跳时间
-  }).optional(),
-  templateSource: agentTemplateSourceSchema.optional(),
-  createdAt: z.number(),
-  updatedAt: z.number(),
-  lastUsedAt: z.number().optional(),
-  isActive: z.boolean(),
-  version: z.number()
-});
-var agentListOptionsSchema = z.object({
-  sortBy: z.enum(["name", "createdAt", "updatedAt", "lastUsedAt"]).optional(),
-  sortOrder: z.enum(["asc", "desc"]).optional(),
-  filterByMode: z.string().optional(),
-  onlyActive: z.boolean().optional(),
-  limit: z.number().optional(),
-  offset: z.number().optional()
-});
-var agentExportDataSchema = z.object({
-  agent: agentConfigSchema,
-  metadata: z.object({
-    exportedAt: z.number(),
-    exportedBy: z.string(),
-    version: z.string()
-  })
-});
-var agentTemplateDataSchema = z.object({
-  apiConfigId: z.string().optional(),
-  mode: z.string().optional(),
-  tools: z.array(z.string()).optional(),
-  templateSource: agentTemplateSourceSchema
-});
-var resourceQuotaSchema = z.object({
-  maxMemory: z.number(),
-  // 最大内存使用 (MB)
-  maxCpuTime: z.number(),
-  // 最大CPU时间 (ms)
-  maxFileOperations: z.number(),
-  // 最大文件操作次数
-  maxNetworkRequests: z.number(),
-  // 最大网络请求次数
-  maxExecutionTime: z.number(),
-  // 最大执行时间 (ms)
-  workspaceAccess: z.object({
-    readOnly: z.boolean(),
-    allowedPaths: z.array(z.string()),
-    deniedPaths: z.array(z.string()),
-    tempDirectory: z.string()
-  })
-});
-var resourceUsageSchema = z.object({
-  memory: z.number(),
-  // 当前内存使用 (MB)
-  cpuTime: z.number(),
-  // 当前CPU时间 (ms)
-  fileOperations: z.number(),
-  // 当前文件操作次数
-  networkRequests: z.number(),
-  // 当前网络请求次数
-  startTime: z.number(),
-  // 启动时间戳
-  lastUpdate: z.number()
-  // 最后更新时间戳
-});
-var agentInstanceSchema = z.object({
-  agentId: z.string(),
-  // 关联的智能体定义ID
-  instanceId: z.string(),
-  // 实例唯一标识
-  userId: z.string(),
-  // 实例所属用户
-  // 部署信息
-  deployment: z.object({
-    type: z.enum(["pc", "cloud", "docker", "k8s"]),
-    platform: z.string(),
-    // 'vscode' | 'docker' | 'k8s'
-    location: z.string().optional(),
-    // 部署位置描述
-    version: z.string(),
-    // void版本
-    region: z.string().optional()
-    // 地理区域
-  }),
-  // 网络端点
-  endpoint: z.object({
-    type: z.enum(["local_only", "network_reachable", "hybrid"]),
-    // 直连信息
-    direct: z.object({
-      url: z.string(),
-      // HTTP服务端点
-      protocol: z.enum(["http", "https"]),
-      port: z.number().optional(),
-      apiKey: z.string().optional(),
-      // API密钥
-      healthCheckPath: z.string()
-      // 健康检查路径
-    }).optional(),
-    // IM桥接信息
-    imBridge: z.object({
-      proxyId: z.string(),
-      // 代理标识
-      channelId: z.string().optional(),
-      // 通道标识
-      priority: z.number()
-      // 路由优先级
-    }),
-    networkReachable: z.boolean().optional(),
-    // 是否网络可达
-    lastProbeTime: z.number().optional()
-    // 最后探测时间
-  }),
-  // 实例状态
-  status: z.object({
-    state: z.enum(["starting", "online", "offline", "error", "maintenance"]),
-    startTime: z.number(),
-    lastSeen: z.number(),
-    currentLoad: z.number(),
-    // 当前负载 0-1
-    errorCount: z.number(),
-    // 错误计数
-    errorRate: z.number(),
-    // 错误率 0-1
-    uptime: z.number()
-    // 运行时间
-  }),
-  // 性能指标
-  metrics: z.object({
-    avgResponseTime: z.number(),
-    // 平均响应时间 (ms)
-    successRate: z.number(),
-    // 成功率 0-1
-    throughput: z.number(),
-    // 吞吐量 (req/s)
-    memoryUsage: z.number().optional(),
-    // 内存使用率 0-1
-    cpuUsage: z.number().optional(),
-    // CPU使用率 0-1
-    lastUpdate: z.number()
-    // 最后更新时间
-  }),
-  // 资源配额
-  resourceQuota: resourceQuotaSchema.optional(),
-  // 元数据
-  metadata: z.object({
-    createdAt: z.number(),
-    updatedAt: z.number(),
-    version: z.number(),
-    tags: z.array(z.string()).optional()
-  })
-});
-var agentRequestSchema = z.object({
-  method: z.string(),
-  params: z.any(),
-  timeout: z.number().optional(),
-  priority: z.enum(["low", "normal", "high"]).optional(),
-  retries: z.number().optional(),
-  sourceAgentId: z.string().optional(),
-  sourceUserId: z.string().optional()
-});
-var agentResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.any().optional(),
-  error: z.string().optional(),
-  agentId: z.string(),
-  route: z.enum(["direct", "im_bridge", "hybrid"]).optional(),
-  timestamp: z.number(),
-  duration: z.number().optional()
-});
-var agentEndpointSchema = z.object({
-  agentId: z.string(),
-  userId: z.string(),
-  type: z.enum(["local_only", "network_reachable", "hybrid"]),
-  directUrl: z.string().optional(),
-  // 直连URL
-  apiKey: z.string().optional(),
-  // API密钥
-  imProxyId: z.string(),
-  // IM代理标识
-  networkReachable: z.boolean().optional(),
-  // 网络可达性
-  lastProbeTime: z.number().optional(),
-  // 最后探测时间
-  status: z.object({
-    state: z.enum(["online", "offline", "busy", "error"]),
-    lastSeen: z.number(),
-    currentLoad: z.number(),
-    errorRate: z.number(),
-    avgResponseTime: z.number()
-  }),
-  deploymentType: z.enum(["pc", "cloud", "docker"])
-});
-var agentDiscoveryQuerySchema = z.object({
-  userId: z.string(),
-  capabilities: z.array(z.string()).optional(),
-  categories: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
-  deploymentTypes: z.array(z.string()).optional(),
-  regions: z.array(z.string()).optional(),
-  keywords: z.string().optional(),
-  onlyOnline: z.boolean().optional(),
-  visibility: z.enum(["private", "friends", "groups", "public", "all"]).optional(),
-  shareScope: z.enum(["friends", "groups", "public"]).optional(),
-  shareLevel: z.number().optional(),
-  sortBy: z.enum(["relevance", "performance", "popularity", "rating"]).optional(),
-  sortOrder: z.enum(["asc", "desc"]).optional(),
-  offset: z.number().optional(),
-  limit: z.number().optional()
-});
-var agentDiscoveryResultSchema = z.object({
-  agentId: z.string(),
-  userId: z.string(),
-  name: z.string(),
-  description: z.string(),
-  avatar: z.string(),
-  // 匹配信息
-  matchedCapabilities: z.array(z.string()),
-  relevanceScore: z.number(),
-  // 部署信息
-  deploymentType: z.enum(["pc", "cloud", "docker", "serverless"]),
-  region: z.string().optional(),
-  endpointType: z.enum(["local_only", "network_reachable", "hybrid"]),
-  // 性能指标
-  currentLoad: z.number(),
-  avgResponseTime: z.number(),
-  errorRate: z.number(),
-  availability: z.number(),
-  // 使用统计
-  totalCalls: z.number(),
-  successRate: z.number(),
-  rating: z.number().optional(),
-  // 权限信息
-  isPrivate: z.boolean(),
-  hasAccess: z.boolean(),
-  // 元数据
-  category: z.string().optional(),
-  tags: z.array(z.string()),
-  createdAt: z.number(),
-  lastUsed: z.number().optional()
-});
-var unifiedAgentRegistrySchema = z.object({
-  agentId: z.string(),
-  userId: z.string(),
-  name: z.string(),
-  avatar: z.string(),
-  description: z.string(),
-  // 能力信息
-  capabilities: z.object({
-    tools: z.array(z.string()),
-    skills: z.array(z.string()),
-    categories: z.array(z.string())
-  }),
-  // 部署信息
-  deployment: z.object({
-    type: z.enum(["pc", "cloud", "docker", "serverless"]),
-    region: z.string().optional(),
-    endpointType: z.enum(["local_only", "network_reachable", "hybrid"]),
-    directUrl: z.string().optional(),
-    imProxyId: z.string().optional()
-  }),
-  // 状态信息
-  status: z.object({
-    state: z.enum(["online", "offline", "busy", "maintenance"]),
-    lastSeen: z.number(),
-    currentLoad: z.number(),
-    errorRate: z.number(),
-    avgResponseTime: z.number()
-  }),
-  // 共享配置
-  sharing: z.object({
-    isPrivate: z.boolean(),
-    shareScope: z.enum(["none", "friends", "groups", "public"]),
-    shareLevel: z.number().min(0).max(3),
-    permissions: z.array(z.enum(["read", "execute", "modify"])),
-    allowedUsers: z.array(z.string()),
-    allowedGroups: z.array(z.string()),
-    deniedUsers: z.array(z.string())
-  }),
-  // 元数据
-  metadata: z.object({
-    createdAt: z.number(),
-    updatedAt: z.number(),
-    version: z.string(),
-    tags: z.array(z.string())
-  })
-});
-
-// src/cloud.ts
-import { z as z14 } from "zod";
-
-// src/global-settings.ts
-import { z as z12 } from "zod";
-
-// src/provider-settings.ts
 import { z as z4 } from "zod";
 
+// src/provider-settings.ts
+import { z as z3 } from "zod";
+
 // src/model.ts
-import { z as z2 } from "zod";
+import { z } from "zod";
 var reasoningEfforts = ["low", "medium", "high"];
-var reasoningEffortsSchema = z2.enum(reasoningEfforts);
+var reasoningEffortsSchema = z.enum(reasoningEfforts);
 var verbosityLevels = ["low", "medium", "high"];
-var verbosityLevelsSchema = z2.enum(verbosityLevels);
+var verbosityLevelsSchema = z.enum(verbosityLevels);
 var modelParameters = ["max_tokens", "temperature", "reasoning", "include_reasoning"];
-var modelParametersSchema = z2.enum(modelParameters);
+var modelParametersSchema = z.enum(modelParameters);
 var isModelParameter = (value) => modelParameters.includes(value);
-var modelInfoSchema = z2.object({
-  maxTokens: z2.number().nullish(),
-  maxThinkingTokens: z2.number().nullish(),
-  contextWindow: z2.number(),
-  supportsImages: z2.boolean().optional(),
-  supportsComputerUse: z2.boolean().optional(),
-  supportsPromptCache: z2.boolean(),
+var modelInfoSchema = z.object({
+  maxTokens: z.number().nullish(),
+  maxThinkingTokens: z.number().nullish(),
+  contextWindow: z.number(),
+  supportsImages: z.boolean().optional(),
+  supportsComputerUse: z.boolean().optional(),
+  supportsPromptCache: z.boolean(),
   // Capability flag to indicate whether the model supports an output verbosity parameter
-  supportsVerbosity: z2.boolean().optional(),
-  supportsReasoningBudget: z2.boolean().optional(),
-  requiredReasoningBudget: z2.boolean().optional(),
-  supportsReasoningEffort: z2.boolean().optional(),
-  supportedParameters: z2.array(modelParametersSchema).optional(),
-  inputPrice: z2.number().optional(),
-  outputPrice: z2.number().optional(),
-  cacheWritesPrice: z2.number().optional(),
-  cacheReadsPrice: z2.number().optional(),
-  description: z2.string().optional(),
-  modelType: z2.string().optional(),
+  supportsVerbosity: z.boolean().optional(),
+  supportsReasoningBudget: z.boolean().optional(),
+  requiredReasoningBudget: z.boolean().optional(),
+  supportsReasoningEffort: z.boolean().optional(),
+  supportedParameters: z.array(modelParametersSchema).optional(),
+  inputPrice: z.number().optional(),
+  outputPrice: z.number().optional(),
+  cacheWritesPrice: z.number().optional(),
+  cacheReadsPrice: z.number().optional(),
+  description: z.string().optional(),
+  modelType: z.string().optional(),
   reasoningEffort: reasoningEffortsSchema.optional(),
-  minTokensPerCachePoint: z2.number().optional(),
-  maxCachePoints: z2.number().optional(),
-  cachableFields: z2.array(z2.string()).optional(),
-  tiers: z2.array(
-    z2.object({
-      contextWindow: z2.number(),
-      inputPrice: z2.number().optional(),
-      outputPrice: z2.number().optional(),
-      cacheWritesPrice: z2.number().optional(),
-      cacheReadsPrice: z2.number().optional()
+  minTokensPerCachePoint: z.number().optional(),
+  maxCachePoints: z.number().optional(),
+  cachableFields: z.array(z.string()).optional(),
+  tiers: z.array(
+    z.object({
+      contextWindow: z.number(),
+      inputPrice: z.number().optional(),
+      outputPrice: z.number().optional(),
+      cacheWritesPrice: z.number().optional(),
+      cacheReadsPrice: z.number().optional()
     })
   ).optional()
 });
 
 // src/codebase-index.ts
-import { z as z3 } from "zod";
+import { z as z2 } from "zod";
 var CODEBASE_INDEX_DEFAULTS = {
   MIN_SEARCH_RESULTS: 10,
   MAX_SEARCH_RESULTS: 200,
@@ -461,38 +59,38 @@ var CODEBASE_INDEX_DEFAULTS = {
   DEFAULT_SEARCH_MIN_SCORE: 0.4,
   SEARCH_SCORE_STEP: 0.05
 };
-var codebaseIndexConfigSchema = z3.object({
-  codebaseIndexEnabled: z3.boolean().optional(),
-  codebaseIndexQdrantUrl: z3.string().optional(),
-  codebaseIndexEmbedderProvider: z3.enum(["openai", "ollama", "openai-compatible", "gemini", "mistral"]).optional(),
-  codebaseIndexEmbedderBaseUrl: z3.string().optional(),
-  codebaseIndexEmbedderModelId: z3.string().optional(),
-  codebaseIndexEmbedderModelDimension: z3.number().optional(),
-  codebaseIndexSearchMinScore: z3.number().min(0).max(1).optional(),
-  codebaseIndexSearchMaxResults: z3.number().min(CODEBASE_INDEX_DEFAULTS.MIN_SEARCH_RESULTS).max(CODEBASE_INDEX_DEFAULTS.MAX_SEARCH_RESULTS).optional(),
+var codebaseIndexConfigSchema = z2.object({
+  codebaseIndexEnabled: z2.boolean().optional(),
+  codebaseIndexQdrantUrl: z2.string().optional(),
+  codebaseIndexEmbedderProvider: z2.enum(["openai", "ollama", "openai-compatible", "gemini", "mistral"]).optional(),
+  codebaseIndexEmbedderBaseUrl: z2.string().optional(),
+  codebaseIndexEmbedderModelId: z2.string().optional(),
+  codebaseIndexEmbedderModelDimension: z2.number().optional(),
+  codebaseIndexSearchMinScore: z2.number().min(0).max(1).optional(),
+  codebaseIndexSearchMaxResults: z2.number().min(CODEBASE_INDEX_DEFAULTS.MIN_SEARCH_RESULTS).max(CODEBASE_INDEX_DEFAULTS.MAX_SEARCH_RESULTS).optional(),
   // OpenAI Compatible specific fields
-  codebaseIndexOpenAiCompatibleBaseUrl: z3.string().optional(),
-  codebaseIndexOpenAiCompatibleModelDimension: z3.number().optional()
+  codebaseIndexOpenAiCompatibleBaseUrl: z2.string().optional(),
+  codebaseIndexOpenAiCompatibleModelDimension: z2.number().optional()
 });
-var codebaseIndexModelsSchema = z3.object({
-  openai: z3.record(z3.string(), z3.object({ dimension: z3.number() })).optional(),
-  ollama: z3.record(z3.string(), z3.object({ dimension: z3.number() })).optional(),
-  "openai-compatible": z3.record(z3.string(), z3.object({ dimension: z3.number() })).optional(),
-  gemini: z3.record(z3.string(), z3.object({ dimension: z3.number() })).optional(),
-  mistral: z3.record(z3.string(), z3.object({ dimension: z3.number() })).optional()
+var codebaseIndexModelsSchema = z2.object({
+  openai: z2.record(z2.string(), z2.object({ dimension: z2.number() })).optional(),
+  ollama: z2.record(z2.string(), z2.object({ dimension: z2.number() })).optional(),
+  "openai-compatible": z2.record(z2.string(), z2.object({ dimension: z2.number() })).optional(),
+  gemini: z2.record(z2.string(), z2.object({ dimension: z2.number() })).optional(),
+  mistral: z2.record(z2.string(), z2.object({ dimension: z2.number() })).optional()
 });
-var codebaseIndexProviderSchema = z3.object({
-  codeIndexOpenAiKey: z3.string().optional(),
-  codeIndexQdrantApiKey: z3.string().optional(),
-  codebaseIndexOpenAiCompatibleBaseUrl: z3.string().optional(),
-  codebaseIndexOpenAiCompatibleApiKey: z3.string().optional(),
-  codebaseIndexOpenAiCompatibleModelDimension: z3.number().optional(),
-  codebaseIndexGeminiApiKey: z3.string().optional(),
-  codebaseIndexMistralApiKey: z3.string().optional()
+var codebaseIndexProviderSchema = z2.object({
+  codeIndexOpenAiKey: z2.string().optional(),
+  codeIndexQdrantApiKey: z2.string().optional(),
+  codebaseIndexOpenAiCompatibleBaseUrl: z2.string().optional(),
+  codebaseIndexOpenAiCompatibleApiKey: z2.string().optional(),
+  codebaseIndexOpenAiCompatibleModelDimension: z2.number().optional(),
+  codebaseIndexGeminiApiKey: z2.string().optional(),
+  codebaseIndexMistralApiKey: z2.string().optional()
 });
 
 // src/provider-settings.ts
-var extendedReasoningEffortsSchema = z4.union([reasoningEffortsSchema, z4.literal("minimal")]);
+var extendedReasoningEffortsSchema = z3.union([reasoningEffortsSchema, z3.literal("minimal")]);
 var providerNames = [
   "anthropic",
   "claude-code",
@@ -526,226 +124,229 @@ var providerNames = [
   "fireworks",
   "io-intelligence"
 ];
-var providerNamesSchema = z4.enum(providerNames);
-var providerSettingsEntrySchema = z4.object({
-  id: z4.string(),
-  name: z4.string(),
-  apiProvider: providerNamesSchema.optional()
+var providerNamesSchema = z3.enum(providerNames);
+var providerSettingsEntrySchema = z3.object({
+  id: z3.string(),
+  name: z3.string(),
+  apiProvider: providerNamesSchema.optional(),
+  // 添加model相关字段，支持不同provider的model字段
+  modelId: z3.string().optional()
+  // 通用的model字段
 });
 var DEFAULT_CONSECUTIVE_MISTAKE_LIMIT = 3;
-var baseProviderSettingsSchema = z4.object({
-  includeMaxTokens: z4.boolean().optional(),
-  diffEnabled: z4.boolean().optional(),
-  todoListEnabled: z4.boolean().optional(),
-  fuzzyMatchThreshold: z4.number().optional(),
-  modelTemperature: z4.number().nullish(),
-  rateLimitSeconds: z4.number().optional(),
-  consecutiveMistakeLimit: z4.number().min(0).optional(),
+var baseProviderSettingsSchema = z3.object({
+  includeMaxTokens: z3.boolean().optional(),
+  diffEnabled: z3.boolean().optional(),
+  todoListEnabled: z3.boolean().optional(),
+  fuzzyMatchThreshold: z3.number().optional(),
+  modelTemperature: z3.number().nullish(),
+  rateLimitSeconds: z3.number().optional(),
+  consecutiveMistakeLimit: z3.number().min(0).optional(),
   // Model reasoning.
-  enableReasoningEffort: z4.boolean().optional(),
+  enableReasoningEffort: z3.boolean().optional(),
   reasoningEffort: extendedReasoningEffortsSchema.optional(),
-  modelMaxTokens: z4.number().optional(),
-  modelMaxThinkingTokens: z4.number().optional(),
+  modelMaxTokens: z3.number().optional(),
+  modelMaxThinkingTokens: z3.number().optional(),
   // Model verbosity.
   verbosity: verbosityLevelsSchema.optional()
 });
 var apiModelIdProviderModelSchema = baseProviderSettingsSchema.extend({
-  apiModelId: z4.string().optional()
+  apiModelId: z3.string().optional()
 });
 var anthropicSchema = apiModelIdProviderModelSchema.extend({
-  apiKey: z4.string().optional(),
-  anthropicBaseUrl: z4.string().optional(),
-  anthropicUseAuthToken: z4.boolean().optional(),
-  anthropicBeta1MContext: z4.boolean().optional()
+  apiKey: z3.string().optional(),
+  anthropicBaseUrl: z3.string().optional(),
+  anthropicUseAuthToken: z3.boolean().optional(),
+  anthropicBeta1MContext: z3.boolean().optional()
   // Enable 'context-1m-2025-08-07' beta for 1M context window
 });
 var claudeCodeSchema = apiModelIdProviderModelSchema.extend({
-  claudeCodePath: z4.string().optional(),
-  claudeCodeMaxOutputTokens: z4.number().int().min(1).max(2e5).optional()
+  claudeCodePath: z3.string().optional(),
+  claudeCodeMaxOutputTokens: z3.number().int().min(1).max(2e5).optional()
 });
 var glamaSchema = baseProviderSettingsSchema.extend({
-  glamaModelId: z4.string().optional(),
-  glamaApiKey: z4.string().optional()
+  glamaModelId: z3.string().optional(),
+  glamaApiKey: z3.string().optional()
 });
 var openRouterSchema = baseProviderSettingsSchema.extend({
-  openRouterApiKey: z4.string().optional(),
-  openRouterModelId: z4.string().optional(),
-  openRouterBaseUrl: z4.string().optional(),
-  openRouterSpecificProvider: z4.string().optional(),
-  openRouterUseMiddleOutTransform: z4.boolean().optional()
+  openRouterApiKey: z3.string().optional(),
+  openRouterModelId: z3.string().optional(),
+  openRouterBaseUrl: z3.string().optional(),
+  openRouterSpecificProvider: z3.string().optional(),
+  openRouterUseMiddleOutTransform: z3.boolean().optional()
 });
 var bedrockSchema = apiModelIdProviderModelSchema.extend({
-  awsAccessKey: z4.string().optional(),
-  awsSecretKey: z4.string().optional(),
-  awsSessionToken: z4.string().optional(),
-  awsRegion: z4.string().optional(),
-  awsUseCrossRegionInference: z4.boolean().optional(),
-  awsUsePromptCache: z4.boolean().optional(),
-  awsProfile: z4.string().optional(),
-  awsUseProfile: z4.boolean().optional(),
-  awsApiKey: z4.string().optional(),
-  awsUseApiKey: z4.boolean().optional(),
-  awsCustomArn: z4.string().optional(),
-  awsModelContextWindow: z4.number().optional(),
-  awsBedrockEndpointEnabled: z4.boolean().optional(),
-  awsBedrockEndpoint: z4.string().optional()
+  awsAccessKey: z3.string().optional(),
+  awsSecretKey: z3.string().optional(),
+  awsSessionToken: z3.string().optional(),
+  awsRegion: z3.string().optional(),
+  awsUseCrossRegionInference: z3.boolean().optional(),
+  awsUsePromptCache: z3.boolean().optional(),
+  awsProfile: z3.string().optional(),
+  awsUseProfile: z3.boolean().optional(),
+  awsApiKey: z3.string().optional(),
+  awsUseApiKey: z3.boolean().optional(),
+  awsCustomArn: z3.string().optional(),
+  awsModelContextWindow: z3.number().optional(),
+  awsBedrockEndpointEnabled: z3.boolean().optional(),
+  awsBedrockEndpoint: z3.string().optional()
 });
 var vertexSchema = apiModelIdProviderModelSchema.extend({
-  vertexKeyFile: z4.string().optional(),
-  vertexJsonCredentials: z4.string().optional(),
-  vertexProjectId: z4.string().optional(),
-  vertexRegion: z4.string().optional()
+  vertexKeyFile: z3.string().optional(),
+  vertexJsonCredentials: z3.string().optional(),
+  vertexProjectId: z3.string().optional(),
+  vertexRegion: z3.string().optional()
 });
 var openAiSchema = baseProviderSettingsSchema.extend({
-  openAiBaseUrl: z4.string().optional(),
-  openAiApiKey: z4.string().optional(),
-  openAiLegacyFormat: z4.boolean().optional(),
-  openAiR1FormatEnabled: z4.boolean().optional(),
-  openAiModelId: z4.string().optional(),
+  openAiBaseUrl: z3.string().optional(),
+  openAiApiKey: z3.string().optional(),
+  openAiLegacyFormat: z3.boolean().optional(),
+  openAiR1FormatEnabled: z3.boolean().optional(),
+  openAiModelId: z3.string().optional(),
   openAiCustomModelInfo: modelInfoSchema.nullish(),
-  openAiUseAzure: z4.boolean().optional(),
-  azureApiVersion: z4.string().optional(),
-  openAiStreamingEnabled: z4.boolean().optional(),
-  openAiHostHeader: z4.string().optional(),
+  openAiUseAzure: z3.boolean().optional(),
+  azureApiVersion: z3.string().optional(),
+  openAiStreamingEnabled: z3.boolean().optional(),
+  openAiHostHeader: z3.string().optional(),
   // Keep temporarily for backward compatibility during migration.
-  openAiHeaders: z4.record(z4.string(), z4.string()).optional()
+  openAiHeaders: z3.record(z3.string(), z3.string()).optional()
 });
 var ollamaSchema = baseProviderSettingsSchema.extend({
-  ollamaModelId: z4.string().optional(),
-  ollamaBaseUrl: z4.string().optional()
+  ollamaModelId: z3.string().optional(),
+  ollamaBaseUrl: z3.string().optional()
 });
 var vsCodeLmSchema = baseProviderSettingsSchema.extend({
-  vsCodeLmModelSelector: z4.object({
-    vendor: z4.string().optional(),
-    family: z4.string().optional(),
-    version: z4.string().optional(),
-    id: z4.string().optional()
+  vsCodeLmModelSelector: z3.object({
+    vendor: z3.string().optional(),
+    family: z3.string().optional(),
+    version: z3.string().optional(),
+    id: z3.string().optional()
   }).optional()
 });
 var lmStudioSchema = baseProviderSettingsSchema.extend({
-  lmStudioModelId: z4.string().optional(),
-  lmStudioBaseUrl: z4.string().optional(),
-  lmStudioDraftModelId: z4.string().optional(),
-  lmStudioSpeculativeDecodingEnabled: z4.boolean().optional()
+  lmStudioModelId: z3.string().optional(),
+  lmStudioBaseUrl: z3.string().optional(),
+  lmStudioDraftModelId: z3.string().optional(),
+  lmStudioSpeculativeDecodingEnabled: z3.boolean().optional()
 });
 var geminiSchema = apiModelIdProviderModelSchema.extend({
-  geminiApiKey: z4.string().optional(),
-  googleGeminiBaseUrl: z4.string().optional(),
-  enableUrlContext: z4.boolean().optional(),
-  enableGrounding: z4.boolean().optional()
+  geminiApiKey: z3.string().optional(),
+  googleGeminiBaseUrl: z3.string().optional(),
+  enableUrlContext: z3.boolean().optional(),
+  enableGrounding: z3.boolean().optional()
 });
 var geminiCliSchema = apiModelIdProviderModelSchema.extend({
-  geminiCliOAuthPath: z4.string().optional(),
-  geminiCliProjectId: z4.string().optional()
+  geminiCliOAuthPath: z3.string().optional(),
+  geminiCliProjectId: z3.string().optional()
 });
 var openAiNativeSchema = apiModelIdProviderModelSchema.extend({
-  openAiNativeApiKey: z4.string().optional(),
-  openAiNativeBaseUrl: z4.string().optional()
+  openAiNativeApiKey: z3.string().optional(),
+  openAiNativeBaseUrl: z3.string().optional()
 });
 var mistralSchema = apiModelIdProviderModelSchema.extend({
-  mistralApiKey: z4.string().optional(),
-  mistralCodestralUrl: z4.string().optional()
+  mistralApiKey: z3.string().optional(),
+  mistralCodestralUrl: z3.string().optional()
 });
 var deepSeekSchema = apiModelIdProviderModelSchema.extend({
-  deepSeekBaseUrl: z4.string().optional(),
-  deepSeekApiKey: z4.string().optional()
+  deepSeekBaseUrl: z3.string().optional(),
+  deepSeekApiKey: z3.string().optional()
 });
 var doubaoSchema = apiModelIdProviderModelSchema.extend({
-  doubaoBaseUrl: z4.string().optional(),
-  doubaoApiKey: z4.string().optional()
+  doubaoBaseUrl: z3.string().optional(),
+  doubaoApiKey: z3.string().optional()
 });
 var moonshotSchema = apiModelIdProviderModelSchema.extend({
-  moonshotBaseUrl: z4.union([z4.literal("https://api.moonshot.ai/v1"), z4.literal("https://api.moonshot.cn/v1")]).optional(),
-  moonshotApiKey: z4.string().optional()
+  moonshotBaseUrl: z3.union([z3.literal("https://api.moonshot.ai/v1"), z3.literal("https://api.moonshot.cn/v1")]).optional(),
+  moonshotApiKey: z3.string().optional()
 });
 var unboundSchema = baseProviderSettingsSchema.extend({
-  unboundApiKey: z4.string().optional(),
-  unboundModelId: z4.string().optional()
+  unboundApiKey: z3.string().optional(),
+  unboundModelId: z3.string().optional()
 });
 var requestySchema = baseProviderSettingsSchema.extend({
-  requestyBaseUrl: z4.string().optional(),
-  requestyApiKey: z4.string().optional(),
-  requestyModelId: z4.string().optional()
+  requestyBaseUrl: z3.string().optional(),
+  requestyApiKey: z3.string().optional(),
+  requestyModelId: z3.string().optional()
 });
 var humanRelaySchema = baseProviderSettingsSchema;
 var fakeAiSchema = baseProviderSettingsSchema.extend({
-  fakeAi: z4.unknown().optional()
+  fakeAi: z3.unknown().optional()
 });
 var xaiSchema = apiModelIdProviderModelSchema.extend({
-  xaiApiKey: z4.string().optional()
+  xaiApiKey: z3.string().optional()
 });
 var groqSchema = apiModelIdProviderModelSchema.extend({
-  groqApiKey: z4.string().optional()
+  groqApiKey: z3.string().optional()
 });
 var huggingFaceSchema = baseProviderSettingsSchema.extend({
-  huggingFaceApiKey: z4.string().optional(),
-  huggingFaceModelId: z4.string().optional(),
-  huggingFaceInferenceProvider: z4.string().optional()
+  huggingFaceApiKey: z3.string().optional(),
+  huggingFaceModelId: z3.string().optional(),
+  huggingFaceInferenceProvider: z3.string().optional()
 });
 var chutesSchema = apiModelIdProviderModelSchema.extend({
-  chutesApiKey: z4.string().optional()
+  chutesApiKey: z3.string().optional()
 });
 var litellmSchema = baseProviderSettingsSchema.extend({
-  litellmBaseUrl: z4.string().optional(),
-  litellmApiKey: z4.string().optional(),
-  litellmModelId: z4.string().optional(),
-  litellmUsePromptCache: z4.boolean().optional()
+  litellmBaseUrl: z3.string().optional(),
+  litellmApiKey: z3.string().optional(),
+  litellmModelId: z3.string().optional(),
+  litellmUsePromptCache: z3.boolean().optional()
 });
 var cerebrasSchema = apiModelIdProviderModelSchema.extend({
-  cerebrasApiKey: z4.string().optional()
+  cerebrasApiKey: z3.string().optional()
 });
 var sambaNovaSchema = apiModelIdProviderModelSchema.extend({
-  sambaNovaApiKey: z4.string().optional()
+  sambaNovaApiKey: z3.string().optional()
 });
 var zaiSchema = apiModelIdProviderModelSchema.extend({
-  zaiApiKey: z4.string().optional(),
-  zaiApiLine: z4.union([z4.literal("china"), z4.literal("international")]).optional()
+  zaiApiKey: z3.string().optional(),
+  zaiApiLine: z3.union([z3.literal("china"), z3.literal("international")]).optional()
 });
 var fireworksSchema = apiModelIdProviderModelSchema.extend({
-  fireworksApiKey: z4.string().optional()
+  fireworksApiKey: z3.string().optional()
 });
 var ioIntelligenceSchema = apiModelIdProviderModelSchema.extend({
-  ioIntelligenceModelId: z4.string().optional(),
-  ioIntelligenceApiKey: z4.string().optional()
+  ioIntelligenceModelId: z3.string().optional(),
+  ioIntelligenceApiKey: z3.string().optional()
 });
-var defaultSchema = z4.object({
-  apiProvider: z4.undefined()
+var defaultSchema = z3.object({
+  apiProvider: z3.undefined()
 });
-var providerSettingsSchemaDiscriminated = z4.discriminatedUnion("apiProvider", [
-  anthropicSchema.merge(z4.object({ apiProvider: z4.literal("anthropic") })),
-  claudeCodeSchema.merge(z4.object({ apiProvider: z4.literal("claude-code") })),
-  glamaSchema.merge(z4.object({ apiProvider: z4.literal("glama") })),
-  openRouterSchema.merge(z4.object({ apiProvider: z4.literal("openrouter") })),
-  bedrockSchema.merge(z4.object({ apiProvider: z4.literal("bedrock") })),
-  vertexSchema.merge(z4.object({ apiProvider: z4.literal("vertex") })),
-  openAiSchema.merge(z4.object({ apiProvider: z4.literal("openai") })),
-  ollamaSchema.merge(z4.object({ apiProvider: z4.literal("ollama") })),
-  vsCodeLmSchema.merge(z4.object({ apiProvider: z4.literal("vscode-lm") })),
-  lmStudioSchema.merge(z4.object({ apiProvider: z4.literal("lmstudio") })),
-  geminiSchema.merge(z4.object({ apiProvider: z4.literal("gemini") })),
-  geminiCliSchema.merge(z4.object({ apiProvider: z4.literal("gemini-cli") })),
-  openAiNativeSchema.merge(z4.object({ apiProvider: z4.literal("openai-native") })),
-  mistralSchema.merge(z4.object({ apiProvider: z4.literal("mistral") })),
-  deepSeekSchema.merge(z4.object({ apiProvider: z4.literal("deepseek") })),
-  doubaoSchema.merge(z4.object({ apiProvider: z4.literal("doubao") })),
-  moonshotSchema.merge(z4.object({ apiProvider: z4.literal("moonshot") })),
-  unboundSchema.merge(z4.object({ apiProvider: z4.literal("unbound") })),
-  requestySchema.merge(z4.object({ apiProvider: z4.literal("requesty") })),
-  humanRelaySchema.merge(z4.object({ apiProvider: z4.literal("human-relay") })),
-  fakeAiSchema.merge(z4.object({ apiProvider: z4.literal("fake-ai") })),
-  xaiSchema.merge(z4.object({ apiProvider: z4.literal("xai") })),
-  groqSchema.merge(z4.object({ apiProvider: z4.literal("groq") })),
-  huggingFaceSchema.merge(z4.object({ apiProvider: z4.literal("huggingface") })),
-  chutesSchema.merge(z4.object({ apiProvider: z4.literal("chutes") })),
-  litellmSchema.merge(z4.object({ apiProvider: z4.literal("litellm") })),
-  cerebrasSchema.merge(z4.object({ apiProvider: z4.literal("cerebras") })),
-  sambaNovaSchema.merge(z4.object({ apiProvider: z4.literal("sambanova") })),
-  zaiSchema.merge(z4.object({ apiProvider: z4.literal("zai") })),
-  fireworksSchema.merge(z4.object({ apiProvider: z4.literal("fireworks") })),
-  ioIntelligenceSchema.merge(z4.object({ apiProvider: z4.literal("io-intelligence") })),
+var providerSettingsSchemaDiscriminated = z3.discriminatedUnion("apiProvider", [
+  anthropicSchema.merge(z3.object({ apiProvider: z3.literal("anthropic") })),
+  claudeCodeSchema.merge(z3.object({ apiProvider: z3.literal("claude-code") })),
+  glamaSchema.merge(z3.object({ apiProvider: z3.literal("glama") })),
+  openRouterSchema.merge(z3.object({ apiProvider: z3.literal("openrouter") })),
+  bedrockSchema.merge(z3.object({ apiProvider: z3.literal("bedrock") })),
+  vertexSchema.merge(z3.object({ apiProvider: z3.literal("vertex") })),
+  openAiSchema.merge(z3.object({ apiProvider: z3.literal("openai") })),
+  ollamaSchema.merge(z3.object({ apiProvider: z3.literal("ollama") })),
+  vsCodeLmSchema.merge(z3.object({ apiProvider: z3.literal("vscode-lm") })),
+  lmStudioSchema.merge(z3.object({ apiProvider: z3.literal("lmstudio") })),
+  geminiSchema.merge(z3.object({ apiProvider: z3.literal("gemini") })),
+  geminiCliSchema.merge(z3.object({ apiProvider: z3.literal("gemini-cli") })),
+  openAiNativeSchema.merge(z3.object({ apiProvider: z3.literal("openai-native") })),
+  mistralSchema.merge(z3.object({ apiProvider: z3.literal("mistral") })),
+  deepSeekSchema.merge(z3.object({ apiProvider: z3.literal("deepseek") })),
+  doubaoSchema.merge(z3.object({ apiProvider: z3.literal("doubao") })),
+  moonshotSchema.merge(z3.object({ apiProvider: z3.literal("moonshot") })),
+  unboundSchema.merge(z3.object({ apiProvider: z3.literal("unbound") })),
+  requestySchema.merge(z3.object({ apiProvider: z3.literal("requesty") })),
+  humanRelaySchema.merge(z3.object({ apiProvider: z3.literal("human-relay") })),
+  fakeAiSchema.merge(z3.object({ apiProvider: z3.literal("fake-ai") })),
+  xaiSchema.merge(z3.object({ apiProvider: z3.literal("xai") })),
+  groqSchema.merge(z3.object({ apiProvider: z3.literal("groq") })),
+  huggingFaceSchema.merge(z3.object({ apiProvider: z3.literal("huggingface") })),
+  chutesSchema.merge(z3.object({ apiProvider: z3.literal("chutes") })),
+  litellmSchema.merge(z3.object({ apiProvider: z3.literal("litellm") })),
+  cerebrasSchema.merge(z3.object({ apiProvider: z3.literal("cerebras") })),
+  sambaNovaSchema.merge(z3.object({ apiProvider: z3.literal("sambanova") })),
+  zaiSchema.merge(z3.object({ apiProvider: z3.literal("zai") })),
+  fireworksSchema.merge(z3.object({ apiProvider: z3.literal("fireworks") })),
+  ioIntelligenceSchema.merge(z3.object({ apiProvider: z3.literal("io-intelligence") })),
   defaultSchema
 ]);
-var providerSettingsSchema = z4.object({
+var providerSettingsSchema = z3.object({
   apiProvider: providerNamesSchema.optional(),
   ...anthropicSchema.shape,
   ...claudeCodeSchema.shape,
@@ -780,9 +381,9 @@ var providerSettingsSchema = z4.object({
   ...ioIntelligenceSchema.shape,
   ...codebaseIndexProviderSchema.shape
 });
-var providerSettingsWithIdSchema = providerSettingsSchema.extend({ id: z4.string().optional() });
+var providerSettingsWithIdSchema = providerSettingsSchema.extend({ id: z3.string().optional() });
 var discriminatedProviderSettingsWithIdSchema = providerSettingsSchemaDiscriminated.and(
-  z4.object({ id: z4.string().optional() })
+  z3.object({ id: z3.string().optional() })
 );
 var PROVIDER_SETTINGS_KEYS = providerSettingsSchema.keyof().options;
 var MODEL_ID_KEYS = [
@@ -813,6 +414,421 @@ var getApiProtocol = (provider, modelId) => {
   }
   return "openai";
 };
+
+// src/agent.ts
+var agentToolConfigSchema = z4.object({
+  toolId: z4.string(),
+  enabled: z4.boolean(),
+  config: z4.record(z4.string(), z4.any()).optional()
+});
+var agentTodoSchema = z4.object({
+  id: z4.string(),
+  content: z4.string(),
+  status: z4.enum(["pending", "in_progress", "completed"]),
+  createdAt: z4.number(),
+  updatedAt: z4.number(),
+  priority: z4.enum(["low", "medium", "high"]).optional()
+});
+var agentTemplateSourceSchema = z4.object({
+  type: z4.enum(["manual", "task"]),
+  taskId: z4.string().optional(),
+  taskDescription: z4.string().optional(),
+  timestamp: z4.number()
+});
+var a2aAgentCardSchema = z4.object({
+  name: z4.string(),
+  description: z4.string(),
+  skills: z4.array(z4.string()),
+  url: z4.string().optional(),
+  // 公网可访问的 A2A 端点
+  capabilities: z4.object({
+    messageTypes: z4.array(z4.string()),
+    // 支持的消息类型
+    taskTypes: z4.array(z4.string()),
+    // 支持的任务类型
+    dataFormats: z4.array(z4.string()),
+    // 支持的数据格式
+    maxConcurrency: z4.number().optional()
+    // 最大并发数
+  }),
+  // 部署信息
+  deployment: z4.object({
+    type: z4.enum(["pc", "cloud", "docker"]),
+    platform: z4.string(),
+    region: z4.string().optional(),
+    networkReachable: z4.boolean().optional()
+    // 网络是否可达
+  }).optional(),
+  auth: z4.object({
+    apiKey: z4.string().optional(),
+    authType: z4.enum(["none", "apikey", "oauth"])
+  }).optional()
+});
+var agentPermissionSchema = z4.object({
+  action: z4.enum(["read", "execute", "modify", "admin"]),
+  resource: z4.string(),
+  // 资源路径或标识
+  conditions: z4.object({
+    timeRange: z4.tuple([z4.number(), z4.number()]).optional(),
+    // 时间范围限制
+    ipRange: z4.array(z4.string()).optional(),
+    // IP范围限制
+    userAgent: z4.string().optional(),
+    // User-Agent限制
+    maxUsage: z4.number().optional(),
+    // 最大使用次数限制
+    rateLimit: z4.number().optional()
+    // 速率限制（每分钟）
+  }).optional(),
+  description: z4.string().optional()
+  // 权限描述
+});
+var agentApiConfigSchema = providerSettingsSchema.extend({
+  originalId: z4.string().optional(),
+  // 原始配置ID（用于追踪来源）
+  originalName: z4.string().optional(),
+  // 原始配置名称
+  createdAt: z4.number().optional()
+  // 副本创建时间
+});
+var agentConfigSchema = z4.object({
+  id: z4.string(),
+  userId: z4.string(),
+  name: z4.string(),
+  avatar: z4.string(),
+  roleDescription: z4.string(),
+  apiConfigId: z4.string(),
+  // 保留向后兼容
+  apiConfig: agentApiConfigSchema.optional(),
+  // 新增：嵌入式API配置
+  mode: z4.string(),
+  tools: z4.array(agentToolConfigSchema),
+  todos: z4.array(agentTodoSchema),
+  // 新增：A2A 和共享配置
+  isPrivate: z4.boolean().optional().default(true),
+  // 私有/共享标识，默认true
+  shareScope: z4.enum(["friends", "groups", "public"]).optional(),
+  // 共享范围：好友、群组、公开
+  shareLevel: z4.number().optional(),
+  // 共享级别：0=私有，1=好友，2=群组，3=公开
+  a2aAgentCard: a2aAgentCardSchema.optional(),
+  // A2A 协议智能体卡片
+  a2aEndpoint: z4.string().optional(),
+  // A2A 服务端点URL
+  permissions: z4.array(agentPermissionSchema).optional(),
+  // 访问权限列表
+  allowedUsers: z4.array(z4.string()).optional(),
+  // 好友级别：白名单用户ID
+  allowedGroups: z4.array(z4.string()).optional(),
+  // 群组级别：白名单群组ID
+  deniedUsers: z4.array(z4.string()).optional(),
+  // 用户黑名单
+  // 发布状态相关字段
+  isPublished: z4.boolean().optional().default(false),
+  // 是否已发布
+  publishInfo: z4.object({
+    // 发布信息
+    terminalType: z4.enum(["local", "cloud"]).optional(),
+    // 发布终端类型
+    serverPort: z4.number().optional(),
+    // A2A服务器端口
+    serverUrl: z4.string().optional(),
+    // A2A服务器URL
+    publishedAt: z4.string().optional(),
+    // 发布时间
+    serviceStatus: z4.enum(["online", "offline", "error"]).optional(),
+    // 服务状态
+    lastHeartbeat: z4.number().optional()
+    // 最后心跳时间
+  }).optional(),
+  templateSource: agentTemplateSourceSchema.optional(),
+  createdAt: z4.number(),
+  updatedAt: z4.number(),
+  lastUsedAt: z4.number().optional(),
+  isActive: z4.boolean(),
+  version: z4.number()
+});
+var agentListOptionsSchema = z4.object({
+  sortBy: z4.enum(["name", "createdAt", "updatedAt", "lastUsedAt"]).optional(),
+  sortOrder: z4.enum(["asc", "desc"]).optional(),
+  filterByMode: z4.string().optional(),
+  onlyActive: z4.boolean().optional(),
+  limit: z4.number().optional(),
+  offset: z4.number().optional()
+});
+var agentExportDataSchema = z4.object({
+  agent: agentConfigSchema,
+  metadata: z4.object({
+    exportedAt: z4.number(),
+    exportedBy: z4.string(),
+    version: z4.string()
+  })
+});
+var agentTemplateDataSchema = z4.object({
+  apiConfigId: z4.string().optional(),
+  mode: z4.string().optional(),
+  tools: z4.array(z4.string()).optional(),
+  templateSource: agentTemplateSourceSchema
+});
+var resourceQuotaSchema = z4.object({
+  maxMemory: z4.number(),
+  // 最大内存使用 (MB)
+  maxCpuTime: z4.number(),
+  // 最大CPU时间 (ms)
+  maxFileOperations: z4.number(),
+  // 最大文件操作次数
+  maxNetworkRequests: z4.number(),
+  // 最大网络请求次数
+  maxExecutionTime: z4.number(),
+  // 最大执行时间 (ms)
+  workspaceAccess: z4.object({
+    readOnly: z4.boolean(),
+    allowedPaths: z4.array(z4.string()),
+    deniedPaths: z4.array(z4.string()),
+    tempDirectory: z4.string()
+  })
+});
+var resourceUsageSchema = z4.object({
+  memory: z4.number(),
+  // 当前内存使用 (MB)
+  cpuTime: z4.number(),
+  // 当前CPU时间 (ms)
+  fileOperations: z4.number(),
+  // 当前文件操作次数
+  networkRequests: z4.number(),
+  // 当前网络请求次数
+  startTime: z4.number(),
+  // 启动时间戳
+  lastUpdate: z4.number()
+  // 最后更新时间戳
+});
+var agentInstanceSchema = z4.object({
+  agentId: z4.string(),
+  // 关联的智能体定义ID
+  instanceId: z4.string(),
+  // 实例唯一标识
+  userId: z4.string(),
+  // 实例所属用户
+  // 部署信息
+  deployment: z4.object({
+    type: z4.enum(["pc", "cloud", "docker", "k8s"]),
+    platform: z4.string(),
+    // 'vscode' | 'docker' | 'k8s'
+    location: z4.string().optional(),
+    // 部署位置描述
+    version: z4.string(),
+    // void版本
+    region: z4.string().optional()
+    // 地理区域
+  }),
+  // 网络端点
+  endpoint: z4.object({
+    type: z4.enum(["local_only", "network_reachable", "hybrid"]),
+    // 直连信息
+    direct: z4.object({
+      url: z4.string(),
+      // HTTP服务端点
+      protocol: z4.enum(["http", "https"]),
+      port: z4.number().optional(),
+      apiKey: z4.string().optional(),
+      // API密钥
+      healthCheckPath: z4.string()
+      // 健康检查路径
+    }).optional(),
+    // IM桥接信息
+    imBridge: z4.object({
+      proxyId: z4.string(),
+      // 代理标识
+      channelId: z4.string().optional(),
+      // 通道标识
+      priority: z4.number()
+      // 路由优先级
+    }),
+    networkReachable: z4.boolean().optional(),
+    // 是否网络可达
+    lastProbeTime: z4.number().optional()
+    // 最后探测时间
+  }),
+  // 实例状态
+  status: z4.object({
+    state: z4.enum(["starting", "online", "offline", "error", "maintenance"]),
+    startTime: z4.number(),
+    lastSeen: z4.number(),
+    currentLoad: z4.number(),
+    // 当前负载 0-1
+    errorCount: z4.number(),
+    // 错误计数
+    errorRate: z4.number(),
+    // 错误率 0-1
+    uptime: z4.number()
+    // 运行时间
+  }),
+  // 性能指标
+  metrics: z4.object({
+    avgResponseTime: z4.number(),
+    // 平均响应时间 (ms)
+    successRate: z4.number(),
+    // 成功率 0-1
+    throughput: z4.number(),
+    // 吞吐量 (req/s)
+    memoryUsage: z4.number().optional(),
+    // 内存使用率 0-1
+    cpuUsage: z4.number().optional(),
+    // CPU使用率 0-1
+    lastUpdate: z4.number()
+    // 最后更新时间
+  }),
+  // 资源配额
+  resourceQuota: resourceQuotaSchema.optional(),
+  // 元数据
+  metadata: z4.object({
+    createdAt: z4.number(),
+    updatedAt: z4.number(),
+    version: z4.number(),
+    tags: z4.array(z4.string()).optional()
+  })
+});
+var agentRequestSchema = z4.object({
+  method: z4.string(),
+  params: z4.any(),
+  timeout: z4.number().optional(),
+  priority: z4.enum(["low", "normal", "high"]).optional(),
+  retries: z4.number().optional(),
+  sourceAgentId: z4.string().optional(),
+  sourceUserId: z4.string().optional()
+});
+var agentResponseSchema = z4.object({
+  success: z4.boolean(),
+  data: z4.any().optional(),
+  error: z4.string().optional(),
+  agentId: z4.string(),
+  route: z4.enum(["direct", "im_bridge", "hybrid"]).optional(),
+  timestamp: z4.number(),
+  duration: z4.number().optional()
+});
+var agentEndpointSchema = z4.object({
+  agentId: z4.string(),
+  userId: z4.string(),
+  type: z4.enum(["local_only", "network_reachable", "hybrid"]),
+  directUrl: z4.string().optional(),
+  // 直连URL
+  apiKey: z4.string().optional(),
+  // API密钥
+  imProxyId: z4.string(),
+  // IM代理标识
+  networkReachable: z4.boolean().optional(),
+  // 网络可达性
+  lastProbeTime: z4.number().optional(),
+  // 最后探测时间
+  status: z4.object({
+    state: z4.enum(["online", "offline", "busy", "error"]),
+    lastSeen: z4.number(),
+    currentLoad: z4.number(),
+    errorRate: z4.number(),
+    avgResponseTime: z4.number()
+  }),
+  deploymentType: z4.enum(["pc", "cloud", "docker"])
+});
+var agentDiscoveryQuerySchema = z4.object({
+  userId: z4.string(),
+  capabilities: z4.array(z4.string()).optional(),
+  categories: z4.array(z4.string()).optional(),
+  tags: z4.array(z4.string()).optional(),
+  deploymentTypes: z4.array(z4.string()).optional(),
+  regions: z4.array(z4.string()).optional(),
+  keywords: z4.string().optional(),
+  onlyOnline: z4.boolean().optional(),
+  visibility: z4.enum(["private", "friends", "groups", "public", "all"]).optional(),
+  shareScope: z4.enum(["friends", "groups", "public"]).optional(),
+  shareLevel: z4.number().optional(),
+  sortBy: z4.enum(["relevance", "performance", "popularity", "rating"]).optional(),
+  sortOrder: z4.enum(["asc", "desc"]).optional(),
+  offset: z4.number().optional(),
+  limit: z4.number().optional()
+});
+var agentDiscoveryResultSchema = z4.object({
+  agentId: z4.string(),
+  userId: z4.string(),
+  name: z4.string(),
+  description: z4.string(),
+  avatar: z4.string(),
+  // 匹配信息
+  matchedCapabilities: z4.array(z4.string()),
+  relevanceScore: z4.number(),
+  // 部署信息
+  deploymentType: z4.enum(["pc", "cloud", "docker", "serverless"]),
+  region: z4.string().optional(),
+  endpointType: z4.enum(["local_only", "network_reachable", "hybrid"]),
+  // 性能指标
+  currentLoad: z4.number(),
+  avgResponseTime: z4.number(),
+  errorRate: z4.number(),
+  availability: z4.number(),
+  // 使用统计
+  totalCalls: z4.number(),
+  successRate: z4.number(),
+  rating: z4.number().optional(),
+  // 权限信息
+  isPrivate: z4.boolean(),
+  hasAccess: z4.boolean(),
+  // 元数据
+  category: z4.string().optional(),
+  tags: z4.array(z4.string()),
+  createdAt: z4.number(),
+  lastUsed: z4.number().optional()
+});
+var unifiedAgentRegistrySchema = z4.object({
+  agentId: z4.string(),
+  userId: z4.string(),
+  name: z4.string(),
+  avatar: z4.string(),
+  description: z4.string(),
+  // 能力信息
+  capabilities: z4.object({
+    tools: z4.array(z4.string()),
+    skills: z4.array(z4.string()),
+    categories: z4.array(z4.string())
+  }),
+  // 部署信息
+  deployment: z4.object({
+    type: z4.enum(["pc", "cloud", "docker", "serverless"]),
+    region: z4.string().optional(),
+    endpointType: z4.enum(["local_only", "network_reachable", "hybrid"]),
+    directUrl: z4.string().optional(),
+    imProxyId: z4.string().optional()
+  }),
+  // 状态信息
+  status: z4.object({
+    state: z4.enum(["online", "offline", "busy", "maintenance"]),
+    lastSeen: z4.number(),
+    currentLoad: z4.number(),
+    errorRate: z4.number(),
+    avgResponseTime: z4.number()
+  }),
+  // 共享配置
+  sharing: z4.object({
+    isPrivate: z4.boolean(),
+    shareScope: z4.enum(["none", "friends", "groups", "public"]),
+    shareLevel: z4.number().min(0).max(3),
+    permissions: z4.array(z4.enum(["read", "execute", "modify"])),
+    allowedUsers: z4.array(z4.string()),
+    allowedGroups: z4.array(z4.string()),
+    deniedUsers: z4.array(z4.string())
+  }),
+  // 元数据
+  metadata: z4.object({
+    createdAt: z4.number(),
+    updatedAt: z4.number(),
+    version: z4.string(),
+    tags: z4.array(z4.string())
+  })
+});
+
+// src/cloud.ts
+import { z as z14 } from "zod";
+
+// src/global-settings.ts
+import { z as z12 } from "zod";
 
 // src/history.ts
 import { z as z5 } from "zod";
@@ -4890,6 +4906,7 @@ export {
   ZAI_DEFAULT_TEMPERATURE,
   a2aAgentCardSchema,
   ackSchema,
+  agentApiConfigSchema,
   agentConfigSchema,
   agentDiscoveryQuerySchema,
   agentDiscoveryResultSchema,

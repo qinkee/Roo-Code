@@ -102,10 +102,10 @@ async function initializeLocalAgent(agent: any, provider: any, preferredPort?: n
 		const sharedStorageService = (provider as any).agentManager?.getStorageService()
 		if (sharedStorageService) {
 			console.log(`[AgentInitializer] Using shared storage service from AgentManager`)
-			await serverManager.initialize(sharedStorageService)
+			await serverManager.initialize(sharedStorageService, provider)
 		} else {
 			console.log(`[AgentInitializer] Warning: No shared storage service found, creating new instance`)
-			await serverManager.initialize()
+			await serverManager.initialize(undefined, provider)
 		}
 
 		// 3. 为智能体启动专用的A2A服务器，🎯 传递首选端口
@@ -1869,6 +1869,44 @@ export const webviewMessageHandler = async (
 				}
 			}
 			break
+		case "getApiConfigurationById":
+			if (message.text) {
+				try {
+					// 只获取配置，不激活（不改变全局当前配置）
+					const config = await provider.getProviderProfileById(message.text)
+					if (config) {
+						// 返回完整的配置数据
+						provider.postStateToWebview()
+						provider.postMessageToWebview({
+							type: "action",
+							action: "getApiConfigurationByIdResult",
+							success: true,
+							config: config,
+							configId: message.text
+						})
+					} else {
+						provider.postMessageToWebview({
+							type: "action",
+							action: "getApiConfigurationByIdResult",
+							success: false,
+							error: "Configuration not found",
+							configId: message.text
+						})
+					}
+				} catch (error) {
+					provider.log(
+						`Error get api configuration by ID: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+					)
+					provider.postMessageToWebview({
+						type: "action",
+						action: "getApiConfigurationByIdResult",
+						success: false,
+						error: error instanceof Error ? error.message : "Unknown error",
+						configId: message.text
+					})
+				}
+			}
+			break
 		case "deleteApiConfiguration":
 			if (message.text) {
 				const answer = await vscode.window.showInformationMessage(
@@ -2832,7 +2870,7 @@ export const webviewMessageHandler = async (
 				const result = (await vscode.commands.executeCommand("roo-cline.updateAgent", {
 					userId,
 					agentId: message.agentId,
-					agentConfig: message.agentConfig,
+					updates: message.agentConfig,
 				})) as any
 
 				await provider.postMessageToWebview({

@@ -279,6 +279,38 @@ export class ProviderSettingsManager {
 	}
 
 	/**
+	 * Extract model ID from provider settings based on provider type
+	 */
+	private extractModelId(apiConfig: any): string | undefined {
+		// 添加调试信息
+		console.log('[ProviderSettingsManager] Extracting model from config:', {
+			id: apiConfig.id,
+			apiProvider: apiConfig.apiProvider,
+			keys: Object.keys(apiConfig),
+			apiModelId: apiConfig.apiModelId,
+			openAiModelId: apiConfig.openAiModelId,
+			ollamaModelId: apiConfig.ollamaModelId
+		})
+		
+		// Try different model field names based on provider
+		const modelId = apiConfig.apiModelId || 
+			   apiConfig.glamaModelId || 
+			   apiConfig.openRouterModelId || 
+			   apiConfig.openAiModelId || 
+			   apiConfig.ollamaModelId || 
+			   apiConfig.lmStudioModelId || 
+			   apiConfig.unboundModelId || 
+			   apiConfig.requestyModelId || 
+			   apiConfig.litellmModelId || 
+			   apiConfig.huggingFaceModelId || 
+			   apiConfig.ioIntelligenceModelId ||
+			   undefined
+			   
+		console.log('[ProviderSettingsManager] Extracted modelId:', modelId)
+		return modelId
+	}
+
+	/**
 	 * List all available configs with metadata.
 	 */
 	public async listConfig(): Promise<ProviderSettingsEntry[]> {
@@ -286,11 +318,37 @@ export class ProviderSettingsManager {
 			return await this.lock(async () => {
 				const providerProfiles = await this.load()
 
-				return Object.entries(providerProfiles.apiConfigs).map(([name, apiConfig]) => ({
-					name,
-					id: apiConfig.id || "",
-					apiProvider: apiConfig.apiProvider,
-				}))
+				return Object.entries(providerProfiles.apiConfigs).map(([name, apiConfig]) => {
+					// Get complete configuration to properly extract model information
+					try {
+						// Use the same extraction logic as getProfile but synchronously since we already have the data
+						const completeConfig = { name, ...apiConfig }
+						const modelId = this.extractModelId(completeConfig)
+						
+						console.log('[ProviderSettingsManager] Processing config for list:', {
+							name,
+							id: apiConfig.id,
+							apiProvider: apiConfig.apiProvider,
+							extractedModelId: modelId,
+							configKeys: Object.keys(apiConfig)
+						})
+						
+						return {
+							name,
+							id: apiConfig.id || "",
+							apiProvider: apiConfig.apiProvider,
+							modelId,
+						}
+					} catch (error) {
+						console.error('[ProviderSettingsManager] Error processing config:', name, error)
+						return {
+							name,
+							id: apiConfig.id || "",
+							apiProvider: apiConfig.apiProvider,
+							modelId: undefined,
+						}
+					}
+				})
 			})
 		} catch (error) {
 			throw new Error(`Failed to list configs: ${error}`)

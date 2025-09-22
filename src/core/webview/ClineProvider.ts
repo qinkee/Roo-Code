@@ -1234,6 +1234,18 @@ export class ClineProvider
 		await this.postStateToWebview()
 	}
 
+	/**
+	 * Get provider profile by ID without activating it (does not change global current config)
+	 */
+	async getProviderProfileById(id: string) {
+		try {
+			return await this.providerSettingsManager.getProfile({ id })
+		} catch (error) {
+			this.log(`Error getting provider profile by ID ${id}: ${error instanceof Error ? error.message : error}`)
+			return null
+		}
+	}
+
 	// Task Management
 
 	async cancelTask() {

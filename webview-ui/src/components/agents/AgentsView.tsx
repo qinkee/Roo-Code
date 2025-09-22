@@ -9,6 +9,7 @@ import type { AgentTemplateData } from "./utils/taskToAgentTemplate"
 import { vscode } from "@src/utils/vscode"
 import { cn } from "@src/lib/utils"
 import { StandardTooltip } from "@src/components/ui"
+import { useExtensionState } from "@src/context/ExtensionStateContext"
 import ToggleSwitch from "./ToggleSwitch"
 import VolumeSlider from "./VolumeSlider"
 import CronRulePanel from "./CronRulePanel"
@@ -172,6 +173,7 @@ const mockBuiltinAgents: Agent[] = [
 
 const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	const { t } = useTranslation()
+	const { listApiConfigMeta } = useExtensionState()
 	const [agents, setAgents] = useState<Agent[]>([...mockBuiltinAgents])
 	const [customAgents, setCustomAgents] = useState<Agent[]>([])
 	const [loading, setLoading] = useState(false)
@@ -194,6 +196,11 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	const [showTerminalModal, setShowTerminalModal] = useState(false)
 	const [selectedAgentForPublish, setSelectedAgentForPublish] = useState<Agent | null>(null)
 	const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null)
+	const [modifiedApiConfig, setModifiedApiConfig] = useState<any>(null)
+	const [selectedProfileConfig, setSelectedProfileConfig] = useState<any>(null)
+	const [isAgentMode, setIsAgentMode] = useState(false) // 标识是否为智能体模式
+	const [agentConfigSaveCallback, setAgentConfigSaveCallback] = useState<((config: any) => void) | null>(null)
+	const [editingConfigId, setEditingConfigId] = useState<string>("") // 记住正在编辑的配置ID
 
 	// 加载智能体列表
 	const loadAgents = useCallback(() => {
@@ -212,6 +219,24 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 
 			if (message.type === "action") {
 				switch (message.action) {
+					case "getApiConfigurationByIdResult":
+						if (message.success && message.config) {
+							console.log('[AgentsView] Received full config for profile:', message.configId, message.config)
+							// 保存完整的配置数据
+							setSelectedProfileConfig(message.config)
+							// 打开API配置页面
+							setShowApiConfig(true)
+						} else {
+							console.error('[AgentsView] Failed to get config for profile:', message.configId, message.error)
+							// 失败时使用元数据作为备选
+							const profileMeta = listApiConfigMeta?.find(config => config.id === message.configId)
+							if (profileMeta) {
+								setSelectedProfileConfig(profileMeta)
+								setShowApiConfig(true)
+							}
+						}
+						break
+
 					case "createAgentResult":
 						setLoading(false)
 						if (message.success) {
@@ -632,13 +657,63 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 		setLoading(true)
 	}, [])
 
-	const handleShowApiConfig = useCallback(() => {
+	const handleShowApiConfig = useCallback(async (selectedConfigId?: string, currentConfig?: any, agentMode?: boolean) => {
+		console.log('[AgentsView] handleShowApiConfig called with:', { selectedConfigId, currentConfig, agentMode })
+		
+		// 设置智能体模式
+		setIsAgentMode(!!agentMode)
+		
+		// 记住正在编辑的配置ID
+		if (selectedConfigId) {
+			setEditingConfigId(selectedConfigId)
+		}
+		
+		// 如果已经有完整的currentConfig（有apiModelId字段），直接使用
+		if (currentConfig && currentConfig.apiModelId) {
+			console.log('[AgentsView] Using provided FULL current config:', currentConfig)
+			setSelectedProfileConfig(currentConfig)
+			setShowApiConfig(true)
+			return
+		}
+		
+		// 如果没有currentConfig但有selectedConfigId，使用新的API获取完整配置
+		if (selectedConfigId) {
+			console.log('[AgentsView] Fetching full config for profile WITHOUT changing global config:', selectedConfigId)
+			// 使用新的API来获取完整配置（不会改变全局配置）
+			vscode.postMessage({
+				type: "getApiConfigurationById",
+				text: selectedConfigId
+			})
+			// 收到响应后会在 getApiConfigurationByIdResult 中处理
+			return
+		}
+		
+		// 都没有的话，直接打开配置页面
+		console.log('[AgentsView] Opening API config without specific profile')
 		setShowApiConfig(true)
 	}, [])
 
 	const handleApiConfigBack = useCallback(() => {
 		setShowApiConfig(false)
+		// 清理选中profile配置
+		setSelectedProfileConfig(null)
+		setIsAgentMode(false) // 重置智能体模式
 	}, [])
+
+	const handleApiConfigChanged = useCallback((newConfig: any) => {
+		console.log('[AgentsView] API config changed, isAgentMode:', isAgentMode, 'newConfig:', newConfig)
+		
+		if (isAgentMode && agentConfigSaveCallback) {
+			// 智能体模式：直接调用回调
+			console.log('[AgentsView] Calling agent config save callback directly')
+			agentConfigSaveCallback(newConfig)
+		} else {
+			// 普通模式：使用全局状态
+			setModifiedApiConfig(newConfig)
+		}
+		
+		setShowApiConfig(false)
+	}, [isAgentMode, agentConfigSaveCallback])
 
 	const handleShowModeConfig = useCallback(() => {
 		setShowModeConfig(true)
@@ -658,7 +733,15 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 
 	// Show API config view if requested
 	if (showApiConfig) {
-		return <ApiConfigView onBack={handleApiConfigBack} />
+		return (
+			<ApiConfigView 
+				onBack={handleApiConfigBack} 
+				onConfigChanged={handleApiConfigChanged} 
+				readOnlyMode={true} 
+				initialConfig={selectedProfileConfig}
+				enableSaveButton={true}
+			/>
+		)
 	}
 
 	// Show mode config view if requested
@@ -673,12 +756,28 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 				onBack={handleCreateAgentBack}
 				onCancel={handleCreateAgentCancel}
 				onCreate={handleCreateAgentSubmit}
-				onShowApiConfig={handleShowApiConfig}
+				onShowApiConfig={(selectedConfigId, currentConfig, agentMode) => {
+					// 传递回调给AgentsView
+					if (agentMode) {
+						const saveCallback = (config: any) => {
+							// 关键：在保存配置时带上编辑的配置ID
+							const configWithId = { ...config, editingConfigId: selectedConfigId }
+							setModifiedApiConfig(configWithId)
+						}
+						setAgentConfigSaveCallback(() => saveCallback)
+					}
+					handleShowApiConfig(selectedConfigId, currentConfig, agentMode)
+				}}
 				onShowModeConfig={handleShowModeConfig}
+				onAgentApiConfigSave={(config) => {
+					console.log('[AgentsView] Agent API config saved callback:', config)
+				}}
 				templateData={selectedTaskData}
 				editMode={editMode}
 				editData={editAgentData}
 				onUpdate={handleAgentUpdate}
+				modifiedApiConfig={modifiedApiConfig}
+				onApiConfigUsed={() => setModifiedApiConfig(null)}
 			/>
 		)
 	}

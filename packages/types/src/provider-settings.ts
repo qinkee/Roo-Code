@@ -58,6 +58,8 @@ export const providerSettingsEntrySchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	apiProvider: providerNamesSchema.optional(),
+	// 添加model相关字段，支持不同provider的model字段
+	modelId: z.string().optional(), // 通用的model字段
 })
 
 export type ProviderSettingsEntry = z.infer<typeof providerSettingsEntrySchema>

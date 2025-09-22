@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { providerSettingsSchema } from "./provider-settings.js"
 
 /**
  * 智能体工具配置
@@ -85,6 +86,17 @@ export const agentPermissionSchema = z.object({
 export type AgentPermission = z.infer<typeof agentPermissionSchema>
 
 /**
+ * 智能体API配置 - 基于完整的ProviderSettings副本
+ */
+export const agentApiConfigSchema = providerSettingsSchema.extend({
+	originalId: z.string().optional(),           // 原始配置ID（用于追踪来源）
+	originalName: z.string().optional(),         // 原始配置名称
+	createdAt: z.number().optional(),            // 副本创建时间
+})
+
+export type AgentApiConfig = z.infer<typeof agentApiConfigSchema>
+
+/**
  * 智能体配置
  */
 export const agentConfigSchema = z.object({
@@ -93,7 +105,8 @@ export const agentConfigSchema = z.object({
 	name: z.string(),
 	avatar: z.string(),
 	roleDescription: z.string(),
-	apiConfigId: z.string(),
+	apiConfigId: z.string(),                      // 保留向后兼容
+	apiConfig: agentApiConfigSchema.optional(),   // 新增：嵌入式API配置
 	mode: z.string(),
 	tools: z.array(agentToolConfigSchema),
 	todos: z.array(agentTodoSchema),

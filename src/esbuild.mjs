@@ -108,7 +108,7 @@ async function main() {
 	 */
 	const workerConfig = {
 		...buildOptions,
-		entryPoints: ["workers/countTokens.ts"],
+		entryPoints: ["workers/countTokens.ts", "workers/agentExecutor.ts"],
 		outdir: "dist/workers",
 	}
 
