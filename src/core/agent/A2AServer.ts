@@ -429,7 +429,7 @@ export class A2AServer {
 						}),
 					)
 				} else if (url === "/execute" && method === "POST") {
-					// 处理执行请求 - 使用真正的智能体执行逻辑
+					// 处理执行请求 - 支持流式响应
 					console.log(`[A2AServer] 🔥 Received POST /execute request`)
 					let body = ""
 					req.on("data", (chunk: any) => {
@@ -442,6 +442,12 @@ export class A2AServer {
 							const requestData = JSON.parse(body)
 							console.log(`[A2AServer] ✅ Execute request parsed:`, requestData)
 
+							// 检查客户端是否支持 SSE
+							const acceptHeader = req.headers.accept || ""
+							const isSSE = acceptHeader.includes("text/event-stream") || requestData.stream === true
+							
+							console.log(`[A2AServer] 📡 Request mode: ${isSSE ? 'SSE streaming' : 'standard JSON'}`)
+
 							// 获取智能体配置并执行真正的AI逻辑
 							console.log(`[A2AServer] 🔍 Checking agent availability:`, { agentExists: !!agent, agentId: requestData.agentId })
 							if (!agent) {
@@ -453,29 +459,59 @@ export class A2AServer {
 								}))
 								return
 							}
+							
+							// 打印智能体的API配置信息
+							console.log(`[A2AServer] 📋 Agent API Config Info:`, {
+								agentId: agent.id,
+								hasEmbeddedApiConfig: !!agent.apiConfig,
+								apiConfigId: agent.apiConfigId,
+								apiProvider: agent.apiConfig?.apiProvider,
+								apiModel: agent.apiConfig?.apiModelId,
+								hasApiKey: !!(agent.apiConfig?.apiKey || agent.apiConfig?.openAiApiKey || agent.apiConfig?.anthropicApiKey)
+							})
 
-							// 执行真正的智能体逻辑（使用Worker）
-							console.log(`[A2AServer] 🚀 Starting agent execution for:`, requestData.agentId)
-							const result = await this.executeAgentLogic(agent, requestData)
-							console.log(`[A2AServer] ✅ Agent execution completed:`, { success: result.success, duration: result.duration })
+							if (isSSE) {
+								// SSE 流式响应
+								res.writeHead(200, {
+									"Content-Type": "text/event-stream",
+									"Cache-Control": "no-cache",
+									"Connection": "keep-alive",
+									"Access-Control-Allow-Origin": "*"
+								})
+								
+								// 发送初始连接事件
+								res.write(`event: connected\ndata: {"message":"SSE connection established"}\n\n`)
+								
+								// 执行智能体逻辑并流式传输结果
+								console.log(`[A2AServer] 🚀 Starting streaming agent execution for:`, requestData.agentId)
+								await this.executeAgentLogicWithStreaming(agent, requestData, res)
+								
+							} else {
+								// 标准 JSON 响应（保持向后兼容）
+								console.log(`[A2AServer] 🚀 Starting agent execution for:`, requestData.agentId)
+								const result = await this.executeAgentLogic(agent, requestData)
+								console.log(`[A2AServer] ✅ Agent execution completed:`, { success: result.success, duration: result.duration })
 
-							const response = {
-								success: result.success,
-								result: result.data || result.error,
-								timestamp: Date.now(),
-								duration: result.duration,
+								const response = {
+									success: result.success,
+									result: result.success ? result.data : result.error,
+									timestamp: Date.now(),
+									duration: result.duration,
+								}
+
+								res.writeHead(200, { "Content-Type": "application/json" })
+								res.end(JSON.stringify(response))
 							}
-
-							res.writeHead(200, { "Content-Type": "application/json" })
-							res.end(JSON.stringify(response))
 						} catch (error) {
 							logger.error(`[A2AServer] Execute error:`, error)
-							res.writeHead(500, { "Content-Type": "application/json" })
-							res.end(JSON.stringify({ 
-								success: false, 
-								error: "Agent execution failed",
-								details: error instanceof Error ? error.message : "Unknown error"
-							}))
+							if (!res.headersSent) {
+								res.writeHead(500, { "Content-Type": "application/json" })
+								res.end(JSON.stringify({ 
+									success: false, 
+									error: "Agent execution failed",
+									details: error instanceof Error ? error.message : "Unknown error"
+								}))
+							}
 						}
 					})
 				} else {
@@ -721,6 +757,174 @@ export class A2AServer {
 	}
 
 	/**
+	 * 执行智能体逻辑并支持流式输出
+	 */
+	private async executeAgentLogicWithStreaming(
+		agent: AgentConfig,
+		request: any,
+		res: any
+	): Promise<void> {
+		const startTime = Date.now()
+		let isStreamClosed = false
+		
+		// 辅助函数：发送SSE事件
+		const sendSSE = (event: string, data: any) => {
+			if (!isStreamClosed && !res.destroyed) {
+				try {
+					const jsonData = typeof data === 'string' ? data : JSON.stringify(data)
+					res.write(`event: ${event}\ndata: ${jsonData}\n\n`)
+				} catch (error) {
+					console.error(`[A2AServer] SSE send error:`, error)
+				}
+			}
+		}
+		
+		// 监听客户端断开连接
+		res.on('close', () => {
+			console.log(`[A2AServer] SSE connection closed by client`)
+			isStreamClosed = true
+		})
+		
+		try {
+			// 获取用户消息
+			const userMessage = request.task || request.params?.message || request.message || request.data?.message || "Hello"
+			console.log(`[A2AServer] 📝 Starting streaming execution for agent ${agent.id} with message: "${userMessage}"`)
+			
+			// 发送开始事件
+			sendSSE("start", { 
+				agentId: agent.id, 
+				message: userMessage,
+				timestamp: Date.now() 
+			})
+			
+			// 获取API配置
+			const agentApiConfig = await this.getAgentApiConfiguration(agent)
+			
+			// 设置智能体上下文
+			await this.setupAgentContext(agent)
+			
+			// 导入Task类
+			const { Task } = await import("../task/Task")
+			
+			// 创建Task实例
+			const task = new Task({
+				provider: this.provider,
+				apiConfiguration: agentApiConfig.providerSettings,
+				enableDiff: false,
+				enableCheckpoints: false,
+				enableTaskBridge: false,
+				task: userMessage,
+				startTask: false,
+				experiments: {},
+			})
+			
+			// 监听Task的消息事件并流式发送
+			task.on(RooCodeEventName.Message, (messageEvent: any) => {
+				if (messageEvent && messageEvent.message) {
+					const message = messageEvent.message
+					
+					// 根据消息类型发送不同的SSE事件
+					if (message.type === "say" && message.say === "text" && message.text && message.text !== userMessage) {
+						// AI的思考过程
+						sendSSE("thinking", {
+							content: message.text,
+							timestamp: Date.now()
+						})
+					} else if (message.say === "completion_result" && message.text) {
+						// AI的最终回答
+						sendSSE("completion", {
+							content: message.text,
+							timestamp: Date.now()
+						})
+					} else if (message.say === "api_req_started") {
+						// API请求开始
+						sendSSE("api_start", {
+							message: "Processing request...",
+							timestamp: Date.now()
+						})
+					} else if (message.type === "tool_use") {
+						// 工具使用
+						sendSSE("tool_use", {
+							tool: message.tool,
+							input: message.input,
+							timestamp: Date.now()
+						})
+					}
+				}
+			})
+			
+			// 监听任务完成
+			task.on(RooCodeEventName.TaskCompleted, (_, tokenUsage, toolUsage) => {
+				if (!isStreamClosed) {
+					// 发送完成事件
+					sendSSE("done", {
+						success: true,
+						duration: Date.now() - startTime,
+						tokensUsed: tokenUsage?.totalTokens || 0,
+						toolsUsed: toolUsage ? Object.keys(toolUsage) : [],
+						timestamp: Date.now()
+					})
+					
+					// 关闭连接
+					res.end()
+					isStreamClosed = true
+				}
+			})
+			
+			// 监听任务错误
+			task.on("taskError", (error: any) => {
+				if (!isStreamClosed) {
+					sendSSE("error", {
+						error: error.message || error.toString(),
+						timestamp: Date.now()
+					})
+					res.end()
+					isStreamClosed = true
+				}
+			})
+			
+			// 监听任务中止
+			task.on("taskAborted", () => {
+				if (!isStreamClosed) {
+					sendSSE("aborted", {
+						message: "Task was aborted",
+						timestamp: Date.now()
+					})
+					res.end()
+					isStreamClosed = true
+				}
+			})
+			
+			// 等待Task初始化并启动
+			await task.waitForModeInitialization()
+			task.startTask(userMessage)
+			
+			// 设置超时保护
+			setTimeout(() => {
+				if (!isStreamClosed) {
+					sendSSE("timeout", {
+						message: "Task execution timeout",
+						timestamp: Date.now()
+					})
+					res.end()
+					isStreamClosed = true
+					task.abortTask(true)
+				}
+			}, 60000) // 60秒超时
+			
+		} catch (error) {
+			logger.error(`[A2AServer] Streaming execution failed:`, error)
+			if (!isStreamClosed) {
+				sendSSE("error", {
+					error: error instanceof Error ? error.message : "Unknown error",
+					timestamp: Date.now()
+				})
+				res.end()
+			}
+		}
+	}
+
+	/**
 	 * 执行智能体逻辑 - 直接使用Task类，复用Roo-Code完整逻辑
 	 */
 	private async executeAgentLogic(
@@ -735,10 +939,22 @@ export class A2AServer {
 		const startTime = Date.now()
 
 		try {
-			// 获取用户消息
-			const userMessage = request.task || request.params?.message || request.message || "Hello"
+			// 获取用户消息 - 添加详细的调试日志
+			console.log(`[A2AServer] 🔍 Request object:`, {
+				hasTask: !!request.task,
+				task: request.task,
+				hasParams: !!request.params,
+				paramsMessage: request.params?.message,
+				hasMessage: !!request.message,
+				message: request.message,
+				hasData: !!request.data,
+				dataMessage: request.data?.message,
+				allKeys: Object.keys(request || {})
+			})
 			
-			console.log(`[A2AServer] 📝 Executing agent ${agent.id} with message: ${userMessage}`)
+			const userMessage = request.task || request.params?.message || request.message || request.data?.message || "Hello"
+			
+			console.log(`[A2AServer] 📝 Executing agent ${agent.id} with message: "${userMessage}"`)
 
 			// 直接使用Roo-Code的Task执行引擎
 			console.log(`[A2AServer] 🔧 Starting executeInWorker for agent ${agent.id}`)
@@ -797,7 +1013,21 @@ export class A2AServer {
 			console.log(`[A2AServer] ✅ Task class imported successfully`)
 			
 			// 4. 创建并自动启动Task实例
-			console.log(`[A2AServer] 🚀 Creating Task with auto-start for agent ${agent.id}`)
+			console.log(`[A2AServer] 🚀 Creating Task with API configuration:`, {
+				agentId: agent.id,
+				apiProvider: agentApiConfig.providerSettings.apiProvider,
+				modelName: agentApiConfig.providerSettings.modelName,
+				hasApiKey: !!agentApiConfig.providerSettings.apiKey,
+				userMessage: userMessage
+			})
+			
+			console.log(`[A2AServer] 📌 Task constructor params:`, {
+				hasProvider: !!this.provider,
+				hasApiConfiguration: !!agentApiConfig.providerSettings,
+				taskMessage: userMessage,
+				taskMessageType: typeof userMessage,
+				taskMessageLength: userMessage?.length
+			})
 			
 			const task = new Task({
 				provider: this.provider,
@@ -885,8 +1115,8 @@ export class A2AServer {
 			// 先等待Task初始化完成
 			console.log(`[A2AServer] ⏸️ Waiting for Task initialization...`)
 			task.waitForModeInitialization().then(() => {
-				console.log(`[A2AServer] ✅ Task initialized, starting execution`)
-				task.startTask()
+				console.log(`[A2AServer] ✅ Task initialized, starting execution with message: "${userMessage}"`)
+				task.startTask(userMessage)
 				console.log(`[A2AServer] 🚀 Task started successfully`)
 			}).catch(error => {
 				console.log(`[A2AServer] ❌ Task initialization failed:`, error)
@@ -926,8 +1156,23 @@ export class A2AServer {
 					const message = messageEvent.message
 					console.log(`[A2AServer] 📝 Message details - type: ${message.type}, say: ${message.say}, text: ${message.text?.substring(0, 100)}`)
 					
+					// 捕获所有类型的AI响应 - 但排除用户消息的回显
+					if (message.type === "say" && message.say === "text" && message.text) {
+						// 检查是否是用户消息的回显（通常与userMessage相同）
+						if (message.text === userMessage) {
+							console.log(`[A2AServer] 🔄 Skipping user message echo: ${message.text.substring(0, 100)}...`)
+						} else {
+							// 这是AI的主要回答
+							console.log(`[A2AServer] 📝 Capturing AI text response: ${message.text.substring(0, 200)}...`)
+							taskResult += message.text + "\n"
+							// 只有在还没有finalResponse时才设置，避免覆盖completion_result
+							if (!finalResponse) {
+								finalResponse = message.text
+							}
+						}
+					}
 					// 处理assistant类型的消息（AI回答）
-					if (message.type === "ask" && message.say === "completion_result" && message.text) {
+					else if (message.type === "ask" && message.say === "completion_result" && message.text) {
 						console.log(`[A2AServer] 📝 Capturing AI completion result: ${message.text.substring(0, 200)}...`)
 						finalResponse = message.text
 					}
@@ -936,10 +1181,14 @@ export class A2AServer {
 						console.log(`[A2AServer] 📝 Capturing text message: ${message.text.substring(0, 100)}...`)
 						taskResult += message.text + "\n"
 					}
-					// 处理say为completion_result的消息
+					// 处理say为completion_result的消息 - 这是最高优先级
 					else if (message.say === "completion_result" && message.text) {
 						console.log(`[A2AServer] 📝 Capturing completion result: ${message.text.substring(0, 200)}...`)
 						finalResponse = message.text
+						// completion_result 是最终答案，也添加到 taskResult
+						if (!taskResult.includes(message.text)) {
+							taskResult = message.text // 直接使用completion_result作为最终结果
+						}
 					}
 				}
 			})
@@ -1140,11 +1389,18 @@ export class A2AServer {
 					modelName: agent.apiConfig.apiModelId, // 添加兼容字段
 				}
 				
-				console.log(`[A2AServer] 📊 Embedded API config:`, { 
+				// 详细打印API配置信息以便调试
+				console.log(`[A2AServer] 📊 Detailed embedded API config:`, { 
 					provider: providerSettings.apiProvider, 
-					model: providerSettings.modelName,
+					model: providerSettings.modelName || providerSettings.apiModelId,
 					hasApiKey: !!providerSettings.apiKey,
-					originalName: agent.apiConfig.originalName 
+					hasOpenAiApiKey: !!providerSettings.openAiApiKey,
+					hasAnthropicApiKey: !!providerSettings.anthropicApiKey,
+					apiKeyLength: providerSettings.apiKey?.length || 0,
+					openAiKeyLength: providerSettings.openAiApiKey?.length || 0,
+					anthropicKeyLength: providerSettings.anthropicApiKey?.length || 0,
+					originalName: agent.apiConfig.originalName,
+					allKeys: Object.keys(providerSettings).filter(k => k.includes('Key') || k.includes('key'))
 				})
 				
 				return { providerSettings }

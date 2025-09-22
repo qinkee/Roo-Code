@@ -333,7 +333,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 							// 如果返回了更新后的智能体数据，直接更新列表
 							if (message.updatedAgent) {
 								console.log("🔄 [AgentsView] Updating state with fresh agent data")
-								console.log("🔄 [AgentsView] Before state update, current agents:", agents.length)
+								console.log("🔄 [AgentsView] Before state update, current agents:", customAgents.length)
 								console.log("🔄 [AgentsView] Updated agent data:", {
 									id: message.updatedAgent.id,
 									name: message.updatedAgent.name,
@@ -346,7 +346,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 								console.log("  areEqual:", message.agentId === message.updatedAgent.id)
 								console.log(
 									"🔍 [AgentsView] Current agents IDs:",
-									agents.map((a) => a.id),
+									customAgents.map((a: any) => a.id),
 								)
 
 								setCustomAgents((prevAgents) => {
