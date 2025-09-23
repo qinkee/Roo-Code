@@ -42,7 +42,8 @@
       "Bash(pnpm turbo build:*)",
       "Bash(echo $NODE_ENV)",
       "Bash(pnpm turbo bundle:*)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(timeout:*)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [

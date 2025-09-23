@@ -767,6 +767,10 @@ export class A2AServer {
 		const startTime = Date.now()
 		let isStreamClosed = false
 		
+		// 跟踪已经发送的内容，用于计算增量
+		let sentThinkingContent = ""
+		let sentCompletionContent = ""
+		
 		// 辅助函数：发送SSE事件
 		const sendSSE = (event: string, data: any) => {
 			if (!isStreamClosed && !res.destroyed) {
@@ -797,49 +801,175 @@ export class A2AServer {
 				timestamp: Date.now() 
 			})
 			
-			// 获取API配置
-			const agentApiConfig = await this.getAgentApiConfiguration(agent)
+			// 获取API配置 - 捕获配置错误
+			let agentApiConfig
+			try {
+				agentApiConfig = await this.getAgentApiConfiguration(agent)
+				
+				// 验证API密钥是否存在
+				const hasValidKey = agentApiConfig.providerSettings.apiKey ||
+					agentApiConfig.providerSettings.openAiApiKey ||
+					agentApiConfig.providerSettings.anthropicApiKey ||
+					agentApiConfig.providerSettings.requestyApiKey ||
+					agentApiConfig.providerSettings.glamaApiKey
+				
+				if (!hasValidKey) {
+					throw new Error("API key not configured for this agent")
+				}
+			} catch (configError) {
+				logger.error(`[A2AServer] API configuration error for agent ${agent.id}:`, configError)
+				sendSSE("error", {
+					error: `Configuration error: ${configError instanceof Error ? configError.message : "Failed to get API configuration"}`,
+					code: "CONFIG_ERROR",
+					timestamp: Date.now()
+				})
+				res.end()
+				return
+			}
 			
 			// 设置智能体上下文
-			await this.setupAgentContext(agent)
+			try {
+				await this.setupAgentContext(agent)
+			} catch (contextError) {
+				logger.error(`[A2AServer] Context setup error for agent ${agent.id}:`, contextError)
+				sendSSE("error", {
+					error: `Context setup failed: ${contextError instanceof Error ? contextError.message : "Unknown error"}`,
+					code: "CONTEXT_ERROR",
+					timestamp: Date.now()
+				})
+				res.end()
+				return
+			}
 			
 			// 导入Task类
 			const { Task } = await import("../task/Task")
 			
 			// 创建Task实例
-			const task = new Task({
-				provider: this.provider,
-				apiConfiguration: agentApiConfig.providerSettings,
-				enableDiff: false,
-				enableCheckpoints: false,
-				enableTaskBridge: false,
-				task: userMessage,
-				startTask: false,
-				experiments: {},
-			})
+			let task
+			try {
+				task = new Task({
+					provider: this.provider,
+					apiConfiguration: agentApiConfig.providerSettings,
+					enableDiff: false,
+					enableCheckpoints: false,
+					enableTaskBridge: false,
+					task: userMessage,
+					startTask: false,
+					experiments: {},
+				})
+			} catch (taskCreationError) {
+				logger.error(`[A2AServer] Task creation error for agent ${agent.id}:`, taskCreationError)
+				sendSSE("error", {
+					error: `Task creation failed: ${taskCreationError instanceof Error ? taskCreationError.message : "Unknown error"}`,
+					code: "TASK_CREATION_ERROR",
+					timestamp: Date.now()
+				})
+				res.end()
+				return
+			}
+			
+			// 重要：由于Task的attemptApiRequest是一个生成器函数，错误不会通过事件发出
+			// 我们需要在执行生成器时捕获错误
+			let apiRequestGenerator: any = null
 			
 			// 监听Task的消息事件并流式发送
 			task.on(RooCodeEventName.Message, (messageEvent: any) => {
 				if (messageEvent && messageEvent.message) {
 					const message = messageEvent.message
 					
+					// 检查是否有错误消息 - 特别是api_req_failed
+					if (message.type === "error" || message.say === "error" || message.say === "api_req_failed") {
+						if (!isStreamClosed) {
+							logger.error(`[A2AServer] Error message detected:`, message)
+							
+							let errorMessage = message.text || message.error || "Task execution error"
+							let errorCode = "MESSAGE_ERROR"
+							
+							// 检查是否是API请求失败
+							if (message.say === "api_req_failed") {
+								errorCode = "API_REQUEST_FAILED"
+								// 分析错误内容
+								if (errorMessage.includes("401") || errorMessage.toLowerCase().includes("unauthorized") ||
+									errorMessage.toLowerCase().includes("invalid_api_key") || 
+									errorMessage.toLowerCase().includes("invalid api key")) {
+									errorCode = "AUTH_ERROR"
+									errorMessage = "API authentication failed. Please check your API key configuration."
+								} else if (errorMessage.includes("429") || errorMessage.toLowerCase().includes("rate limit")) {
+									errorCode = "RATE_LIMIT_ERROR"
+									errorMessage = "API rate limit exceeded. Please try again later."
+								} else if (errorMessage.toLowerCase().includes("network") || errorMessage.toLowerCase().includes("econnrefused")) {
+									errorCode = "NETWORK_ERROR"
+									errorMessage = "Network connection failed. Please check your internet connection."
+								}
+							}
+							
+							sendSSE("error", {
+								error: errorMessage,
+								code: errorCode,
+								details: message,
+								timestamp: Date.now()
+							})
+							res.end()
+							isStreamClosed = true
+						}
+						return
+					}
+					
 					// 根据消息类型发送不同的SSE事件
 					if (message.type === "say" && message.say === "text" && message.text && message.text !== userMessage) {
-						// AI的思考过程
-						sendSSE("thinking", {
-							content: message.text,
-							timestamp: Date.now()
-						})
+						// AI的思考过程 - 只发送增量内容
+						const fullContent = message.text
+						if (fullContent.startsWith(sentThinkingContent)) {
+							// 计算增量内容（新增的部分）
+							const incrementalContent = fullContent.substring(sentThinkingContent.length)
+							if (incrementalContent) {
+								sendSSE("thinking", {
+									content: incrementalContent,
+									timestamp: Date.now()
+								})
+								// 更新已发送的内容
+								sentThinkingContent = fullContent
+							}
+						} else {
+							// 如果内容不是追加的，可能是新的思考过程，直接发送
+							sendSSE("thinking", {
+								content: fullContent,
+								timestamp: Date.now()
+							})
+							sentThinkingContent = fullContent
+						}
 					} else if (message.say === "completion_result" && message.text) {
-						// AI的最终回答
-						sendSSE("completion", {
-							content: message.text,
-							timestamp: Date.now()
-						})
+						// AI的最终回答 - 只发送增量内容
+						const fullContent = message.text
+						if (fullContent.startsWith(sentCompletionContent)) {
+							// 计算增量内容（新增的部分）
+							const incrementalContent = fullContent.substring(sentCompletionContent.length)
+							if (incrementalContent) {
+								sendSSE("completion", {
+									content: incrementalContent,
+									timestamp: Date.now()
+								})
+								// 更新已发送的内容
+								sentCompletionContent = fullContent
+							}
+						} else {
+							// 如果内容不是追加的，可能是新的回答，直接发送
+							sendSSE("completion", {
+								content: fullContent,
+								timestamp: Date.now()
+							})
+							sentCompletionContent = fullContent
+						}
 					} else if (message.say === "api_req_started") {
 						// API请求开始
 						sendSSE("api_start", {
 							message: "Processing request...",
+							timestamp: Date.now()
+						})
+					} else if (message.say === "api_req_retry_delayed") {
+						// API请求重试中
+						sendSSE("api_retry", {
+							message: message.text || "Retrying API request...",
 							timestamp: Date.now()
 						})
 					} else if (message.type === "tool_use") {
@@ -874,8 +1004,38 @@ export class A2AServer {
 			// 监听任务错误
 			task.on("taskError", (error: any) => {
 				if (!isStreamClosed) {
+					logger.error(`[A2AServer] Task error for agent ${agent.id}:`, error)
+					
+					// 识别错误类型
+					let errorCode = "TASK_ERROR"
+					let errorMessage = error.message || error.toString()
+					
+					// 检测API认证错误
+					if (errorMessage.includes("401") || errorMessage.toLowerCase().includes("unauthorized") || 
+						errorMessage.toLowerCase().includes("invalid api key") || 
+						errorMessage.toLowerCase().includes("invalid_api_key") ||
+						errorMessage.toLowerCase().includes("authentication")) {
+						errorCode = "AUTH_ERROR"
+						errorMessage = "API authentication failed. Please check your API key configuration."
+					}
+					// 检测配额错误
+					else if (errorMessage.includes("429") || errorMessage.toLowerCase().includes("rate limit") ||
+						errorMessage.toLowerCase().includes("quota")) {
+						errorCode = "QUOTA_ERROR"
+						errorMessage = "API rate limit or quota exceeded. Please try again later."
+					}
+					// 检测网络错误
+					else if (errorMessage.toLowerCase().includes("econnrefused") || 
+						errorMessage.toLowerCase().includes("timeout") ||
+						errorMessage.toLowerCase().includes("network")) {
+						errorCode = "NETWORK_ERROR"
+						errorMessage = "Network connection failed. Please check your internet connection."
+					}
+					
 					sendSSE("error", {
-						error: error.message || error.toString(),
+						error: errorMessage,
+						code: errorCode,
+						details: error.stack || error.toString(),
 						timestamp: Date.now()
 					})
 					res.end()
@@ -896,21 +1056,96 @@ export class A2AServer {
 			})
 			
 			// 等待Task初始化并启动
-			await task.waitForModeInitialization()
-			task.startTask(userMessage)
-			
-			// 设置超时保护
-			setTimeout(() => {
+			try {
+				await task.waitForModeInitialization()
+				
+				// 额外的错误监听：监听Task的say方法输出
+				const originalSay = task.say.bind(task)
+				task.say = async (type: string, text?: string, ...args: any[]) => {
+					// 拦截api_req_failed消息
+					if (type === "api_req_failed") {
+						logger.error(`[A2AServer] API request failed intercepted:`, text)
+						if (!isStreamClosed) {
+							let errorMessage = text || "API request failed"
+							let errorCode = "API_REQUEST_FAILED"
+							
+							// 分析错误类型
+							if (errorMessage.includes("401") || errorMessage.toLowerCase().includes("unauthorized") ||
+								errorMessage.toLowerCase().includes("invalid_api_key") || 
+								errorMessage.toLowerCase().includes("invalid api key") ||
+								errorMessage.toLowerCase().includes("incorrect api key")) {
+								errorCode = "AUTH_ERROR"
+								errorMessage = "API authentication failed. Please check your API key configuration."
+							} else if (errorMessage.includes("429") || errorMessage.toLowerCase().includes("rate limit")) {
+								errorCode = "RATE_LIMIT_ERROR"
+								errorMessage = "API rate limit exceeded. Please try again later."
+							} else if (errorMessage.includes("404") && errorMessage.toLowerCase().includes("model")) {
+								errorCode = "MODEL_NOT_FOUND"
+								errorMessage = "The specified model was not found. Please check your model configuration."
+							}
+							
+							sendSSE("error", {
+								error: errorMessage,
+								code: errorCode,
+								timestamp: Date.now()
+							})
+							res.end()
+							isStreamClosed = true
+							
+							// 阻止进一步执行
+							throw new Error(errorMessage)
+						}
+					}
+					// 调用原始方法
+					return originalSay(type, text, ...args)
+				}
+				
+				task.startTask(userMessage)
+			} catch (initError) {
+				logger.error(`[A2AServer] Task initialization/start error for agent ${agent.id}:`, initError)
 				if (!isStreamClosed) {
-					sendSSE("timeout", {
-						message: "Task execution timeout",
+					let errorMessage = initError instanceof Error ? initError.message : "Task initialization failed"
+					let errorCode = "INIT_ERROR"
+					
+					// 检查是否是API相关错误
+					if (errorMessage.toLowerCase().includes("api") || errorMessage.toLowerCase().includes("key")) {
+						errorCode = "API_CONFIG_ERROR"
+					} else if (errorMessage.toLowerCase().includes("model")) {
+						errorCode = "MODEL_ERROR"
+					}
+					
+					sendSSE("error", {
+						error: errorMessage,
+						code: errorCode,
 						timestamp: Date.now()
 					})
 					res.end()
 					isStreamClosed = true
-					task.abortTask(true)
 				}
-			}, 60000) // 60秒超时
+				return
+			}
+			
+			// 可选的超时保护 - 默认不设置超时（0表示无超时）
+			const timeoutMs = request.timeout || 0 // 客户端可以通过request.timeout指定超时时间（毫秒）
+			if (timeoutMs > 0) {
+				setTimeout(() => {
+					if (!isStreamClosed) {
+						sendSSE("timeout", {
+							message: `Task execution timeout after ${timeoutMs}ms`,
+							timestamp: Date.now()
+						})
+						res.end()
+						isStreamClosed = true
+						task.abortTask(true)
+					}
+				}, timeoutMs)
+				
+				// 发送超时配置信息
+				logger.info(`[A2AServer] Task timeout set to ${timeoutMs}ms for agent ${agent.id}`)
+			} else {
+				// 无超时限制
+				logger.info(`[A2AServer] No timeout limit for agent ${agent.id} task execution`)
+			}
 			
 		} catch (error) {
 			logger.error(`[A2AServer] Streaming execution failed:`, error)
@@ -1122,7 +1357,7 @@ export class A2AServer {
 				console.log(`[A2AServer] ❌ Task initialization failed:`, error)
 				if (!isCompleted) {
 					isCompleted = true
-					clearTimeout(timeout)
+					if (timeout) clearTimeout(timeout)
 					resolve({
 						success: false,
 						error: `Task initialization failed: ${error.message}`,
@@ -1131,18 +1366,26 @@ export class A2AServer {
 				}
 			})
 			
-			// 设置合理的超时时间（60秒）
-			const timeout = setTimeout(() => {
-				if (!isCompleted) {
-					console.log(`[A2AServer] ⏰ Task timeout for agent ${agent.id}`)
-					task.abortTask(true)
-					resolve({
-						success: false,
-						error: "Task execution timeout (60s)",
-						duration: Date.now() - startTime
-					})
-				}
-			}, 60000)
+			// 可选的超时保护 - 默认不设置超时
+			let timeout: NodeJS.Timeout | null = null
+			// 注意：这里的超时配置应该从调用方传入，暂时禁用超时
+			const timeoutMs = 0 // 0表示无超时限制
+			
+			if (timeoutMs > 0) {
+				timeout = setTimeout(() => {
+					if (!isCompleted) {
+						console.log(`[A2AServer] ⏰ Task timeout for agent ${agent.id} after ${timeoutMs}ms`)
+						task.abortTask(true)
+						resolve({
+							success: false,
+							error: `Task execution timeout (${timeoutMs}ms)`,
+							duration: Date.now() - startTime
+						})
+					}
+				}, timeoutMs)
+			} else {
+				console.log(`[A2AServer] 🚀 No timeout limit for task execution`)
+			}
 
 			// 监听任务状态变化事件
 			task.on("taskStatusChanged", (status: string) => {
@@ -1197,7 +1440,7 @@ export class A2AServer {
 			task.on(RooCodeEventName.TaskCompleted, (_, tokenUsage, toolUsage) => {
 				if (isCompleted) return
 				isCompleted = true
-				clearTimeout(timeout)
+				if (timeout) clearTimeout(timeout)
 				clearInterval(statusPoller)
 				
 				console.log(`[A2AServer] ✅ Task completed for agent ${agent.id}`)
@@ -1288,7 +1531,7 @@ export class A2AServer {
 					console.log(`[A2AServer] 🔍 Task completion detected via polling`)
 					if (!isCompleted) {
 						isCompleted = true
-						clearTimeout(timeout)
+						if (timeout) clearTimeout(timeout)
 						clearInterval(statusPoller)
 						
 						resolve({
@@ -1306,7 +1549,7 @@ export class A2AServer {
 			task.on("taskError", (error: any) => {
 				if (isCompleted) return
 				isCompleted = true
-				clearTimeout(timeout)
+				if (timeout) clearTimeout(timeout)
 				
 				console.log(`[A2AServer] ❌ Task error for agent ${agent.id}:`, error)
 				resolve({
@@ -1344,7 +1587,7 @@ export class A2AServer {
 			task.on("taskAborted", () => {
 				if (isCompleted) return
 				isCompleted = true
-				clearTimeout(timeout)
+				if (timeout) clearTimeout(timeout)
 				
 				logger.warn(`[A2AServer] Task aborted for agent ${agent.id}`)
 				resolve({
