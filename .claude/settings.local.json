@@ -43,7 +43,14 @@
       "Bash(echo $NODE_ENV)",
       "Bash(pnpm turbo bundle:*)",
       "Bash(pnpm run:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
