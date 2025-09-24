@@ -52,19 +52,16 @@ export class A2AServerManager {
 	}
 
 	/**
-	 * 为智能体启动A2A服务器
+	 * 为智能体启动A2A服务器（通过ID查找）
 	 */
 	async startAgentServer(
-		agentIdOrData: string | any,
+		agentId: string,
 		preferredPort?: number,
 	): Promise<{
 		port: number
 		url: string
 		agentCard: any
 	}> {
-		// 处理输入参数（在try外定义以便错误处理时使用）
-		const agentId = typeof agentIdOrData === "string" ? agentIdOrData : agentIdOrData.id
-
 		try {
 			if (!this.a2aServer) {
 				await this.initialize()
@@ -194,6 +191,78 @@ export class A2AServerManager {
 			logger.info("[A2AServerManager] Stopped all servers")
 		} catch (error) {
 			logger.error("[A2AServerManager] Failed to stop all servers:", error)
+			throw error
+		}
+	}
+
+	/**
+	 * 自动启动所有已发布的智能体A2A服务器
+	 */
+	async startAllPublishedAgents(): Promise<{
+		total: number
+		started: number
+		errors: Array<{ agentId: string; error: string }>
+	}> {
+		try {
+			if (!this.storageService) {
+				throw new Error("Storage service not initialized")
+			}
+
+			logger.info("[A2AServerManager] Starting auto-startup of published agents...")
+
+			// 获取当前用户ID
+			const VoidBridge = require("../../api/void-bridge").VoidBridge
+			const userId = VoidBridge.getCurrentUserId() || "default"
+
+			// 获取所有已发布的智能体
+			const allAgents = await this.storageService.listUserAgents(userId)
+			const publishedAgents = allAgents.filter(agent => 
+				agent.isPublished === true && 
+				agent.autoStartServer !== false // 默认自动启动，除非明确禁用
+			)
+
+			logger.info(`[A2AServerManager] Found ${publishedAgents.length} published agents out of ${allAgents.length} total agents`)
+
+			const results = {
+				total: publishedAgents.length,
+				started: 0,
+				errors: [] as Array<{ agentId: string; error: string }>
+			}
+
+			// 并行启动所有已发布的智能体
+			const startupPromises = publishedAgents.map(async (agent) => {
+				try {
+					logger.info(`[A2AServerManager] Auto-starting agent: ${agent.name} (${agent.id})`)
+					
+					// 尝试使用智能体记录的端口（如果有的话）
+					const preferredPort = (agent as any).publishInfo?.serverPort
+					
+					// 直接启动智能体服务器
+					const serverInfo = await this.startAgentServer(agent.id, preferredPort)
+					results.started++
+					
+					logger.info(`[A2AServerManager] ✅ Auto-started agent ${agent.name}: ${serverInfo.url}`)
+					return { success: true, agentId: agent.id, serverInfo }
+				} catch (error) {
+					const errorMessage = error instanceof Error ? error.message : String(error)
+					logger.error(`[A2AServerManager] ❌ Failed to auto-start agent ${agent.name} (${agent.id}):`, error)
+					results.errors.push({ agentId: agent.id, error: errorMessage })
+					return { success: false, agentId: agent.id, error: errorMessage }
+				}
+			})
+
+			// 等待所有启动完成
+			await Promise.allSettled(startupPromises)
+
+			logger.info(`[A2AServerManager] Auto-startup completed: ${results.started}/${results.total} agents started successfully`)
+			
+			if (results.errors.length > 0) {
+				logger.warn(`[A2AServerManager] ${results.errors.length} agents failed to start:`, results.errors)
+			}
+
+			return results
+		} catch (error) {
+			logger.error("[A2AServerManager] Failed to start published agents:", error)
 			throw error
 		}
 	}

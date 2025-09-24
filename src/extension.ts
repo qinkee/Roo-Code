@@ -34,6 +34,8 @@ import { API } from "./extension/api"
 import { VoidBridge } from "./api/void-bridge"
 import { TaskHistoryBridge } from "./api/task-history-bridge"
 import { RedisSyncService } from "./services/RedisSyncService"
+import { A2AServerManager } from "./core/agent/A2AServerManager"
+import { EnhancedAgentStorageService } from "./core/agent/EnhancedAgentStorageService"
 
 import {
 	handleUri,
@@ -393,6 +395,50 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Allows other extensions to activate once Roo is ready.
 	vscode.commands.executeCommand(`${Package.name}.activationCompleted`)
 
+	// 🤖 Initialize A2A Server Manager and auto-start published agents
+	try {
+		outputChannel.appendLine("[A2AServerManager] Initializing A2A Server Manager...")
+		
+		// 初始化A2A服务器管理器（不传存储服务，让它自己创建）
+		const a2aServerManager = A2AServerManager.getInstance()
+		await a2aServerManager.initialize(undefined, provider)
+		
+		// 自动启动所有已发布的智能体（异步执行，不阻塞插件启动）
+		a2aServerManager.startAllPublishedAgents()
+			.then((result) => {
+				outputChannel.appendLine(`[A2AServerManager] ✅ Auto-startup completed: ${result.started}/${result.total} agents started`)
+				
+				if (result.started > 0) {
+					vscode.window.showInformationMessage(
+						`🤖 Started ${result.started} published agents automatically`
+					)
+				}
+				
+				if (result.errors.length > 0) {
+					outputChannel.appendLine(`[A2AServerManager] ❌ ${result.errors.length} agents failed to start:`)
+					result.errors.forEach(({ agentId, error }) => {
+						outputChannel.appendLine(`  - ${agentId}: ${error}`)
+					})
+				}
+			})
+			.catch((error) => {
+				outputChannel.appendLine(`[A2AServerManager] ❌ Auto-startup failed: ${error}`)
+				console.error("A2A Server auto-startup failed:", error)
+			})
+		
+		// 添加到订阅中以便正确清理
+		context.subscriptions.push({
+			dispose: async () => {
+				await a2aServerManager.destroy()
+			}
+		})
+		
+		outputChannel.appendLine("[A2AServerManager] ✅ A2A Server Manager initialized successfully")
+	} catch (error) {
+		outputChannel.appendLine(`[A2AServerManager] ❌ Failed to initialize A2A Server Manager: ${error}`)
+		console.error("A2A Server Manager initialization failed:", error)
+	}
+
 	// Implements the `RooCodeAPI` interface.
 	const socketPath = process.env.ROO_CODE_IPC_SOCKET_PATH
 	const enableLogging = typeof socketPath === "string"
@@ -455,6 +501,15 @@ export async function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated.
 export async function deactivate() {
 	outputChannel.appendLine(`${Package.name} extension deactivated`)
+
+	// Cleanup A2A Server Manager
+	try {
+		const a2aServerManager = A2AServerManager.getInstance()
+		await a2aServerManager.destroy()
+		outputChannel.appendLine("[A2AServerManager] A2A servers stopped and cleaned up")
+	} catch (error) {
+		outputChannel.appendLine(`[A2AServerManager] Error during cleanup: ${error}`)
+	}
 
 	// Cleanup Redis connection
 	const redisSync = RedisSyncService.getInstance()
