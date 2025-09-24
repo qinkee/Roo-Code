@@ -383,10 +383,12 @@ export class A2AServer {
 		const server = http.createServer(async (req: any, res: any) => {
 			console.log(`[A2AServer] 🌟 RAW HTTP REQUEST: ${req.method} ${req.url}`)
 			try {
-				// 设置CORS头
+				// 设置完整的CORS头 - 允许任意访问
 				res.setHeader("Access-Control-Allow-Origin", "*")
-				res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-				res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+				res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
+				res.setHeader("Access-Control-Allow-Headers", "*")
+				res.setHeader("Access-Control-Allow-Credentials", "true")
+				res.setHeader("Access-Control-Max-Age", "86400") // 缓存预检请求24小时
 
 				// 处理OPTIONS请求
 				if (req.method === "OPTIONS") {
@@ -476,7 +478,10 @@ export class A2AServer {
 									"Content-Type": "text/event-stream",
 									"Cache-Control": "no-cache",
 									"Connection": "keep-alive",
-									"Access-Control-Allow-Origin": "*"
+									"Access-Control-Allow-Origin": "*",
+									"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+									"Access-Control-Allow-Headers": "*",
+									"Access-Control-Allow-Credentials": "true"
 								})
 								
 								// 发送初始连接事件
