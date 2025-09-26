@@ -10964,18 +10964,21 @@ declare const globalSettingsSchema: z.ZodObject<{
         agentName: z.ZodString;
         serverUrl: z.ZodString;
         serverPort: z.ZodNumber;
+        isDebugMode: z.ZodOptional<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
         enabled: boolean;
         serverPort: number;
         serverUrl: string;
         agentId: string;
         agentName: string;
+        isDebugMode?: boolean | undefined;
     }, {
         enabled: boolean;
         serverPort: number;
         serverUrl: string;
         agentId: string;
         agentName: string;
+        isDebugMode?: boolean | undefined;
     }>>>;
 }, "strip", z.ZodTypeAny, {
     diffEnabled?: boolean | undefined;
@@ -11169,6 +11172,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         serverUrl: string;
         agentId: string;
         agentName: string;
+        isDebugMode?: boolean | undefined;
     } | null | undefined;
 }, {
     diffEnabled?: boolean | undefined;
@@ -11362,6 +11366,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         serverUrl: string;
         agentId: string;
         agentName: string;
+        isDebugMode?: boolean | undefined;
     } | null | undefined;
 }>;
 type GlobalSettings = z.infer<typeof globalSettingsSchema>;
@@ -12050,18 +12055,21 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         agentName: z.ZodString;
         serverUrl: z.ZodString;
         serverPort: z.ZodNumber;
+        isDebugMode: z.ZodOptional<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
         enabled: boolean;
         serverPort: number;
         serverUrl: string;
         agentId: string;
         agentName: string;
+        isDebugMode?: boolean | undefined;
     }, {
         enabled: boolean;
         serverPort: number;
         serverUrl: string;
         agentId: string;
         agentName: string;
+        isDebugMode?: boolean | undefined;
     }>>>;
 }, "strip", z.ZodTypeAny, {
     reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
@@ -12395,6 +12403,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         serverUrl: string;
         agentId: string;
         agentName: string;
+        isDebugMode?: boolean | undefined;
     } | null | undefined;
 }, {
     reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
@@ -12728,6 +12737,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         serverUrl: string;
         agentId: string;
         agentName: string;
+        isDebugMode?: boolean | undefined;
     } | null | undefined;
 }>;
 type RooCodeSettings = GlobalSettings & ProviderSettings;
@@ -13478,18 +13488,21 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentName: z.ZodString;
                 serverUrl: z.ZodString;
                 serverPort: z.ZodNumber;
+                isDebugMode: z.ZodOptional<z.ZodBoolean>;
             }, "strip", z.ZodTypeAny, {
                 enabled: boolean;
                 serverPort: number;
                 serverUrl: string;
                 agentId: string;
                 agentName: string;
+                isDebugMode?: boolean | undefined;
             }, {
                 enabled: boolean;
                 serverPort: number;
                 serverUrl: string;
                 agentId: string;
                 agentName: string;
+                isDebugMode?: boolean | undefined;
             }>>>;
         }, "strip", z.ZodTypeAny, {
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
@@ -13823,6 +13836,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 serverUrl: string;
                 agentId: string;
                 agentName: string;
+                isDebugMode?: boolean | undefined;
             } | null | undefined;
         }, {
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
@@ -14156,6 +14170,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 serverUrl: string;
                 agentId: string;
                 agentName: string;
+                isDebugMode?: boolean | undefined;
             } | null | undefined;
         }>;
         text: z.ZodString;
@@ -14495,6 +14510,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 serverUrl: string;
                 agentId: string;
                 agentName: string;
+                isDebugMode?: boolean | undefined;
             } | null | undefined;
         };
         images?: string[] | undefined;
@@ -14833,6 +14849,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 serverUrl: string;
                 agentId: string;
                 agentName: string;
+                isDebugMode?: boolean | undefined;
             } | null | undefined;
         };
         images?: string[] | undefined;
@@ -15173,6 +15190,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 serverUrl: string;
                 agentId: string;
                 agentName: string;
+                isDebugMode?: boolean | undefined;
             } | null | undefined;
         };
         images?: string[] | undefined;
@@ -15514,6 +15532,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 serverUrl: string;
                 agentId: string;
                 agentName: string;
+                isDebugMode?: boolean | undefined;
             } | null | undefined;
         };
         images?: string[] | undefined;
@@ -16263,18 +16282,21 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentName: z.ZodString;
                     serverUrl: z.ZodString;
                     serverPort: z.ZodNumber;
+                    isDebugMode: z.ZodOptional<z.ZodBoolean>;
                 }, "strip", z.ZodTypeAny, {
                     enabled: boolean;
                     serverPort: number;
                     serverUrl: string;
                     agentId: string;
                     agentName: string;
+                    isDebugMode?: boolean | undefined;
                 }, {
                     enabled: boolean;
                     serverPort: number;
                     serverUrl: string;
                     agentId: string;
                     agentName: string;
+                    isDebugMode?: boolean | undefined;
                 }>>>;
             }, "strip", z.ZodTypeAny, {
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
@@ -16608,6 +16630,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     serverUrl: string;
                     agentId: string;
                     agentName: string;
+                    isDebugMode?: boolean | undefined;
                 } | null | undefined;
             }, {
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
@@ -16941,6 +16964,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     serverUrl: string;
                     agentId: string;
                     agentName: string;
+                    isDebugMode?: boolean | undefined;
                 } | null | undefined;
             }>;
             text: z.ZodString;
@@ -17280,6 +17304,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     serverUrl: string;
                     agentId: string;
                     agentName: string;
+                    isDebugMode?: boolean | undefined;
                 } | null | undefined;
             };
             images?: string[] | undefined;
@@ -17618,6 +17643,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     serverUrl: string;
                     agentId: string;
                     agentName: string;
+                    isDebugMode?: boolean | undefined;
                 } | null | undefined;
             };
             images?: string[] | undefined;
@@ -17958,6 +17984,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     serverUrl: string;
                     agentId: string;
                     agentName: string;
+                    isDebugMode?: boolean | undefined;
                 } | null | undefined;
             };
             images?: string[] | undefined;
@@ -18299,6 +18326,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     serverUrl: string;
                     agentId: string;
                     agentName: string;
+                    isDebugMode?: boolean | undefined;
                 } | null | undefined;
             };
             images?: string[] | undefined;
@@ -18661,6 +18689,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     serverUrl: string;
                     agentId: string;
                     agentName: string;
+                    isDebugMode?: boolean | undefined;
                 } | null | undefined;
             };
             images?: string[] | undefined;
@@ -19013,6 +19042,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     serverUrl: string;
                     agentId: string;
                     agentName: string;
+                    isDebugMode?: boolean | undefined;
                 } | null | undefined;
             };
             images?: string[] | undefined;

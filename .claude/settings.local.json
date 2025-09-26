@@ -44,7 +44,18 @@
       "Bash(pnpm turbo bundle:*)",
       "Bash(pnpm run:*)",
       "Bash(timeout:*)",
+<<<<<<< HEAD
       "Bash(pnpm turbo check-types:*)"
+=======
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-uniapp/**)"
+>>>>>>> feature/agent-im-integration
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [

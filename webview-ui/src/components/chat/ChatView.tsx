@@ -583,14 +583,16 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					userRespondedRef.current = true
 
 					if (messagesRef.current.length === 0) {
-						// 检查是否是A2A模式
+						// 检查是否是A2A模式 - 只有在当前任务启动时才检查A2A状态
 						console.log('[A2A] 🔍 Checking A2A mode, agentA2AMode:', agentA2AMode)
-						if (agentA2AMode?.enabled && agentA2AMode?.serverUrl) {
-							// A2A模式：直接调用智能体HTTP端点
-							console.log('[A2A] A2A mode detected, calling agent:', agentA2AMode.agentName)
+						
+						// 如果是通过智能体列表启动的调试模式，agentA2AMode 应该包含完整的调试信息
+						if (agentA2AMode?.enabled && agentA2AMode?.serverUrl && 'isDebugMode' in agentA2AMode && agentA2AMode.isDebugMode) {
+							// A2A调试模式：直接调用智能体HTTP端点
+							console.log('[A2A] A2A debug mode detected, calling agent:', agentA2AMode.agentName)
 							handleA2ACall(text, images, agentA2AMode)
 						} else {
-							// 直接模式：使用原有逻辑
+							// 直接模式：使用原有逻辑（包括普通任务和已结束的智能体任务）
 							console.log('[A2A] Direct mode, using normal task flow')
 							vscode.postMessage({ type: "newTask", text, images })
 						}

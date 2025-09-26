@@ -204,6 +204,7 @@ export const globalSettingsSchema = z.object({
 			agentName: z.string(),
 			serverUrl: z.string(),
 			serverPort: z.number(),
+			isDebugMode: z.boolean().optional(), // 标识是否为调试模式
 		})
 		.nullable()
 		.optional(),

@@ -1455,7 +1455,9 @@ var globalSettingsSchema = z12.object({
     agentId: z12.string(),
     agentName: z12.string(),
     serverUrl: z12.string(),
-    serverPort: z12.number()
+    serverPort: z12.number(),
+    isDebugMode: z12.boolean().optional()
+    // 标识是否为调试模式
   }).nullable().optional()
 });
 var GLOBAL_SETTINGS_KEYS = globalSettingsSchema.keyof().options;

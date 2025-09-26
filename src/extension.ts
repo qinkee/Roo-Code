@@ -34,8 +34,7 @@ import { API } from "./extension/api"
 import { VoidBridge } from "./api/void-bridge"
 import { TaskHistoryBridge } from "./api/task-history-bridge"
 import { RedisSyncService } from "./services/RedisSyncService"
-import { A2AServerManager } from "./core/agent/A2AServerManager"
-import { EnhancedAgentStorageService } from "./core/agent/EnhancedAgentStorageService"
+import { AgentAutoStartService } from "./core/agent/AgentAutoStartService"
 
 import {
 	handleUri,
@@ -330,6 +329,64 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Register task history bridge for void integration
 	TaskHistoryBridge.register(context, provider)
 
+	// SAFE INITIALIZATION: Initialize agent services safely
+	outputChannel.appendLine("[SafeInit] Starting safe initialization of agent services...")
+
+	// Set current user ID from VoidBridge for the existing AgentManager (safe initialization)
+	try {
+		const currentUserId = VoidBridge.getCurrentUserId() || "default"
+		if (provider.agentManager) {
+			provider.agentManager.setCurrentUserId(currentUserId)
+			outputChannel.appendLine(`[AgentManager] Set current user ID: ${currentUserId}`)
+		}
+	} catch (error) {
+		outputChannel.appendLine(`[AgentManager] Failed to set user ID: ${error instanceof Error ? error.message : "Unknown error"}`)
+	}
+	
+	// TEMPORARILY DISABLE AUTO-START to prevent crashes
+	outputChannel.appendLine("[AgentAutoStart] Auto-start temporarily disabled for stability")
+	
+	/* DISABLED FOR SAFETY - Initialize auto-start service
+	setTimeout(async () => {
+		try {
+			outputChannel.appendLine("[AgentAutoStart] Initializing auto-start service...")
+			const autoStartService = AgentAutoStartService.getInstance()
+			
+			if (provider.agentManager) {
+				await autoStartService.initialize(provider.agentManager.getStorageService(), provider)
+				outputChannel.appendLine("[AgentAutoStart] Auto-start service initialized successfully")
+
+				setTimeout(async () => {
+					try {
+						await autoStartService.autoStartPublishedAgents()
+						outputChannel.appendLine("[AgentAutoStart] Auto-start process completed")
+					} catch (error) {
+						outputChannel.appendLine(`[AgentAutoStart] Auto-start failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+					}
+				}, 2000)
+			}
+		} catch (error) {
+			outputChannel.appendLine(`[AgentAutoStart] Failed to initialize auto-start service: ${error instanceof Error ? error.message : "Unknown error"}`)
+		}
+	}, 1000)
+	*/
+
+	// DISABLED - Add cleanup for auto-start service
+	context.subscriptions.push({
+		dispose: () => {
+			outputChannel.appendLine("[AgentAutoStart] Cleanup disabled for safety")
+		}
+	})
+
+	// DISABLED - Register agent auto-start management commands  
+	outputChannel.appendLine("[AgentAutoStart] Management commands disabled for safety")
+	
+	/* DISABLED FOR SAFETY - Register commands
+	setTimeout(() => {
+		// Command registration code disabled
+	}, 5000)
+	*/
+
 	// Add keyboard shortcut support for adding files to context
 	context.subscriptions.push(
 		vscode.commands.registerCommand("roo-cline.addSelectedFilesToChat", async () => {
@@ -502,14 +559,18 @@ export async function activate(context: vscode.ExtensionContext) {
 export async function deactivate() {
 	outputChannel.appendLine(`${Package.name} extension deactivated`)
 
-	// Cleanup A2A Server Manager
+	// DISABLED - Stop all auto-started agent servers (for safety)
+	outputChannel.appendLine("[AgentAutoStart] Auto-start cleanup disabled for safety")
+	
+	/* DISABLED FOR SAFETY
 	try {
-		const a2aServerManager = A2AServerManager.getInstance()
-		await a2aServerManager.destroy()
-		outputChannel.appendLine("[A2AServerManager] A2A servers stopped and cleaned up")
+		const autoStartService = AgentAutoStartService.getInstance()
+		await autoStartService.dispose()
+		outputChannel.appendLine("[AgentAutoStart] Auto-started agent servers stopped")
 	} catch (error) {
-		outputChannel.appendLine(`[A2AServerManager] Error during cleanup: ${error}`)
+		outputChannel.appendLine(`[AgentAutoStart] Error stopping agent servers: ${error}`)
 	}
+	*/
 
 	// Cleanup Redis connection
 	const redisSync = RedisSyncService.getInstance()

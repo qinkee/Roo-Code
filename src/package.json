@@ -298,6 +298,21 @@
 				"category": "Roo Code"
 			},
 			{
+				"command": "roo-cline.restartPublishedAgents",
+				"title": "重启已发布的智能体服务",
+				"category": "智能体管理"
+			},
+			{
+				"command": "roo-cline.stopAllAgentServers",
+				"title": "停止所有智能体服务",
+				"category": "智能体管理"
+			},
+			{
+				"command": "roo-cline.showAgentServerStatus",
+				"title": "查看智能体服务状态",
+				"category": "智能体管理"
+			},
+			{
 				"command": "roo-cline.executeTaskWithMode",
 				"title": "Execute Task with Mode",
 				"category": "Roo Code"
