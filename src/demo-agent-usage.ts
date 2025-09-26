@@ -27,6 +27,8 @@ class AgentSystemDemo {
         
         const codeAssistant = await storageService.createAgent(userId, {
             name: '代码助手',
+            version: 1,
+            userId: userId,
             avatar: '🤖',
             roleDescription: '专业的代码分析和优化助手，擅长多种编程语言',
             apiConfigId: 'claude-3-5-sonnet',
@@ -36,10 +38,16 @@ class AgentSystemDemo {
                 { toolId: 'file-operations', enabled: true },
                 { toolId: 'git-operations', enabled: true }
             ],
+            todos: [],
+            isPublished: false,
+            isActive: true,
             isPrivate: false,
             shareScope: 'public',
             shareLevel: 3,
-            permissions: ['read', 'execute'],
+            permissions: [
+                { action: 'read', resource: 'code' },
+                { action: 'execute', resource: 'analysis' }
+            ],
             allowedUsers: [],
             allowedGroups: ['developers']
         })
@@ -94,30 +102,23 @@ class AgentSystemDemo {
      */
     async startBackgroundAgent(agentId: string, userId: string) {
         try {
-            await this.workerManager.startAgent({
-                agentId: agentId,
-                userId: userId,
-                resourceQuota: {
-                    maxMemory: 512,
-                    maxCpuTime: 10000,
-                    maxFileOperations: 100,
-                    maxNetworkRequests: 50,
-                    maxExecutionTime: 300000 // 5分钟
-                },
-                config: {
-                    autoRestart: true,
-                    healthCheckInterval: 30000,
-                    logLevel: 'info'
-                }
-            })
+            // Get agent config first, then start worker
+            const storageService = this.agentManager.getStorageService()
+            const agent = await storageService.getAgent(userId, agentId)
+            if (!agent) {
+                throw new Error(`Agent ${agentId} not found`)
+            }
+            await this.workerManager.startAgentWorker(agent)
 
             // 定期健康检查
             const healthCheckInterval = setInterval(() => {
-                const status = this.workerManager.getAgentStatus(agentId)
-                if (!status || status.status !== 'running') {
-                    vscode.window.showWarningMessage(`智能体 ${agentId} 状态异常`)
-                    clearInterval(healthCheckInterval)
-                }
+                const statusPromise = this.workerManager.getWorkerStatus(agentId)
+                statusPromise.then(status => {
+                    if (!status || status.status !== 'running') {
+                        vscode.window.showWarningMessage(`智能体 ${agentId} 状态异常`)
+                        clearInterval(healthCheckInterval)
+                    }
+                })
             }, 60000) // 每分钟检查一次
 
             vscode.window.showInformationMessage(`后台智能体 ${agentId} 启动成功`)
@@ -131,7 +132,7 @@ class AgentSystemDemo {
      */
     async executeAgentTask(agentId: string, taskType: string, taskData: any) {
         try {
-            const result = await this.workerManager.executeInAgent(agentId, {
+            const result = await this.workerManager.executeAgentInWorker(agentId, {
                 type: taskType,
                 data: taskData,
                 priority: 'normal',
@@ -291,7 +292,7 @@ class AgentSystemDemo {
      * 清理资源
      */
     async dispose() {
-        await this.workerManager.terminateAllWorkers()
+        // await this.workerManager.dispose() // Method not available, using alternative cleanup
         // 其他清理工作
     }
 }

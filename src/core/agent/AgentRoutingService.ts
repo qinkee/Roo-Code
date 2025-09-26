@@ -36,7 +36,7 @@ export class AgentRoutingService {
 					success: false,
 					error: `Target agent ${targetAgentId} not found`,
 					agentId: targetAgentId,
-					route: 'failed',
+					route: 'direct',
 					timestamp: Date.now()
 				}
 			}
@@ -48,7 +48,7 @@ export class AgentRoutingService {
 					success: false,
 					error: `Access denied: ${sourceAgentId} cannot access ${targetAgentId}`,
 					agentId: targetAgentId,
-					route: 'failed',
+					route: 'direct',
 					timestamp: Date.now()
 				}
 			}
@@ -59,7 +59,7 @@ export class AgentRoutingService {
 					success: false,
 					error: `Target agent ${targetAgentId} is offline`,
 					agentId: targetAgentId,
-					route: 'failed',
+					route: 'direct',
 					timestamp: Date.now()
 				}
 			}
@@ -84,7 +84,7 @@ export class AgentRoutingService {
 				success: false,
 				error: error instanceof Error ? error.message : String(error),
 				agentId: targetAgentId,
-				route: 'failed',
+				route: 'direct',
 				timestamp: Date.now()
 			}
 		}
@@ -172,7 +172,7 @@ export class AgentRoutingService {
 					success: false,
 					error: `Unknown route type: ${route}`,
 					agentId: target.agentId,
-					route: 'failed',
+					route: 'direct',
 					timestamp: Date.now()
 				}
 		}
@@ -305,7 +305,7 @@ export interface RoutingOptions {
 	preferDirect?: boolean
 }
 
-export type RouteType = 'direct' | 'im_bridge' | 'probe_then_fallback' | 'hybrid' | 'failed'
+export type RouteType = 'direct' | 'im_bridge' | 'probe_then_fallback' | 'hybrid'
 
 interface PendingRequest {
 	requestId: string

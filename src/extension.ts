@@ -28,6 +28,7 @@ import { McpServerManager } from "./services/mcp/McpServerManager"
 import { CodeIndexManager } from "./services/code-index/manager"
 import { MdmService } from "./services/mdm/MdmService"
 import { migrateSettings } from "./utils/migrateSettings"
+import { A2AServerManager } from "./core/agent/A2AServerManager"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { isRemoteControlEnabled } from "./utils/remoteControl"
 import { API } from "./extension/api"
@@ -462,7 +463,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		
 		// 自动启动所有已发布的智能体（异步执行，不阻塞插件启动）
 		a2aServerManager.startAllPublishedAgents()
-			.then((result) => {
+			.then((result: any) => {
 				outputChannel.appendLine(`[A2AServerManager] ✅ Auto-startup completed: ${result.started}/${result.total} agents started`)
 				
 				if (result.started > 0) {
@@ -473,12 +474,12 @@ export async function activate(context: vscode.ExtensionContext) {
 				
 				if (result.errors.length > 0) {
 					outputChannel.appendLine(`[A2AServerManager] ❌ ${result.errors.length} agents failed to start:`)
-					result.errors.forEach(({ agentId, error }) => {
-						outputChannel.appendLine(`  - ${agentId}: ${error}`)
+					result.errors.forEach((item: { agentId: string; error: any }) => {
+						outputChannel.appendLine(`  - ${item.agentId}: ${item.error}`)
 					})
 				}
 			})
-			.catch((error) => {
+			.catch((error: any) => {
 				outputChannel.appendLine(`[A2AServerManager] ❌ Auto-startup failed: ${error}`)
 				console.error("A2A Server auto-startup failed:", error)
 			})

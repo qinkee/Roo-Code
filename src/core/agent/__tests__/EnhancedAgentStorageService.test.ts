@@ -25,8 +25,10 @@ const mockContext = {
 	logUri: {} as vscode.Uri,
 	logPath: '/mock/logs',
 	secrets: {} as any,
-	extension: {} as vscode.Extension<any>
-} as vscode.ExtensionContext
+	extension: {} as vscode.Extension<any>,
+	extensionMode: 1, // Production mode
+	languageModelAccessInformation: {} as any
+} as unknown as vscode.ExtensionContext
 
 // Mock dependencies
 vi.mock('../VSCodeAgentStorageService')
@@ -71,13 +73,14 @@ describe('EnhancedAgentStorageService', () => {
 	let mockAgent: AgentConfig
 
 	beforeEach(async () => {
-		service = new EnhancedAgentStorageService(mockContext)
+		service = new EnhancedAgentStorageService(mockContext as unknown as vscode.ExtensionContext)
 		vi.clearAllMocks()
 
 		mockAgent = {
 			id: 'test-agent-1',
 			userId: 'user123',
 			name: 'Test Agent',
+			version: 1,
 			avatar: 'avatar.png',
 			roleDescription: 'A test agent',
 			apiConfigId: 'default',
@@ -86,11 +89,11 @@ describe('EnhancedAgentStorageService', () => {
 			todos: [],
 			isActive: true,
 			isPrivate: false,
+			isPublished: false,
 			shareScope: 'public',
 			shareLevel: 3,
 			createdAt: Date.now(),
-			updatedAt: Date.now(),
-			version: 1
+			updatedAt: Date.now()
 		}
 
 		// Wait for initialization
@@ -102,11 +105,18 @@ describe('EnhancedAgentStorageService', () => {
 			mockLocalStorage.createAgent.mockResolvedValue(mockAgent)
 
 			const result = await service.createAgent('user123', {
+				userId: 'user123',
 				name: 'Test Agent',
+				version: 1,
+				avatar: '',
 				roleDescription: 'A test agent',
 				apiConfigId: 'default',
 				mode: 'assistant',
-				tools: []
+				tools: [],
+				todos: [],
+				isActive: true,
+				isPrivate: false,
+				isPublished: false
 			})
 
 			expect(mockLocalStorage.createAgent).toHaveBeenCalledWith('user123', expect.any(Object))
@@ -119,11 +129,18 @@ describe('EnhancedAgentStorageService', () => {
 			mockRedisAdapter.syncAgentToRegistry.mockRejectedValue(new Error('Redis error'))
 
 			const result = await service.createAgent('user123', {
+				userId: 'user123',
 				name: 'Test Agent',
+				version: 1,
+				avatar: '',
 				roleDescription: 'A test agent',
 				apiConfigId: 'default',
 				mode: 'assistant',
-				tools: []
+				tools: [],
+				todos: [],
+				isActive: true,
+				isPrivate: false,
+				isPublished: false
 			})
 
 			expect(result).toEqual(mockAgent)
@@ -315,7 +332,7 @@ describe('EnhancedAgentStorageService', () => {
 			mockRedisAdapter.isEnabled.mockReturnValue(false)
 			
 			// Create new service instance with Redis disabled
-			const disabledService = new EnhancedAgentStorageService(mockContext)
+			const disabledService = new EnhancedAgentStorageService(mockContext as unknown as vscode.ExtensionContext)
 			await new Promise(resolve => setTimeout(resolve, 10))
 
 			const result = await disabledService.getOnlineAgents()
@@ -337,7 +354,7 @@ describe('EnhancedAgentStorageService', () => {
 
 		it('should throw error when Redis is disabled', async () => {
 			mockRedisAdapter.isEnabled.mockReturnValue(false)
-			const disabledService = new EnhancedAgentStorageService(mockContext)
+			const disabledService = new EnhancedAgentStorageService(mockContext as unknown as vscode.ExtensionContext)
 			await new Promise(resolve => setTimeout(resolve, 10))
 
 			await expect(disabledService.manualSync('user123')).rejects.toThrow('Redis sync is not enabled')
@@ -360,7 +377,7 @@ describe('EnhancedAgentStorageService', () => {
 
 		it('should handle close when Redis is disabled', async () => {
 			mockRedisAdapter.isEnabled.mockReturnValue(false)
-			const disabledService = new EnhancedAgentStorageService(mockContext)
+			const disabledService = new EnhancedAgentStorageService(mockContext as unknown as vscode.ExtensionContext)
 			
 			await expect(disabledService.close()).resolves.not.toThrow()
 		})
@@ -378,7 +395,14 @@ describe('EnhancedAgentStorageService', () => {
 		})
 
 		it('should delegate import/export operations', async () => {
-			const mockExportData = { agents: [mockAgent] }
+			const mockExportData = { 
+				agent: mockAgent,
+				metadata: {
+					exportedAt: Date.now(),
+					exportedBy: "user123",
+					version: "1.0"
+				}
+			}
 			mockLocalStorage.exportAgents.mockResolvedValue(mockExportData)
 			mockLocalStorage.importAgents.mockResolvedValue([mockAgent])
 

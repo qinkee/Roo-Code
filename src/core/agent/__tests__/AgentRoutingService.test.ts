@@ -85,7 +85,7 @@ describe('AgentRoutingService', () => {
 				success: true,
 				data: { result: 'success' },
 				agentId: 'target-agent',
-				route: 'a2a_official',
+				route: 'direct',
 				timestamp: Date.now()
 			}
 			mockA2AClient.sendRequest.mockResolvedValue(mockResponse)
@@ -213,7 +213,7 @@ describe('AgentRoutingService', () => {
 				success: true,
 				data: { result: 'direct success' },
 				agentId: 'target-agent',
-				route: 'a2a_official',
+				route: 'direct',
 				timestamp: Date.now()
 			}
 			
@@ -252,7 +252,7 @@ describe('AgentRoutingService', () => {
 				success: true,
 				data: { result: 'direct success' },
 				agentId: 'target-agent',
-				route: 'a2a_official',
+				route: 'direct',
 				timestamp: Date.now()
 			}
 			
@@ -287,7 +287,7 @@ describe('AgentRoutingService', () => {
 
 	describe('updateMetrics', () => {
 		it('should update metrics for successful requests', async () => {
-			const { logger } = await import('../../utils/logging')
+			const { logger } = await import('../../../utils/logging')
 			const loggerSpy = vi.spyOn(logger, 'debug')
 
 			await (routingService as any).updateMetrics('test-agent', 'direct', 1500, true)
@@ -298,7 +298,7 @@ describe('AgentRoutingService', () => {
 		})
 
 		it('should handle metrics update errors gracefully', async () => {
-			const { logger } = await import('../../utils/logging')
+			const { logger } = await import('../../../utils/logging')
 			const loggerSpy = vi.spyOn(logger, 'error')
 
 			// This should not throw

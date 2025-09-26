@@ -31,6 +31,7 @@ describe('AgentRedisAdapter', () => {
 				id: 'test-agent-1',
 				userId: 'user123',
 				name: 'Test Agent',
+				version: 1,
 				avatar: 'avatar.png',
 				roleDescription: 'A test agent',
 				apiConfigId: 'default',
@@ -38,16 +39,19 @@ describe('AgentRedisAdapter', () => {
 				tools: [{ toolId: 'test-tool', enabled: true }],
 				todos: [],
 				isActive: true,
+				isPublished: false,
 				isPrivate: false,
 				shareScope: 'public',
 				shareLevel: 3,
-				permissions: ['read', 'execute'],
+				permissions: [
+				{ action: 'read', resource: '*' },
+				{ action: 'execute', resource: '*' }
+			],
 				allowedUsers: [],
 				allowedGroups: [],
 				deniedUsers: [],
 				createdAt: Date.now(),
-				updatedAt: Date.now(),
-				version: 1
+				updatedAt: Date.now()
 			}
 
 			// Mock online agents list
@@ -80,12 +84,16 @@ describe('AgentRedisAdapter', () => {
 				id: 'test-agent-1',
 				userId: 'user123',
 				name: 'Test Agent',
+				version: 1,
 				avatar: '',
 				roleDescription: 'A test agent',
 				apiConfigId: 'default',
 				mode: 'assistant',
 				tools: [],
 				todos: [],
+				isPrivate: false,
+				isPublished: false,
+				isActive: true,
 				createdAt: Date.now(),
 				updatedAt: Date.now()
 			}
@@ -218,6 +226,7 @@ describe('AgentRedisAdapter', () => {
 					id: 'agent1',
 					userId: 'user123',
 					name: 'Agent 1',
+					version: 1,
 					avatar: '',
 					roleDescription: 'First agent',
 					apiConfigId: 'default',
@@ -225,6 +234,8 @@ describe('AgentRedisAdapter', () => {
 					tools: [],
 					todos: [],
 					isActive: true,
+					isPrivate: false,
+					isPublished: false,
 					createdAt: Date.now(),
 					updatedAt: Date.now()
 				},
@@ -232,6 +243,7 @@ describe('AgentRedisAdapter', () => {
 					id: 'agent2',
 					userId: 'user123',
 					name: 'Agent 2',
+					version: 1,
 					avatar: '',
 					roleDescription: 'Second agent',
 					apiConfigId: 'default',
@@ -239,6 +251,8 @@ describe('AgentRedisAdapter', () => {
 					tools: [],
 					todos: [],
 					isActive: true,
+					isPrivate: false,
+					isPublished: false,
 					createdAt: Date.now(),
 					updatedAt: Date.now()
 				}

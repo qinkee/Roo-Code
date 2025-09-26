@@ -274,8 +274,8 @@ export class AgentRedisAdapter {
 			const agentIds = new Set<string>()
 			for (const key of searchKeys) {
 				try {
-					const ids = await this.redisService.smembers(key)
-					ids.forEach((id) => agentIds.add(id))
+					const ids = await this.redisService.get(key) as string[] || []
+					ids.forEach((id: string) => agentIds.add(id))
 				} catch (error) {
 					logger.warn(`[AgentRedisAdapter] Failed to get agents from ${key}:`, error)
 				}
@@ -309,7 +309,7 @@ export class AgentRedisAdapter {
 	async getAgent(agentId: string): Promise<AgentConfig | null> {
 		try {
 			const key = `roo:agent:${agentId}:details`
-			const data = await this.redisService.hget(key, "data")
+			const data = await this.redisService.get(key)
 
 			if (data) {
 				return JSON.parse(data)

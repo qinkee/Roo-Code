@@ -32,6 +32,9 @@ export class A2AUsageExample {
 			// 创建测试智能体
 			const agent = await this.storageService.createAgent("user123", {
 				name: "Test Agent",
+				version: 1,
+				userId: "user123",
+				avatar: "",
 				roleDescription: "A test agent for A2A communication",
 				apiConfigId: "default",
 				mode: "assistant",
@@ -39,7 +42,10 @@ export class A2AUsageExample {
 					{ toolId: "file-operation", enabled: true },
 					{ toolId: "web-search", enabled: true }
 				],
+				todos: [],
+				isActive: true,
 				isPrivate: false,
+				isPublished: false,
 				shareScope: "public",
 				shareLevel: 3
 			})
@@ -76,9 +82,9 @@ export class A2AUsageExample {
 				onlyOnline: true
 			})
 
-			logger.info(`[A2AUsageExample] Discovered ${availableAgents.length} agents:`, 
+			logger.info(`[A2AUsageExample] Discovered ${availableAgents.length} agents: ${JSON.stringify(
 				availableAgents.map(a => ({ agentId: a.agentId, type: a.type }))
-			)
+			)}`)
 
 			if (availableAgents.length > 0) {
 				const targetAgent = availableAgents[0]
@@ -141,7 +147,7 @@ export class A2AUsageExample {
 					logger.info("[A2AUsageExample] Streaming data received:", data)
 				},
 				(error) => {
-					logger.error("[A2AUsageExample] Streaming error:", error)
+					logger.error(`[A2AUsageExample] Streaming error: ${error.message || error}`)
 				},
 				() => {
 					logger.info("[A2AUsageExample] Streaming completed")
@@ -194,18 +200,45 @@ export class A2AUsageExample {
 			const agents = await Promise.all([
 				this.storageService.createAgent("user123", {
 					name: "Code Analyzer",
+					version: 1,
+					userId: "user123",
+					avatar: "",
 					roleDescription: "Analyzes code quality and structure",
-					tools: [{ toolId: "ast-parser", enabled: true }]
+					apiConfigId: "default",
+					mode: "assistant",
+					tools: [{ toolId: "ast-parser", enabled: true }],
+					todos: [],
+					isActive: true,
+					isPrivate: false,
+					isPublished: false
 				}),
 				this.storageService.createAgent("user123", {
-					name: "Test Generator", 
+					name: "Test Generator",
+					version: 1,
+					userId: "user123",
+					avatar: "",
 					roleDescription: "Generates unit tests for code",
-					tools: [{ toolId: "test-framework", enabled: true }]
+					apiConfigId: "default",
+					mode: "assistant",
+					tools: [{ toolId: "test-framework", enabled: true }],
+					todos: [],
+					isActive: true,
+					isPrivate: false,
+					isPublished: false
 				}),
 				this.storageService.createAgent("user123", {
 					name: "Documentation Writer",
+					version: 1,
+					userId: "user123",
+					avatar: "",
 					roleDescription: "Writes documentation for code",
-					tools: [{ toolId: "markdown-generator", enabled: true }]
+					apiConfigId: "default",
+					mode: "assistant",
+					tools: [{ toolId: "markdown-generator", enabled: true }],
+					todos: [],
+					isActive: true,
+					isPrivate: false,
+					isPublished: false
 				})
 			])
 
@@ -216,9 +249,9 @@ export class A2AUsageExample {
 				)
 			)
 
-			logger.info("[A2AUsageExample] Started multiple agent servers:", 
+			logger.info(`[A2AUsageExample] Started multiple agent servers: ${JSON.stringify(
 				serverInfos.map(info => ({ port: info.port, url: info.url }))
-			)
+			)}`)
 
 			// 模拟协作流程: 代码分析 -> 测试生成 -> 文档生成
 			const collaborationFlow = async () => {

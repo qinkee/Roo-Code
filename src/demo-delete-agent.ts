@@ -141,7 +141,7 @@ export class AgentDeleteDemo {
                 
                 // 6. 验证智能体确实被删除
                 const updatedAgents = await this.getTestAgents(userId)
-                const stillExists = updatedAgents.find(a => a.id === testAgent.id)
+                const stillExists = updatedAgents.find((a: any) => a.id === testAgent.id)
                 
                 if (!stillExists) {
                     console.log('✅ 验证通过: 智能体已从列表中移除')

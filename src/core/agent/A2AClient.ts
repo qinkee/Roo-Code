@@ -52,7 +52,7 @@ export class A2AClient {
 				success: true,
 				data: response,
 				agentId: targetAgentId,
-				route: 'a2a_official',
+				route: 'direct',
 				timestamp: Date.now(),
 				duration: Date.now() - startTime
 			}
@@ -65,7 +65,7 @@ export class A2AClient {
 				success: false,
 				error: error instanceof Error ? error.message : 'Request failed',
 				agentId: targetAgentId,
-				route: 'a2a_official',
+				route: 'direct',
 				timestamp: Date.now(),
 				duration: Date.now() - startTime
 			}
@@ -115,7 +115,6 @@ export class A2AClient {
 			// 从统一注册中心获取端点信息
 			const discoveryResults = await this.registry.discoverAgents({
 				userId: 'system', // 系统级查询
-				agentIds: [agentId],
 				onlyOnline: true,
 				limit: 1
 			})
@@ -160,11 +159,7 @@ export class A2AClient {
 		let client = this.clients.get(clientKey)
 		if (!client) {
 			// 创建新的A2A客户端
-			client = new OfficialA2AClient({
-				baseUrl: endpoint.directUrl,
-				timeout: 30000,
-				// 根据官方SDK的配置选项进行调整
-			})
+			client = new OfficialA2AClient(endpoint.directUrl || 'http://localhost:3000')
 
 			this.clients.set(clientKey, client)
 			logger.debug(`[A2AClient] Created new A2A client for ${endpoint.agentId}`)
@@ -190,10 +185,17 @@ export class A2AClient {
 		for (let attempt = 1; attempt <= maxRetries; attempt++) {
 			try {
 				// 根据官方SDK的API调整请求方式
-				const response = await client.sendRequest({
-					method: request.method || 'execute',
-					params: request.params || {},
-					timeout
+				const response = await client.sendMessage({
+					message: {
+						messageId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+						role: "user",
+						parts: [{ kind: "text", text: JSON.stringify(request.params || {}) }],
+						kind: "message",
+					},
+					configuration: {
+						blocking: true,
+						acceptedOutputModes: ["text/plain"],
+					}
 				})
 
 				return response

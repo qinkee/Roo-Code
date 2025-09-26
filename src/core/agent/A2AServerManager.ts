@@ -31,12 +31,13 @@ export class A2AServerManager {
 					// 使用共享的存储服务实例
 					this.storageService = sharedStorageService
 					logger.info("[A2AServerManager] Using shared storage service")
+				} else if (provider?.context) {
+					// 使用provider提供的context创建实例
+					this.storageService = new EnhancedAgentStorageService(provider.context)
+					logger.info("[A2AServerManager] Created storage service with provider context")
 				} else {
-					// 降级到创建新实例（不推荐）
-					this.storageService = new EnhancedAgentStorageService()
-					logger.warn(
-						"[A2AServerManager] Creating new storage service instance - this may cause inconsistencies",
-					)
+					// 抛出错误，要求提供context
+					throw new Error("EnhancedAgentStorageService requires a context parameter. Please provide sharedStorageService or provider with context.")
 				}
 			}
 
@@ -68,7 +69,7 @@ export class A2AServerManager {
 			}
 
 			logger.info(
-				`[A2AServerManager] Starting server for agent: ${agentId}, input type: ${typeof agentIdOrData}, preferredPort: ${preferredPort}`,
+				`[A2AServerManager] Starting server for agent: ${agentId}, input type: ${typeof agentId}, preferredPort: ${preferredPort}`,
 			)
 
 			// 检查是否已经运行
@@ -218,7 +219,7 @@ export class A2AServerManager {
 			const allAgents = await this.storageService.listUserAgents(userId)
 			const publishedAgents = allAgents.filter(agent => 
 				agent.isPublished === true && 
-				agent.autoStartServer !== false // 默认自动启动，除非明确禁用
+				(agent as any).autoStartServer !== false // 默认自动启动，除非明确禁用
 			)
 
 			logger.info(`[A2AServerManager] Found ${publishedAgents.length} published agents out of ${allAgents.length} total agents`)
@@ -257,7 +258,7 @@ export class A2AServerManager {
 			logger.info(`[A2AServerManager] Auto-startup completed: ${results.started}/${results.total} agents started successfully`)
 			
 			if (results.errors.length > 0) {
-				logger.warn(`[A2AServerManager] ${results.errors.length} agents failed to start:`, results.errors)
+				logger.warn(`[A2AServerManager] ${results.errors.length} agents failed to start: ${JSON.stringify(results.errors)}`)
 			}
 
 			return results

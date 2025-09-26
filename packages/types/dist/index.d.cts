@@ -4230,7 +4230,7 @@ declare const agentEndpointSchema: z.ZodObject<{
         errorRate: number;
         avgResponseTime: number;
     }>;
-    deploymentType: z.ZodEnum<["pc", "cloud", "docker"]>;
+    deploymentType: z.ZodEnum<["pc", "cloud", "docker", "serverless"]>;
 }, "strip", z.ZodTypeAny, {
     type: "local_only" | "network_reachable" | "hybrid";
     status: {
@@ -4243,7 +4243,7 @@ declare const agentEndpointSchema: z.ZodObject<{
     userId: string;
     agentId: string;
     imProxyId: string;
-    deploymentType: "pc" | "cloud" | "docker";
+    deploymentType: "pc" | "cloud" | "docker" | "serverless";
     apiKey?: string | undefined;
     networkReachable?: boolean | undefined;
     lastProbeTime?: number | undefined;
@@ -4260,7 +4260,7 @@ declare const agentEndpointSchema: z.ZodObject<{
     userId: string;
     agentId: string;
     imProxyId: string;
-    deploymentType: "pc" | "cloud" | "docker";
+    deploymentType: "pc" | "cloud" | "docker" | "serverless";
     apiKey?: string | undefined;
     networkReachable?: boolean | undefined;
     lastProbeTime?: number | undefined;

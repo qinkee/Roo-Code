@@ -338,7 +338,7 @@ export const agentEndpointSchema = z.object({
 		errorRate: z.number(),
 		avgResponseTime: z.number(),
 	}),
-	deploymentType: z.enum(['pc', 'cloud', 'docker']),
+	deploymentType: z.enum(['pc', 'cloud', 'docker', 'serverless']),
 })
 
 export type AgentEndpoint = z.infer<typeof agentEndpointSchema>

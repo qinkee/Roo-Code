@@ -308,7 +308,7 @@ parentPort.postMessage({
 		})
 
 		worker.on('error', (error) => {
-			logger.error(`[AgentWorkerManager] Worker ${agentWorker.id} error:`, error)
+			logger.error(`[AgentWorkerManager] Worker ${agentWorker.id} error:`, { error: error instanceof Error ? error.message : String(error) })
 			agentWorker.status = 'error'
 		})
 

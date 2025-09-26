@@ -29,6 +29,7 @@ vi.mock('worker_threads', () => ({
 describe('AgentWorkerManager', () => {
 	let manager: AgentWorkerManager
 	let mockWorker: any
+	let mockAgentConfig: AgentConfig
 
 	beforeEach(() => {
 		vi.clearAllMocks()
@@ -40,11 +41,30 @@ describe('AgentWorkerManager', () => {
 			terminate: vi.fn().mockResolvedValue(undefined)
 		}
 		
+		// Set up mock agent config
+		mockAgentConfig = {
+			id: 'test-agent',
+			userId: 'user123',
+			name: 'Test Agent',
+			version: 1,
+			avatar: '',
+			roleDescription: 'A test agent',
+			apiConfigId: 'default',
+			mode: 'assistant',
+			tools: [],
+			todos: [],
+			isActive: true,
+			isPrivate: false,
+			isPublished: false,
+			createdAt: Date.now(),
+			updatedAt: Date.now()
+		}
+		
 		// Create manager after setting up mocks
 		manager = new AgentWorkerManager()
 	})
 
-	describe('startAgent', () => {
+	describe('startAgentWorker', () => {
 		const mockAgentInstance = {
 			agentId: 'test-agent',
 			userId: 'user123',
@@ -75,7 +95,7 @@ describe('AgentWorkerManager', () => {
 				}
 			})
 
-			const result = await manager.startAgent('test-agent', mockAgentInstance)
+			const result = await manager.startAgentWorker(mockAgentConfig)
 
 			expect(result).toEqual({
 				success: true,
@@ -99,10 +119,10 @@ describe('AgentWorkerManager', () => {
 				}
 			})
 
-			await manager.startAgent('test-agent', mockAgentInstance)
+			await manager.startAgentWorker(mockAgentConfig)
 
 			// Try to start same agent again
-			const result = await manager.startAgent('test-agent', mockAgentInstance)
+			const result = await manager.startAgentWorker(mockAgentConfig)
 
 			expect(result).toEqual({
 				success: false,
@@ -114,9 +134,18 @@ describe('AgentWorkerManager', () => {
 			// Mock worker that never sends ready message
 			mockWorker.on.mockImplementation(() => {})
 
-			const result = await manager.startAgent('test-agent', {
-				...mockAgentInstance,
-				timeout: 100 // Short timeout for test
+			const result = await manager.startAgentWorker(mockAgentConfig, {
+				maxMemory: 512,
+				maxCpuTime: 1000,
+				maxFileOperations: 10,
+				maxNetworkRequests: 5,
+				maxExecutionTime: 100, // Short timeout for test
+				workspaceAccess: {
+					readOnly: false,
+					allowedPaths: [],
+					deniedPaths: [],
+					tempDirectory: '/tmp'
+				}
 			})
 
 			expect(result).toEqual({
@@ -133,7 +162,7 @@ describe('AgentWorkerManager', () => {
 				}
 			})
 
-			const result = await manager.startAgent('test-agent', mockAgentInstance)
+			const result = await manager.startAgentWorker(mockAgentConfig)
 
 			expect(result).toEqual({
 				success: false,
@@ -142,7 +171,7 @@ describe('AgentWorkerManager', () => {
 		})
 	})
 
-	describe('stopAgent', () => {
+	describe('terminateWorker', () => {
 		it('should stop running agent', async () => {
 			// Start agent first
 			mockWorker.on.mockImplementation((event: string, callback: Function) => {
@@ -151,45 +180,35 @@ describe('AgentWorkerManager', () => {
 				}
 			})
 
-			await manager.startAgent('test-agent', {
-				agentId: 'test-agent',
-				userId: 'user123',
-				resourceQuota: {
-					maxMemory: 100,
-					maxCpuTime: 5000,
-					maxFileOperations: 50,
-					maxNetworkRequests: 10,
-					maxExecutionTime: 30000,
-					workspaceAccess: {
-						readOnly: false,
-						allowedPaths: [],
-						deniedPaths: [],
-						tempDirectory: '/tmp'
-					}
+			const workerId = await manager.startAgentWorker(mockAgentConfig, {
+				maxMemory: 100,
+				maxCpuTime: 5000,
+				maxFileOperations: 50,
+				maxNetworkRequests: 10,
+				maxExecutionTime: 30000,
+				workspaceAccess: {
+					readOnly: false,
+					allowedPaths: [],
+					deniedPaths: [],
+					tempDirectory: '/tmp'
 				}
 			})
 
-			const result = await manager.stopAgent('test-agent')
+			await manager.terminateWorker(workerId)
 
-			expect(result).toEqual({
-				success: true,
-				message: 'Agent worker stopped successfully'
-			})
-
+			// Verify worker was terminated
 			expect(mockWorker.terminate).toHaveBeenCalled()
 		})
 
 		it('should handle stopping non-existent agent', async () => {
-			const result = await manager.stopAgent('nonexistent-agent')
-
-			expect(result).toEqual({
-				success: false,
-				error: 'Agent nonexistent-agent is not running'
-			})
+			await manager.terminateWorker('nonexistent-agent')
+			
+			// Should not throw error, just silently return
+			expect(mockWorker.terminate).not.toHaveBeenCalled()
 		})
 	})
 
-	describe('getAgentStatus', () => {
+	describe('getWorkerStatus', () => {
 		it('should return status for running agent', async () => {
 			// Start agent first
 			mockWorker.on.mockImplementation((event: string, callback: Function) => {
@@ -198,25 +217,21 @@ describe('AgentWorkerManager', () => {
 				}
 			})
 
-			await manager.startAgent('test-agent', {
-				agentId: 'test-agent',
-				userId: 'user123',
-				resourceQuota: {
-					maxMemory: 100,
-					maxCpuTime: 5000,
-					maxFileOperations: 50,
-					maxNetworkRequests: 10,
-					maxExecutionTime: 30000,
-					workspaceAccess: {
-						readOnly: false,
-						allowedPaths: [],
-						deniedPaths: [],
-						tempDirectory: '/tmp'
-					}
+			const workerId = await manager.startAgentWorker(mockAgentConfig, {
+				maxMemory: 100,
+				maxCpuTime: 5000,
+				maxFileOperations: 50,
+				maxNetworkRequests: 10,
+				maxExecutionTime: 30000,
+				workspaceAccess: {
+					readOnly: false,
+					allowedPaths: [],
+					deniedPaths: [],
+					tempDirectory: '/tmp'
 				}
 			})
 
-			const status = await manager.getAgentStatus('test-agent')
+			const status = await manager.getWorkerStatus(workerId)
 
 			expect(status).toEqual({
 				agentId: 'test-agent',
@@ -236,13 +251,13 @@ describe('AgentWorkerManager', () => {
 		})
 
 		it('should return null for non-existent agent', async () => {
-			const status = await manager.getAgentStatus('nonexistent')
+			const status = await manager.getWorkerStatus('nonexistent')
 
 			expect(status).toBeNull()
 		})
 	})
 
-	describe('getAllRunningAgents', () => {
+	describe('getAllWorkerStatus', () => {
 		it('should return list of running agents', async () => {
 			// Start multiple agents
 			mockWorker.on.mockImplementation((event: string, callback: Function) => {
@@ -268,10 +283,37 @@ describe('AgentWorkerManager', () => {
 				}
 			}
 
-			await manager.startAgent('agent1', { ...agentConfig, agentId: 'agent1' })
-			await manager.startAgent('agent2', { ...agentConfig, agentId: 'agent2' })
+			const agent1Config = { ...mockAgentConfig, id: 'agent1' }
+			const agent2Config = { ...mockAgentConfig, id: 'agent2' }
+			
+			await manager.startAgentWorker(agent1Config, {
+				maxMemory: 100,
+				maxCpuTime: 5000,
+				maxFileOperations: 50,
+				maxNetworkRequests: 10,
+				maxExecutionTime: 30000,
+				workspaceAccess: {
+					readOnly: false,
+					allowedPaths: [],
+					deniedPaths: [],
+					tempDirectory: '/tmp'
+				}
+			})
+			await manager.startAgentWorker(agent2Config, {
+				maxMemory: 100,
+				maxCpuTime: 5000,
+				maxFileOperations: 50,
+				maxNetworkRequests: 10,
+				maxExecutionTime: 30000,
+				workspaceAccess: {
+					readOnly: false,
+					allowedPaths: [],
+					deniedPaths: [],
+					tempDirectory: '/tmp'
+				}
+			})
 
-			const agents = manager.getAllRunningAgents()
+			const agents = manager.getAllWorkerStatus()
 
 			expect(agents).toHaveLength(2)
 			expect(agents).toContain('agent1')
@@ -279,39 +321,32 @@ describe('AgentWorkerManager', () => {
 		})
 
 		it('should return empty array when no agents running', () => {
-			const agents = manager.getAllRunningAgents()
+			const agents = manager.getAllWorkerStatus()
 
 			expect(agents).toEqual([])
 		})
 	})
 
-	describe('executeInAgent', () => {
+	describe('executeAgentInWorker', () => {
 		it('should execute task in running agent', async () => {
 			// Start agent first
 			mockWorker.on.mockImplementation((event: string, callback: Function) => {
 				if (event === 'message') {
-					const message = callback.mock.calls?.[0]?.[0]
-					if (!message) {
-						setTimeout(() => callback({ type: 'ready' }), 10)
-					}
+					setTimeout(() => callback({ type: 'ready' }), 10)
 				}
 			})
 
-			await manager.startAgent('test-agent', {
-				agentId: 'test-agent',
-				userId: 'user123',
-				resourceQuota: {
-					maxMemory: 100,
-					maxCpuTime: 5000,
-					maxFileOperations: 50,
-					maxNetworkRequests: 10,
-					maxExecutionTime: 30000,
-					workspaceAccess: {
-						readOnly: false,
-						allowedPaths: [],
-						deniedPaths: [],
-						tempDirectory: '/tmp'
-					}
+			const workerId = await manager.startAgentWorker(mockAgentConfig, {
+				maxMemory: 100,
+				maxCpuTime: 5000,
+				maxFileOperations: 50,
+				maxNetworkRequests: 10,
+				maxExecutionTime: 30000,
+				workspaceAccess: {
+					readOnly: false,
+					allowedPaths: [],
+					deniedPaths: [],
+					tempDirectory: '/tmp'
 				}
 			})
 
@@ -326,7 +361,7 @@ describe('AgentWorkerManager', () => {
 				}
 			})
 
-			const result = await manager.executeInAgent('test-agent', {
+			const result = await manager.executeAgentInWorker(workerId, {
 				method: 'test',
 				params: { task: 'hello' }
 			})
@@ -347,7 +382,7 @@ describe('AgentWorkerManager', () => {
 		})
 
 		it('should handle execution in non-existent agent', async () => {
-			const result = await manager.executeInAgent('nonexistent', {
+			const result = await manager.executeAgentInWorker('nonexistent', {
 				method: 'test',
 				params: {}
 			})
@@ -385,8 +420,35 @@ describe('AgentWorkerManager', () => {
 				}
 			}
 
-			await manager.startAgent('agent1', { ...agentConfig, agentId: 'agent1' })
-			await manager.startAgent('agent2', { ...agentConfig, agentId: 'agent2' })
+			const agent1Config = { ...mockAgentConfig, id: 'agent1' }
+			const agent2Config = { ...mockAgentConfig, id: 'agent2' }
+			
+			await manager.startAgentWorker(agent1Config, {
+				maxMemory: 100,
+				maxCpuTime: 5000,
+				maxFileOperations: 50,
+				maxNetworkRequests: 10,
+				maxExecutionTime: 30000,
+				workspaceAccess: {
+					readOnly: false,
+					allowedPaths: [],
+					deniedPaths: [],
+					tempDirectory: '/tmp'
+				}
+			})
+			await manager.startAgentWorker(agent2Config, {
+				maxMemory: 100,
+				maxCpuTime: 5000,
+				maxFileOperations: 50,
+				maxNetworkRequests: 10,
+				maxExecutionTime: 30000,
+				workspaceAccess: {
+					readOnly: false,
+					allowedPaths: [],
+					deniedPaths: [],
+					tempDirectory: '/tmp'
+				}
+			})
 
 			await manager.cleanup()
 
@@ -394,7 +456,7 @@ describe('AgentWorkerManager', () => {
 			expect(mockWorker.terminate).toHaveBeenCalledTimes(2)
 
 			// Should have no running agents
-			expect(manager.getAllRunningAgents()).toEqual([])
+			expect(manager.getAllWorkerStatus()).toEqual([])
 		})
 	})
 })

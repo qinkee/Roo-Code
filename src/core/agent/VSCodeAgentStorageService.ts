@@ -537,4 +537,51 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 			return false
 		}
 	}
+
+	/**
+	 * 批量导出智能体数据
+	 */
+	async exportAgents(userId: string): Promise<AgentExportData> {
+		try {
+			const agents = await this.listUserAgents(userId)
+			return {
+				agent: agents[0] || {} as any,
+				metadata: {
+					exportedAt: Date.now(),
+					exportedBy: userId,
+					version: "1.0"
+				}
+			}
+		} catch (error) {
+			logger.error(`[VSCodeAgentStorageService] Failed to export agents for user ${userId}:`, error)
+			throw error
+		}
+	}
+
+	/**
+	 * 批量导入智能体数据
+	 */
+	async importAgents(userId: string, data: AgentExportData): Promise<AgentConfig[]> {
+		try {
+			const importedAgents: AgentConfig[] = []
+			
+			if (data.agent) {
+				try {
+					const importedAgent = await this.importAgent(userId, { 
+						agent: data.agent,
+						metadata: data.metadata
+					})
+					importedAgents.push(importedAgent)
+				} catch (error) {
+					logger.warn(`[VSCodeAgentStorageService] Failed to import agent ${data.agent.id}:`, error)
+					// Continue with other agents
+				}
+			}
+			
+			return importedAgents
+		} catch (error) {
+			logger.error(`[VSCodeAgentStorageService] Failed to import agents for user ${userId}:`, error)
+			throw error
+		}
+	}
 }

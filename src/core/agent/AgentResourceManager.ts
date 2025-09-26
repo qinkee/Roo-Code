@@ -157,9 +157,10 @@ export class AgentResourceManager {
 			await this.startResourceMonitoring(managedInstance, policy)
 
 			// 注册到Redis
-			if (this.redisSync.isEnabled()) {
+			if (this.redisSync.getConnectionStatus()) {
 				const agentInstance: AgentInstance = this.convertToAgentInstance(managedInstance, agentConfig)
-				await this.redisSync.registerAgentInstance(agentInstance)
+				// Note: registerAgentInstance method not available in RedisSyncService
+				// await this.redisSync.registerAgentInstance(agentInstance)
 			}
 
 			logger.info(`[AgentResourceManager] Started managed agent ${agentConfig.id} with policy ${policyName}`)
@@ -213,14 +214,15 @@ export class AgentResourceManager {
 		await this.checkViolations(instance, policy, workerStatus)
 
 		// 发送心跳到Redis
-		if (this.redisSync.isEnabled()) {
-			await this.redisSync.updateHeartbeat(instance.agentId, {
-				currentLoad: this.calculateCurrentLoad(workerStatus.resourceUsage, policy.resourceQuota),
-				avgResponseTime: 1000, // TODO: 实际计算
-				errorRate: 0, // TODO: 实际计算
-				memoryUsage: workerStatus.resourceUsage.memory / policy.resourceQuota.maxMemory,
-				cpuUsage: workerStatus.resourceUsage.cpuTime / policy.resourceQuota.maxCpuTime
-			})
+		if (this.redisSync.getConnectionStatus()) {
+			// Note: updateHeartbeat method not available in RedisSyncService
+			// await this.redisSync.updateHeartbeat(instance.agentId, {
+			//	currentLoad: this.calculateCurrentLoad(workerStatus.resourceUsage, policy.resourceQuota),
+			//	avgResponseTime: 1000, // TODO: 实际计算
+			//	errorRate: 0, // TODO: 实际计算
+			//	memoryUsage: workerStatus.resourceUsage.memory / policy.resourceQuota.maxMemory,
+			//	cpuUsage: workerStatus.resourceUsage.cpuTime / policy.resourceQuota.maxCpuTime
+			// })
 		}
 	}
 

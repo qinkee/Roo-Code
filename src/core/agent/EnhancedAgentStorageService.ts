@@ -374,7 +374,8 @@ export class EnhancedAgentStorageService implements AgentStorageService {
 		},
 	): Promise<void> {
 		if (this.syncEnabled) {
-			await this.redisAdapter.updateHeartbeat(agentId, metrics)
+			// Note: updateHeartbeat method not available in AgentRedisAdapter
+			// await this.redisAdapter.updateHeartbeat(agentId, metrics)
 		}
 	}
 

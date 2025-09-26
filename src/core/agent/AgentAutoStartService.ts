@@ -487,13 +487,4 @@ export class AgentAutoStartService {
 		})
 	}
 
-	/**
-	 * 停止所有服务并清理资源
-	 */
-	async dispose(): Promise<void> {
-		logger.info("[AgentAutoStartService] Disposing auto-start service...")
-		await this.stopAllServers()
-		this.isInitialized = false
-		logger.info("[AgentAutoStartService] Auto-start service disposed")
-	}
 }

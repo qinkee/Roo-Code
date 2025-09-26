@@ -149,6 +149,10 @@ export interface ExtensionMessage {
 		| "startAgentTaskResult"
 		| "getAgentResult"
 		| "updateAgentResult"
+		| "deleteAgentResult"
+		| "publishAgentResult"
+		| "stopAgentResult"
+		| "getApiConfigurationByIdResult"
 	invoke?: "newChat" | "sendMessage" | "primaryButtonClick" | "secondaryButtonClick" | "setChatBoxMessage"
 	state?: ExtensionState
 	images?: string[]

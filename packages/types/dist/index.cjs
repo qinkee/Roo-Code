@@ -974,7 +974,7 @@ var agentEndpointSchema = import_zod4.z.object({
     errorRate: import_zod4.z.number(),
     avgResponseTime: import_zod4.z.number()
   }),
-  deploymentType: import_zod4.z.enum(["pc", "cloud", "docker"])
+  deploymentType: import_zod4.z.enum(["pc", "cloud", "docker", "serverless"])
 });
 var agentDiscoveryQuerySchema = import_zod4.z.object({
   userId: import_zod4.z.string(),

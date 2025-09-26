@@ -480,7 +480,7 @@ export const webviewMessageHandler = async (
 
 	// 添加通用消息日志来调试
 	if (message.type === "startAgentTask") {
-		provider.log(`[WebviewMessageHandler] 🎯 Received startAgentTask message:`, JSON.stringify(message))
+		provider.log(`[WebviewMessageHandler] 🎯 Received startAgentTask message: ${JSON.stringify(message)}`)
 	}
 
 	switch (message.type) {
@@ -1886,8 +1886,7 @@ export const webviewMessageHandler = async (
 							type: "action",
 							action: "getApiConfigurationByIdResult",
 							success: true,
-							config: config,
-							configId: message.text
+							text: JSON.stringify(config),
 						})
 					} else {
 						provider.postMessageToWebview({
@@ -1895,7 +1894,6 @@ export const webviewMessageHandler = async (
 							action: "getApiConfigurationByIdResult",
 							success: false,
 							error: "Configuration not found",
-							configId: message.text
 						})
 					}
 				} catch (error) {
@@ -1907,7 +1905,6 @@ export const webviewMessageHandler = async (
 						action: "getApiConfigurationByIdResult",
 						success: false,
 						error: error instanceof Error ? error.message : "Unknown error",
-						configId: message.text
 					})
 				}
 			}
@@ -3002,7 +2999,7 @@ export const webviewMessageHandler = async (
 						updatedAgentIsPublished: messageToSend.updatedAgent?.isPublished,
 					})
 
-					await provider.postMessageToWebview(messageToSend)
+					await provider.postMessageToWebview(messageToSend as any)
 
 					// 显示成功消息
 					vscode.window.showInformationMessage(`智能体 "${agent.name}" 已成功发布到 ${terminal.name}`)
@@ -3071,7 +3068,7 @@ export const webviewMessageHandler = async (
 					console.log(
 						`🎯 [stopAgent] Preserving publishInfo, setting isPublished=false for agent ${message.agentId}`,
 					)
-					await updateAgentPublishStatus(message.agentId, false, currentAgentResult.agent.publishInfo)
+					await updateAgentPublishStatus(message.agentId || '', false, currentAgentResult.agent.publishInfo)
 					console.log(
 						`🎯 [stopAgent] Preserved publishInfo for agent ${message.agentId}:`,
 						currentAgentResult.agent.publishInfo,
@@ -3079,11 +3076,11 @@ export const webviewMessageHandler = async (
 				} else {
 					// 如果没有发布信息，则清除
 					console.log(`🛑 [stopAgent] No publishInfo found, clearing for agent ${message.agentId}`)
-					await updateAgentPublishStatus(message.agentId, false, null)
+					await updateAgentPublishStatus(message.agentId || '', false, null)
 				}
 
 				// 从Redis移除服务注册
-				await removeAgentFromRedis(message.agentId, userId)
+				await removeAgentFromRedis(message.agentId || '', userId)
 
 				await provider.postMessageToWebview({
 					type: "action",
@@ -3109,14 +3106,13 @@ export const webviewMessageHandler = async (
 		case "startAgentTask": {
 			try {
 				provider.log(
-					`[startAgentTask] 🚀 Received message:`,
-					JSON.stringify({
+					`[startAgentTask] 🚀 Received message: ${JSON.stringify({
 						agentId: message.agentId,
 						agentName: message.agentName,
 						executionMode: message.executionMode,
 						a2aServerUrl: message.a2aServerUrl,
 						a2aServerPort: message.a2aServerPort,
-					}),
+					})}`,
 				)
 
 				const VoidBridge = require("../../api/void-bridge").VoidBridge
@@ -3158,14 +3154,14 @@ export const webviewMessageHandler = async (
 					if (message.executionMode === "a2a" && message.a2aServerUrl) {
 						const a2aConfig = {
 							enabled: true,
-							agentId: message.agentId,
-							agentName: message.agentName || agent.name,
+							agentId: message.agentId || "unknown",
+							agentName: message.agentName || agent.name || "Unknown Agent",
 							serverUrl: message.a2aServerUrl,
-							serverPort: message.a2aServerPort,
+							serverPort: message.a2aServerPort || 3000,
 							isDebugMode: true, // 标识这是智能体调试模式
 						}
 						await updateGlobalState("agentA2AMode", a2aConfig)
-						provider.log(`[startAgentTask] ✅ Set A2A debug mode:`, JSON.stringify(a2aConfig))
+						provider.log(`[startAgentTask] ✅ Set A2A debug mode: ${JSON.stringify(a2aConfig)}`)
 					} else {
 						// 清除A2A模式
 						await updateGlobalState("agentA2AMode", null)
@@ -3179,8 +3175,7 @@ export const webviewMessageHandler = async (
 					// 6. 验证状态是否正确保存
 					const currentState = await provider.getState()
 					provider.log(
-						`[startAgentTask] 🔍 Current agentA2AMode in state:`,
-						JSON.stringify(currentState.agentA2AMode),
+						`[startAgentTask] 🔍 Current agentA2AMode in state: ${JSON.stringify(currentState.agentA2AMode)}`,
 					)
 
 					// 7. 等待较长时间确保状态完全同步
@@ -3197,8 +3192,10 @@ export const webviewMessageHandler = async (
 						success: true,
 						agentId: message.agentId,
 						agentName: agent.name,
-						executionMode: message.executionMode || "direct",
-						a2aServerUrl: message.a2aServerUrl,
+						text: JSON.stringify({
+							executionMode: message.executionMode || "direct",
+							a2aServerUrl: message.a2aServerUrl,
+						}),
 					})
 
 					provider.log(`[startAgentTask] Started new task with agent: ${agent.name}`)
@@ -3478,7 +3475,7 @@ export const webviewMessageHandler = async (
 
 				// 获取当前最新的agentA2AMode状态
 				const currentState = await provider.getState()
-				provider.log(`[getCurrentA2AMode] 🎯 Current agentA2AMode:`, JSON.stringify(currentState.agentA2AMode))
+				provider.log(`[getCurrentA2AMode] 🎯 Current agentA2AMode: ${JSON.stringify(currentState.agentA2AMode)}`)
 
 				// 发送当前状态给前端
 				provider.log(`[getCurrentA2AMode] 📤 Sending currentA2AModeResponse to frontend...`)
@@ -3489,7 +3486,7 @@ export const webviewMessageHandler = async (
 				})
 				provider.log(`[getCurrentA2AMode] ✅ Response sent successfully`)
 			} catch (error) {
-				provider.log(`[getCurrentA2AMode] ❌ Error:`, error)
+				provider.log(`[getCurrentA2AMode] ❌ Error: ${error}`)
 				await provider.postMessageToWebview({
 					type: "currentA2AModeResponse",
 					agentA2AMode: null,

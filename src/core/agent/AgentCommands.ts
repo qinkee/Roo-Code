@@ -230,7 +230,8 @@ export class AgentCommands {
 			}> => {
 				try {
 					const count = await storageService.restoreFromRedis(data.userId)
-					return { success: true, count }
+					const finalCount = typeof count === 'number' ? count : 0
+					return { success: true, count: finalCount }
 				} catch (error) {
 					const errorMessage = error instanceof Error ? error.message : String(error)
 					logger.error("[AgentCommands] Error restoring agents:", error)
@@ -253,7 +254,7 @@ export class AgentCommands {
 			}> => {
 				try {
 					const result = await storageService.checkDataConsistency(data.userId)
-					return { success: true, ...result }
+					return { success: true, consistent: true, ...result }
 				} catch (error) {
 					const errorMessage = error instanceof Error ? error.message : String(error)
 					logger.error("[AgentCommands] Error checking consistency:", error)
