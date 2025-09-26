@@ -559,6 +559,11 @@ export const webviewMessageHandler = async (
 			provider.isViewLaunched = true
 			break
 		case "newTask":
+			// Clear agent A2A mode state when starting a new task directly
+			// This ensures that direct tasks are not confused with agent debug tasks
+			await updateGlobalState("agentA2AMode", null)
+			provider.log(`[newTask] Cleared A2A mode for direct task creation`)
+			
 			// Initializing new instance of Cline will make sure that any
 			// agentically running promises in old instance don't affect our new
 			// task. This essentially creates a fresh slate for the new task.
@@ -3157,9 +3162,10 @@ export const webviewMessageHandler = async (
 							agentName: message.agentName || agent.name,
 							serverUrl: message.a2aServerUrl,
 							serverPort: message.a2aServerPort,
+							isDebugMode: true, // 标识这是智能体调试模式
 						}
 						await updateGlobalState("agentA2AMode", a2aConfig)
-						provider.log(`[startAgentTask] ✅ Set A2A mode:`, JSON.stringify(a2aConfig))
+						provider.log(`[startAgentTask] ✅ Set A2A debug mode:`, JSON.stringify(a2aConfig))
 					} else {
 						// 清除A2A模式
 						await updateGlobalState("agentA2AMode", null)

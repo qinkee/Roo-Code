@@ -329,104 +329,63 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Register task history bridge for void integration
 	TaskHistoryBridge.register(context, provider)
 
-	// Initialize auto-start service for published agents using existing AgentManager
-	outputChannel.appendLine("[AgentAutoStart] Initializing auto-start service...")
-	const autoStartService = AgentAutoStartService.getInstance()
-	
-	// Set current user ID from VoidBridge for the existing AgentManager
-	const currentUserId = VoidBridge.getCurrentUserId() || "default"
-	provider.agentManager.setCurrentUserId(currentUserId)
-	outputChannel.appendLine(`[AgentManager] Set current user ID: ${currentUserId}`)
-	
+	// SAFE INITIALIZATION: Initialize agent services safely
+	outputChannel.appendLine("[SafeInit] Starting safe initialization of agent services...")
+
+	// Set current user ID from VoidBridge for the existing AgentManager (safe initialization)
 	try {
-		// Initialize the auto-start service with the existing AgentManager's storage service
-		await autoStartService.initialize(provider.agentManager.getStorageService(), provider)
-		outputChannel.appendLine("[AgentAutoStart] Auto-start service initialized successfully")
-
-		// Delay auto-start to ensure all other services are fully initialized
-		setTimeout(async () => {
-			try {
-				outputChannel.appendLine("[AgentAutoStart] Starting published agents...")
-				await autoStartService.autoStartPublishedAgents()
-				outputChannel.appendLine("[AgentAutoStart] Auto-start process completed")
-			} catch (error) {
-				outputChannel.appendLine(`[AgentAutoStart] Auto-start failed: ${error instanceof Error ? error.message : "Unknown error"}`)
-			}
-		}, 5000) // Wait 5 seconds to ensure everything is ready
-
+		const currentUserId = VoidBridge.getCurrentUserId() || "default"
+		if (provider.agentManager) {
+			provider.agentManager.setCurrentUserId(currentUserId)
+			outputChannel.appendLine(`[AgentManager] Set current user ID: ${currentUserId}`)
+		}
 	} catch (error) {
-		outputChannel.appendLine(`[AgentAutoStart] Failed to initialize auto-start service: ${error instanceof Error ? error.message : "Unknown error"}`)
+		outputChannel.appendLine(`[AgentManager] Failed to set user ID: ${error instanceof Error ? error.message : "Unknown error"}`)
 	}
+	
+	// TEMPORARILY DISABLE AUTO-START to prevent crashes
+	outputChannel.appendLine("[AgentAutoStart] Auto-start temporarily disabled for stability")
+	
+	/* DISABLED FOR SAFETY - Initialize auto-start service
+	setTimeout(async () => {
+		try {
+			outputChannel.appendLine("[AgentAutoStart] Initializing auto-start service...")
+			const autoStartService = AgentAutoStartService.getInstance()
+			
+			if (provider.agentManager) {
+				await autoStartService.initialize(provider.agentManager.getStorageService(), provider)
+				outputChannel.appendLine("[AgentAutoStart] Auto-start service initialized successfully")
 
-	// Add cleanup for auto-start service
+				setTimeout(async () => {
+					try {
+						await autoStartService.autoStartPublishedAgents()
+						outputChannel.appendLine("[AgentAutoStart] Auto-start process completed")
+					} catch (error) {
+						outputChannel.appendLine(`[AgentAutoStart] Auto-start failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+					}
+				}, 2000)
+			}
+		} catch (error) {
+			outputChannel.appendLine(`[AgentAutoStart] Failed to initialize auto-start service: ${error instanceof Error ? error.message : "Unknown error"}`)
+		}
+	}, 1000)
+	*/
+
+	// DISABLED - Add cleanup for auto-start service
 	context.subscriptions.push({
-		dispose: async () => {
-			outputChannel.appendLine("[AgentAutoStart] Disposing auto-start service...")
-			await autoStartService.dispose()
+		dispose: () => {
+			outputChannel.appendLine("[AgentAutoStart] Cleanup disabled for safety")
 		}
 	})
 
-	// Register agent auto-start management commands
-	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.restartPublishedAgents", async () => {
-			try {
-				outputChannel.appendLine("[AgentAutoStart] Manual restart requested...")
-				await autoStartService.stopAllServers()
-				await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 seconds
-				await autoStartService.autoStartPublishedAgents()
-				vscode.window.showInformationMessage("所有已发布的智能体服务已重新启动")
-			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : "未知错误"
-				outputChannel.appendLine(`[AgentAutoStart] Manual restart failed: ${errorMessage}`)
-				vscode.window.showErrorMessage(`重启智能体服务失败: ${errorMessage}`)
-			}
-		})
-	)
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.stopAllAgentServers", async () => {
-			try {
-				outputChannel.appendLine("[AgentAutoStart] Stopping all agent servers...")
-				await autoStartService.stopAllServers()
-				vscode.window.showInformationMessage("所有智能体服务已停止")
-			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : "未知错误"
-				outputChannel.appendLine(`[AgentAutoStart] Stop all servers failed: ${errorMessage}`)
-				vscode.window.showErrorMessage(`停止智能体服务失败: ${errorMessage}`)
-			}
-		})
-	)
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("roo-cline.showAgentServerStatus", async () => {
-			try {
-				const runningServers = autoStartService.getRunningServersStatus()
-				if (runningServers.length === 0) {
-					vscode.window.showInformationMessage("当前没有运行中的智能体服务")
-					return
-				}
-
-				const statusInfo = runningServers.map(server => 
-					`• ${server.agentId}: ${server.status} (端口 ${server.port})`
-				).join('\n')
-
-				vscode.window.showInformationMessage(
-					`运行中的智能体服务 (${runningServers.length}):\n${statusInfo}`,
-					{ modal: true }
-				)
-
-				// Also log to output channel
-				outputChannel.appendLine(`[AgentAutoStart] Running servers status:`)
-				runningServers.forEach(server => {
-					outputChannel.appendLine(`  - ${server.agentId}: ${server.status} (${server.url})`)
-				})
-			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : "未知错误"
-				outputChannel.appendLine(`[AgentAutoStart] Show status failed: ${errorMessage}`)
-				vscode.window.showErrorMessage(`获取智能体服务状态失败: ${errorMessage}`)
-			}
-		})
-	)
+	// DISABLED - Register agent auto-start management commands  
+	outputChannel.appendLine("[AgentAutoStart] Management commands disabled for safety")
+	
+	/* DISABLED FOR SAFETY - Register commands
+	setTimeout(() => {
+		// Command registration code disabled
+	}, 5000)
+	*/
 
 	// Add keyboard shortcut support for adding files to context
 	context.subscriptions.push(
@@ -555,6 +514,19 @@ export async function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated.
 export async function deactivate() {
 	outputChannel.appendLine(`${Package.name} extension deactivated`)
+
+	// DISABLED - Stop all auto-started agent servers (for safety)
+	outputChannel.appendLine("[AgentAutoStart] Auto-start cleanup disabled for safety")
+	
+	/* DISABLED FOR SAFETY
+	try {
+		const autoStartService = AgentAutoStartService.getInstance()
+		await autoStartService.dispose()
+		outputChannel.appendLine("[AgentAutoStart] Auto-started agent servers stopped")
+	} catch (error) {
+		outputChannel.appendLine(`[AgentAutoStart] Error stopping agent servers: ${error}`)
+	}
+	*/
 
 	// Cleanup Redis connection
 	const redisSync = RedisSyncService.getInstance()

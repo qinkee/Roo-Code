@@ -68,15 +68,28 @@ export class AgentAutoStartService {
 			// 获取用户的所有智能体
 			let allAgents: any[] = []
 			try {
-				allAgents = await this.storageService!.listUserAgents(currentUserId)
+				if (!this.storageService) {
+					logger.warn("[AgentAutoStartService] Storage service not available, skipping auto-start")
+					return
+				}
+				allAgents = await this.storageService.listUserAgents(currentUserId)
 				logger.info(`[AgentAutoStartService] Found ${allAgents.length} total agents for user ${currentUserId}`)
 			} catch (error) {
 				logger.error(`[AgentAutoStartService] Failed to get user agents: ${error instanceof Error ? error.message : "Unknown error"}`)
-				throw error
+				// 不要抛出错误，只记录警告
+				logger.warn("[AgentAutoStartService] Skipping auto-start due to storage service error")
+				return
 			}
 
 			// 筛选已发布的智能体
-			const publishedAgents = allAgents.filter(agent => agent.isPublished === true)
+			const publishedAgents = allAgents.filter(agent => {
+				try {
+					return agent && agent.isPublished === true && agent.id && agent.name
+				} catch (filterError) {
+					logger.warn(`[AgentAutoStartService] Invalid agent data, skipping:`, filterError)
+					return false
+				}
+			})
 			logger.info(`[AgentAutoStartService] Found ${publishedAgents.length} published agents`)
 
 			if (publishedAgents.length === 0) {
@@ -112,14 +125,15 @@ export class AgentAutoStartService {
 
 			logger.info(`[AgentAutoStartService] Auto-start completed: ${successCount} success, ${failureCount} failures`)
 
-			// 显示通知
+			// 显示通知（只在有结果时显示）
 			if (successCount > 0) {
 				vscode.window.showInformationMessage(
 					`Roo-Code: ${successCount} 个已发布的智能体服务已自动启动`
 				)
 			}
 
-			if (failureCount > 0) {
+			if (failureCount > 0 && failureCount < publishedAgents.length) {
+				// 只在部分失败时显示警告，全部失败时不显示
 				vscode.window.showWarningMessage(
 					`Roo-Code: ${failureCount} 个智能体服务启动失败，请检查配置`
 				)
@@ -127,7 +141,8 @@ export class AgentAutoStartService {
 
 		} catch (error) {
 			logger.error("[AgentAutoStartService] Auto-start process failed:", error)
-			vscode.window.showErrorMessage(`智能体自动启动失败: ${error instanceof Error ? error.message : "未知错误"}`)
+			// 不要显示错误消息给用户，只记录日志
+			logger.warn("[AgentAutoStartService] Auto-start process encountered an error, but extension will continue normally")
 		}
 	}
 
@@ -138,8 +153,13 @@ export class AgentAutoStartService {
 		try {
 			logger.info(`[AgentAutoStartService] Starting server for agent: ${agent.name} (${agent.id})`)
 
-			// 优先使用上次发布的端口
+			// 检查服务是否已经运行
 			const preferredPort = agent.publishInfo?.serverPort
+			if (preferredPort && await this.isPortInUse(preferredPort)) {
+				logger.info(`[AgentAutoStartService] Server already running on port ${preferredPort} for agent ${agent.id}, skipping`)
+				return
+			}
+
 			if (preferredPort) {
 				logger.info(`[AgentAutoStartService] Using preferred port ${preferredPort} for agent ${agent.id}`)
 			}
@@ -154,7 +174,8 @@ export class AgentAutoStartService {
 
 		} catch (error) {
 			logger.error(`[AgentAutoStartService] Failed to start server for agent ${agent.id}:`, error)
-			throw error
+			// 不要抛出错误，避免影响其他智能体的启动
+			logger.warn(`[AgentAutoStartService] Skipping agent ${agent.id} due to startup error`)
 		}
 	}
 
@@ -191,48 +212,80 @@ export class AgentAutoStartService {
 			// 1. 获取A2A服务器管理器实例
 			const serverManager = this.a2aServerManager!
 
-			// 2. 为智能体启动专用的A2A服务器
-			logger.info(`[AgentAutoStartService] Starting A2A server for agent ${agent.id}`, { preferredPort })
-			const serverInfo = await serverManager.startAgentServer(agent.id, preferredPort)
+			// 2. 检查是否已经有正在运行的服务器
+			let serverInfo
+			try {
+				const existingStatus = serverManager.getServerStatus(agent.id)
+				if (existingStatus && existingStatus.status === 'running') {
+					logger.info(`[AgentAutoStartService] Agent ${agent.id} server already running, reusing existing server`)
+					serverInfo = {
+						port: existingStatus.port,
+						url: existingStatus.url,
+						agentCard: null // 对于已存在的服务，我们可能没有agentCard
+					}
+				} else {
+					// 为智能体启动专用的A2A服务器
+					logger.info(`[AgentAutoStartService] Starting A2A server for agent ${agent.id}`, { preferredPort })
+					serverInfo = await serverManager.startAgentServer(agent.id, preferredPort)
+				}
+			} catch (serverError) {
+				logger.error(`[AgentAutoStartService] Failed to start/check A2A server for agent ${agent.id}:`, serverError)
+				throw serverError
+			}
 
-			logger.info(`[AgentAutoStartService] A2A server started:`, {
+			logger.info(`[AgentAutoStartService] A2A server ready:`, {
 				port: serverInfo.port,
 				url: serverInfo.url,
 				agentCard: !!serverInfo.agentCard
 			})
 
-			// 3. 更新 Provider 的全局状态（agentA2AMode）
-			if (this.provider) {
-				const updatedA2AConfig = {
-					enabled: true,
-					serverPort: serverInfo.port,
-					serverUrl: serverInfo.url,
-					agentId: agent.id,
-					agentName: agent.name,
+			// 3. 更新 Provider 的全局状态（agentA2AMode）- 只在成功后执行
+			if (this.provider && serverInfo) {
+				try {
+					const updatedA2AConfig = {
+						enabled: true,
+						serverPort: serverInfo.port,
+						serverUrl: serverInfo.url,
+						agentId: agent.id,
+						agentName: agent.name,
+					}
+
+					logger.info(`[AgentAutoStartService] Updating provider global state for agent ${agent.id}`)
+					await this.provider.updateGlobalState("agentA2AMode", updatedA2AConfig)
+
+					// 同步状态到webview
+					await this.provider.postStateToWebview()
+					logger.info(`[AgentAutoStartService] Provider state synchronized to webview`)
+				} catch (stateError) {
+					logger.warn(`[AgentAutoStartService] Failed to update provider state for agent ${agent.id}:`, stateError)
+					// 继续执行，不阻塞整个流程
 				}
-
-				logger.info(`[AgentAutoStartService] Updating provider global state for agent ${agent.id}`)
-				await this.provider.updateGlobalState("agentA2AMode", updatedA2AConfig)
-
-				// 同步状态到webview
-				await this.provider.postStateToWebview()
-				logger.info(`[AgentAutoStartService] Provider state synchronized to webview`)
 			}
 
 			// 4. 更新本地智能体状态为"已发布"
-			logger.info(`[AgentAutoStartService] Updating agent status to published`)
-			await this.updateAgentPublishStatus(agent.id, true, {
-				terminalType: "local",
-				serverPort: serverInfo.port,
-				serverUrl: serverInfo.url,
-				publishedAt: new Date().toISOString(),
-				serviceStatus: 'online',
-				lastHeartbeat: Date.now(),
-			})
+			try {
+				logger.info(`[AgentAutoStartService] Updating agent status to published`)
+				await this.updateAgentPublishStatus(agent.id, true, {
+					terminalType: "local",
+					serverPort: serverInfo.port,
+					serverUrl: serverInfo.url,
+					publishedAt: new Date().toISOString(),
+					serviceStatus: 'online',
+					lastHeartbeat: Date.now(),
+				})
+			} catch (statusError) {
+				logger.warn(`[AgentAutoStartService] Failed to update agent publish status for agent ${agent.id}:`, statusError)
+				// 继续执行，不阻塞整个流程
+			}
 
 			// 5. 向Redis注册智能体服务
-			logger.info(`[AgentAutoStartService] Registering agent ${agent.id} in Redis`)
-			await this.registerAgentInRedis(agent, serverInfo)
+			try {
+				logger.info(`[AgentAutoStartService] Registering agent ${agent.id} in Redis`)
+				await this.registerAgentInRedis(agent, serverInfo)
+			} catch (redisError) {
+				logger.warn(`[AgentAutoStartService] Failed to register agent ${agent.id} in Redis:`, redisError)
+				// 继续执行，不阻塞整个流程
+			}
 
 			logger.info(`[AgentAutoStartService] Local agent ${agent.id} initialized successfully`)
 		} catch (error) {
@@ -407,5 +460,40 @@ export class AgentAutoStartService {
 		} catch (error) {
 			logger.error("[AgentAutoStartService] Failed to dispose service:", error)
 		}
+	}
+
+	/**
+	 * 检查端口是否被占用
+	 */
+	private async isPortInUse(port: number): Promise<boolean> {
+		return new Promise((resolve) => {
+			const net = require('net')
+			const server = net.createServer()
+
+			server.listen(port, '127.0.0.1', () => {
+				server.once('close', () => {
+					resolve(false) // 端口可用
+				})
+				server.close()
+			})
+
+			server.on('error', (err: any) => {
+				if (err.code === 'EADDRINUSE') {
+					resolve(true) // 端口被占用
+				} else {
+					resolve(false) // 其他错误，认为端口可用
+				}
+			})
+		})
+	}
+
+	/**
+	 * 停止所有服务并清理资源
+	 */
+	async dispose(): Promise<void> {
+		logger.info("[AgentAutoStartService] Disposing auto-start service...")
+		await this.stopAllServers()
+		this.isInitialized = false
+		logger.info("[AgentAutoStartService] Auto-start service disposed")
 	}
 }

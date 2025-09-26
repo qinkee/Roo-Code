@@ -50,7 +50,8 @@
       "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
       "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
       "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
-      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)"
+      "Read(//Users/david/ThinkgsProjects/box-im/im-web/**)",
+      "Read(//Users/david/ThinkgsProjects/box-im/im-uniapp/**)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [

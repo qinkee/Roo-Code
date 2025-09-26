@@ -1702,7 +1702,9 @@ var globalSettingsSchema = import_zod12.z.object({
     agentId: import_zod12.z.string(),
     agentName: import_zod12.z.string(),
     serverUrl: import_zod12.z.string(),
-    serverPort: import_zod12.z.number()
+    serverPort: import_zod12.z.number(),
+    isDebugMode: import_zod12.z.boolean().optional()
+    // 标识是否为调试模式
   }).nullable().optional()
 });
 var GLOBAL_SETTINGS_KEYS = globalSettingsSchema.keyof().options;
