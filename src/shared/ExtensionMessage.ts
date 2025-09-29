@@ -187,6 +187,8 @@ export interface ExtensionMessage {
 	}>
 	mcpServers?: McpServer[]
 	commits?: GitCommit[]
+	config?: any
+	configId?: string
 	listApiConfig?: ProviderSettingsEntry[]
 	mode?: Mode
 	customMode?: ModeConfig

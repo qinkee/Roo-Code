@@ -1068,7 +1068,7 @@ export class A2AServer {
 			})
 			
 			// 监听任务中止
-			(task as any).on("taskAborted", () => {
+			(task as any).on(RooCodeEventName.TaskAborted, () => {
 				if (!isStreamClosed) {
 					sendSSE("aborted", {
 						message: "Task was aborted",
@@ -1371,30 +1371,7 @@ export class A2AServer {
 			
 			console.log(`[A2AServer] 🎯 Setting up task execution for agent ${agent.id}`)
 			
-			// 先等待Task初始化完成
-			console.log(`[A2AServer] ⏸️ Waiting for Task initialization...`)
-			const initPromise = task.waitForModeInitialization()
-			if (initPromise && typeof initPromise.then === 'function') {
-				initPromise.then(() => {
-					console.log(`[A2AServer] ✅ Task initialized, starting execution with message: "${userMessage}"`)
-					;(task as any).startTask(userMessage)
-					console.log(`[A2AServer] 🚀 Task started successfully`)
-				}).catch((error: any) => {
-					console.log(`[A2AServer] ❌ Task initialization failed:`, error)
-					if (!isCompleted) {
-						isCompleted = true
-						if (timeout) clearTimeout(timeout)
-						resolve({
-							success: false,
-							error: `Task initialization failed: ${error.message}`,
-							duration: Date.now() - startTime
-						})
-					}
-				})
-			} else {
-				console.log(`[A2AServer] ⚠️ Task initialization method not available, starting directly`)
-				;(task as any).startTask(userMessage)
-			}
+			// Task启动现在在setupEventListeners中处理
 			
 			// 可选的超时保护 - 默认不设置超时
 			let timeout: NodeJS.Timeout | null = null
@@ -1416,6 +1393,29 @@ export class A2AServer {
 			} else {
 				console.log(`[A2AServer] 🚀 No timeout limit for task execution`)
 			}
+
+			// 等待少许时间确保Task完全初始化
+			setTimeout(() => {
+				// 验证task确实有on方法
+				if (typeof task.on !== 'function') {
+					console.error(`[A2AServer] ❌ Task.on is not a function. Task type:`, typeof task, 'Task keys:', Object.keys(task))
+					if (!isCompleted) {
+						isCompleted = true
+						resolve({
+							success: false,
+							error: `Task object does not have 'on' method. Task instance may not be properly initialized.`,
+							duration: Date.now() - startTime
+						})
+					}
+					return
+				}
+				
+				console.log(`[A2AServer] ✅ Task.on method verified. Setting up event listeners...`)
+				
+				setupEventListeners()
+			}, 50)
+			
+			function setupEventListeners() {
 
 			// 监听任务状态变化事件
 			(task as any).on("taskStatusChanged", (status: string) => {
@@ -1640,6 +1640,12 @@ export class A2AServer {
 			(task as any).on("messageOutgoing", (msg: any) => {
 				logger.info(`[A2AServer] Task messageOutgoing:`, { msg })
 			})
+			
+			// 启动Task执行
+			console.log(`[A2AServer] 🚀 Starting task execution with message: "${userMessage}"`)
+			;(task as any).startTask(userMessage)
+			
+			} // 结束setupEventListeners函数
 		})
 	}
 	

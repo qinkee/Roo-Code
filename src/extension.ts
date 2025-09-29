@@ -35,7 +35,6 @@ import { API } from "./extension/api"
 import { VoidBridge } from "./api/void-bridge"
 import { TaskHistoryBridge } from "./api/task-history-bridge"
 import { RedisSyncService } from "./services/RedisSyncService"
-import { AgentAutoStartService } from "./core/agent/AgentAutoStartService"
 
 import {
 	handleUri,
@@ -347,30 +346,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	// TEMPORARILY DISABLE AUTO-START to prevent crashes
 	outputChannel.appendLine("[AgentAutoStart] Auto-start temporarily disabled for stability")
 	
-	/* DISABLED FOR SAFETY - Initialize auto-start service
-	setTimeout(async () => {
-		try {
-			outputChannel.appendLine("[AgentAutoStart] Initializing auto-start service...")
-			const autoStartService = AgentAutoStartService.getInstance()
-			
-			if (provider.agentManager) {
-				await autoStartService.initialize(provider.agentManager.getStorageService(), provider)
-				outputChannel.appendLine("[AgentAutoStart] Auto-start service initialized successfully")
-
-				setTimeout(async () => {
-					try {
-						await autoStartService.autoStartPublishedAgents()
-						outputChannel.appendLine("[AgentAutoStart] Auto-start process completed")
-					} catch (error) {
-						outputChannel.appendLine(`[AgentAutoStart] Auto-start failed: ${error instanceof Error ? error.message : "Unknown error"}`)
-					}
-				}, 2000)
-			}
-		} catch (error) {
-			outputChannel.appendLine(`[AgentAutoStart] Failed to initialize auto-start service: ${error instanceof Error ? error.message : "Unknown error"}`)
-		}
-	}, 1000)
-	*/
 
 	// DISABLED - Add cleanup for auto-start service
 	context.subscriptions.push({
@@ -460,6 +435,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		// 初始化A2A服务器管理器（不传存储服务，让它自己创建）
 		const a2aServerManager = A2AServerManager.getInstance()
 		await a2aServerManager.initialize(undefined, provider)
+		
+		// 确保provider正确设置，以便startAgentWithFullFlow方法能够访问API配置
+		a2aServerManager.setProvider(provider)
 		
 		// 自动启动所有已发布的智能体（异步执行，不阻塞插件启动）
 		a2aServerManager.startAllPublishedAgents()
@@ -560,18 +538,6 @@ export async function activate(context: vscode.ExtensionContext) {
 export async function deactivate() {
 	outputChannel.appendLine(`${Package.name} extension deactivated`)
 
-	// DISABLED - Stop all auto-started agent servers (for safety)
-	outputChannel.appendLine("[AgentAutoStart] Auto-start cleanup disabled for safety")
-	
-	/* DISABLED FOR SAFETY
-	try {
-		const autoStartService = AgentAutoStartService.getInstance()
-		await autoStartService.dispose()
-		outputChannel.appendLine("[AgentAutoStart] Auto-started agent servers stopped")
-	} catch (error) {
-		outputChannel.appendLine(`[AgentAutoStart] Error stopping agent servers: ${error}`)
-	}
-	*/
 
 	// Cleanup Redis connection
 	const redisSync = RedisSyncService.getInstance()

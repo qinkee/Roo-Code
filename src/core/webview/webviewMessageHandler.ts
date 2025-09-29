@@ -1877,23 +1877,29 @@ export const webviewMessageHandler = async (
 		case "getApiConfigurationById":
 			if (message.text) {
 				try {
+					provider.log(`[getApiConfigurationById] Fetching config for ID: ${message.text}`)
 					// 只获取配置，不激活（不改变全局当前配置）
 					const config = await provider.getProviderProfileById(message.text)
+					provider.log(`[getApiConfigurationById] Retrieved config: ${config ? 'found' : 'not found'}`)
 					if (config) {
 						// 返回完整的配置数据
+						provider.log(`[getApiConfigurationById] Sending success response with config ID: ${message.text}`)
 						provider.postStateToWebview()
 						provider.postMessageToWebview({
 							type: "action",
 							action: "getApiConfigurationByIdResult",
 							success: true,
-							text: JSON.stringify(config),
+							config: config,
+							configId: message.text,
 						})
 					} else {
+						provider.log(`[getApiConfigurationById] Sending error response - config not found for ID: ${message.text}`)
 						provider.postMessageToWebview({
 							type: "action",
 							action: "getApiConfigurationByIdResult",
 							success: false,
 							error: "Configuration not found",
+							configId: message.text,
 						})
 					}
 				} catch (error) {
@@ -1905,6 +1911,7 @@ export const webviewMessageHandler = async (
 						action: "getApiConfigurationByIdResult",
 						success: false,
 						error: error instanceof Error ? error.message : "Unknown error",
+						configId: message.text,
 					})
 				}
 			}
@@ -3510,3 +3517,6 @@ export const webviewMessageHandler = async (
 		}
 	}
 }
+
+// 导出智能体初始化函数供自动启动服务使用
+export { initializeAgentOnTerminal }
