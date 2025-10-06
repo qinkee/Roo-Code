@@ -38,7 +38,9 @@ export class A2AServerManager {
 					logger.info("[A2AServerManager] Created storage service with provider context")
 				} else {
 					// 抛出错误，要求提供context
-					throw new Error("EnhancedAgentStorageService requires a context parameter. Please provide sharedStorageService or provider with context.")
+					throw new Error(
+						"EnhancedAgentStorageService requires a context parameter. Please provide sharedStorageService or provider with context.",
+					)
 				}
 			}
 
@@ -218,31 +220,32 @@ export class A2AServerManager {
 
 			// 获取所有已发布的智能体
 			const allAgents = await this.storageService.listUserAgents(userId)
-			const publishedAgents = allAgents.filter(agent => 
-				agent.isPublished === true && 
-				(agent as any).autoStartServer !== false // 默认自动启动，除非明确禁用
+			const publishedAgents = allAgents.filter(
+				(agent) => agent.isPublished === true && (agent as any).autoStartServer !== false, // 默认自动启动，除非明确禁用
 			)
 
-			logger.info(`[A2AServerManager] Found ${publishedAgents.length} published agents out of ${allAgents.length} total agents`)
+			logger.info(
+				`[A2AServerManager] Found ${publishedAgents.length} published agents out of ${allAgents.length} total agents`,
+			)
 
 			const results = {
 				total: publishedAgents.length,
 				started: 0,
-				errors: [] as Array<{ agentId: string; error: string }>
+				errors: [] as Array<{ agentId: string; error: string }>,
 			}
 
 			// 并行启动所有已发布的智能体 - 使用完整的发布流程
 			const startupPromises = publishedAgents.map(async (agent) => {
 				try {
 					logger.info(`[A2AServerManager] Auto-starting agent: ${agent.name} (${agent.id})`)
-					
+
 					// 尝试使用智能体记录的端口（如果有的话）
 					const preferredPort = (agent as any).publishInfo?.serverPort
-					
+
 					// 🔥 关键修复：使用完整的发布流程，确保Redis同步
 					await this.startAgentWithFullFlow(agent, preferredPort)
 					results.started++
-					
+
 					logger.info(`[A2AServerManager] ✅ Auto-started agent ${agent.name} with full Redis sync`)
 					return { success: true, agentId: agent.id }
 				} catch (error) {
@@ -256,10 +259,14 @@ export class A2AServerManager {
 			// 等待所有启动完成
 			await Promise.allSettled(startupPromises)
 
-			logger.info(`[A2AServerManager] Auto-startup completed: ${results.started}/${results.total} agents started successfully`)
-			
+			logger.info(
+				`[A2AServerManager] Auto-startup completed: ${results.started}/${results.total} agents started successfully`,
+			)
+
 			if (results.errors.length > 0) {
-				logger.warn(`[A2AServerManager] ${results.errors.length} agents failed to start: ${JSON.stringify(results.errors)}`)
+				logger.warn(
+					`[A2AServerManager] ${results.errors.length} agents failed to start: ${JSON.stringify(results.errors)}`,
+				)
 			}
 
 			return results
@@ -320,11 +327,11 @@ export class A2AServerManager {
 			// 1. 重新获取完整的智能体数据（包含apiConfig）
 			const VoidBridge = require("../../api/void-bridge").VoidBridge
 			const userId = VoidBridge.getCurrentUserId() || "default"
-			
-			const result = await require("vscode").commands.executeCommand("roo-cline.getAgent", {
+
+			const result = (await require("vscode").commands.executeCommand("roo-cline.getAgent", {
 				userId,
 				agentId: agent.id,
-			}) as any
+			})) as any
 
 			if (!result.success || !result.agent) {
 				throw new Error(`Failed to get agent data: ${result.error || "Agent not found"}`)
@@ -336,44 +343,54 @@ export class A2AServerManager {
 			logger.info(`[A2AServerManager] Got agent data:`, {
 				agentId: fullAgent.id,
 				hasApiConfig: !!fullAgent.apiConfig,
-				apiConfigId: fullAgent.apiConfigId
+				apiConfigId: fullAgent.apiConfigId,
 			})
 
 			// 2. 如果智能体缺少apiConfig对象，手动加载
 			if (!fullAgent.apiConfig) {
 				try {
 					logger.info(`[A2AServerManager] Loading missing apiConfig for agent ${fullAgent.id}`)
-					
+
 					// 通过provider获取API配置列表
 					// 注意：这里需要provider实例，我们通过构造函数传入
 					if (this.provider) {
 						const providerState = await this.provider.getState()
-						
+
 						// 首先尝试根据apiConfigId从listApiConfigMeta中查找
 						if (fullAgent.apiConfigId && providerState?.listApiConfigMeta) {
-							const matchingConfig = providerState.listApiConfigMeta.find((config: any) => 
-								config.id === fullAgent.apiConfigId || config.name === fullAgent.apiConfigId
+							const matchingConfig = providerState.listApiConfigMeta.find(
+								(config: any) =>
+									config.id === fullAgent.apiConfigId || config.name === fullAgent.apiConfigId,
 							)
-							
+
 							if (matchingConfig) {
 								fullAgent.apiConfig = matchingConfig
-								logger.info(`[A2AServerManager] ✅ Found apiConfig in listApiConfigMeta for agent ${fullAgent.id}`)
+								logger.info(
+									`[A2AServerManager] ✅ Found apiConfig in listApiConfigMeta for agent ${fullAgent.id}`,
+								)
 							}
 						}
-						
+
 						// 如果还没找到，使用当前API配置作为fallback
 						if (!fullAgent.apiConfig && providerState?.apiConfiguration) {
 							fullAgent.apiConfig = providerState.apiConfiguration
-							logger.info(`[A2AServerManager] 🔄 Using provider current API config as fallback for agent ${fullAgent.id}`)
+							logger.info(
+								`[A2AServerManager] 🔄 Using provider current API config as fallback for agent ${fullAgent.id}`,
+							)
 						}
 					}
 
 					// 如果仍然没有API配置，警告但继续
 					if (!fullAgent.apiConfig) {
-						logger.warn(`[A2AServerManager] ⚠️ No API configuration found for agent ${fullAgent.id}, continuing anyway`)
+						logger.warn(
+							`[A2AServerManager] ⚠️ No API configuration found for agent ${fullAgent.id}, continuing anyway`,
+						)
 					}
 				} catch (configError) {
-					logger.error(`[A2AServerManager] ❌ Error loading apiConfig for agent ${fullAgent.id}:`, configError)
+					logger.error(
+						`[A2AServerManager] ❌ Error loading apiConfig for agent ${fullAgent.id}:`,
+						configError,
+					)
 				}
 			}
 
@@ -382,7 +399,6 @@ export class A2AServerManager {
 			await initializeAgentOnTerminal(fullAgent, terminal, this.provider, preferredPort)
 
 			logger.info(`[A2AServerManager] ✅ Successfully started agent ${fullAgent.id} with full flow`)
-
 		} catch (error) {
 			logger.error(`[A2AServerManager] Failed to start agent ${agent.id} with full flow:`, error)
 			throw error
@@ -394,6 +410,38 @@ export class A2AServerManager {
 	 */
 	setProvider(provider: any): void {
 		this.provider = provider
+	}
+
+	/**
+	 * 获取A2A服务器实例
+	 */
+	async getA2AServer(): Promise<A2AServer | null> {
+		if (!this.a2aServer) {
+			await this.initialize()
+		}
+		return this.a2aServer
+	}
+
+	/**
+	 * 获取智能体配置
+	 */
+	async getAgentConfig(agentId: string): Promise<any> {
+		try {
+			if (!this.storageService) {
+				throw new Error("Storage service not initialized")
+			}
+
+			// 获取当前用户ID
+			const VoidBridge = require("../../api/void-bridge").VoidBridge
+			const userId = VoidBridge.getCurrentUserId() || "default"
+
+			// 获取智能体配置
+			const result = await this.storageService.getAgent(userId, agentId)
+			return result
+		} catch (error) {
+			logger.error(`[A2AServerManager] Failed to get agent config for ${agentId}:`, error)
+			return null
+		}
 	}
 
 	/**

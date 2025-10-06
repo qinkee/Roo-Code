@@ -19,7 +19,32 @@ export class RooIgnoreController {
 
 	constructor(cwd: string) {
 		this.cwd = cwd
-		this.ignoreInstance = ignore()
+
+		// 防御性检查：确保ignore函数可用
+		try {
+			if (typeof ignore === "function") {
+				this.ignoreInstance = ignore()
+			} else {
+				console.warn("[RooIgnoreController] ignore module not properly loaded, using fallback")
+				// 创建一个最小的fallback实现
+				this.ignoreInstance = {
+					add: () => this.ignoreInstance,
+					filter: (paths: string[]) => paths,
+					ignores: () => false,
+					test: () => ({ ignored: false, unignored: false }),
+				} as any
+			}
+		} catch (error) {
+			console.error("[RooIgnoreController] Failed to initialize ignore module:", error)
+			// 创建fallback实现
+			this.ignoreInstance = {
+				add: () => this.ignoreInstance,
+				filter: (paths: string[]) => paths,
+				ignores: () => false,
+				test: () => ({ ignored: false, unignored: false }),
+			} as any
+		}
+
 		this.rooIgnoreContent = undefined
 		// Set up file watcher for .rooignore
 		this.setupFileWatcher()
@@ -37,24 +62,29 @@ export class RooIgnoreController {
 	 * Set up the file watcher for .rooignore changes
 	 */
 	private setupFileWatcher(): void {
-		const rooignorePattern = new vscode.RelativePattern(this.cwd, ".rooignore")
-		const fileWatcher = vscode.workspace.createFileSystemWatcher(rooignorePattern)
+		try {
+			const rooignorePattern = new vscode.RelativePattern(this.cwd, ".rooignore")
+			const fileWatcher = vscode.workspace.createFileSystemWatcher(rooignorePattern)
 
-		// Watch for changes and updates
-		this.disposables.push(
-			fileWatcher.onDidChange(() => {
-				this.loadRooIgnore()
-			}),
-			fileWatcher.onDidCreate(() => {
-				this.loadRooIgnore()
-			}),
-			fileWatcher.onDidDelete(() => {
-				this.loadRooIgnore()
-			}),
-		)
+			// Watch for changes and updates
+			this.disposables.push(
+				fileWatcher.onDidChange(() => {
+					this.loadRooIgnore()
+				}),
+				fileWatcher.onDidCreate(() => {
+					this.loadRooIgnore()
+				}),
+				fileWatcher.onDidDelete(() => {
+					this.loadRooIgnore()
+				}),
+			)
 
-		// Add fileWatcher itself to disposables
-		this.disposables.push(fileWatcher)
+			// Add fileWatcher itself to disposables
+			this.disposables.push(fileWatcher)
+		} catch (error) {
+			console.warn("[RooIgnoreController] Failed to setup file watcher:", error)
+			// 继续执行，不阻塞Task创建
+		}
 	}
 
 	/**

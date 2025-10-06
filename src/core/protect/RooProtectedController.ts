@@ -25,9 +25,32 @@ export class RooProtectedController {
 
 	constructor(cwd: string) {
 		this.cwd = cwd
-		// Initialize ignore instance with protected patterns
-		this.ignoreInstance = ignore()
-		this.ignoreInstance.add(RooProtectedController.PROTECTED_PATTERNS)
+
+		// 防御性检查：确保ignore函数可用
+		try {
+			if (typeof ignore === "function") {
+				this.ignoreInstance = ignore()
+				this.ignoreInstance.add(RooProtectedController.PROTECTED_PATTERNS)
+			} else {
+				console.warn("[RooProtectedController] ignore module not properly loaded, using fallback")
+				// 创建一个最小的fallback实现
+				this.ignoreInstance = {
+					add: () => this.ignoreInstance,
+					filter: (paths: string[]) => paths,
+					ignores: () => false,
+					test: () => ({ ignored: false, unignored: false }),
+				} as any
+			}
+		} catch (error) {
+			console.error("[RooProtectedController] Failed to initialize ignore module:", error)
+			// 创建fallback实现
+			this.ignoreInstance = {
+				add: () => this.ignoreInstance,
+				filter: (paths: string[]) => paths,
+				ignores: () => false,
+				test: () => ({ ignored: false, unignored: false }),
+			} as any
+		}
 	}
 
 	/**

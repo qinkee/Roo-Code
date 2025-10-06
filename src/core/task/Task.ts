@@ -2,7 +2,7 @@ import * as path from "path"
 import * as vscode from "vscode"
 import os from "os"
 import crypto from "crypto"
-import EventEmitter from "events"
+import { EventEmitter } from "events"
 
 import { Anthropic } from "@anthropic-ai/sdk"
 import delay from "delay"
@@ -290,6 +290,34 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}: TaskOptions) {
 		super()
 
+		// 🔥 强制确保EventEmitter方法立即可用 - 多重保障
+		if (typeof this.on !== "function" || typeof this.emit !== "function") {
+			console.error("[Task Constructor] EventEmitter methods not available, forcing initialization")
+
+			// 方法1: 重新设置原型
+			Object.setPrototypeOf(this, EventEmitter.prototype)
+
+			// 方法2: 调用EventEmitter构造函数
+			EventEmitter.call(this)
+
+			// 方法3: 手动绑定关键方法
+			const emitter = new EventEmitter()
+			this.on = emitter.on.bind(this)
+			this.emit = emitter.emit.bind(this)
+			this.once = emitter.once.bind(this)
+			this.off = emitter.off.bind(this)
+			this.removeListener = emitter.removeListener.bind(this)
+			this.removeAllListeners = emitter.removeAllListeners.bind(this)
+			this.addListener = emitter.addListener.bind(this)
+			this.listeners = emitter.listeners.bind(this)
+			this.listenerCount = emitter.listenerCount.bind(this)
+		}
+
+		// 最终验证
+		if (typeof this.on !== "function") {
+			throw new Error("FATAL: Task EventEmitter initialization failed completely")
+		}
+
 		if (startTask && !task && !images && !historyItem) {
 			throw new Error("Either historyItem or task/images must be provided")
 		}
@@ -366,7 +394,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						this.llmTargetUserId = targetUserId
 						this.llmTargetTerminal = targetTerminal
 						this.llmChatType = params.chatType
-						
 
 						provider.log(`[Task Constructor] LLM 路由设置:`)
 						provider.log(`  - recvId: ${targetUserId} (接收用户)`)
@@ -394,29 +421,64 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.rooProtectedController = new RooProtectedController(this.cwd)
 		this.fileContextTracker = new FileContextTracker(provider, this.taskId)
 
+		provider.log(`[Task Constructor] 🔧 Step 1: Starting RooIgnoreController initialization`)
 		this.rooIgnoreController.initialize().catch((error) => {
 			console.error("Failed to initialize RooIgnoreController:", error)
 		})
 
+		provider.log(`[Task Constructor] 🔧 Step 2: Setting API configuration`)
 		this.apiConfiguration = apiConfiguration
-		this.api = buildApiHandler(apiConfiguration)
-		this.autoApprovalHandler = new AutoApprovalHandler()
 
+		// 防御性检查：确保buildApiHandler可用
+		try {
+			provider.log(
+				`[Task Constructor] 🔧 Step 3: Building API handler for provider: ${apiConfiguration.apiProvider}`,
+			)
+			this.api = buildApiHandler(apiConfiguration)
+			provider.log(`[Task Constructor] ✅ Step 3 complete: API handler created successfully`)
+		} catch (apiError) {
+			provider.log(`[Task Constructor] ❌ Step 3 failed: ${apiError}`)
+			throw new Error(
+				`Failed to initialize API handler: ${apiError instanceof Error ? apiError.message : "Unknown error"}`,
+			)
+		}
+
+		provider.log(`[Task Constructor] 🔧 Step 4: Creating AutoApprovalHandler`)
+		this.autoApprovalHandler = new AutoApprovalHandler()
+		provider.log(`[Task Constructor] ✅ Step 4 complete`)
+
+		provider.log(`[Task Constructor] 🔧 Step 5: Creating UrlContentFetcher`)
 		this.urlContentFetcher = new UrlContentFetcher(provider.context)
+		provider.log(`[Task Constructor] ✅ Step 5 complete`)
+
+		provider.log(`[Task Constructor] 🔧 Step 6: Creating BrowserSession`)
 		this.browserSession = new BrowserSession(provider.context)
+		provider.log(`[Task Constructor] ✅ Step 6 complete`)
+
+		provider.log(`[Task Constructor] 🔧 Step 7: Setting basic properties`)
 		this.diffEnabled = enableDiff
 		this.fuzzyMatchThreshold = fuzzyMatchThreshold
 		this.consecutiveMistakeLimit = consecutiveMistakeLimit ?? DEFAULT_CONSECUTIVE_MISTAKE_LIMIT
 		this.providerRef = new WeakRef(provider)
 		this.globalStoragePath = provider.context.globalStorageUri.fsPath
+		provider.log(`[Task Constructor] ✅ Step 7 complete`)
+
+		provider.log(`[Task Constructor] 🔧 Step 8: Creating DiffViewProvider`)
 		this.diffViewProvider = new DiffViewProvider(this.cwd, this)
+		provider.log(`[Task Constructor] ✅ Step 8 complete`)
+
+		provider.log(`[Task Constructor] 🔧 Step 9: Setting final properties`)
 		this.enableCheckpoints = enableCheckpoints
 		this.enableTaskBridge = enableTaskBridge
+		provider.log(`[Task Constructor] ✅ Step 9 complete`)
 
+		provider.log(`[Task Constructor] 🔧 Step 10: Setting task hierarchy`)
 		this.rootTask = rootTask
 		this.parentTask = parentTask
 		this.taskNumber = taskNumber
+		provider.log(`[Task Constructor] ✅ Step 10 complete`)
 
+		provider.log(`[Task Constructor] 🔧 Step 11: Setting up task mode`)
 		// Store the task's mode when it's created.
 		// For history items, use the stored mode; for new tasks, we'll set it
 		// after getting state.
@@ -430,38 +492,69 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.taskModeReady = this.initializeTaskMode(provider)
 			TelemetryService.instance.captureTaskCreated(this.taskId)
 		}
+		provider.log(`[Task Constructor] ✅ Step 11 complete`)
 
+		provider.log(`[Task Constructor] 🔧 Step 12: Setting up diff strategy`)
 		// Only set up diff strategy if diff is enabled.
 		if (this.diffEnabled) {
 			// Default to old strategy, will be updated if experiment is enabled.
 			this.diffStrategy = new MultiSearchReplaceDiffStrategy(this.fuzzyMatchThreshold)
 
-			// Check experiment asynchronously and update strategy if needed.
-			provider.getState().then((state) => {
-				const isMultiFileApplyDiffEnabled = experiments.isEnabled(
-					state.experiments ?? {},
-					EXPERIMENT_IDS.MULTI_FILE_APPLY_DIFF,
-				)
+			// 🔥 修复关键问题：安全调用provider.getState()
+			try {
+				provider.log(`[Task Constructor] 🔧 Step 12a: Calling provider.getState()`)
+				const statePromise = provider.getState()
+				if (statePromise && typeof statePromise.then === "function") {
+					statePromise
+						.then((state) => {
+							provider.log(`[Task Constructor] 🔧 Step 12b: Processing experiment state`)
+							const isMultiFileApplyDiffEnabled = experiments.isEnabled(
+								state.experiments ?? {},
+								EXPERIMENT_IDS.MULTI_FILE_APPLY_DIFF,
+							)
 
-				if (isMultiFileApplyDiffEnabled) {
-					this.diffStrategy = new MultiFileSearchReplaceDiffStrategy(this.fuzzyMatchThreshold)
+							if (isMultiFileApplyDiffEnabled) {
+								this.diffStrategy = new MultiFileSearchReplaceDiffStrategy(this.fuzzyMatchThreshold)
+							}
+							provider.log(`[Task Constructor] ✅ Step 12b complete`)
+						})
+						.catch((stateError) => {
+							provider.log(`[Task Constructor] ⚠️ Step 12b failed: ${stateError}`)
+						})
+				} else {
+					provider.log(`[Task Constructor] ⚠️ Step 12a: provider.getState() did not return a promise`)
 				}
-			})
+			} catch (getStateError) {
+				provider.log(`[Task Constructor] ❌ Step 12a failed: ${getStateError}`)
+			}
+		} else {
+			provider.log(`[Task Constructor] ⚠️ Step 12: Diff disabled, skipping strategy setup`)
 		}
+		provider.log(`[Task Constructor] ✅ Step 12 complete`)
 
+		provider.log(`[Task Constructor] 🔧 Step 13: Creating ToolRepetitionDetector`)
 		this.toolRepetitionDetector = new ToolRepetitionDetector(this.consecutiveMistakeLimit)
+		provider.log(`[Task Constructor] ✅ Step 13 complete`)
 
+		provider.log(`[Task Constructor] 🔧 Step 14: Calling onCreated callback`)
 		onCreated?.(this)
+		provider.log(`[Task Constructor] ✅ Step 14 complete`)
 
+		provider.log(`[Task Constructor] 🔧 Step 15: Final task startup`)
 		if (startTask) {
 			if (task || images) {
+				provider.log(`[Task Constructor] 🔧 Step 15a: Starting task with content`)
 				this.startTask(task, images)
 			} else if (historyItem) {
+				provider.log(`[Task Constructor] 🔧 Step 15b: Resuming from history`)
 				this.resumeTaskFromHistory()
 			} else {
 				throw new Error("Either historyItem or task/images must be provided")
 			}
+		} else {
+			provider.log(`[Task Constructor] ⚠️ Step 15: startTask=false, not starting immediately`)
 		}
+		provider.log(`[Task Constructor] 🎉 CONSTRUCTOR COMPLETE - Task ${this.taskId} created successfully`)
 	}
 
 	/**
@@ -699,7 +792,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 			// Update the stored historyItem
 			this.historyItem = historyItem
-			
+
 			await this.providerRef.deref()?.updateTaskHistory(historyItem)
 		} catch (error) {
 			console.error("Failed to save Roo messages:", error)
@@ -1029,7 +1122,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 					// More performant than an entire `postStateToWebview`.
 					this.updateClineMessage(lastMessage)
-					
+
 					// Send LLM end signal when partial message becomes complete
 					if (type === "text" && text) {
 						this.sendLLMChunkToIM(text, false)
@@ -1051,7 +1144,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						contextCondense,
 						metadata: options.metadata,
 					})
-					
+
 					// Send LLM end signal for new complete messages
 					if (type === "text" && text) {
 						this.sendLLMChunkToIM(text, false)
@@ -1079,7 +1172,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				checkpoint,
 				contextCondense,
 			})
-			
+
 			// Send LLM end signal for non-partial messages
 			if (type === "text" && text) {
 				this.sendLLMChunkToIM(text, false)
@@ -1141,7 +1234,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 			// Store the historyItem for later use
 			this.historyItem = historyItem
-			
+
 			// Update task history immediately so it appears in the UI
 			const provider = this.providerRef.deref()
 			if (provider) {
@@ -1282,24 +1375,28 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			await this.say("user_feedback", text, images)
 			responseText = text
 			responseImages = images
-			
+
 			// 解析续问消息中的零宽参数以恢复LLM流式传输目标
 			if (text) {
 				const provider = this.providerRef.deref()
-				provider?.log(`[Task resumeTaskFromHistory] Attempting to parse zero-width params from text: ${text.substring(0, 100)}...`)
+				provider?.log(
+					`[Task resumeTaskFromHistory] Attempting to parse zero-width params from text: ${text.substring(0, 100)}...`,
+				)
 				try {
 					const { ZeroWidthEncoder } = require("../../utils/zeroWidthEncoder")
 					const encodedParams = ZeroWidthEncoder.extractAllFromText(text)
 					provider?.log(`[Task resumeTaskFromHistory] Found ${encodedParams.length} encoded params`)
-					
+
 					if (encodedParams.length > 0) {
 						const params = encodedParams[0].params
-						provider?.log(`[Task resumeTaskFromHistory] Found zero-width params in continuation: ${JSON.stringify(params)}`)
-						
+						provider?.log(
+							`[Task resumeTaskFromHistory] Found zero-width params in continuation: ${JSON.stringify(params)}`,
+						)
+
 						// 提取目标参数（与构造函数相同的逻辑）
 						let targetUserId: number | undefined = undefined
 						let targetTerminal: number | undefined = undefined
-						
+
 						// 解析 targetId
 						if (params.targetId) {
 							provider?.log(`[Task resumeTaskFromHistory] Processing targetId: ${params.targetId}`)
@@ -1308,12 +1405,16 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								provider?.log(`[Task resumeTaskFromHistory] Group chat or non-standard format`)
 								if (params.targetId.match(/^\d+$/)) {
 									targetUserId = parseInt(params.targetId)
-									provider?.log(`[Task resumeTaskFromHistory] Parsed userId from group: ${targetUserId}`)
+									provider?.log(
+										`[Task resumeTaskFromHistory] Parsed userId from group: ${targetUserId}`,
+									)
 								}
 							} else {
 								// 私聊场景
 								const parts = params.targetId.split("_")
-								provider?.log(`[Task resumeTaskFromHistory] Private chat, parts: ${JSON.stringify(parts)}`)
+								provider?.log(
+									`[Task resumeTaskFromHistory] Private chat, parts: ${JSON.stringify(parts)}`,
+								)
 								if (parts.length === 2 && !isNaN(parseInt(parts[0])) && !isNaN(parseInt(parts[1]))) {
 									targetUserId = parseInt(parts[0])
 									provider?.log(`[Task resumeTaskFromHistory] Parsed userId: ${targetUserId}`)
@@ -1322,7 +1423,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						} else {
 							provider?.log(`[Task resumeTaskFromHistory] No targetId in params`)
 						}
-						
+
 						// 使用 senderTerminal 作为目标终端
 						if (params.senderTerminal !== undefined) {
 							targetTerminal = params.senderTerminal
@@ -1330,13 +1431,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						} else {
 							provider?.log(`[Task resumeTaskFromHistory] No senderTerminal in params`)
 						}
-						
+
 						// 设置LLM流式传输目标
 						this.llmTargetUserId = targetUserId
 						this.llmTargetTerminal = targetTerminal
 						this.llmChatType = params.chatType
-						
-						provider?.log(`[Task resumeTaskFromHistory] LLM stream target restored: recvId=${targetUserId}, targetTerminal=${targetTerminal}, chatType=${params.chatType}`)
+
+						provider?.log(
+							`[Task resumeTaskFromHistory] LLM stream target restored: recvId=${targetUserId}, targetTerminal=${targetTerminal}, chatType=${params.chatType}`,
+						)
 					} else {
 						provider?.log(`[Task resumeTaskFromHistory] No encoded params found in text`)
 					}
@@ -2753,7 +2856,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	private llmTargetUserId: number | undefined = undefined
 	private llmTargetTerminal: number | undefined = undefined
 	private llmChatType: string | undefined = undefined
-	private llmTaskInfo: {name: string, id?: string} | undefined = undefined
+	private llmTaskInfo: { name: string; id?: string } | undefined = undefined
 
 	/**
 	 * 设置LLM流式传输的目标用户
@@ -2832,28 +2935,31 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				// 获取当前任务的真实名称用于续问
 				// 从原始文本中提取任务名（保留零宽编码）
 				let taskName = "AI助手"
-				
+
 				if (this.originalTaskText) {
 					// 从原始文本中提取 @任务[xxx] 中的xxx部分
 					const match = this.originalTaskText.match(/@任务\[([^\]]+)\]/)
 					if (match) {
 						const bracketContent = match[1] // 括号内的内容（带零宽编码）
-						
+
 						// 如果是"新建任务"，需要替换为实际任务名
-						if (bracketContent.includes('新建任务')) {
+						if (bracketContent.includes("新建任务")) {
 							// 获取实际的任务名
 							let actualTaskName = this.historyItem?.task || this.originalTaskText
 							// 如果historyItem.task也包含@任务格式，提取真正的任务内容
-							if (actualTaskName && actualTaskName.includes('@任务')) {
-								actualTaskName = actualTaskName.replace(/@任务\[[^\]]+\]\s*/, '').trim()
+							if (actualTaskName && actualTaskName.includes("@任务")) {
+								actualTaskName = actualTaskName.replace(/@任务\[[^\]]+\]\s*/, "").trim()
 							}
-							
+
 							// 提取原始的零宽编码并附加到实际任务名后
-							const zeroWidthChars = bracketContent.match(/[\u200B-\u200D\u2060-\u2069\u180E\uFEFF]/g) || []
-							const zeroWidthString = zeroWidthChars.join('')
+							const zeroWidthChars =
+								bracketContent.match(/[\u200B-\u200D\u2060-\u2069\u180E\uFEFF]/g) || []
+							const zeroWidthString = zeroWidthChars.join("")
 							taskName = actualTaskName + zeroWidthString
-							
-							provider?.log(`[Task] 替换新建任务为: ${taskName.replace(/[\u200B-\u200D\u2060-\u2069\u180E\uFEFF]/g, '')} (长度: ${taskName.length})`)
+
+							provider?.log(
+								`[Task] 替换新建任务为: ${taskName.replace(/[\u200B-\u200D\u2060-\u2069\u180E\uFEFF]/g, "")} (长度: ${taskName.length})`,
+							)
 						} else {
 							// 不是新建任务，直接使用括号内的内容
 							taskName = bracketContent
@@ -2865,12 +2971,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				} else if (this.historyItem?.task) {
 					taskName = this.historyItem.task
 				}
-				
+
 				const taskInfo = {
 					name: taskName, // 任务名（包含零宽编码）
-					id: this.taskId
+					id: this.taskId,
 				}
-				
+
 				provider?.log(`[Task] 发送流式结束标记，任务信息: ${JSON.stringify(taskInfo)}`)
 				console.log(
 					`[Task] LLM stream END sent: streamId=${this.llmStreamId}, recvId=${this.llmTargetUserId}, targetTerminal=${this.llmTargetTerminal}, chatType=${this.llmChatType}`,
@@ -2880,7 +2986,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					this.llmTargetUserId,
 					this.llmTargetTerminal,
 					this.llmChatType,
-					taskInfo
+					taskInfo,
 				)
 				this.llmStreamId = null
 				this.lastChunkText = ""
