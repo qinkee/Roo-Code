@@ -110,6 +110,21 @@ export async function activate(context: vscode.ExtensionContext) {
 	;(global as any).llmStreamService = llmService
 	outputChannel.appendLine("[LLM] LLM Stream Service created and registered globally")
 
+	// 注册LLM流式请求处理器
+	llmService.imConnection.onLLMStreamRequest((data: any) => {
+		outputChannel.appendLine(`[LLM] Received LLM_STREAM_REQUEST: ${JSON.stringify(data)}`)
+		// 处理接收到的LLM流式请求
+		// data 包含: streamId, question, sendId, recvId, senderTerminal, targetTerminal, chatType, taskName, timestamp
+		try {
+			const { streamId, question, sendId, recvId, targetTerminal, chatType } = data
+			outputChannel.appendLine(`[LLM] Processing request - streamId: ${streamId}, question: ${question}`)
+			// TODO: 这里需要调用实际的LLM处理逻辑
+			// 暂时只是记录日志
+		} catch (error) {
+			outputChannel.appendLine(`[LLM] Error processing LLM request: ${error}`)
+		}
+	})
+
 	// 延迟初始化：检查tokenKey是否已设置
 	setTimeout(async () => {
 		const tokenManager = ImPlatformTokenManager.getInstance()
@@ -340,23 +355,24 @@ export async function activate(context: vscode.ExtensionContext) {
 			outputChannel.appendLine(`[AgentManager] Set current user ID: ${currentUserId}`)
 		}
 	} catch (error) {
-		outputChannel.appendLine(`[AgentManager] Failed to set user ID: ${error instanceof Error ? error.message : "Unknown error"}`)
+		outputChannel.appendLine(
+			`[AgentManager] Failed to set user ID: ${error instanceof Error ? error.message : "Unknown error"}`,
+		)
 	}
-	
+
 	// TEMPORARILY DISABLE AUTO-START to prevent crashes
 	outputChannel.appendLine("[AgentAutoStart] Auto-start temporarily disabled for stability")
-	
 
 	// DISABLED - Add cleanup for auto-start service
 	context.subscriptions.push({
 		dispose: () => {
 			outputChannel.appendLine("[AgentAutoStart] Cleanup disabled for safety")
-		}
+		},
 	})
 
-	// DISABLED - Register agent auto-start management commands  
+	// DISABLED - Register agent auto-start management commands
 	outputChannel.appendLine("[AgentAutoStart] Management commands disabled for safety")
-	
+
 	/* DISABLED FOR SAFETY - Register commands
 	setTimeout(() => {
 		// Command registration code disabled
@@ -431,25 +447,26 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 🤖 Initialize A2A Server Manager and auto-start published agents
 	try {
 		outputChannel.appendLine("[A2AServerManager] Initializing A2A Server Manager...")
-		
+
 		// 初始化A2A服务器管理器（不传存储服务，让它自己创建）
 		const a2aServerManager = A2AServerManager.getInstance()
 		await a2aServerManager.initialize(undefined, provider)
-		
+
 		// 确保provider正确设置，以便startAgentWithFullFlow方法能够访问API配置
 		a2aServerManager.setProvider(provider)
-		
+
 		// 自动启动所有已发布的智能体（异步执行，不阻塞插件启动）
-		a2aServerManager.startAllPublishedAgents()
+		a2aServerManager
+			.startAllPublishedAgents()
 			.then((result: any) => {
-				outputChannel.appendLine(`[A2AServerManager] ✅ Auto-startup completed: ${result.started}/${result.total} agents started`)
-				
+				outputChannel.appendLine(
+					`[A2AServerManager] ✅ Auto-startup completed: ${result.started}/${result.total} agents started`,
+				)
+
 				if (result.started > 0) {
-					vscode.window.showInformationMessage(
-						`🤖 Started ${result.started} published agents automatically`
-					)
+					vscode.window.showInformationMessage(`🤖 Started ${result.started} published agents automatically`)
 				}
-				
+
 				if (result.errors.length > 0) {
 					outputChannel.appendLine(`[A2AServerManager] ❌ ${result.errors.length} agents failed to start:`)
 					result.errors.forEach((item: { agentId: string; error: any }) => {
@@ -461,14 +478,14 @@ export async function activate(context: vscode.ExtensionContext) {
 				outputChannel.appendLine(`[A2AServerManager] ❌ Auto-startup failed: ${error}`)
 				console.error("A2A Server auto-startup failed:", error)
 			})
-		
+
 		// 添加到订阅中以便正确清理
 		context.subscriptions.push({
 			dispose: async () => {
 				await a2aServerManager.destroy()
-			}
+			},
 		})
-		
+
 		outputChannel.appendLine("[A2AServerManager] ✅ A2A Server Manager initialized successfully")
 	} catch (error) {
 		outputChannel.appendLine(`[A2AServerManager] ❌ Failed to initialize A2A Server Manager: ${error}`)
@@ -537,7 +554,6 @@ export async function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated.
 export async function deactivate() {
 	outputChannel.appendLine(`${Package.name} extension deactivated`)
-
 
 	// Cleanup Redis connection
 	const redisSync = RedisSyncService.getInstance()
