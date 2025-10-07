@@ -299,18 +299,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 			// 方法2: 调用EventEmitter构造函数
 			EventEmitter.call(this)
-
-			// 方法3: 手动绑定关键方法
-			const emitter = new EventEmitter()
-			this.on = emitter.on.bind(this)
-			this.emit = emitter.emit.bind(this)
-			this.once = emitter.once.bind(this)
-			this.off = emitter.off.bind(this)
-			this.removeListener = emitter.removeListener.bind(this)
-			this.removeAllListeners = emitter.removeAllListeners.bind(this)
-			this.addListener = emitter.addListener.bind(this)
-			this.listeners = emitter.listeners.bind(this)
-			this.listenerCount = emitter.listenerCount.bind(this)
 		}
 
 		// 最终验证

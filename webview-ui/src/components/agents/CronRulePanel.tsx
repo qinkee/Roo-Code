@@ -24,32 +24,42 @@ const CronRulePanel: React.FC<CronRulePanelProps> = ({ cronRule, onChange }) => 
 		{ label: t("agents:cronPresets.monthly", "每月1日9点"), value: "0 9 1 * *" },
 	]
 
-	const handlePresetSelect = useCallback((value: string) => {
-		onChange(value)
-	}, [onChange])
+	const handlePresetSelect = useCallback(
+		(value: string) => {
+			onChange(value)
+		},
+		[onChange],
+	)
 
-	const handleAdvancedChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		onChange(e.target.value)
-	}, [onChange])
+	const handleAdvancedChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			onChange(e.target.value)
+		},
+		[onChange],
+	)
 
 	// 解析cron表达式显示描述
-	const getCronDescription = useCallback((cron: string) => {
-		const parts = cron.split(" ")
-		if (parts.length < 5) return t("agents:cronInvalid", "无效的表达式")
-		
-		// 简单的cron描述逻辑
-		const [minute, hour, day, month, weekday] = parts
-		
-		if (cron === "* * * * *") return t("agents:cronDesc.everyMinute", "每分钟执行")
-		if (cron === "0 * * * *") return t("agents:cronDesc.hourly", "每小时执行")
-		if (cron === "0 9 * * *") return t("agents:cronDesc.daily9am", "每天上午9点执行")
-		if (cron === "0 18 * * *") return t("agents:cronDesc.daily6pm", "每天下午6点执行")
-		if (cron === "0 9 * * 1-5") return t("agents:cronDesc.weekdays9am", "工作日上午9点执行")
-		if (cron === "0 9 * * 1") return t("agents:cronDesc.weekly", "每周一上午9点执行")
-		if (cron === "0 9 1 * *") return t("agents:cronDesc.monthly", "每月1日上午9点执行")
-		
-		return t("agents:cronDesc.custom", "自定义时间规则")
-	}, [t])
+	const getCronDescription = useCallback(
+		(cron: string) => {
+			const parts = cron.split(" ")
+			if (parts.length < 5) return t("agents:cronInvalid", "无效的表达式")
+
+			// 简单的cron描述逻辑
+			// Parse but don't use individual parts for now
+			const [_minute, _hour, _day, _month, _weekday] = parts
+
+			if (cron === "* * * * *") return t("agents:cronDesc.everyMinute", "每分钟执行")
+			if (cron === "0 * * * *") return t("agents:cronDesc.hourly", "每小时执行")
+			if (cron === "0 9 * * *") return t("agents:cronDesc.daily9am", "每天上午9点执行")
+			if (cron === "0 18 * * *") return t("agents:cronDesc.daily6pm", "每天下午6点执行")
+			if (cron === "0 9 * * 1-5") return t("agents:cronDesc.weekdays9am", "工作日上午9点执行")
+			if (cron === "0 9 * * 1") return t("agents:cronDesc.weekly", "每周一上午9点执行")
+			if (cron === "0 9 1 * *") return t("agents:cronDesc.monthly", "每月1日上午9点执行")
+
+			return t("agents:cronDesc.custom", "自定义时间规则")
+		},
+		[t],
+	)
 
 	return (
 		<div className="space-y-4">
@@ -71,9 +81,8 @@ const CronRulePanel: React.FC<CronRulePanelProps> = ({ cronRule, onChange }) => 
 						"px-3 py-1.5 text-sm font-medium border-b-2 transition-colors",
 						activeTab === "simple"
 							? "border-vscode-button-background text-vscode-foreground"
-							: "border-transparent text-vscode-foreground/70 hover:text-vscode-foreground"
-					)}
-				>
+							: "border-transparent text-vscode-foreground/70 hover:text-vscode-foreground",
+					)}>
 					{t("agents:simpleMode", "简单模式")}
 				</button>
 				<button
@@ -82,9 +91,8 @@ const CronRulePanel: React.FC<CronRulePanelProps> = ({ cronRule, onChange }) => 
 						"px-3 py-1.5 text-sm font-medium border-b-2 transition-colors",
 						activeTab === "advanced"
 							? "border-vscode-button-background text-vscode-foreground"
-							: "border-transparent text-vscode-foreground/70 hover:text-vscode-foreground"
-					)}
-				>
+							: "border-transparent text-vscode-foreground/70 hover:text-vscode-foreground",
+					)}>
 					{t("agents:advancedMode", "高级模式")}
 				</button>
 			</div>
@@ -105,9 +113,8 @@ const CronRulePanel: React.FC<CronRulePanelProps> = ({ cronRule, onChange }) => 
 										"text-left p-2 rounded-md border text-xs transition-colors",
 										cronRule === preset.value
 											? "bg-vscode-button-background border-vscode-button-background text-vscode-button-foreground"
-											: "bg-vscode-input-background border-vscode-input-border text-vscode-foreground hover:bg-vscode-list-hoverBackground"
-									)}
-								>
+											: "bg-vscode-input-background border-vscode-input-border text-vscode-foreground hover:bg-vscode-list-hoverBackground",
+									)}>
 									<div className="font-medium">{preset.label}</div>
 									<div className="text-xs text-vscode-foreground/60 font-mono mt-0.5">
 										{preset.value}
@@ -140,16 +147,12 @@ const CronRulePanel: React.FC<CronRulePanelProps> = ({ cronRule, onChange }) => 
 			{/* 当前规则预览 */}
 			<div className="p-3 bg-vscode-editor-background rounded-md border border-vscode-panel-border">
 				<div className="flex items-center justify-between">
-					<span className="text-xs text-vscode-foreground/70">
-						{t("agents:currentRule", "当前规则")}:
-					</span>
+					<span className="text-xs text-vscode-foreground/70">{t("agents:currentRule", "当前规则")}:</span>
 					<span className="text-xs font-mono text-vscode-foreground bg-vscode-badge-background px-2 py-0.5 rounded">
 						{cronRule}
 					</span>
 				</div>
-				<div className="text-xs text-vscode-foreground/80 mt-1">
-					{getCronDescription(cronRule)}
-				</div>
+				<div className="text-xs text-vscode-foreground/80 mt-1">{getCronDescription(cronRule)}</div>
 			</div>
 		</div>
 	)

@@ -1,8 +1,6 @@
-import React, { useCallback, useState, useEffect, useMemo, useRef } from "react"
+import React from "react"
 import { ArrowLeft } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { useExtensionState } from "@src/context/ExtensionStateContext"
-import { Tab, TabContent, TabHeader } from "@src/components/common/Tab"
 import { Button } from "@src/components/ui"
 
 // 直接导入 ModesView 的核心内容组件
@@ -22,8 +20,7 @@ const ModeConfigView: React.FC<ModeConfigViewProps> = ({ onBack }) => {
 				<div className="flex items-center gap-3">
 					<button
 						onClick={onBack}
-						className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors"
-					>
+						className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors">
 						<ArrowLeft size={16} />
 					</button>
 					<h1 className="text-lg font-bold">{t("prompts:modes.title", "模式")}</h1>
@@ -37,10 +34,11 @@ const ModeConfigView: React.FC<ModeConfigViewProps> = ({ onBack }) => {
 					<ModesView onDone={onBack} />
 				</div>
 			</div>
-			
+
 			{/* 隐藏ModesView内部的Tab头部 */}
-			<style dangerouslySetInnerHTML={{
-				__html: `
+			<style
+				dangerouslySetInnerHTML={{
+					__html: `
 					.modes-view-wrapper > div > div:first-child {
 						display: none !important;
 					}
@@ -52,8 +50,9 @@ const ModeConfigView: React.FC<ModeConfigViewProps> = ({ onBack }) => {
 						position: static !important;
 						height: 100% !important;
 					}
-				`
-			}} />
+				`,
+				}}
+			/>
 		</div>
 	)
 }

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { Plus, MoreHorizontal, Info, Play, Edit, Trash2, Share, Upload, Square } from "lucide-react"
+import { MoreHorizontal, Info, Play, Edit, Trash2, Share, Upload } from "lucide-react"
 import ActionBar from "./ActionBar"
 import TaskListModal from "./TaskListModal"
 import TerminalSelectionModal from "./TerminalSelectionModal"
@@ -63,7 +63,7 @@ const PublishStatusBadge = ({
 				const newStatus = response.ok ? "running" : "stopped"
 				setServerStatus(newStatus)
 				onStatusChange?.(newStatus)
-			} catch (error) {
+			} catch (_error) {
 				setServerStatus("stopped")
 				onStatusChange?.("stopped")
 			}
@@ -76,7 +76,7 @@ const PublishStatusBadge = ({
 		const interval = setInterval(checkServerHealth, 10000)
 
 		return () => clearInterval(interval)
-	}, [isPublished, publishInfo.serverUrl])
+	}, [isPublished, publishInfo.serverUrl, onStatusChange])
 
 	// 🎯 UX优化：对于有历史发布信息但当前停止的智能体，也显示状态
 	if (!isPublished && !publishInfo.serverPort) {
@@ -188,7 +188,6 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	const [selectedProfileConfig, setSelectedProfileConfig] = useState<any>(null)
 	const [isAgentMode, setIsAgentMode] = useState(false) // 标识是否为智能体模式
 	const [agentConfigSaveCallback, setAgentConfigSaveCallback] = useState<((config: any) => void) | null>(null)
-	const [editingConfigId, setEditingConfigId] = useState<string>("") // 记住正在编辑的配置ID
 
 	// 加载智能体列表
 	const loadAgents = useCallback(() => {
@@ -209,15 +208,23 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 				switch (message.action) {
 					case "getApiConfigurationByIdResult":
 						if (message.success && message.config) {
-							console.log('[AgentsView] Received full config for profile:', message.configId, message.config)
+							console.log(
+								"[AgentsView] Received full config for profile:",
+								message.configId,
+								message.config,
+							)
 							// 保存完整的配置数据
 							setSelectedProfileConfig(message.config)
 							// 打开API配置页面
 							setShowApiConfig(true)
 						} else {
-							console.error('[AgentsView] Failed to get config for profile:', message.configId, message.error)
+							console.error(
+								"[AgentsView] Failed to get config for profile:",
+								message.configId,
+								message.error,
+							)
 							// 失败时使用元数据作为备选
-							const profileMeta = listApiConfigMeta?.find(config => config.id === message.configId)
+							const profileMeta = listApiConfigMeta?.find((config) => config.id === message.configId)
 							if (profileMeta) {
 								setSelectedProfileConfig(profileMeta)
 								setShowApiConfig(true)
@@ -416,7 +423,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 
 		window.addEventListener("message", handleMessage)
 		return () => window.removeEventListener("message", handleMessage)
-	}, [loadAgents])
+	}, [loadAgents, customAgents, listApiConfigMeta])
 
 	// 在组件挂载时加载智能体列表
 	useEffect(() => {
@@ -505,7 +512,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 					console.log(`🎯 [AgentsView] Agent ${agent.id} server is stopped, restarting`)
 					handleRestartAgent(agent)
 				}
-			} catch (error) {
+			} catch (_error) {
 				// 网络错误或超时：服务器已停止，重启
 				console.log(`🎯 [AgentsView] Agent ${agent.id} server is not responding, restarting`)
 				handleRestartAgent(agent)
@@ -517,6 +524,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 			setShowTerminalModal(true)
 		}
 		setOpenDropdownId(null)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	const handleStopAgent = useCallback(async (agent: Agent) => {
@@ -635,51 +643,52 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 		setSelectedAgentForPublish(null)
 	}, [])
 
-	const handleCreateAgentSubmit = useCallback((agentData: any) => {
+	const handleCreateAgentSubmit = useCallback((_agentData: any) => {
 		// CreateAgentView已经发送了createAgent消息，这里只需要设置loading状态
 		setLoading(true)
 	}, [])
 
-	const handleAgentUpdate = useCallback((agentData: any) => {
+	const handleAgentUpdate = useCallback((_agentData: any) => {
 		// CreateAgentView已经发送了updateAgent消息，这里只需要设置loading状态
 		setLoading(true)
 	}, [])
 
-	const handleShowApiConfig = useCallback(async (selectedConfigId?: string, currentConfig?: any, agentMode?: boolean) => {
-		console.log('[AgentsView] handleShowApiConfig called with:', { selectedConfigId, currentConfig, agentMode })
-		
-		// 设置智能体模式
-		setIsAgentMode(!!agentMode)
-		
-		// 记住正在编辑的配置ID
-		if (selectedConfigId) {
-			setEditingConfigId(selectedConfigId)
-		}
-		
-		// 如果已经有完整的currentConfig（有apiModelId字段），直接使用
-		if (currentConfig && currentConfig.apiModelId) {
-			console.log('[AgentsView] Using provided FULL current config:', currentConfig)
-			setSelectedProfileConfig(currentConfig)
+	const handleShowApiConfig = useCallback(
+		async (selectedConfigId?: string, currentConfig?: any, agentMode?: boolean) => {
+			console.log("[AgentsView] handleShowApiConfig called with:", { selectedConfigId, currentConfig, agentMode })
+
+			// 设置智能体模式
+			setIsAgentMode(!!agentMode)
+
+			// 如果已经有完整的currentConfig（有apiModelId字段），直接使用
+			if (currentConfig && currentConfig.apiModelId) {
+				console.log("[AgentsView] Using provided FULL current config:", currentConfig)
+				setSelectedProfileConfig(currentConfig)
+				setShowApiConfig(true)
+				return
+			}
+
+			// 如果没有currentConfig但有selectedConfigId，使用新的API获取完整配置
+			if (selectedConfigId) {
+				console.log(
+					"[AgentsView] Fetching full config for profile WITHOUT changing global config:",
+					selectedConfigId,
+				)
+				// 使用新的API来获取完整配置（不会改变全局配置）
+				vscode.postMessage({
+					type: "getApiConfigurationById",
+					text: selectedConfigId,
+				})
+				// 收到响应后会在 getApiConfigurationByIdResult 中处理
+				return
+			}
+
+			// 都没有的话，直接打开配置页面
+			console.log("[AgentsView] Opening API config without specific profile")
 			setShowApiConfig(true)
-			return
-		}
-		
-		// 如果没有currentConfig但有selectedConfigId，使用新的API获取完整配置
-		if (selectedConfigId) {
-			console.log('[AgentsView] Fetching full config for profile WITHOUT changing global config:', selectedConfigId)
-			// 使用新的API来获取完整配置（不会改变全局配置）
-			vscode.postMessage({
-				type: "getApiConfigurationById",
-				text: selectedConfigId
-			})
-			// 收到响应后会在 getApiConfigurationByIdResult 中处理
-			return
-		}
-		
-		// 都没有的话，直接打开配置页面
-		console.log('[AgentsView] Opening API config without specific profile')
-		setShowApiConfig(true)
-	}, [])
+		},
+		[],
+	)
 
 	const handleApiConfigBack = useCallback(() => {
 		setShowApiConfig(false)
@@ -688,20 +697,23 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 		setIsAgentMode(false) // 重置智能体模式
 	}, [])
 
-	const handleApiConfigChanged = useCallback((newConfig: any) => {
-		console.log('[AgentsView] API config changed, isAgentMode:', isAgentMode, 'newConfig:', newConfig)
-		
-		if (isAgentMode && agentConfigSaveCallback) {
-			// 智能体模式：直接调用回调
-			console.log('[AgentsView] Calling agent config save callback directly')
-			agentConfigSaveCallback(newConfig)
-		} else {
-			// 普通模式：使用全局状态
-			setModifiedApiConfig(newConfig)
-		}
-		
-		setShowApiConfig(false)
-	}, [isAgentMode, agentConfigSaveCallback])
+	const handleApiConfigChanged = useCallback(
+		(newConfig: any) => {
+			console.log("[AgentsView] API config changed, isAgentMode:", isAgentMode, "newConfig:", newConfig)
+
+			if (isAgentMode && agentConfigSaveCallback) {
+				// 智能体模式：直接调用回调
+				console.log("[AgentsView] Calling agent config save callback directly")
+				agentConfigSaveCallback(newConfig)
+			} else {
+				// 普通模式：使用全局状态
+				setModifiedApiConfig(newConfig)
+			}
+
+			setShowApiConfig(false)
+		},
+		[isAgentMode, agentConfigSaveCallback],
+	)
 
 	const handleShowModeConfig = useCallback(() => {
 		setShowModeConfig(true)
@@ -711,10 +723,6 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 		setShowModeConfig(false)
 	}, [])
 
-	const handleAgentAction = useCallback((agentId: string, action: "toggle" | "configure" | "delete") => {
-		console.log(`Agent ${agentId} action: ${action}`)
-	}, [])
-
 	const handleBlacklistCommand = useCallback((command: string) => {
 		console.log(`Adding blacklist command: ${command}`)
 	}, [])
@@ -722,10 +730,10 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	// Show API config view if requested
 	if (showApiConfig) {
 		return (
-			<ApiConfigView 
-				onBack={handleApiConfigBack} 
-				onConfigChanged={handleApiConfigChanged} 
-				readOnlyMode={true} 
+			<ApiConfigView
+				onBack={handleApiConfigBack}
+				onConfigChanged={handleApiConfigChanged}
+				readOnlyMode={true}
 				initialConfig={selectedProfileConfig}
 				enableSaveButton={true}
 			/>
@@ -758,7 +766,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 				}}
 				onShowModeConfig={handleShowModeConfig}
 				onAgentApiConfigSave={(config) => {
-					console.log('[AgentsView] Agent API config saved callback:', config)
+					console.log("[AgentsView] Agent API config saved callback:", config)
 				}}
 				templateData={selectedTaskData}
 				editMode={editMode}

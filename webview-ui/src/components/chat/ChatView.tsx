@@ -118,7 +118,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		soundVolume,
 		cloudIsAuthenticated,
 		cwd,
-		agentA2AMode
+		agentA2AMode,
 	} = useExtensionState()
 
 	const messagesRef = useRef(messages)
@@ -423,7 +423,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					break
 			}
 		}
-	}, [lastMessage, secondLastMessage])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [lastMessage, secondLastMessage, playSound, t])
 
 	useEffect(() => {
 		if (messages.length === 0) {
@@ -584,16 +585,21 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 					if (messagesRef.current.length === 0) {
 						// 检查是否是A2A模式 - 只有在当前任务启动时才检查A2A状态
-						console.log('[A2A] 🔍 Checking A2A mode, agentA2AMode:', agentA2AMode)
-						
+						console.log("[A2A] 🔍 Checking A2A mode, agentA2AMode:", agentA2AMode)
+
 						// 如果是通过智能体列表启动的调试模式，agentA2AMode 应该包含完整的调试信息
-						if (agentA2AMode?.enabled && agentA2AMode?.serverUrl && 'isDebugMode' in agentA2AMode && agentA2AMode.isDebugMode) {
+						if (
+							agentA2AMode?.enabled &&
+							agentA2AMode?.serverUrl &&
+							"isDebugMode" in agentA2AMode &&
+							agentA2AMode.isDebugMode
+						) {
 							// A2A调试模式：直接调用智能体HTTP端点
-							console.log('[A2A] A2A debug mode detected, calling agent:', agentA2AMode.agentName)
+							console.log("[A2A] A2A debug mode detected, calling agent:", agentA2AMode.agentName)
 							handleA2ACall(text, images, agentA2AMode)
 						} else {
 							// 直接模式：使用原有逻辑（包括普通任务和已结束的智能体任务）
-							console.log('[A2A] Direct mode, using normal task flow')
+							console.log("[A2A] Direct mode, using normal task flow")
 							vscode.postMessage({ type: "newTask", text, images })
 						}
 					} else if (clineAskRef.current) {
@@ -641,7 +647,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				// but for now we'll just log it
 			}
 		},
-		[handleChatReset, markFollowUpAsAnswered, sendingDisabled], // messagesRef and clineAskRef are stable
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[handleChatReset, markFollowUpAsAnswered, sendingDisabled, agentA2AMode], // messagesRef and clineAskRef are stable
 	)
 
 	useEffect(() => {
@@ -730,91 +737,91 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	// A2A调用处理函数
 	const handleA2ACall = useCallback(async (text: string, images: string[], agentA2AMode: any) => {
 		try {
-			console.log('[A2A] 🚀 Starting A2A call to agent:', agentA2AMode.agentName)
-			console.log('[A2A] 📍 Server URL from state:', agentA2AMode.serverUrl)
-			console.log('[A2A] 💬 User message:', text)
-			console.log('[A2A] 🔍 Frontend state port:', agentA2AMode.serverPort)
-			
+			console.log("[A2A] 🚀 Starting A2A call to agent:", agentA2AMode.agentName)
+			console.log("[A2A] 📍 Server URL from state:", agentA2AMode.serverUrl)
+			console.log("[A2A] 💬 User message:", text)
+			console.log("[A2A] 🔍 Frontend state port:", agentA2AMode.serverPort)
+
 			// 先显示用户输入的消息 - 使用特殊的A2A标识
-			vscode.postMessage({ 
-				type: "newTask", 
-				text: `🤖 [A2A测试] 正在调用智能体 "${agentA2AMode.agentName}"\n\n用户输入: ${text}`, 
-				images
+			vscode.postMessage({
+				type: "newTask",
+				text: `🤖 [A2A测试] 正在调用智能体 "${agentA2AMode.agentName}"\n\n用户输入: ${text}`,
+				images,
 			})
-			
+
 			// 🔥 动态获取正确的端口：从后端状态获取最新端口信息
 			// 根据Extension Host日志，后端有正确的端口信息
-			console.log('[A2A] 🔍 Frontend port from agentA2AMode:', agentA2AMode.serverPort)
-			console.log('[A2A] 🔍 Frontend URL from agentA2AMode:', agentA2AMode.serverUrl)
-			
+			console.log("[A2A] 🔍 Frontend port from agentA2AMode:", agentA2AMode.serverPort)
+			console.log("[A2A] 🔍 Frontend URL from agentA2AMode:", agentA2AMode.serverUrl)
+
 			// 🔥 直接从ClineProvider获取最新的agentA2AMode状态
-			console.log('[A2A] 🔄 Getting latest A2A state from ClineProvider...')
-			
+			console.log("[A2A] 🔄 Getting latest A2A state from ClineProvider...")
+
 			// 发送消息获取最新状态
 			const requestId = `a2a_${Date.now()}_${Math.random()}`
-			console.log('[A2A] 📤 Sending getCurrentA2AMode request to backend with requestId:', requestId)
+			console.log("[A2A] 📤 Sending getCurrentA2AMode request to backend with requestId:", requestId)
 			vscode.postMessage({
 				type: "getCurrentA2AMode",
-				requestId: requestId
+				requestId: requestId,
 			})
-			
+
 			// 🔥 CRITICAL: 等待后端响应最新的A2A状态
-			console.log('[A2A] ⏳ Waiting for currentA2AModeResponse message...')
-			
+			console.log("[A2A] ⏳ Waiting for currentA2AModeResponse message...")
+
 			// 创建Promise等待状态响应，但设置5秒超时然后回退使用当前状态
 			let latestA2AMode
 			try {
-				latestA2AMode = await new Promise<any>((resolve, reject) => {
+				latestA2AMode = await new Promise<any>((resolve) => {
 					const timeout = setTimeout(() => {
-						console.warn('[A2A] ⚠️ Timeout waiting for backend response, using current state')
+						console.warn("[A2A] ⚠️ Timeout waiting for backend response, using current state")
 						resolve(agentA2AMode) // 超时时使用当前状态而不是拒绝
 					}, 1000) // 缩短到1秒
-					
+
 					// 临时监听器等待响应
 					const messageHandler = (event: MessageEvent) => {
 						const message = event.data
-						console.log('[A2A] 📨 Received message:', message.type, message.requestId)
-						if (message.type === 'currentA2AModeResponse' && message.requestId === requestId) {
+						console.log("[A2A] 📨 Received message:", message.type, message.requestId)
+						if (message.type === "currentA2AModeResponse" && message.requestId === requestId) {
 							clearTimeout(timeout)
-							window.removeEventListener('message', messageHandler)
+							window.removeEventListener("message", messageHandler)
 							if (message.agentA2AMode) {
-								console.log('[A2A] ✅ Received fresh A2A state:', message.agentA2AMode)
+								console.log("[A2A] ✅ Received fresh A2A state:", message.agentA2AMode)
 								resolve(message.agentA2AMode)
 							} else if (message.error) {
-								console.error('[A2A] ❌ Backend error:', message.error)
+								console.error("[A2A] ❌ Backend error:", message.error)
 								resolve(agentA2AMode) // 错误时也使用当前状态
 							} else {
-								console.log('[A2A] ⚠️ No agentA2AMode in response, using current state')
+								console.log("[A2A] ⚠️ No agentA2AMode in response, using current state")
 								resolve(agentA2AMode)
 							}
 						}
 					}
-					
-					window.addEventListener('message', messageHandler)
+
+					window.addEventListener("message", messageHandler)
 				})
 			} catch (error) {
-				console.error('[A2A] ❌ Error waiting for state:', error)
+				console.error("[A2A] ❌ Error waiting for state:", error)
 				latestA2AMode = agentA2AMode // 出错时使用当前状态
 			}
-			
-			let serverUrl = latestA2AMode.serverUrl
-			let serverPort = latestA2AMode.serverPort
-			
-			console.log('[A2A] 🔧 Using server URL:', serverUrl)
-			console.log('[A2A] 🔧 Using server port:', serverPort)
-			
+
+			const serverUrl = latestA2AMode.serverUrl
+			const serverPort = latestA2AMode.serverPort
+
+			console.log("[A2A] 🔧 Using server URL:", serverUrl)
+			console.log("[A2A] 🔧 Using server port:", serverPort)
+
 			const response = await fetch(`${serverUrl}/execute`, {
-				method: 'POST',
+				method: "POST",
 				headers: {
-					'Content-Type': 'application/json',
+					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					method: 'chat',
+					method: "chat",
 					params: {
 						message: text,
-						images: images?.length > 0 ? images : undefined
-					}
-				})
+						images: images?.length > 0 ? images : undefined,
+					},
+				}),
 			})
 
 			if (!response.ok) {
@@ -822,22 +829,21 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			}
 
 			const result = await response.json()
-			console.log('[A2A] ✅ Response received:', result)
-			console.log('[A2A] 📋 Response content:', JSON.stringify(result, null, 2))
-			
+			console.log("[A2A] ✅ Response received:", result)
+			console.log("[A2A] 📋 Response content:", JSON.stringify(result, null, 2))
+
 			// 显示智能体响应内容
 			const responseText = result.result || result.response || result.data || "智能体执行完成"
-			console.log('[A2A] 💬 Agent response:', responseText)
-
+			console.log("[A2A] 💬 Agent response:", responseText)
 		} catch (error) {
-			console.error('[A2A] ❌ Call failed:', error)
-			console.log('[A2A] 🔍 Error details:', error instanceof Error ? error.message : String(error))
-			
+			console.error("[A2A] ❌ Call failed:", error)
+			console.log("[A2A] 🔍 Error details:", error instanceof Error ? error.message : String(error))
+
 			// 发送错误信息作为新任务
-			vscode.postMessage({ 
-				type: "newTask", 
-				text: `🤖 [A2A测试失败] 智能体 "${agentA2AMode.agentName}"\n\n用户输入: ${text}\n\n❌ 调用失败: ${error instanceof Error ? error.message : String(error)}`, 
-				images
+			vscode.postMessage({
+				type: "newTask",
+				text: `🤖 [A2A测试失败] 智能体 "${agentA2AMode.agentName}"\n\n用户输入: ${text}\n\n❌ 调用失败: ${error instanceof Error ? error.message : String(error)}`,
+				images,
 			})
 		}
 	}, [])
@@ -1030,7 +1036,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					break
 				case "currentA2AModeResponse":
 					// 这个case现在由临时监听器处理，保留用于其他可能的响应
-					console.log('[A2A] 📥 Received currentA2AModeResponse message (handled by temp listener):', message)
+					console.log("[A2A] 📥 Received currentA2AModeResponse message (handled by temp listener):", message)
 					break
 			}
 			// textAreaRef.current is not explicitly required here since React

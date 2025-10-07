@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useMemo } from "react"
+import React, { useCallback, useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { X, Clock, Folder, Settings, Sparkles } from "lucide-react"
-import { cn } from "@src/lib/utils"
+import { X, Clock, Settings, Sparkles } from "lucide-react"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { useTaskSearch } from "@src/components/history/useTaskSearch"
 import { formatTaskForDisplay, isTaskSuitableForTemplate, type AgentTemplateData } from "./utils/taskToAgentTemplate"
@@ -15,10 +14,10 @@ interface TaskListModalProps {
 const TaskListModal: React.FC<TaskListModalProps> = ({ isOpen, onClose, onSelectTask }) => {
 	const { t } = useTranslation()
 	const { taskHistory } = useExtensionState()
-	
+
 	// 使用现有的任务搜索hook
 	const { tasks, searchQuery, setSearchQuery } = useTaskSearch()
-	
+
 	// 过滤出适合创建模板的任务
 	const suitableTasks = useMemo(() => {
 		return tasks
@@ -27,30 +26,36 @@ const TaskListModal: React.FC<TaskListModalProps> = ({ isOpen, onClose, onSelect
 			.sort((a: any, b: any) => b.timestamp - a.timestamp) // 按时间倒序
 	}, [tasks])
 
-	const handleTaskSelect = useCallback((task: any) => {
-		// 从原始任务数据中提取模板信息
-		const originalTask = taskHistory?.find(t => t.id === task.id)
-		if (originalTask) {
-			const templateData: AgentTemplateData = {
-				apiConfigId: (originalTask as any).apiConfigId,
-				mode: (originalTask as any).mode || "ask",
-				tools: (originalTask as any).tools || ["internal"],
-				templateSource: {
-					type: 'task',
-					taskId: originalTask.id,
-					taskDescription: originalTask.task || '',
-					timestamp: originalTask.ts || Date.now()
+	const handleTaskSelect = useCallback(
+		(task: any) => {
+			// 从原始任务数据中提取模板信息
+			const originalTask = taskHistory?.find((t) => t.id === task.id)
+			if (originalTask) {
+				const templateData: AgentTemplateData = {
+					apiConfigId: (originalTask as any).apiConfigId,
+					mode: (originalTask as any).mode || "ask",
+					tools: (originalTask as any).tools || ["internal"],
+					templateSource: {
+						type: "task",
+						taskId: originalTask.id,
+						taskDescription: originalTask.task || "",
+						timestamp: originalTask.ts || Date.now(),
+					},
 				}
+				onSelectTask(templateData)
 			}
-			onSelectTask(templateData)
-		}
-	}, [taskHistory, onSelectTask])
+		},
+		[taskHistory, onSelectTask],
+	)
 
-	const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-		if (e.target === e.currentTarget) {
-			onClose()
-		}
-	}, [onClose])
+	const handleBackdropClick = useCallback(
+		(e: React.MouseEvent) => {
+			if (e.target === e.currentTarget) {
+				onClose()
+			}
+		},
+		[onClose],
+	)
 
 	if (!isOpen) return null
 
@@ -58,8 +63,7 @@ const TaskListModal: React.FC<TaskListModalProps> = ({ isOpen, onClose, onSelect
 		<div
 			className="fixed inset-0 bg-black/50 flex items-center justify-center"
 			style={{ zIndex: 9999 }}
-			onClick={handleBackdropClick}
-		>
+			onClick={handleBackdropClick}>
 			<div className="bg-vscode-editor-background border border-vscode-panel-border rounded-lg w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
 				{/* Header */}
 				<div className="flex items-center justify-between px-6 py-4 border-b border-vscode-panel-border">
@@ -71,8 +75,7 @@ const TaskListModal: React.FC<TaskListModalProps> = ({ isOpen, onClose, onSelect
 					</div>
 					<button
 						onClick={onClose}
-						className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors"
-					>
+						className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors">
 						<X size={16} />
 					</button>
 				</div>
@@ -106,15 +109,14 @@ const TaskListModal: React.FC<TaskListModalProps> = ({ isOpen, onClose, onSelect
 								<button
 									key={task.id}
 									onClick={() => handleTaskSelect(task)}
-									className="w-full text-left p-4 bg-vscode-input-background hover:bg-vscode-list-hoverBackground border border-vscode-input-border rounded-md transition-colors group"
-								>
+									className="w-full text-left p-4 bg-vscode-input-background hover:bg-vscode-list-hoverBackground border border-vscode-input-border rounded-md transition-colors group">
 									<div className="flex items-start justify-between gap-3">
 										<div className="flex-1 min-w-0">
 											{/* Task Title */}
 											<h3 className="font-medium text-vscode-foreground truncate group-hover:text-vscode-list-activeSelectionForeground">
 												{task.title}
 											</h3>
-											
+
 											{/* Task Subtitle */}
 											<div className="flex items-center gap-2 mt-1 text-xs text-vscode-foreground/60">
 												<Clock size={12} />
@@ -125,7 +127,11 @@ const TaskListModal: React.FC<TaskListModalProps> = ({ isOpen, onClose, onSelect
 											<div className="flex items-center gap-3 mt-2">
 												<div className="flex items-center gap-1 text-xs text-vscode-foreground/50">
 													<Settings size={10} />
-													<span>{t(`chat:modeSelector.presetModes.${task.configPreview.mode}.name` as any) || task.configPreview.mode}</span>
+													<span>
+														{t(
+															`chat:modeSelector.presetModes.${task.configPreview.mode}.name` as any,
+														) || task.configPreview.mode}
+													</span>
 												</div>
 												{task.configPreview.hasApiConfig && (
 													<div className="flex items-center gap-1 text-xs text-green-500">
@@ -153,7 +159,10 @@ const TaskListModal: React.FC<TaskListModalProps> = ({ isOpen, onClose, onSelect
 				{/* Footer */}
 				<div className="px-6 py-4 border-t border-vscode-panel-border text-center">
 					<p className="text-xs text-vscode-foreground/60">
-						{t("agents:taskTemplateHint", "选择一个任务将使用其配置信息（API配置、模式、工具等）作为智能体的初始设置")}
+						{t(
+							"agents:taskTemplateHint",
+							"选择一个任务将使用其配置信息（API配置、模式、工具等）作为智能体的初始设置",
+						)}
 					</p>
 				</div>
 			</div>

@@ -19,7 +19,7 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 	currentAvatar,
 	onAvatarChange,
 	agentName,
-	onNameChange
+	onNameChange,
 }) => {
 	const { t } = useTranslation()
 	const fileInputRef = useRef<HTMLInputElement>(null)
@@ -42,7 +42,7 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 
 	const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0]
-		if (file && file.type.startsWith('image/')) {
+		if (file && file.type.startsWith("image/")) {
 			const reader = new FileReader()
 			reader.onload = (e) => {
 				const result = e.target?.result as string
@@ -52,27 +52,15 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 		}
 	}, [])
 
-	const handleRandomAvatar = useCallback(() => {
-		// 如果智能体名称为空，显示名称输入框
-		if (!agentName || agentName.trim() === "") {
-			setShowNameInput(true)
-			return
-		}
-		
-		// 有名称时直接生成头像
-		generateAvatarByName(agentName)
-	}, [agentName])
-
-	const generateAvatarByName = useCallback((name: string) => {
-		// 基于名称生成更个性化的头像
-		const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899']
-		const nameHash = name.split('').reduce((hash, char) => hash + char.charCodeAt(0), 0)
+	// Helper function to generate avatar from name
+	const generateAvatarFromName = useCallback((name: string) => {
+		const colors = ["#3B82F6", "#EF4444", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"]
+		const nameHash = name.split("").reduce((hash, char) => hash + char.charCodeAt(0), 0)
 		const colorIndex = nameHash % colors.length
 		const selectedColor = colors[colorIndex]
-		
-		// 使用名称的首字符作为头像内容
+
 		const initial = name.charAt(0).toUpperCase()
-		
+
 		const svgContent = `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
 				<rect width="100" height="100" fill="${selectedColor}"/>
 				<text x="50" y="60" font-family="Arial, sans-serif" font-size="40" font-weight="bold" text-anchor="middle" fill="white">${initial}</text>
@@ -81,20 +69,31 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 		setSelectedAvatar(avatar)
 	}, [])
 
+	const handleRandomAvatar = useCallback(() => {
+		// 如果智能体名称为空，显示名称输入框
+		if (!agentName || agentName.trim() === "") {
+			setShowNameInput(true)
+			return
+		}
+
+		// 有名称时直接生成头像
+		generateAvatarFromName(agentName)
+	}, [agentName, generateAvatarFromName])
+
 	const handleGenerateWithName = useCallback(() => {
 		if (tempName.trim()) {
 			const trimmedName = tempName.trim()
-			generateAvatarByName(trimmedName)
-			
+			generateAvatarFromName(trimmedName)
+
 			// 同时更新主页面的智能体名称
 			if (onNameChange) {
 				onNameChange(trimmedName)
 			}
-			
+
 			setShowNameInput(false)
 			setTempName("")
 		}
-	}, [tempName, generateAvatarByName, onNameChange])
+	}, [tempName, generateAvatarFromName, onNameChange])
 
 	const handleUse = useCallback(() => {
 		if (selectedAvatar) {
@@ -103,11 +102,14 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 		onClose()
 	}, [selectedAvatar, onAvatarChange, onClose])
 
-	const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-		if (e.target === e.currentTarget) {
-			onClose()
-		}
-	}, [onClose])
+	const handleBackdropClick = useCallback(
+		(e: React.MouseEvent) => {
+			if (e.target === e.currentTarget) {
+				onClose()
+			}
+		},
+		[onClose],
+	)
 
 	if (!isOpen) return null
 
@@ -115,18 +117,14 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 		<div
 			className="fixed inset-0 bg-black/50 flex items-center justify-center"
 			style={{ zIndex: 9999 }}
-			onClick={handleBackdropClick}
-		>
+			onClick={handleBackdropClick}>
 			<div className="bg-vscode-editor-background border border-vscode-panel-border rounded-lg max-w-xs w-full mx-4">
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 py-3 border-b border-vscode-panel-border">
-					<h2 className="text-lg font-bold text-vscode-foreground">
-						{t("agents:changeAvatar", "更改头像")}
-					</h2>
+					<h2 className="text-lg font-bold text-vscode-foreground">{t("agents:changeAvatar", "更改头像")}</h2>
 					<button
 						onClick={onClose}
-						className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors"
-					>
+						className="p-1.5 hover:bg-vscode-toolbar-hoverBackground rounded-md text-vscode-foreground/70 hover:text-vscode-foreground transition-colors">
 						<X size={16} />
 					</button>
 				</div>
@@ -137,11 +135,7 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 					<div className="flex justify-center mb-4">
 						<div className="w-24 h-24 rounded-lg overflow-hidden bg-vscode-input-background border-2 border-vscode-input-border flex items-center justify-center">
 							{selectedAvatar ? (
-								<img
-									src={selectedAvatar}
-									alt="Avatar preview"
-									className="w-full h-full object-cover"
-								/>
+								<img src={selectedAvatar} alt="Avatar preview" className="w-full h-full object-cover" />
 							) : (
 								<div className="w-16 h-16 bg-vscode-button-background rounded-lg flex items-center justify-center">
 									<span className="text-2xl">👤</span>
@@ -164,7 +158,7 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 									placeholder={t("agents:agentNamePlaceholder", "请输入智能体名称")}
 									className="flex-1 px-3 py-2 bg-vscode-editor-background border border-vscode-input-border rounded-md text-sm text-vscode-foreground placeholder-vscode-foreground/50 focus:outline-none focus:ring-1 focus:ring-vscode-focusBorder"
 									onKeyPress={(e) => {
-										if (e.key === 'Enter' && tempName.trim()) {
+										if (e.key === "Enter" && tempName.trim()) {
 											handleGenerateWithName()
 										}
 									}}
@@ -176,9 +170,8 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 										"px-3 py-2 text-sm rounded-md transition-colors",
 										tempName.trim()
 											? "bg-vscode-button-background hover:bg-vscode-button-hoverBackground text-vscode-button-foreground"
-											: "bg-vscode-button-background/50 text-vscode-button-foreground/50 cursor-not-allowed"
-									)}
-								>
+											: "bg-vscode-button-background/50 text-vscode-button-foreground/50 cursor-not-allowed",
+									)}>
 									{t("agents:generate", "生成")}
 								</button>
 							</div>
@@ -190,8 +183,7 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 						<StandardTooltip content={t("agents:randomAvatar", "换一个")}>
 							<button
 								onClick={handleRandomAvatar}
-								className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-vscode-input-background hover:bg-vscode-list-hoverBackground border border-vscode-input-border rounded-md text-vscode-foreground transition-colors"
-							>
+								className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-vscode-input-background hover:bg-vscode-list-hoverBackground border border-vscode-input-border rounded-md text-vscode-foreground transition-colors">
 								<RotateCcw size={16} />
 								{t("agents:randomAvatar", "换一个")}
 							</button>
@@ -200,8 +192,7 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 						<StandardTooltip content={t("agents:uploadFromDevice", "从本地上传")}>
 							<button
 								onClick={handleFileSelect}
-								className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-vscode-input-background hover:bg-vscode-list-hoverBackground border border-vscode-input-border rounded-md text-vscode-foreground transition-colors"
-							>
+								className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-vscode-input-background hover:bg-vscode-list-hoverBackground border border-vscode-input-border rounded-md text-vscode-foreground transition-colors">
 								<Upload size={16} />
 								{t("agents:uploadFromDevice", "从本地上传")}
 							</button>
@@ -222,8 +213,7 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 				<div className="flex items-center justify-end gap-3 px-4 py-3 border-t border-vscode-panel-border">
 					<button
 						onClick={onClose}
-						className="px-4 py-2 text-sm text-vscode-foreground hover:bg-vscode-toolbar-hoverBackground rounded-md transition-colors"
-					>
+						className="px-4 py-2 text-sm text-vscode-foreground hover:bg-vscode-toolbar-hoverBackground rounded-md transition-colors">
 						{t("agents:cancel", "取消")}
 					</button>
 					<button
@@ -232,10 +222,9 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 							"px-4 py-2 text-sm rounded-md transition-colors",
 							selectedAvatar
 								? "bg-vscode-button-background hover:bg-vscode-button-hoverBackground text-vscode-button-foreground"
-								: "bg-vscode-button-background/50 text-vscode-button-foreground/50 cursor-not-allowed"
+								: "bg-vscode-button-background/50 text-vscode-button-foreground/50 cursor-not-allowed",
 						)}
-						disabled={!selectedAvatar}
-					>
+						disabled={!selectedAvatar}>
 						{t("agents:use", "使用")}
 					</button>
 				</div>

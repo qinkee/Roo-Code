@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { Plus, ChevronDown, FileText, Sparkles } from "lucide-react"
+import { Plus, ChevronDown, Sparkles } from "lucide-react"
 import { cn } from "@src/lib/utils"
 
 interface ActionBarProps {
@@ -14,7 +14,7 @@ const ActionBar: React.FC<ActionBarProps> = ({ onCreateNew, onCreateFromTask }) 
 	const dropdownRef = useRef<HTMLDivElement>(null)
 
 	const handleToggle = useCallback(() => {
-		setIsOpen(prev => !prev)
+		setIsOpen((prev) => !prev)
 	}, [])
 
 	const handleCreateNew = useCallback(() => {
@@ -36,11 +36,11 @@ const ActionBar: React.FC<ActionBarProps> = ({ onCreateNew, onCreateFromTask }) 
 		}
 
 		if (isOpen) {
-			document.addEventListener('mousedown', handleClickOutside)
+			document.addEventListener("mousedown", handleClickOutside)
 		}
 
 		return () => {
-			document.removeEventListener('mousedown', handleClickOutside)
+			document.removeEventListener("mousedown", handleClickOutside)
 		}
 	}, [isOpen])
 
@@ -51,18 +51,11 @@ const ActionBar: React.FC<ActionBarProps> = ({ onCreateNew, onCreateFromTask }) 
 				onClick={handleToggle}
 				className={cn(
 					"flex items-center gap-1.5 px-3 py-1.5 bg-vscode-button-background hover:bg-vscode-button-hoverBackground text-vscode-button-foreground rounded-md text-sm font-bold transition-colors",
-					isOpen && "bg-vscode-button-hoverBackground"
-				)}
-			>
+					isOpen && "bg-vscode-button-hoverBackground",
+				)}>
 				<Plus size={14} />
 				{t("agents:create", "创建")}
-				<ChevronDown 
-					size={12} 
-					className={cn(
-						"transition-transform duration-200",
-						isOpen && "rotate-180"
-					)} 
-				/>
+				<ChevronDown size={12} className={cn("transition-transform duration-200", isOpen && "rotate-180")} />
 			</button>
 
 			{/* Dropdown Menu */}
@@ -71,15 +64,13 @@ const ActionBar: React.FC<ActionBarProps> = ({ onCreateNew, onCreateFromTask }) 
 					<div className="py-1">
 						<button
 							onClick={handleCreateNew}
-							className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground transition-colors"
-						>
+							className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground transition-colors">
 							<Plus size={14} />
 							<span>{t("agents:createNew", "新建")}</span>
 						</button>
 						<button
 							onClick={handleCreateFromTask}
-							className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground transition-colors"
-						>
+							className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground transition-colors">
 							<Sparkles size={14} />
 							<span>{t("agents:createFromTask", "通过任务创建")}</span>
 						</button>

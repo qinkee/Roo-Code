@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { X, Terminal, Monitor, Smartphone, Laptop } from "lucide-react"
-import { vscode } from "@src/utils/vscode"
 
 interface Terminal {
 	id: string
@@ -19,13 +18,8 @@ interface TerminalSelectionModalProps {
 	agentName: string
 }
 
-const TerminalSelectionModal: React.FC<TerminalSelectionModalProps> = ({
-	isOpen,
-	onClose,
-	onSelect,
-	agentName
-}) => {
-	const { t } = useTranslation()
+const TerminalSelectionModal: React.FC<TerminalSelectionModalProps> = ({ isOpen, onClose, onSelect, agentName }) => {
+	const _t = useTranslation().t
 	const [terminals, setTerminals] = useState<Terminal[]>([])
 	const [loading, setLoading] = useState(false)
 	const [selectedTerminal, setSelectedTerminal] = useState<Terminal | null>(null)
@@ -38,16 +32,16 @@ const TerminalSelectionModal: React.FC<TerminalSelectionModalProps> = ({
 			type: "desktop",
 			status: "online",
 			platform: "本地环境",
-			lastSeen: "当前"
+			lastSeen: "当前",
 		},
 		{
 			id: "cloud-computer",
-			name: "我的云电脑", 
+			name: "我的云电脑",
 			type: "server",
 			status: "offline",
 			platform: "云环境",
-			lastSeen: "暂未配置"
-		}
+			lastSeen: "暂未配置",
+		},
 	]
 
 	useEffect(() => {
@@ -59,6 +53,7 @@ const TerminalSelectionModal: React.FC<TerminalSelectionModalProps> = ({
 				setLoading(false)
 			}, 500)
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isOpen])
 
 	const getTerminalIcon = (type: string) => {
@@ -108,13 +103,10 @@ const TerminalSelectionModal: React.FC<TerminalSelectionModalProps> = ({
 					<div>
 						<h2 className="text-lg font-bold text-vscode-foreground">选择发布终端</h2>
 						<p className="text-sm text-vscode-foreground/70 mt-1">
-							为智能体 "{agentName}" 选择运行终端
+							为智能体 &quot;{agentName}&quot; 选择运行终端
 						</p>
 					</div>
-					<button
-						onClick={onClose}
-						className="p-1 hover:bg-vscode-toolbar-hoverBackground rounded"
-					>
+					<button onClick={onClose} className="p-1 hover:bg-vscode-toolbar-hoverBackground rounded">
 						<X size={16} className="text-vscode-foreground/70" />
 					</button>
 				</div>
@@ -129,9 +121,7 @@ const TerminalSelectionModal: React.FC<TerminalSelectionModalProps> = ({
 						<div className="text-center py-8">
 							<Terminal size={48} className="mx-auto text-vscode-foreground/30 mb-4" />
 							<div className="text-sm text-vscode-foreground/70">暂无可用终端</div>
-							<div className="text-xs text-vscode-foreground/50 mt-1">
-								请确保至少有一个终端在线
-							</div>
+							<div className="text-xs text-vscode-foreground/50 mt-1">请确保至少有一个终端在线</div>
 						</div>
 					) : (
 						<div className="space-y-2">
@@ -143,33 +133,37 @@ const TerminalSelectionModal: React.FC<TerminalSelectionModalProps> = ({
 										selectedTerminal?.id === terminal.id
 											? "border-vscode-focusBorder bg-vscode-list-activeSelectionBackground"
 											: "border-vscode-input-border bg-vscode-input-background hover:bg-vscode-list-hoverBackground"
-									} ${terminal.status === "offline" ? "opacity-50" : ""}`}
-								>
+									} ${terminal.status === "offline" ? "opacity-50" : ""}`}>
 									<div className="flex items-center gap-3">
-										<div className={`p-2 rounded ${
-											terminal.status === "online" ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"
-										}`}>
+										<div
+											className={`p-2 rounded ${
+												terminal.status === "online"
+													? "bg-green-500/20 text-green-400"
+													: "bg-gray-500/20 text-gray-400"
+											}`}>
 											{getTerminalIcon(terminal.type)}
 										</div>
 										<div className="flex-1">
 											<div className="flex items-center gap-2">
-												<span className="font-medium text-vscode-foreground">{terminal.name}</span>
-												<span className={`px-2 py-0.5 rounded text-xs ${
-													terminal.status === "online" 
-														? "bg-green-500/20 text-green-400" 
-														: "bg-gray-500/20 text-gray-400"
-												}`}>
+												<span className="font-medium text-vscode-foreground">
+													{terminal.name}
+												</span>
+												<span
+													className={`px-2 py-0.5 rounded text-xs ${
+														terminal.status === "online"
+															? "bg-green-500/20 text-green-400"
+															: "bg-gray-500/20 text-gray-400"
+													}`}>
 													{terminal.status === "online" ? "在线" : "离线"}
 												</span>
 											</div>
 											<div className="text-xs text-vscode-foreground/70 mt-1">
-												{getTerminalTypeText(terminal.type)} • {terminal.platform} • 最后活跃: {terminal.lastSeen}
+												{getTerminalTypeText(terminal.type)} • {terminal.platform} • 最后活跃:{" "}
+												{terminal.lastSeen}
 											</div>
 										</div>
 										{terminal.status === "offline" && (
-											<div className="text-xs text-vscode-foreground/50">
-												离线终端无法发布
-											</div>
+											<div className="text-xs text-vscode-foreground/50">离线终端无法发布</div>
 										)}
 									</div>
 								</div>
@@ -182,15 +176,13 @@ const TerminalSelectionModal: React.FC<TerminalSelectionModalProps> = ({
 				<div className="flex items-center justify-end gap-2 p-4 border-t border-vscode-panel-border">
 					<button
 						onClick={onClose}
-						className="px-4 py-2 text-sm bg-vscode-button-secondaryBackground hover:bg-vscode-button-secondaryHoverBackground text-vscode-button-secondaryForeground rounded"
-					>
+						className="px-4 py-2 text-sm bg-vscode-button-secondaryBackground hover:bg-vscode-button-secondaryHoverBackground text-vscode-button-secondaryForeground rounded">
 						取消
 					</button>
 					<button
 						onClick={handleSelect}
 						disabled={!selectedTerminal || selectedTerminal.status === "offline"}
-						className="px-4 py-2 text-sm bg-vscode-button-background hover:bg-vscode-button-hoverBackground text-vscode-button-foreground rounded disabled:opacity-50 disabled:cursor-not-allowed"
-					>
+						className="px-4 py-2 text-sm bg-vscode-button-background hover:bg-vscode-button-hoverBackground text-vscode-button-foreground rounded disabled:opacity-50 disabled:cursor-not-allowed">
 						发布到此终端
 					</button>
 				</div>
