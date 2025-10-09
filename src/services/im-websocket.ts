@@ -17,7 +17,7 @@ export class RooCodeIMConnection {
 	constructor(
 		private context: vscode.ExtensionContext,
 		private outputChannel: vscode.OutputChannel,
-		private wsUrl: string = "ws://localhost:8878/im",
+		private wsUrl: string = "wss://aiim.ws.service.thinkgs.cn/im",
 	) {
 		this.setupMessageHandlers()
 	}
