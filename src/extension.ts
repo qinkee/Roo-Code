@@ -111,15 +111,234 @@ export async function activate(context: vscode.ExtensionContext) {
 	outputChannel.appendLine("[LLM] LLM Stream Service created and registered globally")
 
 	// 注册LLM流式请求处理器
-	llmService.imConnection.onLLMStreamRequest((data: any) => {
-		outputChannel.appendLine(`[LLM] Received LLM_STREAM_REQUEST: ${JSON.stringify(data)}`)
-		// 处理接收到的LLM流式请求
+	llmService.imConnection.onLLMStreamRequest(async (data: any) => {
+		outputChannel.appendLine(`[LLM] 🔍 Received LLM_STREAM_REQUEST - Full data: ${JSON.stringify(data)}`)
 		// data 包含: streamId, question, sendId, recvId, senderTerminal, targetTerminal, chatType, taskName, timestamp
 		try {
-			const { streamId, question, sendId, recvId, targetTerminal, chatType } = data
-			outputChannel.appendLine(`[LLM] Processing request - streamId: ${streamId}, question: ${question}`)
-			// TODO: 这里需要调用实际的LLM处理逻辑
-			// 暂时只是记录日志
+			const { streamId, question, sendId, recvId, senderTerminal, targetTerminal, chatType, taskName } = data
+			outputChannel.appendLine(`[LLM] Processing request - streamId: ${streamId}, taskName: ${taskName}`)
+			outputChannel.appendLine(
+				`[LLM] 🔍 Incoming route VALUES - sendId: ${sendId} (type: ${typeof sendId}), recvId: ${recvId} (type: ${typeof recvId}), senderTerminal: ${senderTerminal} (type: ${typeof senderTerminal}), targetTerminal: ${targetTerminal} (type: ${typeof targetTerminal}), chatType: ${chatType}`,
+			)
+
+			// 响应时需要交换发送者和接收者的值
+			// 响应消息: sendId字段填recvId的值, recvId字段填sendId的值
+			const responseSendId = recvId // sendId 填原请求的 recvId
+			const responseRecvId = sendId // recvId 填原请求的 sendId
+			const responseSenderTerminal = targetTerminal // senderTerminal 填原请求的 targetTerminal
+			const responseTargetTerminal = senderTerminal // targetTerminal 填原请求的 senderTerminal
+
+			outputChannel.appendLine(
+				`[LLM] 🎯 Response route VALUES - responseSendId: ${responseSendId} (原recvId=${recvId}), responseRecvId: ${responseRecvId} (原sendId=${sendId}), responseSenderTerminal: ${responseSenderTerminal} (原targetTerminal=${targetTerminal}), responseTargetTerminal: ${responseTargetTerminal} (原senderTerminal=${senderTerminal})`,
+			)
+
+			// 解析 question（它是一个JSON字符串）
+			let questionData: any
+			try {
+				questionData = typeof question === "string" ? JSON.parse(question) : question
+				outputChannel.appendLine(`[LLM] Parsed question: ${JSON.stringify(questionData)}`)
+			} catch (e) {
+				outputChannel.appendLine(`[LLM] Failed to parse question: ${e}`)
+				// 发送错误响应
+				llmService.imConnection.sendLLMError(
+					streamId,
+					"Invalid question format",
+					responseRecvId,
+					responseTargetTerminal,
+					chatType,
+					responseSendId,
+					responseSenderTerminal,
+				)
+				return
+			}
+
+			// 从 taskName 中提取智能体ID (格式: agent_{agentId})
+			const agentIdMatch = taskName?.match(/^agent_(.+)$/)
+			if (!agentIdMatch) {
+				outputChannel.appendLine(`[LLM] Invalid taskName format: ${taskName}`)
+				llmService.imConnection.sendLLMError(
+					streamId,
+					"Invalid taskName format",
+					responseRecvId,
+					responseTargetTerminal,
+					chatType,
+					responseSendId,
+					responseSenderTerminal,
+				)
+				return
+			}
+
+			const agentId = agentIdMatch[1]
+			outputChannel.appendLine(`[LLM] Extracted agent ID: ${agentId}`)
+
+			// 获取消息内容
+			const message = questionData?.params?.message
+			if (!message) {
+				outputChannel.appendLine(`[LLM] No message in question data`)
+				llmService.imConnection.sendLLMError(
+					streamId,
+					"No message provided",
+					responseRecvId,
+					responseTargetTerminal,
+					chatType,
+					responseSendId,
+					responseSenderTerminal,
+				)
+				return
+			}
+
+			outputChannel.appendLine(`[LLM] User message: ${message}`)
+
+			// 调用智能体的 A2A 服务器
+			try {
+				// 直接使用已在顶部导入的 A2AServerManager
+				const a2aManager = A2AServerManager.getInstance()
+
+				// 获取智能体的服务器状态（使用正确的方法名）
+				const serverStatus = a2aManager.getServerStatus(agentId)
+				if (!serverStatus || !serverStatus.url) {
+					outputChannel.appendLine(`[LLM] Agent ${agentId} not running or no server URL`)
+					llmService.imConnection.sendLLMError(
+						streamId,
+						`Agent ${agentId} is not running`,
+						recvId,
+						targetTerminal,
+						chatType,
+						sendId,
+						senderTerminal,
+					)
+					return
+				}
+
+				outputChannel.appendLine(`[LLM] Calling agent at: ${serverStatus.url}/execute (SSE with stream=true)`)
+
+				// 使用流式 SSE 请求
+				const url = new URL(`${serverStatus.url}/execute`)
+				const isHttps = url.protocol === "https:"
+				const httpModule = isHttps ? require("https") : require("http")
+
+				await new Promise<void>((resolve, reject) => {
+					const requestData = JSON.stringify({
+						method: "chat",
+						params: { message: message },
+						stream: true, // 关键：添加 stream 参数
+					})
+
+					const options = {
+						hostname: url.hostname,
+						port: url.port || (isHttps ? 443 : 80),
+						path: url.pathname,
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"Content-Length": Buffer.byteLength(requestData),
+							Accept: "text/event-stream",
+						},
+					}
+
+					const req = httpModule.request(options, (res: any) => {
+						if (res.statusCode < 200 || res.statusCode >= 300) {
+							let errorData = ""
+							res.on("data", (chunk: any) => {
+								errorData += chunk
+							})
+							res.on("end", () => {
+								reject(new Error(`HTTP ${res.statusCode}: ${errorData}`))
+							})
+							return
+						}
+
+						outputChannel.appendLine(`[LLM] Connected to agent SSE stream`)
+						let buffer = ""
+
+						let currentEvent = ""
+						res.on("data", (chunk: any) => {
+							buffer += chunk.toString()
+							const lines = buffer.split("\n")
+							buffer = lines.pop() || ""
+
+							for (const line of lines) {
+								if (line.startsWith("event: ")) {
+									currentEvent = line.slice(7).trim()
+								} else if (line.startsWith("data: ")) {
+									const data = line.slice(6).trim()
+
+									if (data === "[DONE]") {
+										outputChannel.appendLine(`[LLM] Stream done signal`)
+										continue
+									}
+
+									try {
+										const parsed = JSON.parse(data)
+
+										// 根据事件类型处理
+										if (currentEvent === "thinking" || currentEvent === "completion") {
+											// thinking 和 completion 事件都包含 content
+											if (parsed.content) {
+												outputChannel.appendLine(
+													`[LLM] [${currentEvent}] ${parsed.content.substring(0, 30)}...`,
+												)
+												llmService.imConnection.sendLLMChunk(
+													streamId,
+													parsed.content,
+													responseRecvId,
+													responseTargetTerminal,
+													chatType,
+													responseSendId,
+													responseSenderTerminal,
+												)
+											}
+										} else if (currentEvent === "error") {
+											reject(new Error(parsed.error || parsed.message || "Stream error"))
+										} else if (currentEvent === "done") {
+											outputChannel.appendLine(`[LLM] Stream done event`)
+										}
+										// connected, start, api_start 等事件不需要转发
+									} catch (e) {
+										outputChannel.appendLine(`[LLM] Failed to parse SSE data: ${data}`)
+									}
+								}
+							}
+						})
+
+						res.on("end", () => {
+							outputChannel.appendLine(`[LLM] Stream ended`)
+							llmService.imConnection.sendLLMEnd(
+								streamId,
+								responseRecvId,
+								responseTargetTerminal,
+								chatType,
+								{
+									name: taskName,
+									id: agentId,
+								},
+								responseSendId,
+								responseSenderTerminal,
+							)
+							resolve()
+						})
+
+						res.on("error", reject)
+					})
+
+					req.on("error", reject)
+					req.write(requestData)
+					req.end()
+				})
+
+				outputChannel.appendLine(`[LLM] Stream completed for streamId: ${streamId}`)
+			} catch (error: any) {
+				outputChannel.appendLine(`[LLM] Error calling agent: ${error.message}`)
+				llmService.imConnection.sendLLMError(
+					streamId,
+					error.message || "Agent execution failed",
+					recvId,
+					targetTerminal,
+					chatType,
+					sendId,
+					senderTerminal,
+				)
+			}
 		} catch (error) {
 			outputChannel.appendLine(`[LLM] Error processing LLM request: ${error}`)
 		}

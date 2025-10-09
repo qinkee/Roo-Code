@@ -100,7 +100,15 @@ export class RooCodeIMConnection {
 		try {
 			const message = JSON.parse(rawData)
 			this.outputChannel.appendLine(`[RooCode IM] Received message: cmd=${message.cmd}`)
-			this.outputChannel.appendLine(`[RooCode IM] Raw message data: ${rawData.substring(0, 200)}...`)
+			this.outputChannel.appendLine(`[RooCode IM] 📦 Full raw message: ${rawData}`)
+			if (message.cmd === 10) {
+				this.outputChannel.appendLine(
+					`[RooCode IM] 🔍 CMD=10 message.data keys: ${Object.keys(message.data || {}).join(", ")}`,
+				)
+				this.outputChannel.appendLine(
+					`[RooCode IM] 🔍 CMD=10 message.data: ${JSON.stringify(message.data, null, 2)}`,
+				)
+			}
 
 			// 处理登录成功
 			if (message.cmd === 0) {
@@ -166,6 +174,8 @@ export class RooCodeIMConnection {
 		recvId?: number,
 		targetTerminal?: number,
 		chatType?: string,
+		sendId?: number,
+		senderTerminal?: number,
 	): void {
 		const sequence = this.getNextSequence(streamId)
 
@@ -175,16 +185,19 @@ export class RooCodeIMConnection {
 				streamId,
 				chunk,
 				sequence,
-				recvId, // 保持接收用户ID
-				targetTerminal, // 保持目标终端
+				sendId, // 发送者用户ID（智能体所属用户）
+				recvId, // 接收用户ID
+				senderTerminal, // 发送者终端类型（智能体运行的终端）
+				targetTerminal, // 目标终端类型
 				chatType, // 聊天类型
 				timestamp: Date.now(),
 			},
 		}
 
 		this.outputChannel.appendLine(
-			`[RooCode IM] Sending LLM CHUNK (cmd=11): streamId=${streamId}, seq=${sequence}, recvId=${recvId}, targetTerminal=${targetTerminal}, chatType=${chatType}, chunk=${chunk.substring(0, 20)}...`,
+			`[RooCode IM] Sending LLM CHUNK (cmd=11): streamId=${streamId}, seq=${sequence}, sendId=${sendId}, recvId=${recvId}, senderTerminal=${senderTerminal}, targetTerminal=${targetTerminal}, chatType=${chatType}, chunk=${chunk.substring(0, 20)}...`,
 		)
+		this.outputChannel.appendLine(`[RooCode IM] Full message data: ${JSON.stringify(message.data)}`)
 		this.send(message)
 	}
 
@@ -197,13 +210,17 @@ export class RooCodeIMConnection {
 		targetTerminal?: number,
 		chatType?: string,
 		taskInfo?: { name: string; id?: string },
+		sendId?: number,
+		senderTerminal?: number,
 	): void {
 		const message = {
 			cmd: 12, // LLM_STREAM_END
 			data: {
 				streamId,
-				recvId, // 保持接收用户ID
-				targetTerminal, // 保持目标终端
+				sendId, // 发送者用户ID
+				recvId, // 接收用户ID
+				senderTerminal, // 发送者终端类型
+				targetTerminal, // 目标终端类型
 				chatType, // 聊天类型
 				// 将taskInfo拆分为独立字段，避免JSON嵌套解析问题
 				taskName: taskInfo?.name,
@@ -229,14 +246,18 @@ export class RooCodeIMConnection {
 		recvId?: number,
 		targetTerminal?: number,
 		chatType?: string,
+		sendId?: number,
+		senderTerminal?: number,
 	): void {
 		const message = {
 			cmd: 13, // LLM_STREAM_ERROR
 			data: {
 				streamId,
 				error,
-				recvId, // 保持接收用户ID
-				targetTerminal, // 保持目标终端
+				sendId, // 发送者用户ID
+				recvId, // 接收用户ID
+				senderTerminal, // 发送者终端类型
+				targetTerminal, // 目标终端类型
 				chatType, // 聊天类型
 				timestamp: Date.now(),
 			},
