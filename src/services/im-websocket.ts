@@ -100,15 +100,6 @@ export class RooCodeIMConnection {
 		try {
 			const message = JSON.parse(rawData)
 			this.outputChannel.appendLine(`[RooCode IM] Received message: cmd=${message.cmd}`)
-			this.outputChannel.appendLine(`[RooCode IM] 📦 Full raw message: ${rawData}`)
-			if (message.cmd === 10) {
-				this.outputChannel.appendLine(
-					`[RooCode IM] 🔍 CMD=10 message.data keys: ${Object.keys(message.data || {}).join(", ")}`,
-				)
-				this.outputChannel.appendLine(
-					`[RooCode IM] 🔍 CMD=10 message.data: ${JSON.stringify(message.data, null, 2)}`,
-				)
-			}
 
 			// 处理登录成功
 			if (message.cmd === 0) {
@@ -195,9 +186,8 @@ export class RooCodeIMConnection {
 		}
 
 		this.outputChannel.appendLine(
-			`[RooCode IM] Sending LLM CHUNK (cmd=11): streamId=${streamId}, seq=${sequence}, sendId=${sendId}, recvId=${recvId}, senderTerminal=${senderTerminal}, targetTerminal=${targetTerminal}, chatType=${chatType}, chunk=${chunk.substring(0, 20)}...`,
+			`[RooCode IM] Sending LLM CHUNK (cmd=11): streamId=${streamId}, seq=${sequence}, chunk=${chunk.substring(0, 20)}...`,
 		)
-		this.outputChannel.appendLine(`[RooCode IM] Full message data: ${JSON.stringify(message.data)}`)
 		this.send(message)
 	}
 
@@ -230,9 +220,8 @@ export class RooCodeIMConnection {
 		}
 
 		this.outputChannel.appendLine(
-			`[RooCode IM] Sending LLM END (cmd=12): streamId=${streamId}, recvId=${recvId}, targetTerminal=${targetTerminal}, chatType=${chatType}, taskName=${taskInfo?.name}`,
+			`[RooCode IM] Sending LLM END (cmd=12): streamId=${streamId}, taskName=${taskInfo?.name}`,
 		)
-		this.outputChannel.appendLine(`[RooCode IM] 🔍 完整消息体: ${JSON.stringify(message, null, 2)}`)
 		this.send(message)
 		this.sequenceMap.delete(streamId)
 	}
@@ -263,9 +252,7 @@ export class RooCodeIMConnection {
 			},
 		}
 
-		this.outputChannel.appendLine(
-			`[RooCode IM] Sending LLM ERROR (cmd=13): streamId=${streamId}, recvId=${recvId}, targetTerminal=${targetTerminal}, chatType=${chatType}, error=${error}`,
-		)
+		this.outputChannel.appendLine(`[RooCode IM] Sending LLM ERROR (cmd=13): streamId=${streamId}, error=${error}`)
 		this.send(message)
 		this.sequenceMap.delete(streamId)
 	}

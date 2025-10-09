@@ -112,14 +112,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// 注册LLM流式请求处理器
 	llmService.imConnection.onLLMStreamRequest(async (data: any) => {
-		outputChannel.appendLine(`[LLM] 🔍 Received LLM_STREAM_REQUEST - Full data: ${JSON.stringify(data)}`)
+		outputChannel.appendLine(`[LLM] Received LLM_STREAM_REQUEST`)
 		// data 包含: streamId, question, sendId, recvId, senderTerminal, targetTerminal, chatType, taskName, timestamp
 		try {
 			const { streamId, question, sendId, recvId, senderTerminal, targetTerminal, chatType, taskName } = data
 			outputChannel.appendLine(`[LLM] Processing request - streamId: ${streamId}, taskName: ${taskName}`)
-			outputChannel.appendLine(
-				`[LLM] 🔍 Incoming route VALUES - sendId: ${sendId} (type: ${typeof sendId}), recvId: ${recvId} (type: ${typeof recvId}), senderTerminal: ${senderTerminal} (type: ${typeof senderTerminal}), targetTerminal: ${targetTerminal} (type: ${typeof targetTerminal}), chatType: ${chatType}`,
-			)
 
 			// 响应时需要交换发送者和接收者的值
 			// 响应消息: sendId字段填recvId的值, recvId字段填sendId的值
@@ -128,15 +125,10 @@ export async function activate(context: vscode.ExtensionContext) {
 			const responseSenderTerminal = targetTerminal // senderTerminal 填原请求的 targetTerminal
 			const responseTargetTerminal = senderTerminal // targetTerminal 填原请求的 senderTerminal
 
-			outputChannel.appendLine(
-				`[LLM] 🎯 Response route VALUES - responseSendId: ${responseSendId} (原recvId=${recvId}), responseRecvId: ${responseRecvId} (原sendId=${sendId}), responseSenderTerminal: ${responseSenderTerminal} (原targetTerminal=${targetTerminal}), responseTargetTerminal: ${responseTargetTerminal} (原senderTerminal=${senderTerminal})`,
-			)
-
 			// 解析 question（它是一个JSON字符串）
 			let questionData: any
 			try {
 				questionData = typeof question === "string" ? JSON.parse(question) : question
-				outputChannel.appendLine(`[LLM] Parsed question: ${JSON.stringify(questionData)}`)
 			} catch (e) {
 				outputChannel.appendLine(`[LLM] Failed to parse question: ${e}`)
 				// 发送错误响应
@@ -169,7 +161,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 
 			const agentId = agentIdMatch[1]
-			outputChannel.appendLine(`[LLM] Extracted agent ID: ${agentId}`)
 
 			// 获取消息内容
 			const message = questionData?.params?.message
@@ -186,8 +177,6 @@ export async function activate(context: vscode.ExtensionContext) {
 				)
 				return
 			}
-
-			outputChannel.appendLine(`[LLM] User message: ${message}`)
 
 			// 调用智能体的 A2A 服务器
 			try {
@@ -209,8 +198,6 @@ export async function activate(context: vscode.ExtensionContext) {
 					)
 					return
 				}
-
-				outputChannel.appendLine(`[LLM] Calling agent at: ${serverStatus.url}/execute (SSE with stream=true)`)
 
 				// 使用流式 SSE 请求
 				const url = new URL(`${serverStatus.url}/execute`)
@@ -248,7 +235,6 @@ export async function activate(context: vscode.ExtensionContext) {
 							return
 						}
 
-						outputChannel.appendLine(`[LLM] Connected to agent SSE stream`)
 						let buffer = ""
 
 						let currentEvent = ""
@@ -264,7 +250,6 @@ export async function activate(context: vscode.ExtensionContext) {
 									const data = line.slice(6).trim()
 
 									if (data === "[DONE]") {
-										outputChannel.appendLine(`[LLM] Stream done signal`)
 										continue
 									}
 
@@ -275,9 +260,6 @@ export async function activate(context: vscode.ExtensionContext) {
 										if (currentEvent === "thinking" || currentEvent === "completion") {
 											// thinking 和 completion 事件都包含 content
 											if (parsed.content) {
-												outputChannel.appendLine(
-													`[LLM] [${currentEvent}] ${parsed.content.substring(0, 30)}...`,
-												)
 												llmService.imConnection.sendLLMChunk(
 													streamId,
 													parsed.content,
@@ -290,19 +272,16 @@ export async function activate(context: vscode.ExtensionContext) {
 											}
 										} else if (currentEvent === "error") {
 											reject(new Error(parsed.error || parsed.message || "Stream error"))
-										} else if (currentEvent === "done") {
-											outputChannel.appendLine(`[LLM] Stream done event`)
 										}
-										// connected, start, api_start 等事件不需要转发
+										// connected, start, api_start, done 等事件不需要转发
 									} catch (e) {
-										outputChannel.appendLine(`[LLM] Failed to parse SSE data: ${data}`)
+										// SSE 数据解析失败，忽略该行
 									}
 								}
 							}
 						})
 
 						res.on("end", () => {
-							outputChannel.appendLine(`[LLM] Stream ended`)
 							llmService.imConnection.sendLLMEnd(
 								streamId,
 								responseRecvId,
@@ -325,8 +304,6 @@ export async function activate(context: vscode.ExtensionContext) {
 					req.write(requestData)
 					req.end()
 				})
-
-				outputChannel.appendLine(`[LLM] Stream completed for streamId: ${streamId}`)
 			} catch (error: any) {
 				outputChannel.appendLine(`[LLM] Error calling agent: ${error.message}`)
 				llmService.imConnection.sendLLMError(
