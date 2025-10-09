@@ -626,10 +626,12 @@ export class ClineProvider
 			localResourceRoots: [this.contextProxy.extensionUri],
 		}
 
-		webviewView.webview.html =
-			this.contextProxy.extensionMode === vscode.ExtensionMode.Development
-				? await this.getHMRHtmlContent(webviewView.webview)
-				: this.getHtmlContent(webviewView.webview)
+		// Temporarily force production mode to bypass HMR
+		webviewView.webview.html = this.getHtmlContent(webviewView.webview)
+		// webviewView.webview.html =
+		// 	this.contextProxy.extensionMode === vscode.ExtensionMode.Development
+		// 		? await this.getHMRHtmlContent(webviewView.webview)
+		// 		: this.getHtmlContent(webviewView.webview)
 
 		// Sets up an event listener to listen for messages passed from the webview view context
 		// and executes code based on the message that is received
