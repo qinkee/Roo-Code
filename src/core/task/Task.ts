@@ -1121,6 +1121,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			throw new Error(`[RooCode#say] task ${this.taskId}.${this.instanceId} aborted`)
 		}
 
+		// 🔥 添加 taskId 到 metadata（用于任务分段）
+		const enhancedMetadata = {
+			...options.metadata,
+			taskId: this.taskId,
+		}
+
 		if (partial !== undefined) {
 			const lastMessage = this.clineMessages.at(-1)
 
@@ -1134,6 +1140,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					lastMessage.images = images
 					lastMessage.partial = partial
 					lastMessage.progressStatus = progressStatus
+					// 🔥 更新 metadata 包含 taskId
+					;(lastMessage as any).metadata = enhancedMetadata
 					this.updateClineMessage(lastMessage)
 
 					// Send LLM chunk to IM if this is assistant text
@@ -1156,7 +1164,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						images,
 						partial,
 						contextCondense,
-						metadata: options.metadata,
+						metadata: enhancedMetadata, // 🔥 使用增强的 metadata
 					})
 				}
 			} else {
@@ -1172,9 +1180,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					lastMessage.images = images
 					lastMessage.partial = false
 					lastMessage.progressStatus = progressStatus
-					if (options.metadata) {
-						;(lastMessage as any).metadata = options.metadata
-					}
+					// 🔥 使用增强的 metadata
+					;(lastMessage as any).metadata = enhancedMetadata
 
 					// Instead of streaming partialMessage events, we do a save
 					// and post like normal to persist to disk.
@@ -1202,7 +1209,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						text,
 						images,
 						contextCondense,
-						metadata: options.metadata,
+						metadata: enhancedMetadata, // 🔥 使用增强的 metadata
 					})
 
 					// Send LLM end signal for new complete messages
@@ -1231,6 +1238,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				images,
 				checkpoint,
 				contextCondense,
+				metadata: enhancedMetadata, // 🔥 使用增强的 metadata
 			})
 
 			// Send LLM end signal for non-partial messages

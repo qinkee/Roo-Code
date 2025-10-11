@@ -924,6 +924,7 @@ export class ClineProvider
 							content: incrementalText, // 🔥 只发送增量部分
 							partial: isPartial,
 							ts: clineMsg.ts,
+							metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
 						}),
 						ctx.imMetadata.recvId,
 						ctx.imMetadata.targetTerminal,
@@ -954,6 +955,7 @@ export class ClineProvider
 						input: clineMsg.input,
 						partial: isPartial,
 						ts: clineMsg.ts,
+						metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
 					}),
 					ctx.imMetadata.recvId,
 					ctx.imMetadata.targetTerminal,
@@ -983,6 +985,7 @@ export class ClineProvider
 							content: incrementalText, // 🔥 只发送增量部分
 							partial: isPartial,
 							ts: clineMsg.ts,
+							metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
 						}),
 						ctx.imMetadata.recvId,
 						ctx.imMetadata.targetTerminal,
@@ -1029,6 +1032,7 @@ export class ClineProvider
 								ts: clineMsg.ts,
 								// 🔥 传递完整的消息元数据，让客户端自己决定如何使用
 								metadata: {
+									...(clineMsg.metadata || {}), // 🔥 包含来自 Task.say() 的 metadata（包括 taskId）
 									tool: clineMsg.tool,
 									status: clineMsg.status,
 									input: clineMsg.input,
