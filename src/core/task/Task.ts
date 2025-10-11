@@ -121,6 +121,20 @@ export type TaskOptions = {
 	parentTask?: Task
 	taskNumber?: number
 	onCreated?: (task: Task) => void
+	// 🔥 新增: 智能体任务上下文
+	agentTaskContext?: {
+		agentId: string
+		streamId: string
+		mode: string
+		roleDescription?: string
+		imMetadata: {
+			sendId: number
+			recvId: number
+			senderTerminal: number
+			targetTerminal: number
+			chatType: string
+		}
+	}
 }
 
 export class Task extends EventEmitter<TaskEvents> implements TaskLike {
@@ -187,6 +201,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	isPaused: boolean = false
 	pausedModeSlug: string = defaultModeSlug
 	private pauseInterval: NodeJS.Timeout | undefined
+
+	// 🔥 智能体任务相关属性
+	readonly agentTaskContext?: TaskOptions["agentTaskContext"]
+	private allowedTools?: string[]
+	private taskModeConfig?: any
+	private customInstructions?: string
 
 	// API
 	readonly apiConfiguration: ProviderSettings
@@ -287,6 +307,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		parentTask,
 		taskNumber = -1,
 		onCreated,
+		agentTaskContext,
 	}: TaskOptions) {
 		super()
 
@@ -456,6 +477,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		provider.log(`[Task Constructor] ✅ Step 8 complete`)
 
 		provider.log(`[Task Constructor] 🔧 Step 9: Setting final properties`)
+		// 🔥 保存智能体任务上下文
+		this.agentTaskContext = agentTaskContext
+		if (agentTaskContext) {
+			provider.log(
+				`[Task Constructor] ✅ agentTaskContext set: agentId=${agentTaskContext.agentId}, streamId=${agentTaskContext.streamId}`,
+			)
+		} else {
+			provider.log(`[Task Constructor] ℹ️ No agentTaskContext (regular user task)`)
+		}
 		this.enableCheckpoints = enableCheckpoints
 		this.enableTaskBridge = enableTaskBridge
 		provider.log(`[Task Constructor] ✅ Step 9 complete`)
@@ -684,13 +714,52 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		return [instance, promise]
 	}
 
+	// 🔥 智能体工具白名单相关方法
+
+	/**
+	 * 设置允许的工具白名单
+	 */
+	setAllowedTools(tools: string[]): void {
+		this.allowedTools = tools
+		console.log(`[Task] Tool whitelist set: ${tools.join(", ")}`)
+	}
+
+	/**
+	 * 检查工具是否被允许
+	 */
+	private isToolAllowed(toolName: string): boolean {
+		if (!this.allowedTools || this.allowedTools.length === 0) {
+			return true
+		}
+		return this.allowedTools.includes(toolName)
+	}
+
+	// 🔥 智能体模式配置相关方法
+
+	/**
+	 * 设置模式配置 (不修改 Provider 全局状态)
+	 */
+	setModeConfig(modeConfig: any): void {
+		this.taskModeConfig = modeConfig
+		console.log(`[Task] Mode config set: ${modeConfig.name}`)
+	}
+
+	/**
+	 * 设置自定义指令
+	 */
+	setCustomInstructions(instructions: string): void {
+		this.customInstructions = instructions
+		console.log(`[Task] Custom instructions set: ${instructions.substring(0, 100)}...`)
+	}
+
 	// API Messages
 
 	private async getSavedApiConversationHistory(): Promise<ApiMessage[]> {
 		return readApiMessages({ taskId: this.taskId, globalStoragePath: this.globalStoragePath })
 	}
 
-	private async addToApiConversationHistory(message: Anthropic.MessageParam) {
+	// 🔥 改为 public 以支持智能体多轮对话
+	public async addToApiConversationHistory(message: Anthropic.MessageParam) {
 		const messageWithTs = { ...message, ts: Date.now() }
 		this.apiConversationHistory.push(messageWithTs)
 		await this.saveApiConversationHistory()
@@ -774,6 +843,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				workspace: this.cwd,
 				mode: this._taskMode || defaultModeSlug, // Use the task's own mode, not the current provider mode
 				terminalNo: VoidBridge.getCurrentTerminalNo(),
+				// 🔥 智能体任务标记
+				source: this.agentTaskContext ? "agent" : "user",
+				agentId: this.agentTaskContext?.agentId,
 			})
 
 			this.emit(RooCodeEventName.TaskTokenUsageUpdated, this.taskId, tokenUsage)
@@ -1218,6 +1290,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				workspace: this.cwd,
 				mode: this._taskMode || defaultModeSlug,
 				terminalNo: VoidBridge.getCurrentTerminalNo(),
+				// 🔥 智能体任务标记
+				source: this.agentTaskContext ? "agent" : "user",
+				agentId: this.agentTaskContext?.agentId,
 			})
 
 			// Store the historyItem for later use
@@ -1749,6 +1824,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				nextUserContent = [{ type: "text", text: formatResponse.noToolsUsed() }]
 				this.consecutiveMistakeCount++
 			}
+		}
+
+		// 🔥 触发任务完成事件（智能体任务需要）
+		if (!this.abort) {
+			this.emit(RooCodeEventName.TaskCompleted)
 		}
 	}
 
@@ -2864,6 +2944,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	private sendLLMChunkToIM(text: string, isPartial: boolean): void {
 		try {
+			// 🔥 智能体任务通过 postMessageToWebview → forwardToIMWebSocket 处理，跳过这里
+			if (this.agentTaskContext) {
+				return
+			}
+
 			// Only send if we have LLM service available
 			const llmService = (global as any).llmStreamService
 			if (!llmService) {

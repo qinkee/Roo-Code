@@ -1092,7 +1092,12 @@ var historyItemSchema = import_zod5.z.object({
   size: import_zod5.z.number().optional(),
   workspace: import_zod5.z.string().optional(),
   mode: import_zod5.z.string().optional(),
-  terminalNo: import_zod5.z.number().optional()
+  terminalNo: import_zod5.z.number().optional(),
+  // 🔥 智能体任务标记
+  source: import_zod5.z.enum(["user", "agent"]).optional(),
+  // 任务来源：用户或智能体
+  agentId: import_zod5.z.string().optional()
+  // 智能体ID（仅当 source === "agent" 时存在）
 });
 
 // src/experiment.ts

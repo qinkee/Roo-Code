@@ -10531,6 +10531,8 @@ declare const globalSettingsSchema: z.ZodObject<{
         workspace: z.ZodOptional<z.ZodString>;
         mode: z.ZodOptional<z.ZodString>;
         terminalNo: z.ZodOptional<z.ZodNumber>;
+        source: z.ZodOptional<z.ZodEnum<["user", "agent"]>>;
+        agentId: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         number: number;
         id: string;
@@ -10540,11 +10542,13 @@ declare const globalSettingsSchema: z.ZodObject<{
         tokensIn: number;
         tokensOut: number;
         mode?: string | undefined;
+        agentId?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
+        source?: "agent" | "user" | undefined;
     }, {
         number: number;
         id: string;
@@ -10554,11 +10558,13 @@ declare const globalSettingsSchema: z.ZodObject<{
         tokensIn: number;
         tokensOut: number;
         mode?: string | undefined;
+        agentId?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
+        source?: "agent" | "user" | undefined;
     }>, "many">>;
     condensingApiConfigId: z.ZodOptional<z.ZodString>;
     customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -10790,9 +10796,9 @@ declare const globalSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }, {
         name: string;
         groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
@@ -10802,9 +10808,9 @@ declare const globalSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }>, "many">>;
     customModePrompts: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodOptional<z.ZodObject<{
         roleDefinition: z.ZodOptional<z.ZodString>;
@@ -10996,9 +11002,9 @@ declare const globalSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }[] | undefined;
     currentApiConfigName?: string | undefined;
     listApiConfigMeta?: {
@@ -11018,11 +11024,13 @@ declare const globalSettingsSchema: z.ZodObject<{
         tokensIn: number;
         tokensOut: number;
         mode?: string | undefined;
+        agentId?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
+        source?: "agent" | "user" | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -11190,9 +11198,9 @@ declare const globalSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }[] | undefined;
     currentApiConfigName?: string | undefined;
     listApiConfigMeta?: {
@@ -11212,11 +11220,13 @@ declare const globalSettingsSchema: z.ZodObject<{
         tokensIn: number;
         tokensOut: number;
         mode?: string | undefined;
+        agentId?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
+        source?: "agent" | "user" | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -11630,6 +11640,8 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         workspace: z.ZodOptional<z.ZodString>;
         mode: z.ZodOptional<z.ZodString>;
         terminalNo: z.ZodOptional<z.ZodNumber>;
+        source: z.ZodOptional<z.ZodEnum<["user", "agent"]>>;
+        agentId: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         number: number;
         id: string;
@@ -11639,11 +11651,13 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         tokensIn: number;
         tokensOut: number;
         mode?: string | undefined;
+        agentId?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
+        source?: "agent" | "user" | undefined;
     }, {
         number: number;
         id: string;
@@ -11653,11 +11667,13 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         tokensIn: number;
         tokensOut: number;
         mode?: string | undefined;
+        agentId?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
+        source?: "agent" | "user" | undefined;
     }>, "many">>;
     condensingApiConfigId: z.ZodOptional<z.ZodString>;
     customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -11881,9 +11897,9 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }, {
         name: string;
         groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
@@ -11893,9 +11909,9 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }>, "many">>;
     customModePrompts: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodOptional<z.ZodObject<{
         roleDefinition: z.ZodOptional<z.ZodString>;
@@ -12227,9 +12243,9 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }[] | undefined;
     currentApiConfigName?: string | undefined;
     listApiConfigMeta?: {
@@ -12249,11 +12265,13 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         tokensIn: number;
         tokensOut: number;
         mode?: string | undefined;
+        agentId?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
+        source?: "agent" | "user" | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -12561,9 +12579,9 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }[] | undefined;
     currentApiConfigName?: string | undefined;
     listApiConfigMeta?: {
@@ -12583,11 +12601,13 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         tokensIn: number;
         tokensOut: number;
         mode?: string | undefined;
+        agentId?: string | undefined;
         cacheWrites?: number | undefined;
         cacheReads?: number | undefined;
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
+        source?: "agent" | "user" | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -13063,6 +13083,8 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 workspace: z.ZodOptional<z.ZodString>;
                 mode: z.ZodOptional<z.ZodString>;
                 terminalNo: z.ZodOptional<z.ZodNumber>;
+                source: z.ZodOptional<z.ZodEnum<["user", "agent"]>>;
+                agentId: z.ZodOptional<z.ZodString>;
             }, "strip", z.ZodTypeAny, {
                 number: number;
                 id: string;
@@ -13072,11 +13094,13 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 tokensIn: number;
                 tokensOut: number;
                 mode?: string | undefined;
+                agentId?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
+                source?: "agent" | "user" | undefined;
             }, {
                 number: number;
                 id: string;
@@ -13086,11 +13110,13 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 tokensIn: number;
                 tokensOut: number;
                 mode?: string | undefined;
+                agentId?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
+                source?: "agent" | "user" | undefined;
             }>, "many">>;
             condensingApiConfigId: z.ZodOptional<z.ZodString>;
             customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -13314,9 +13340,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 slug: string;
                 roleDefinition: string;
                 description?: string | undefined;
+                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
-                source?: "global" | "project" | undefined;
             }, {
                 name: string;
                 groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
@@ -13326,9 +13352,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 slug: string;
                 roleDefinition: string;
                 description?: string | undefined;
+                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
-                source?: "global" | "project" | undefined;
             }>, "many">>;
             customModePrompts: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodOptional<z.ZodObject<{
                 roleDefinition: z.ZodOptional<z.ZodString>;
@@ -13660,9 +13686,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 slug: string;
                 roleDefinition: string;
                 description?: string | undefined;
+                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
-                source?: "global" | "project" | undefined;
             }[] | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
@@ -13682,11 +13708,13 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 tokensIn: number;
                 tokensOut: number;
                 mode?: string | undefined;
+                agentId?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
+                source?: "agent" | "user" | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -13994,9 +14022,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 slug: string;
                 roleDefinition: string;
                 description?: string | undefined;
+                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
-                source?: "global" | "project" | undefined;
             }[] | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
@@ -14016,11 +14044,13 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 tokensIn: number;
                 tokensOut: number;
                 mode?: string | undefined;
+                agentId?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
+                source?: "agent" | "user" | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -14334,9 +14364,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 slug: string;
                 roleDefinition: string;
                 description?: string | undefined;
+                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
-                source?: "global" | "project" | undefined;
             }[] | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
@@ -14356,11 +14386,13 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 tokensIn: number;
                 tokensOut: number;
                 mode?: string | undefined;
+                agentId?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
+                source?: "agent" | "user" | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -14673,9 +14705,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 slug: string;
                 roleDefinition: string;
                 description?: string | undefined;
+                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
-                source?: "global" | "project" | undefined;
             }[] | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
@@ -14695,11 +14727,13 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 tokensIn: number;
                 tokensOut: number;
                 mode?: string | undefined;
+                agentId?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
+                source?: "agent" | "user" | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -15014,9 +15048,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 slug: string;
                 roleDefinition: string;
                 description?: string | undefined;
+                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
-                source?: "global" | "project" | undefined;
             }[] | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
@@ -15036,11 +15070,13 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 tokensIn: number;
                 tokensOut: number;
                 mode?: string | undefined;
+                agentId?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
+                source?: "agent" | "user" | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -15356,9 +15392,9 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 slug: string;
                 roleDefinition: string;
                 description?: string | undefined;
+                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
-                source?: "global" | "project" | undefined;
             }[] | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
@@ -15378,11 +15414,13 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 tokensIn: number;
                 tokensOut: number;
                 mode?: string | undefined;
+                agentId?: string | undefined;
                 cacheWrites?: number | undefined;
                 cacheReads?: number | undefined;
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
+                source?: "agent" | "user" | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -15857,6 +15895,8 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace: z.ZodOptional<z.ZodString>;
                     mode: z.ZodOptional<z.ZodString>;
                     terminalNo: z.ZodOptional<z.ZodNumber>;
+                    source: z.ZodOptional<z.ZodEnum<["user", "agent"]>>;
+                    agentId: z.ZodOptional<z.ZodString>;
                 }, "strip", z.ZodTypeAny, {
                     number: number;
                     id: string;
@@ -15866,11 +15906,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     tokensIn: number;
                     tokensOut: number;
                     mode?: string | undefined;
+                    agentId?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
+                    source?: "agent" | "user" | undefined;
                 }, {
                     number: number;
                     id: string;
@@ -15880,11 +15922,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     tokensIn: number;
                     tokensOut: number;
                     mode?: string | undefined;
+                    agentId?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
+                    source?: "agent" | "user" | undefined;
                 }>, "many">>;
                 condensingApiConfigId: z.ZodOptional<z.ZodString>;
                 customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -16108,9 +16152,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     slug: string;
                     roleDefinition: string;
                     description?: string | undefined;
+                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
-                    source?: "global" | "project" | undefined;
                 }, {
                     name: string;
                     groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
@@ -16120,9 +16164,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     slug: string;
                     roleDefinition: string;
                     description?: string | undefined;
+                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
-                    source?: "global" | "project" | undefined;
                 }>, "many">>;
                 customModePrompts: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodOptional<z.ZodObject<{
                     roleDefinition: z.ZodOptional<z.ZodString>;
@@ -16454,9 +16498,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     slug: string;
                     roleDefinition: string;
                     description?: string | undefined;
+                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
-                    source?: "global" | "project" | undefined;
                 }[] | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
@@ -16476,11 +16520,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     tokensIn: number;
                     tokensOut: number;
                     mode?: string | undefined;
+                    agentId?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
+                    source?: "agent" | "user" | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -16788,9 +16834,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     slug: string;
                     roleDefinition: string;
                     description?: string | undefined;
+                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
-                    source?: "global" | "project" | undefined;
                 }[] | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
@@ -16810,11 +16856,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     tokensIn: number;
                     tokensOut: number;
                     mode?: string | undefined;
+                    agentId?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
+                    source?: "agent" | "user" | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -17128,9 +17176,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     slug: string;
                     roleDefinition: string;
                     description?: string | undefined;
+                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
-                    source?: "global" | "project" | undefined;
                 }[] | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
@@ -17150,11 +17198,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     tokensIn: number;
                     tokensOut: number;
                     mode?: string | undefined;
+                    agentId?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
+                    source?: "agent" | "user" | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -17467,9 +17517,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     slug: string;
                     roleDefinition: string;
                     description?: string | undefined;
+                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
-                    source?: "global" | "project" | undefined;
                 }[] | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
@@ -17489,11 +17539,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     tokensIn: number;
                     tokensOut: number;
                     mode?: string | undefined;
+                    agentId?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
+                    source?: "agent" | "user" | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -17808,9 +17860,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     slug: string;
                     roleDefinition: string;
                     description?: string | undefined;
+                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
-                    source?: "global" | "project" | undefined;
                 }[] | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
@@ -17830,11 +17882,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     tokensIn: number;
                     tokensOut: number;
                     mode?: string | undefined;
+                    agentId?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
+                    source?: "agent" | "user" | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -18150,9 +18204,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     slug: string;
                     roleDefinition: string;
                     description?: string | undefined;
+                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
-                    source?: "global" | "project" | undefined;
                 }[] | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
@@ -18172,11 +18226,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     tokensIn: number;
                     tokensOut: number;
                     mode?: string | undefined;
+                    agentId?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
+                    source?: "agent" | "user" | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -18513,9 +18569,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     slug: string;
                     roleDefinition: string;
                     description?: string | undefined;
+                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
-                    source?: "global" | "project" | undefined;
                 }[] | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
@@ -18535,11 +18591,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     tokensIn: number;
                     tokensOut: number;
                     mode?: string | undefined;
+                    agentId?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
+                    source?: "agent" | "user" | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -18866,9 +18924,9 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     slug: string;
                     roleDefinition: string;
                     description?: string | undefined;
+                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
-                    source?: "global" | "project" | undefined;
                 }[] | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
@@ -18888,11 +18946,13 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     tokensIn: number;
                     tokensOut: number;
                     mode?: string | undefined;
+                    agentId?: string | undefined;
                     cacheWrites?: number | undefined;
                     cacheReads?: number | undefined;
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
+                    source?: "agent" | "user" | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -23855,6 +23915,8 @@ declare const historyItemSchema: z.ZodObject<{
     workspace: z.ZodOptional<z.ZodString>;
     mode: z.ZodOptional<z.ZodString>;
     terminalNo: z.ZodOptional<z.ZodNumber>;
+    source: z.ZodOptional<z.ZodEnum<["user", "agent"]>>;
+    agentId: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     number: number;
     id: string;
@@ -23864,11 +23926,13 @@ declare const historyItemSchema: z.ZodObject<{
     tokensIn: number;
     tokensOut: number;
     mode?: string | undefined;
+    agentId?: string | undefined;
     cacheWrites?: number | undefined;
     cacheReads?: number | undefined;
     size?: number | undefined;
     workspace?: string | undefined;
     terminalNo?: number | undefined;
+    source?: "agent" | "user" | undefined;
 }, {
     number: number;
     id: string;
@@ -23878,11 +23942,13 @@ declare const historyItemSchema: z.ZodObject<{
     tokensIn: number;
     tokensOut: number;
     mode?: string | undefined;
+    agentId?: string | undefined;
     cacheWrites?: number | undefined;
     cacheReads?: number | undefined;
     size?: number | undefined;
     workspace?: string | undefined;
     terminalNo?: number | undefined;
+    source?: "agent" | "user" | undefined;
 }>;
 type HistoryItem = z.infer<typeof historyItemSchema>;
 
@@ -24681,9 +24747,9 @@ declare const modeConfigSchema: z.ZodObject<{
     slug: string;
     roleDefinition: string;
     description?: string | undefined;
+    source?: "global" | "project" | undefined;
     whenToUse?: string | undefined;
     customInstructions?: string | undefined;
-    source?: "global" | "project" | undefined;
 }, {
     name: string;
     groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
@@ -24693,9 +24759,9 @@ declare const modeConfigSchema: z.ZodObject<{
     slug: string;
     roleDefinition: string;
     description?: string | undefined;
+    source?: "global" | "project" | undefined;
     whenToUse?: string | undefined;
     customInstructions?: string | undefined;
-    source?: "global" | "project" | undefined;
 }>;
 type ModeConfig = z.infer<typeof modeConfigSchema>;
 /**
@@ -24735,9 +24801,9 @@ declare const customModesSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }, {
         name: string;
         groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
@@ -24747,9 +24813,9 @@ declare const customModesSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }>, "many">, {
         name: string;
         groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
@@ -24759,9 +24825,9 @@ declare const customModesSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }[], {
         name: string;
         groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
@@ -24771,9 +24837,9 @@ declare const customModesSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }[]>;
 }, "strip", z.ZodTypeAny, {
     customModes: {
@@ -24785,9 +24851,9 @@ declare const customModesSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }[];
 }, {
     customModes: {
@@ -24799,9 +24865,9 @@ declare const customModesSettingsSchema: z.ZodObject<{
         slug: string;
         roleDefinition: string;
         description?: string | undefined;
+        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
-        source?: "global" | "project" | undefined;
     }[];
 }>;
 type CustomModesSettings = z.infer<typeof customModesSettingsSchema>;

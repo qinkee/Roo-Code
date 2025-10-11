@@ -18,6 +18,9 @@ export const historyItemSchema = z.object({
 	workspace: z.string().optional(),
 	mode: z.string().optional(),
 	terminalNo: z.number().optional(),
+	// 🔥 智能体任务标记
+	source: z.enum(["user", "agent"]).optional(), // 任务来源：用户或智能体
+	agentId: z.string().optional(), // 智能体ID（仅当 source === "agent" 时存在）
 })
 
 export type HistoryItem = z.infer<typeof historyItemSchema>

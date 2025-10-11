@@ -265,6 +265,15 @@ export async function presentAssistantMessage(cline: Task) {
 				progressStatus?: ToolProgressStatus,
 				isProtected?: boolean,
 			) => {
+				// 🔥 智能体任务：自动批准所有工具使用
+				if (cline.agentTaskContext) {
+					const provider = cline.providerRef.deref()
+					provider?.log(
+						`[askApproval] ✅ Auto-approving for agent task (agentId=${cline.agentTaskContext.agentId}, type=${type})`,
+					)
+					return true
+				}
+
 				// Check if this is an MCP tool request and if auto-approval is enabled
 				if (type === "use_mcp_server" && partialMessage) {
 					try {

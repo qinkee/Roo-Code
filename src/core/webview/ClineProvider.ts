@@ -106,6 +106,9 @@ export class ClineProvider
 	private webviewDisposables: vscode.Disposable[] = []
 	private view?: vscode.WebviewView | vscode.WebviewPanel
 	private clineStack: Task[] = []
+	// 🔥 追踪每个消息的上次发送位置（用于增量发送）
+	// Key: `${taskId}_${messageTimestamp}`, Value: lastSentLength
+	private lastSentPositions: Map<string, number> = new Map()
 	private codeIndexStatusSubscription?: vscode.Disposable
 	private currentWorkspaceManager?: CodeIndexManager
 	private _workspaceTracker?: WorkspaceTracker // workSpaceTracker read-only for access outside this class
@@ -718,7 +721,13 @@ export class ClineProvider
 		options: Partial<
 			Pick<
 				TaskOptions,
-				"enableDiff" | "enableCheckpoints" | "fuzzyMatchThreshold" | "consecutiveMistakeLimit" | "experiments"
+				| "enableDiff"
+				| "enableCheckpoints"
+				| "fuzzyMatchThreshold"
+				| "consecutiveMistakeLimit"
+				| "experiments"
+				| "agentTaskContext"
+				| "startTask"
 			>
 		> = {},
 	) {
@@ -852,7 +861,232 @@ export class ClineProvider
 	}
 
 	public async postMessageToWebview(message: ExtensionMessage) {
+		// 🔥 检查是否是智能体任务
+		const currentTask = this.clineStack[this.clineStack.length - 1]
+
+		if (currentTask?.agentTaskContext) {
+			// 智能体任务 → 转发到 IM WebSocket
+			this.log(`[postMessageToWebview] Agent task detected, forwarding message type: ${message.type}`)
+			this.forwardToIMWebSocket(currentTask, message)
+			return // 不发送到 Webview
+		}
+
+		// 用户任务 → 原逻辑
 		await this.view?.webview.postMessage(message)
+	}
+
+	/**
+	 * 🔥 转发消息到 IM WebSocket
+	 */
+	private forwardToIMWebSocket(task: any, message: ExtensionMessage) {
+		const ctx = task.agentTaskContext
+		if (!ctx) {
+			this.log(`[forwardToIMWebSocket] ❌ No agentTaskContext`)
+			return
+		}
+
+		const llmService = (global as any).llmStreamService
+		if (!llmService) {
+			this.log(`[forwardToIMWebSocket] ❌ LLM service not available`)
+			return
+		}
+
+		// 映射 ExtensionMessage → IM WebSocket
+		// 🔥 messageUpdated 类型的消息也包含 clineMessage
+		if (message.type === "messageUpdated" && message.clineMessage) {
+			const clineMsg = message.clineMessage
+
+			// 🔥 支持流式传输：partial=true 表示流式中间状态，partial=false 表示完成
+			const isPartial = clineMsg.partial === true
+
+			// 生成消息唯一ID（用于追踪发送位置）
+			const msgKey = `${task.taskId}_${clineMsg.ts}`
+
+			if (clineMsg.say === "text") {
+				// thinking - 增量发送
+				const fullText = clineMsg.text || ""
+				const lastPos = this.lastSentPositions.get(msgKey) || 0
+
+				// 只发送新增的部分
+				if (fullText.length > lastPos) {
+					const incrementalText = fullText.substring(lastPos)
+
+					if (!isPartial) {
+						this.log(
+							`[forwardToIMWebSocket] Sending thinking increment: ${incrementalText.length} chars (total: ${fullText.length})`,
+						)
+					}
+
+					llmService.imConnection.sendLLMChunk(
+						ctx.streamId,
+						JSON.stringify({
+							type: "thinking",
+							content: incrementalText, // 🔥 只发送增量部分
+							partial: isPartial,
+							ts: clineMsg.ts,
+						}),
+						ctx.imMetadata.recvId,
+						ctx.imMetadata.targetTerminal,
+						ctx.imMetadata.chatType,
+						ctx.imMetadata.sendId,
+						ctx.imMetadata.senderTerminal,
+					)
+
+					// 更新已发送位置
+					this.lastSentPositions.set(msgKey, fullText.length)
+				}
+
+				// 消息完成后清理追踪
+				if (!isPartial) {
+					this.lastSentPositions.delete(msgKey)
+				}
+			} else if (clineMsg.say === "tool") {
+				// tool_use - 全量发送
+				if (!isPartial) {
+					this.log(`[forwardToIMWebSocket] Sending tool_use message: ${clineMsg.tool}`)
+				}
+				llmService.imConnection.sendLLMChunk(
+					ctx.streamId,
+					JSON.stringify({
+						type: "tool_use",
+						tool: clineMsg.tool,
+						status: clineMsg.status,
+						input: clineMsg.input,
+						partial: isPartial,
+						ts: clineMsg.ts,
+					}),
+					ctx.imMetadata.recvId,
+					ctx.imMetadata.targetTerminal,
+					ctx.imMetadata.chatType,
+					ctx.imMetadata.sendId,
+					ctx.imMetadata.senderTerminal,
+				)
+			} else if (clineMsg.say === "completion_result") {
+				// completion - 增量发送
+				const fullText = clineMsg.text || ""
+				const lastPos = this.lastSentPositions.get(msgKey) || 0
+
+				// 只发送新增的部分
+				if (fullText.length > lastPos) {
+					const incrementalText = fullText.substring(lastPos)
+
+					if (!isPartial) {
+						this.log(
+							`[forwardToIMWebSocket] Sending completion increment: ${incrementalText.length} chars (total: ${fullText.length})`,
+						)
+					}
+
+					llmService.imConnection.sendLLMChunk(
+						ctx.streamId,
+						JSON.stringify({
+							type: "completion",
+							content: incrementalText, // 🔥 只发送增量部分
+							partial: isPartial,
+							ts: clineMsg.ts,
+						}),
+						ctx.imMetadata.recvId,
+						ctx.imMetadata.targetTerminal,
+						ctx.imMetadata.chatType,
+						ctx.imMetadata.sendId,
+						ctx.imMetadata.senderTerminal,
+					)
+
+					// 更新已发送位置
+					this.lastSentPositions.set(msgKey, fullText.length)
+				}
+
+				// 消息完成后清理追踪
+				if (!isPartial) {
+					this.lastSentPositions.delete(msgKey)
+				}
+			} else {
+				// 🔥 其他所有类型的消息（reasoning, api_req_started, error等）都发送给客户端
+				// 让客户端决定如何处理和显示
+
+				// 判断是否有文本内容需要增量发送
+				const hasTextContent = clineMsg.text && typeof clineMsg.text === "string"
+
+				if (hasTextContent) {
+					// 有文本内容的消息 - 增量发送
+					const fullText = clineMsg.text || ""
+					const lastPos = this.lastSentPositions.get(msgKey) || 0
+
+					if (fullText.length > lastPos) {
+						const incrementalText = fullText.substring(lastPos)
+
+						if (!isPartial) {
+							this.log(
+								`[forwardToIMWebSocket] Sending ${clineMsg.say} increment: ${incrementalText.length} chars`,
+							)
+						}
+
+						llmService.imConnection.sendLLMChunk(
+							ctx.streamId,
+							JSON.stringify({
+								type: clineMsg.say, // reasoning, error, etc
+								content: incrementalText,
+								partial: isPartial,
+								ts: clineMsg.ts,
+								// 🔥 传递完整的消息元数据，让客户端自己决定如何使用
+								metadata: {
+									tool: clineMsg.tool,
+									status: clineMsg.status,
+									input: clineMsg.input,
+									path: clineMsg.path,
+									diff: clineMsg.diff,
+									error: clineMsg.error,
+								},
+							}),
+							ctx.imMetadata.recvId,
+							ctx.imMetadata.targetTerminal,
+							ctx.imMetadata.chatType,
+							ctx.imMetadata.sendId,
+							ctx.imMetadata.senderTerminal,
+						)
+
+						this.lastSentPositions.set(msgKey, fullText.length)
+					}
+
+					if (!isPartial) {
+						this.lastSentPositions.delete(msgKey)
+					}
+				} else {
+					// 无文本内容的消息 - 全量发送（如状态更新、错误等）
+					if (!isPartial) {
+						this.log(`[forwardToIMWebSocket] Sending ${clineMsg.say} message (no text content)`)
+					}
+
+					llmService.imConnection.sendLLMChunk(
+						ctx.streamId,
+						JSON.stringify({
+							type: clineMsg.say,
+							partial: isPartial,
+							ts: clineMsg.ts,
+							// 🔥 传递完整消息对象，让客户端处理
+							metadata: {
+								tool: clineMsg.tool,
+								status: clineMsg.status,
+								input: clineMsg.input,
+								path: clineMsg.path,
+								diff: clineMsg.diff,
+								error: clineMsg.error,
+								apiMetrics: clineMsg.apiMetrics,
+							},
+						}),
+						ctx.imMetadata.recvId,
+						ctx.imMetadata.targetTerminal,
+						ctx.imMetadata.chatType,
+						ctx.imMetadata.sendId,
+						ctx.imMetadata.senderTerminal,
+					)
+				}
+			}
+		} else {
+			// messageUpdated 等其他类型
+			if (message.type !== "messageUpdated" && message.type !== "imContactsResponse") {
+				this.log(`[forwardToIMWebSocket] Ignoring message type: ${message.type}`)
+			}
+		}
 	}
 
 	private async getHMRHtmlContent(webview: vscode.Webview): Promise<string> {
@@ -1529,6 +1763,15 @@ export class ClineProvider
 	}
 
 	async postStateToWebview() {
+		// 🔥 检查是否是智能体任务
+		const currentTask = this.clineStack[this.clineStack.length - 1]
+
+		// 智能体任务 → 不发送状态到 UI
+		if (currentTask?.agentTaskContext) {
+			return
+		}
+
+		// 用户任务 → 原逻辑
 		const state = await this.getStateToPostToWebview()
 		this.postMessageToWebview({ type: "state", state })
 
@@ -2417,6 +2660,62 @@ export class ClineProvider
 		}
 
 		this.log("=== 零宽编码测试结束 ===")
+	}
+
+	// 🔥 智能体多轮对话历史管理
+	/**
+	 * 获取智能体的对话历史
+	 */
+	async getAgentConversationHistory(conversationId: string): Promise<any[] | null> {
+		try {
+			const key = `agentConversation_${conversationId}`
+			const history = await this.context.globalState.get<any[]>(key)
+			return history || null
+		} catch (error) {
+			this.log(`Failed to load conversation history for ${conversationId}: ${error}`)
+			return null
+		}
+	}
+
+	/**
+	 * 保存智能体的对话历史
+	 */
+	async saveAgentConversationHistory(conversationId: string, history: any[]): Promise<void> {
+		try {
+			const key = `agentConversation_${conversationId}`
+			await this.context.globalState.update(key, history)
+			this.log(`Saved conversation history for ${conversationId}: ${history.length} messages`)
+		} catch (error) {
+			this.log(`Failed to save conversation history for ${conversationId}: ${error}`)
+		}
+	}
+
+	/**
+	 * 获取模式配置
+	 */
+	getModeConfig(modeName: string): any {
+		try {
+			const modes = this.customModesManager.getCustomModes()
+
+			if (!modes) {
+				return null
+			}
+
+			// 如果是数组，使用 find
+			if (Array.isArray(modes)) {
+				return modes.find((mode: any) => mode.slug === modeName) || null
+			}
+
+			// 如果是对象（Map形式），尝试直接访问
+			if (typeof modes === "object") {
+				return modes[modeName] || null
+			}
+
+			return null
+		} catch (error) {
+			// 静默失败，返回 null 让调用方使用默认配置
+			return null
+		}
 	}
 }
 

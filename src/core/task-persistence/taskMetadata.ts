@@ -20,6 +20,9 @@ export type TaskMetadataOptions = {
 	workspace: string
 	mode?: string
 	terminalNo?: number
+	// 🔥 智能体任务标记
+	source?: "user" | "agent"
+	agentId?: string
 }
 
 export async function taskMetadata({
@@ -30,6 +33,8 @@ export async function taskMetadata({
 	workspace,
 	mode,
 	terminalNo,
+	source,
+	agentId,
 }: TaskMetadataOptions) {
 	const taskDir = await getTaskDirectoryPath(globalStoragePath, taskId)
 
@@ -98,6 +103,9 @@ export async function taskMetadata({
 		workspace,
 		mode,
 		terminalNo,
+		// 🔥 智能体任务标记
+		source,
+		agentId,
 	}
 
 	return { historyItem, tokenUsage }

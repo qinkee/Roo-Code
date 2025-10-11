@@ -19,6 +19,13 @@ export async function newTaskTool(
 	const mode: string | undefined = block.params.mode
 	const message: string | undefined = block.params.message
 
+	// 🔥 添加调试日志
+	const provider = cline.providerRef.deref()
+	provider?.log(
+		`[newTaskTool] Called with mode=${mode}, message=${message?.substring(0, 100)}..., partial=${block.partial}`,
+	)
+	provider?.log(`[newTaskTool] Is agent task: ${!!cline.agentTaskContext}`)
+
 	try {
 		if (block.partial) {
 			const partialMessage = JSON.stringify({
@@ -63,13 +70,14 @@ export async function newTaskTool(
 				content: message,
 			})
 
+			provider?.log(`[newTaskTool] Calling askApproval...`)
 			const didApprove = await askApproval("tool", toolMessage)
+			provider?.log(`[newTaskTool] askApproval returned: ${didApprove}`)
 
 			if (!didApprove) {
+				provider?.log(`[newTaskTool] ❌ Approval denied, exiting`)
 				return
 			}
-
-			const provider = cline.providerRef.deref()
 
 			if (!provider) {
 				return
@@ -83,7 +91,14 @@ export async function newTaskTool(
 			cline.pausedModeSlug = (await provider.getState()).mode ?? defaultModeSlug
 
 			// Create new task instance first (this preserves parent's current mode in its history)
-			const newCline = await provider.initClineWithTask(unescapedMessage, undefined, cline)
+			// 🔥 如果父任务是智能体任务，子任务也应该继承 agentTaskContext
+			const taskOptions: any = {
+				startTask: true, // 🔥 确保子任务自动启动
+			}
+			if (cline.agentTaskContext) {
+				taskOptions.agentTaskContext = cline.agentTaskContext
+			}
+			const newCline = await provider.initClineWithTask(unescapedMessage, undefined, cline, taskOptions)
 			if (!newCline) {
 				pushToolResult(t("tools:newTask.errors.policy_restriction"))
 				return

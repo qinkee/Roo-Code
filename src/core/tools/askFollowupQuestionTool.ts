@@ -15,6 +15,18 @@ export async function askFollowupQuestionTool(
 	const follow_up: string | undefined = block.params.follow_up
 
 	try {
+		// 🔥 智能体任务：不允许询问用户问题
+		if (cline.agentTaskContext && !block.partial) {
+			const provider = cline.providerRef.deref()
+			provider?.log(`[askFollowupQuestionTool] ❌ Agent tasks cannot ask followup questions`)
+			pushToolResult(
+				formatResponse.toolError(
+					"Agent tasks cannot ask followup questions. You must make decisions independently based on the available information.",
+				),
+			)
+			return
+		}
+
 		if (block.partial) {
 			// 只发送问题文本，不包含suggestions，避免重复
 			// 构建仅包含question的JSON，不包含suggest数组

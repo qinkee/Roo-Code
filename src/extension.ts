@@ -110,215 +110,354 @@ export async function activate(context: vscode.ExtensionContext) {
 	;(global as any).llmStreamService = llmService
 	outputChannel.appendLine("[LLM] LLM Stream Service created and registered globally")
 
+	// 🔥 智能体任务执行辅助函数
+	/**
+	 * 准备智能体任务参数
+	 */
+	async function prepareAgentTask(data: any, provider: ClineProvider) {
+		outputChannel.appendLine(`[Agent] === prepareAgentTask START ===`)
+		outputChannel.appendLine(`[Agent] Raw data: ${JSON.stringify(data)}`)
+
+		const { streamId, question, sendId, recvId, senderTerminal, targetTerminal, chatType, conversationId } = data
+		outputChannel.appendLine(
+			`[Agent] Extracted: streamId=${streamId}, sendId=${sendId}, recvId=${recvId}, conversationId=${conversationId}`,
+		)
+
+		// 解析 question
+		let questionData: any
+		try {
+			questionData = typeof question === "string" ? JSON.parse(question) : question
+			outputChannel.appendLine(`[Agent] Parsed question: ${JSON.stringify(questionData)}`)
+		} catch (e) {
+			outputChannel.appendLine(`[Agent] ❌ Failed to parse question: ${e}`)
+			throw new Error("Invalid question format")
+		}
+
+		// 提取智能体ID - 优先从 question 中获取，如果没有则从 taskName 中提取
+		let agentId = questionData.agentId
+
+		if (!agentId) {
+			// 从 taskName 中提取 agentId (格式: agent_xxx)
+			const { taskName } = data
+			if (taskName && taskName.startsWith("agent_")) {
+				// 移除 "agent_" 前缀
+				agentId = taskName.substring(6)
+				outputChannel.appendLine(`[Agent] Extracted agentId from taskName: ${agentId}`)
+			}
+		}
+
+		if (!agentId) {
+			outputChannel.appendLine(`[Agent] ❌ Missing agentId in both question and taskName`)
+			outputChannel.appendLine(`[Agent] question: ${JSON.stringify(questionData)}`)
+			outputChannel.appendLine(`[Agent] taskName: ${data.taskName}`)
+			throw new Error("Missing agentId in question and taskName")
+		}
+
+		outputChannel.appendLine(`[Agent] Agent ID: ${agentId}`)
+
+		const message = questionData.params?.message
+		if (!message) {
+			outputChannel.appendLine(`[Agent] ❌ Missing message in params`)
+			throw new Error("Missing message in params")
+		}
+		outputChannel.appendLine(`[Agent] Message: ${message.substring(0, 100)}...`)
+
+		// 获取智能体配置
+		outputChannel.appendLine(`[Agent] Getting agent config for ${agentId}...`)
+		const a2aManager = A2AServerManager.getInstance()
+		const agentConfig = await a2aManager.getAgentConfig(agentId)
+		if (!agentConfig) {
+			outputChannel.appendLine(`[Agent] ❌ Agent config not found for ${agentId}`)
+			throw new Error(`Agent ${agentId} not found`)
+		}
+		outputChannel.appendLine(`[Agent] ✅ Agent config loaded: ${JSON.stringify(agentConfig)}`)
+
+		// 响应时交换发送者/接收者
+		const responseSendId = recvId
+		const responseRecvId = sendId
+		const responseSenderTerminal = targetTerminal
+		const responseTargetTerminal = senderTerminal
+
+		const result = {
+			agentId,
+			agentConfig,
+			message,
+			streamId,
+			conversationId,
+			imMetadata: {
+				sendId: responseSendId,
+				recvId: responseRecvId,
+				senderTerminal: responseSenderTerminal,
+				targetTerminal: responseTargetTerminal,
+				chatType,
+			},
+		}
+
+		outputChannel.appendLine(`[Agent] === prepareAgentTask END ===`)
+		return result
+	}
+
+	/**
+	 * 创建并执行智能体任务
+	 */
+	async function createAndExecuteAgentTask(taskParams: any, provider: ClineProvider) {
+		outputChannel.appendLine(`[Agent] === createAndExecuteAgentTask START ===`)
+		const { agentId, agentConfig, message, streamId, conversationId, imMetadata } = taskParams
+		outputChannel.appendLine(
+			`[Agent] AgentID: ${agentId}, StreamID: ${streamId}, ConversationID: ${conversationId}`,
+		)
+
+		// 初始化或加载历史对话
+		let apiHistory: any[] = []
+		if (conversationId) {
+			outputChannel.appendLine(`[Agent] Loading conversation history for ${conversationId}...`)
+			// 从 provider 加载历史对话
+			const storedHistory = await provider.getAgentConversationHistory(conversationId)
+			if (storedHistory) {
+				apiHistory = storedHistory
+				outputChannel.appendLine(
+					`[Agent] ✅ Loaded ${apiHistory.length} messages for conversation ${conversationId}`,
+				)
+			} else {
+				outputChannel.appendLine(`[Agent] No existing conversation history found`)
+			}
+		}
+
+		// 创建任务（使用正确的 API）
+		outputChannel.appendLine(`[Agent] Creating task with initClineWithTask...`)
+		outputChannel.appendLine(`[Agent] Task message: ${message.substring(0, 100)}...`)
+		outputChannel.appendLine(
+			`[Agent] AgentTaskContext: ${JSON.stringify({
+				agentId,
+				streamId,
+				mode: agentConfig.mode || "code",
+				roleDescription: agentConfig.roleDescription ? "exists" : "none",
+				imMetadata,
+			})}`,
+		)
+
+		// 🔥 显式设置 startTask: true 确保任务自动启动
+		const taskOptions: any = {
+			agentTaskContext: {
+				agentId,
+				streamId,
+				mode: agentConfig.mode || "code",
+				roleDescription: agentConfig.roleDescription,
+				imMetadata,
+			},
+			startTask: true, // 🔥 明确设置为 true
+		}
+
+		outputChannel.appendLine(`[Agent] Task options: ${JSON.stringify({ ...taskOptions, agentTaskContext: "..." })}`)
+
+		const task = await provider.initClineWithTask(message, [], undefined, taskOptions)
+
+		outputChannel.appendLine(`[Agent] ✅ Task created: taskId=${task.taskId}, instanceId=${task.instanceId}`)
+
+		// 配置智能体参数
+		outputChannel.appendLine(`[Agent] Configuring agent parameters...`)
+		if (agentConfig.allowedTools) {
+			outputChannel.appendLine(`[Agent] Setting allowed tools: ${agentConfig.allowedTools.join(", ")}`)
+			task.setAllowedTools(agentConfig.allowedTools)
+		}
+
+		if (agentConfig.mode) {
+			try {
+				const modeConfig = provider.getModeConfig(agentConfig.mode)
+				if (modeConfig) {
+					outputChannel.appendLine(`[Agent] ✅ Mode config loaded: ${modeConfig.slug}`)
+					task.setModeConfig(modeConfig)
+				}
+				// 找不到就跳过，使用默认配置
+			} catch (error) {
+				outputChannel.appendLine(`[Agent] Mode config lookup failed (using defaults): ${error}`)
+			}
+		}
+
+		if (agentConfig.roleDescription) {
+			outputChannel.appendLine(
+				`[Agent] Setting custom instructions: ${agentConfig.roleDescription.substring(0, 50)}...`,
+			)
+			task.setCustomInstructions(agentConfig.roleDescription)
+		}
+
+		// 恢复历史对话
+		if (apiHistory.length > 0) {
+			outputChannel.appendLine(`[Agent] Restoring ${apiHistory.length} conversation history messages...`)
+			for (const msg of apiHistory) {
+				await task.addToApiConversationHistory(msg)
+			}
+			outputChannel.appendLine(`[Agent] ✅ Conversation history restored`)
+		}
+
+		// 执行任务 - Task 创建后会自动启动
+		// 等待任务完成（监听任务事件）
+		outputChannel.appendLine(`[Agent] Waiting for task to complete...`)
+		outputChannel.appendLine(`[Agent] Task should be auto-started by constructor (startTask=true)`)
+
+		await new Promise<void>((resolve, reject) => {
+			// 导入 RooCodeEventName
+			const { RooCodeEventName } = require("@roo-code/types")
+
+			// 监听任务完成事件
+			const onCompleted = (...args: any[]) => {
+				outputChannel.appendLine(
+					`[Agent] 🎉 TaskCompleted event received for conversation ${conversationId || streamId}`,
+				)
+				outputChannel.appendLine(`[Agent] Event args: ${JSON.stringify(args)}`)
+				cleanup()
+				resolve()
+			}
+
+			// 监听任务中止事件
+			const onAborted = (...args: any[]) => {
+				outputChannel.appendLine(
+					`[Agent] ⚠️ TaskAborted event received for conversation ${conversationId || streamId}`,
+				)
+				outputChannel.appendLine(`[Agent] Event args: ${JSON.stringify(args)}`)
+				cleanup()
+				resolve()
+			}
+
+			// 监听任务启动事件（用于调试）
+			const onStarted = () => {
+				outputChannel.appendLine(`[Agent] ✅ TaskStarted event received`)
+			}
+
+			// 清理监听器
+			const cleanup = () => {
+				task.off(RooCodeEventName.TaskStarted, onStarted)
+				task.off(RooCodeEventName.TaskCompleted, onCompleted)
+				task.off(RooCodeEventName.TaskAborted, onAborted)
+				if (timeoutId) {
+					clearTimeout(timeoutId)
+				}
+			}
+
+			// 注册事件监听器
+			outputChannel.appendLine(`[Agent] Registering event listeners...`)
+			task.on(RooCodeEventName.TaskStarted, onStarted)
+			task.on(RooCodeEventName.TaskCompleted, onCompleted)
+			task.on(RooCodeEventName.TaskAborted, onAborted)
+
+			// 超时保护 (10分钟)
+			const timeoutId = setTimeout(
+				() => {
+					outputChannel.appendLine(
+						`[Agent] ⏰ Task timeout (10 minutes) for conversation ${conversationId || streamId}`,
+					)
+					cleanup()
+					resolve()
+				},
+				10 * 60 * 1000,
+			)
+
+			outputChannel.appendLine(`[Agent] Event listeners registered, waiting for task events...`)
+		})
+
+		// 保存对话历史
+		outputChannel.appendLine(`[Agent] Saving conversation history...`)
+		const finalHistory = task.apiConversationHistory
+		await provider.saveAgentConversationHistory(conversationId || streamId, finalHistory)
+		outputChannel.appendLine(`[Agent] ✅ Conversation history saved: ${finalHistory.length} messages`)
+
+		// 🔥 发送 LLM_END 事件到 IM WebSocket
+		outputChannel.appendLine(`[Agent] Sending LLM_END event...`)
+		const finalConversationId = conversationId || streamId
+		llmService.imConnection.sendLLMEnd(
+			streamId,
+			finalConversationId,
+			imMetadata.recvId,
+			imMetadata.targetTerminal,
+			imMetadata.chatType,
+			imMetadata.sendId,
+			imMetadata.senderTerminal,
+		)
+		outputChannel.appendLine(`[Agent] ✅ LLM_END event sent with conversationId: ${finalConversationId}`)
+
+		outputChannel.appendLine(`[Agent] === createAndExecuteAgentTask END ===`)
+
+		return finalConversationId
+	}
+
 	// 注册LLM流式请求处理器
 	llmService.imConnection.onLLMStreamRequest(async (data: any) => {
+		outputChannel.appendLine(`[LLM] ========== NEW REQUEST ==========`)
 		outputChannel.appendLine(`[LLM] Received LLM_STREAM_REQUEST`)
-		// data 包含: streamId, question, sendId, recvId, senderTerminal, targetTerminal, chatType, taskName, timestamp
+		outputChannel.appendLine(`[LLM] Request data keys: ${Object.keys(data).join(", ")}`)
+
 		try {
-			const { streamId, question, sendId, recvId, senderTerminal, targetTerminal, chatType, taskName } = data
-			outputChannel.appendLine(`[LLM] Processing request - streamId: ${streamId}, taskName: ${taskName}`)
+			// 延迟获取 provider（必须等待初始化完成）
+			outputChannel.appendLine(`[LLM] Waiting for provider initialization...`)
+			let provider: ClineProvider | undefined
+			let attempts = 0
+			const maxAttempts = 50 // 5 seconds max
 
-			// 响应时需要交换发送者和接收者的值
-			// 响应消息: sendId字段填recvId的值, recvId字段填sendId的值
-			const responseSendId = recvId // sendId 填原请求的 recvId
-			const responseRecvId = sendId // recvId 填原请求的 sendId
-			const responseSenderTerminal = targetTerminal // senderTerminal 填原请求的 targetTerminal
-			const responseTargetTerminal = senderTerminal // targetTerminal 填原请求的 senderTerminal
-
-			// 解析 question（它是一个JSON字符串）
-			let questionData: any
-			try {
-				questionData = typeof question === "string" ? JSON.parse(question) : question
-			} catch (e) {
-				outputChannel.appendLine(`[LLM] Failed to parse question: ${e}`)
-				// 发送错误响应
-				llmService.imConnection.sendLLMError(
-					streamId,
-					"Invalid question format",
-					responseRecvId,
-					responseTargetTerminal,
-					chatType,
-					responseSendId,
-					responseSenderTerminal,
-				)
-				return
-			}
-
-			// 从 taskName 中提取智能体ID (格式: agent_{agentId})
-			const agentIdMatch = taskName?.match(/^agent_(.+)$/)
-			if (!agentIdMatch) {
-				outputChannel.appendLine(`[LLM] Invalid taskName format: ${taskName}`)
-				llmService.imConnection.sendLLMError(
-					streamId,
-					"Invalid taskName format",
-					responseRecvId,
-					responseTargetTerminal,
-					chatType,
-					responseSendId,
-					responseSenderTerminal,
-				)
-				return
-			}
-
-			const agentId = agentIdMatch[1]
-
-			// 获取消息内容
-			const message = questionData?.params?.message
-			if (!message) {
-				outputChannel.appendLine(`[LLM] No message in question data`)
-				llmService.imConnection.sendLLMError(
-					streamId,
-					"No message provided",
-					responseRecvId,
-					responseTargetTerminal,
-					chatType,
-					responseSendId,
-					responseSenderTerminal,
-				)
-				return
-			}
-
-			// 调用智能体的 A2A 服务器
-			try {
-				// 直接使用已在顶部导入的 A2AServerManager
-				const a2aManager = A2AServerManager.getInstance()
-
-				// 获取智能体的服务器状态（使用正确的方法名）
-				const serverStatus = a2aManager.getServerStatus(agentId)
-				if (!serverStatus || !serverStatus.url) {
-					outputChannel.appendLine(`[LLM] Agent ${agentId} not running or no server URL`)
-					llmService.imConnection.sendLLMError(
-						streamId,
-						`Agent ${agentId} is not running`,
-						recvId,
-						targetTerminal,
-						chatType,
-						sendId,
-						senderTerminal,
-					)
-					return
+			while (!provider && attempts < maxAttempts) {
+				provider = (global as any).clineProvider
+				if (!provider) {
+					attempts++
+					outputChannel.appendLine(`[LLM] Provider not ready, attempt ${attempts}/${maxAttempts}`)
+					await new Promise((resolve) => setTimeout(resolve, 100))
 				}
+			}
 
-				// 使用流式 SSE 请求
-				const url = new URL(`${serverStatus.url}/execute`)
-				const isHttps = url.protocol === "https:"
-				const httpModule = isHttps ? require("https") : require("http")
+			if (!provider) {
+				throw new Error("Provider not initialized after 5 seconds")
+			}
 
-				await new Promise<void>((resolve, reject) => {
-					const requestData = JSON.stringify({
-						method: "chat",
-						params: { message: message },
-						stream: true, // 关键：添加 stream 参数
-					})
+			outputChannel.appendLine(`[LLM] ✅ Provider found after ${attempts} attempts`)
 
-					const options = {
-						hostname: url.hostname,
-						port: url.port || (isHttps ? 443 : 80),
-						path: url.pathname,
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-							"Content-Length": Buffer.byteLength(requestData),
-							Accept: "text/event-stream",
-						},
-					}
+			// 准备任务参数
+			outputChannel.appendLine(`[LLM] Calling prepareAgentTask...`)
+			const taskParams = await prepareAgentTask(data, provider)
+			outputChannel.appendLine(`[LLM] ✅ prepareAgentTask completed`)
 
-					const req = httpModule.request(options, (res: any) => {
-						if (res.statusCode < 200 || res.statusCode >= 300) {
-							let errorData = ""
-							res.on("data", (chunk: any) => {
-								errorData += chunk
-							})
-							res.on("end", () => {
-								reject(new Error(`HTTP ${res.statusCode}: ${errorData}`))
-							})
-							return
-						}
+			// 创建并执行任务
+			outputChannel.appendLine(`[LLM] Calling createAndExecuteAgentTask...`)
+			const conversationId = await createAndExecuteAgentTask(taskParams, provider)
+			outputChannel.appendLine(`[LLM] ✅ createAndExecuteAgentTask completed`)
 
-						let buffer = ""
+			// 发送结束事件（带conversationId）
+			outputChannel.appendLine(`[LLM] Sending LLM_END event...`)
+			llmService.imConnection.sendLLMEnd(
+				taskParams.streamId,
+				taskParams.imMetadata.recvId,
+				taskParams.imMetadata.targetTerminal,
+				taskParams.imMetadata.chatType,
+				{
+					name: `agent_${taskParams.agentId}`,
+					id: taskParams.agentId,
+				},
+				taskParams.imMetadata.sendId,
+				taskParams.imMetadata.senderTerminal,
+				conversationId,
+			)
+			outputChannel.appendLine(`[LLM] ✅ Request processing completed successfully`)
+		} catch (error: any) {
+			outputChannel.appendLine(`[LLM] ❌❌❌ Error processing LLM request ❌❌❌`)
+			outputChannel.appendLine(`[LLM] Error message: ${error.message}`)
+			outputChannel.appendLine(`[LLM] Error stack: ${error.stack}`)
 
-						let currentEvent = ""
-						res.on("data", (chunk: any) => {
-							buffer += chunk.toString()
-							const lines = buffer.split("\n")
-							buffer = lines.pop() || ""
-
-							for (const line of lines) {
-								if (line.startsWith("event: ")) {
-									currentEvent = line.slice(7).trim()
-								} else if (line.startsWith("data: ")) {
-									const data = line.slice(6).trim()
-
-									if (data === "[DONE]") {
-										continue
-									}
-
-									try {
-										const parsed = JSON.parse(data)
-
-										// 根据事件类型处理
-										if (currentEvent === "thinking" || currentEvent === "completion") {
-											// thinking 和 completion 事件都包含 content
-											if (parsed.content) {
-												llmService.imConnection.sendLLMChunk(
-													streamId,
-													parsed.content,
-													responseRecvId,
-													responseTargetTerminal,
-													chatType,
-													responseSendId,
-													responseSenderTerminal,
-												)
-											}
-										} else if (currentEvent === "error") {
-											reject(new Error(parsed.error || parsed.message || "Stream error"))
-										}
-										// connected, start, api_start, done 等事件不需要转发
-									} catch (e) {
-										// SSE 数据解析失败，忽略该行
-									}
-								}
-							}
-						})
-
-						res.on("end", () => {
-							llmService.imConnection.sendLLMEnd(
-								streamId,
-								responseRecvId,
-								responseTargetTerminal,
-								chatType,
-								{
-									name: taskName,
-									id: agentId,
-								},
-								responseSendId,
-								responseSenderTerminal,
-							)
-							resolve()
-						})
-
-						res.on("error", reject)
-					})
-
-					req.on("error", reject)
-					req.write(requestData)
-					req.end()
-				})
-			} catch (error: any) {
-				outputChannel.appendLine(`[LLM] Error calling agent: ${error.message}`)
+			// 发送错误响应
+			try {
+				const { streamId, sendId, recvId, senderTerminal, targetTerminal, chatType } = data
 				llmService.imConnection.sendLLMError(
 					streamId,
-					error.message || "Agent execution failed",
+					error.message || "Task execution failed",
 					recvId,
 					targetTerminal,
 					chatType,
 					sendId,
 					senderTerminal,
 				)
+				outputChannel.appendLine(`[LLM] ✅ Error response sent to client`)
+			} catch (sendError: any) {
+				outputChannel.appendLine(`[LLM] ❌ Failed to send error response: ${sendError.message}`)
 			}
-		} catch (error) {
-			outputChannel.appendLine(`[LLM] Error processing LLM request: ${error}`)
 		}
+
+		outputChannel.appendLine(`[LLM] ========== REQUEST END ==========`)
 	})
 
 	// 延迟初始化：检查tokenKey是否已设置
@@ -342,6 +481,57 @@ export async function activate(context: vscode.ExtensionContext) {
 	const llmTargetManager = LLMStreamTargetManager.getInstance()
 	await llmTargetManager.loadFromState(context)
 	;(global as any).llmStreamTargetManager = llmTargetManager
+
+	// 🔥 添加诊断命令
+	context.subscriptions.push(
+		vscode.commands.registerCommand("roo-cline.diagnosticIMConnection", async () => {
+			outputChannel.appendLine("========== IM CONNECTION DIAGNOSTIC ==========")
+			outputChannel.appendLine(`[Diagnostic] Current time: ${new Date().toISOString()}`)
+
+			// 检查 LLM 服务
+			const llmService = (global as any).llmStreamService
+			if (!llmService) {
+				outputChannel.appendLine(`[Diagnostic] ❌ llmStreamService not found in global`)
+			} else {
+				outputChannel.appendLine(`[Diagnostic] ✅ llmStreamService found`)
+				outputChannel.appendLine(`[Diagnostic] IM connection: ${llmService.imConnection ? "exists" : "null"}`)
+
+				if (llmService.imConnection) {
+					const ws = llmService.imConnection.ws
+					outputChannel.appendLine(`[Diagnostic] WebSocket state: ${ws ? ws.readyState : "null"}`)
+					outputChannel.appendLine(`[Diagnostic] Is connected: ${llmService.imConnection.isConnected}`)
+
+					// WebSocket states: 0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED
+					if (ws) {
+						const states = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"]
+						outputChannel.appendLine(`[Diagnostic] WebSocket state name: ${states[ws.readyState]}`)
+					}
+				}
+			}
+
+			// 检查 Provider
+			const provider = (global as any).clineProvider
+			if (!provider) {
+				outputChannel.appendLine(`[Diagnostic] ❌ clineProvider not found in global`)
+			} else {
+				outputChannel.appendLine(`[Diagnostic] ✅ clineProvider found`)
+			}
+
+			// 检查消息处理器
+			if (llmService?.imConnection) {
+				const handlers = llmService.imConnection.messageHandlers
+				outputChannel.appendLine(`[Diagnostic] Message handlers registered: ${handlers ? handlers.size : 0}`)
+				if (handlers) {
+					outputChannel.appendLine(
+						`[Diagnostic] Handler for cmd=10 (LLM_STREAM_REQUEST): ${handlers.has(10)}`,
+					)
+				}
+			}
+
+			outputChannel.appendLine("========== DIAGNOSTIC END ==========")
+			vscode.window.showInformationMessage("IM Connection diagnostic complete. Check output panel.")
+		}),
+	)
 
 	// Register test command for LLM streaming
 	context.subscriptions.push(
@@ -539,6 +729,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Register task history bridge for void integration
 	TaskHistoryBridge.register(context, provider)
+
+	// 🔥 全局注册 provider 供智能体任务使用
+	;(global as any).clineProvider = provider
 
 	// SAFE INITIALIZATION: Initialize agent services safely
 	outputChannel.appendLine("[SafeInit] Starting safe initialization of agent services...")

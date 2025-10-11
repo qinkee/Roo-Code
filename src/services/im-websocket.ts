@@ -202,6 +202,7 @@ export class RooCodeIMConnection {
 		taskInfo?: { name: string; id?: string },
 		sendId?: number,
 		senderTerminal?: number,
+		conversationId?: string, // 🔥 新增：会话ID
 	): void {
 		const message = {
 			cmd: 12, // LLM_STREAM_END
@@ -215,12 +216,13 @@ export class RooCodeIMConnection {
 				// 将taskInfo拆分为独立字段，避免JSON嵌套解析问题
 				taskName: taskInfo?.name,
 				taskId: taskInfo?.id,
+				conversationId, // 🔥 返回会话ID
 				timestamp: Date.now(),
 			},
 		}
 
 		this.outputChannel.appendLine(
-			`[RooCode IM] Sending LLM END (cmd=12): streamId=${streamId}, taskName=${taskInfo?.name}`,
+			`[RooCode IM] Sending LLM END (cmd=12): streamId=${streamId}, taskName=${taskInfo?.name}, conversationId=${conversationId}`,
 		)
 		this.send(message)
 		this.sequenceMap.delete(streamId)
