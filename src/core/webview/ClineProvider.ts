@@ -105,12 +105,14 @@ export class ClineProvider
 	private disposables: vscode.Disposable[] = []
 	private webviewDisposables: vscode.Disposable[] = []
 	private view?: vscode.WebviewView | vscode.WebviewPanel
-	private clineStack: Task[] = []
+	private clineStack: Task[] = [] // 🔥 用户任务栈（单栈执行）
+	// 🔥 智能体任务池（支持并行执行）
+	private agentTaskPool: Map<string, Task> = new Map()
 	// 🔥 追踪每个消息的上次发送位置（用于增量发送）
 	// Key: `${taskId}_${messageTimestamp}`, Value: lastSentLength
 	private lastSentPositions: Map<string, number> = new Map()
-	// 🔥 标记用户是否正在主动查看智能体任务（用于区分静默执行和主动查看）
-	private isViewingAgentTask: boolean = false
+	// 🔥 用户正在查看的智能体任务ID（null表示未查看或查看用户任务）
+	private viewingAgentTaskId: string | null = null
 	private codeIndexStatusSubscription?: vscode.Disposable
 	private currentWorkspaceManager?: CodeIndexManager
 	private _workspaceTracker?: WorkspaceTracker // workSpaceTracker read-only for access outside this class
@@ -316,11 +318,21 @@ export class ClineProvider
 	// The instance is pushed to the top of the stack (LIFO order).
 	// When the task is completed, the top instance is removed, reactivating the previous task.
 	async addClineToStack(task: Task) {
-		// 🔥 添加新任务时，如果不是智能体任务，重置查看标志
-		if (!task.agentTaskContext) {
-			this.isViewingAgentTask = false
+		// 🔥 智能体任务：放入任务池，后台并行执行
+		if (task.agentTaskContext) {
+			this.agentTaskPool.set(task.taskId, task)
+			task.emit(RooCodeEventName.TaskFocused)
+			this.log(`[AgentTaskPool] Added agent task ${task.taskId} to pool, pool size: ${this.agentTaskPool.size}`)
+
+			// 异步启动任务，不阻塞
+			this.performPreparationTasks(task).catch(err => {
+				this.log(`[AgentTaskPool] Task ${task.taskId} preparation failed: ${err}`)
+			})
+			return // 🔥 不进入用户任务栈
 		}
-		// Add this cline instance into the stack that represents the order of all the called tasks.
+
+		// 🔥 用户任务：保持原有单栈逻辑
+		this.viewingAgentTaskId = null // 切换到用户任务，清除查看状态
 		this.clineStack.push(task)
 		task.emit(RooCodeEventName.TaskFocused)
 
@@ -393,6 +405,12 @@ export class ClineProvider
 	// returns the current cline object in the stack (the top one)
 	// if the stack is empty, returns undefined
 	getCurrentCline(): Task | undefined {
+		// 🔥 如果用户正在查看智能体任务，返回该任务
+		if (this.viewingAgentTaskId) {
+			return this.agentTaskPool.get(this.viewingAgentTaskId)
+		}
+
+		// 否则返回用户任务栈顶
 		if (this.clineStack.length === 0) {
 			return undefined
 		}
@@ -421,8 +439,14 @@ export class ClineProvider
 	// Clear the current task without treating it as a subtask
 	// This is used when the user cancels a task that is not a subtask
 	async clearTask() {
-		// 🔥 清理任务时重置查看标志
-		this.isViewingAgentTask = false
+		// 🔥 如果正在查看智能体任务，只清除查看状态
+		if (this.viewingAgentTaskId) {
+			this.viewingAgentTaskId = null
+			await this.postStateToWebview()
+			return
+		}
+
+		// 用户任务：保持原有逻辑
 		await this.removeClineFromStack()
 	}
 
@@ -879,16 +903,28 @@ export class ClineProvider
 		return task
 	}
 
-	public async postMessageToWebview(message: ExtensionMessage, forceToWebview: boolean = false) {
-		const currentTask = this.clineStack[this.clineStack.length - 1]
+	public async postMessageToWebview(message: ExtensionMessage, sourceTaskId?: string) {
+		// 🔥 确定消息来源任务
+		const taskId = sourceTaskId || this.getCurrentCline()?.taskId
+		if (!taskId) {
+			this.log(`[postMessageToWebview] No task ID, skipping message: ${message.type}`)
+			return
+		}
 
-		// 🔥 智能体任务静默执行：转发到 IM，不发送到 webview
-		if (currentTask?.agentTaskContext && !this.isViewingAgentTask) {
-			this.forwardToIMWebSocket(currentTask, message)
+		// 查找任务（可能在用户栈或智能体池）
+		const task = this.agentTaskPool.get(taskId) || this.clineStack.find(t => t.taskId === taskId)
+		if (!task) {
+			this.log(`[postMessageToWebview] Task ${taskId} not found`)
+			return
+		}
+
+		// 🔥 智能体任务：只转发 IM，不发送到 webview（除非用户正在查看）
+		if (task.agentTaskContext && this.viewingAgentTaskId !== taskId) {
+			this.forwardToIMWebSocket(task, message)
 			return // 静默执行，不干扰用户 UI
 		}
 
-		// 🔥 用户任务 或 用户主动查看智能体任务时
+		// 🔥 用户任务 或 用户正在查看的智能体任务：发送到 webview
 		await this.view?.webview.postMessage(message)
 	}
 
@@ -1672,60 +1708,34 @@ export class ClineProvider
 	}
 
 	async showTaskWithId(id: string) {
-		this.log(`[fixagenttaskbug] showTaskWithId 开始激活任务: ${id}`)
-		let isAgentTask = false
+		this.log(`[showTaskWithId] 开始激活任务: ${id}`)
+
+		// 🔥 检查是否是智能体任务
+		const agentTask = this.agentTaskPool.get(id)
+		if (agentTask) {
+			// 智能体任务：标记为正在查看
+			this.viewingAgentTaskId = id
+			this.log(`[showTaskWithId] 查看智能体任务: ${id}`)
+
+			// 更新 UI
+			await this.postStateToWebview()
+			await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+			return
+		}
+
+		// 用户任务：保持原有逻辑
 		if (id !== this.getCurrentCline()?.taskId) {
 			// Non-current task.
 			const { historyItem } = await this.getTaskWithId(id)
-			isAgentTask = historyItem.source === "agent"
-
-			// 🔥 如果是智能体任务，标记为用户正在查看
-			if (isAgentTask) {
-				this.isViewingAgentTask = true
-			}
-			this.log(`[fixagenttaskbug] showTaskWithId 任务类型: ${historyItem.source}, isAgentTask: ${isAgentTask}`)
+			this.log(`[showTaskWithId] 任务类型: ${historyItem.source}`)
 			await this.initClineWithHistoryItem(historyItem) // Clears existing task.
 
-			// 🔥 等待任务初始化完成（加载消息历史）
-			const currentTask = this.getCurrentCline()
-			this.log(`[fixagenttaskbug] showTaskWithId 当前任务状态: isInitialized=${currentTask?.isInitialized}, messages=${currentTask?.clineMessages.length || 0}`)
-
-			if (currentTask && !currentTask.isInitialized) {
-				this.log(`[fixagenttaskbug] showTaskWithId 等待任务初始化完成...`)
-				// Wait for task initialization to complete (resumeTaskFromHistory loads messages)
-				await new Promise<void>((resolve) => {
-					const checkInterval = setInterval(() => {
-						if (currentTask.isInitialized || currentTask.clineMessages.length > 0) {
-							clearInterval(checkInterval)
-							this.log(`[fixagenttaskbug] showTaskWithId 任务初始化完成, messages: ${currentTask.clineMessages.length}`)
-							resolve()
-						}
-					}, 50)
-					// Timeout after 5 seconds
-					setTimeout(() => {
-						clearInterval(checkInterval)
-						this.log(`[fixagenttaskbug] showTaskWithId 任务初始化超时, messages: ${currentTask.clineMessages.length}`)
-						resolve()
-					}, 5000)
-				})
-			} else {
-				this.log(`[fixagenttaskbug] showTaskWithId 任务已初始化，无需等待`)
-			}
-
 			// 更新UI状态
-			this.log(`[fixagenttaskbug] showTaskWithId 调用 postStateToWebview()`)
 			await this.postStateToWebview()
-		} else {
-			// Check if current task is agent task
-			const currentTask = this.getCurrentCline()
-			isAgentTask = currentTask?.agentTaskContext !== undefined
-			this.log(`[fixagenttaskbug] showTaskWithId 当前任务已激活, isAgentTask: ${isAgentTask}`)
 		}
 
 		// 打开聊天界面
-		this.log(`[fixagenttaskbug] showTaskWithId 调用 chatButtonClicked`)
 		await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
-		this.log(`[fixagenttaskbug] showTaskWithId 任务激活完成`)
 	}
 
 	async exportTaskWithId(id: string) {

@@ -563,7 +563,7 @@ export const webviewMessageHandler = async (
 			// This ensures that direct tasks are not confused with agent debug tasks
 			await updateGlobalState("agentA2AMode", null)
 			provider.log(`[newTask] Cleared A2A mode for direct task creation`)
-			
+
 			// Initializing new instance of Cline will make sure that any
 			// agentically running promises in old instance don't affect our new
 			// task. This essentially creates a fresh slate for the new task.
@@ -1872,10 +1872,12 @@ export const webviewMessageHandler = async (
 					provider.log(`[getApiConfigurationById] Fetching config for ID: ${message.text}`)
 					// 只获取配置，不激活（不改变全局当前配置）
 					const config = await provider.getProviderProfileById(message.text)
-					provider.log(`[getApiConfigurationById] Retrieved config: ${config ? 'found' : 'not found'}`)
+					provider.log(`[getApiConfigurationById] Retrieved config: ${config ? "found" : "not found"}`)
 					if (config) {
 						// 返回完整的配置数据
-						provider.log(`[getApiConfigurationById] Sending success response with config ID: ${message.text}`)
+						provider.log(
+							`[getApiConfigurationById] Sending success response with config ID: ${message.text}`,
+						)
 						provider.postStateToWebview()
 						provider.postMessageToWebview({
 							type: "action",
@@ -1885,7 +1887,9 @@ export const webviewMessageHandler = async (
 							configId: message.text,
 						})
 					} else {
-						provider.log(`[getApiConfigurationById] Sending error response - config not found for ID: ${message.text}`)
+						provider.log(
+							`[getApiConfigurationById] Sending error response - config not found for ID: ${message.text}`,
+						)
 						provider.postMessageToWebview({
 							type: "action",
 							action: "getApiConfigurationByIdResult",
@@ -3067,7 +3071,7 @@ export const webviewMessageHandler = async (
 					console.log(
 						`🎯 [stopAgent] Preserving publishInfo, setting isPublished=false for agent ${message.agentId}`,
 					)
-					await updateAgentPublishStatus(message.agentId || '', false, currentAgentResult.agent.publishInfo)
+					await updateAgentPublishStatus(message.agentId || "", false, currentAgentResult.agent.publishInfo)
 					console.log(
 						`🎯 [stopAgent] Preserved publishInfo for agent ${message.agentId}:`,
 						currentAgentResult.agent.publishInfo,
@@ -3075,11 +3079,11 @@ export const webviewMessageHandler = async (
 				} else {
 					// 如果没有发布信息，则清除
 					console.log(`🛑 [stopAgent] No publishInfo found, clearing for agent ${message.agentId}`)
-					await updateAgentPublishStatus(message.agentId || '', false, null)
+					await updateAgentPublishStatus(message.agentId || "", false, null)
 				}
 
 				// 从Redis移除服务注册
-				await removeAgentFromRedis(message.agentId || '', userId)
+				await removeAgentFromRedis(message.agentId || "", userId)
 
 				await provider.postMessageToWebview({
 					type: "action",
@@ -3474,7 +3478,9 @@ export const webviewMessageHandler = async (
 
 				// 获取当前最新的agentA2AMode状态
 				const currentState = await provider.getState()
-				provider.log(`[getCurrentA2AMode] 🎯 Current agentA2AMode: ${JSON.stringify(currentState.agentA2AMode)}`)
+				provider.log(
+					`[getCurrentA2AMode] 🎯 Current agentA2AMode: ${JSON.stringify(currentState.agentA2AMode)}`,
+				)
 
 				// 发送当前状态给前端
 				provider.log(`[getCurrentA2AMode] 📤 Sending currentA2AModeResponse to frontend...`)

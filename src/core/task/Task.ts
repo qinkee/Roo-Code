@@ -814,7 +814,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	private async updateClineMessage(message: ClineMessage) {
 		const provider = this.providerRef.deref()
-		await provider?.postMessageToWebview({ type: "messageUpdated", clineMessage: message })
+		// 🔥 传递 taskId，让 provider 知道消息来源
+		await provider?.postMessageToWebview({ type: "messageUpdated", clineMessage: message }, this.taskId)
 		this.emit(RooCodeEventName.Message, { action: "updated", message })
 
 		const shouldCaptureMessage = message.partial !== true && CloudService.isEnabled()
@@ -1016,12 +1017,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				return
 			}
 
+			// 🔥 传递 taskId
 			void provider.postMessageToWebview({
 				type: "invoke",
 				invoke: "sendMessage",
 				text: trimmed,
 				images: imgs,
-			})
+			}, this.taskId)
 		} catch (error) {
 			console.error("[Task#submitUserMessage] Failed to submit user message:", error)
 		}

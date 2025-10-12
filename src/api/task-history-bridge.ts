@@ -20,7 +20,7 @@ export class TaskHistoryBridge {
 	private static getUserTerminalKey(baseKey: string, userId?: string, terminalNo?: number): string {
 		const id = userId || TaskHistoryBridge.currentUserId
 		const terminal = terminalNo !== undefined ? terminalNo : VoidBridge.getCurrentTerminalNo()
-		
+
 		if (id && terminal !== undefined) {
 			return `user_${id}_terminal_${terminal}_${baseKey}`
 		} else if (id) {
@@ -80,13 +80,13 @@ export class TaskHistoryBridge {
 			userId = options
 		} else if (typeof options === "object" && options !== null) {
 			// Called with options object
-			ctx = context as vscode.ExtensionContext | undefined || TaskHistoryBridge.extensionContext
+			ctx = (context as vscode.ExtensionContext | undefined) || TaskHistoryBridge.extensionContext
 			userId = options.userId
 			terminalNo = options.terminalNo
 			forceRefresh = options.forceRefresh || false
 		} else {
 			// Called as getTaskHistory(context?)
-			ctx = context as vscode.ExtensionContext | undefined || TaskHistoryBridge.extensionContext
+			ctx = (context as vscode.ExtensionContext | undefined) || TaskHistoryBridge.extensionContext
 		}
 
 		if (!ctx) {
@@ -96,20 +96,26 @@ export class TaskHistoryBridge {
 		// Try user+terminal specific key first
 		const effectiveUserId = userId || TaskHistoryBridge.currentUserId
 		const effectiveTerminalNo = terminalNo !== undefined ? terminalNo : VoidBridge.getCurrentTerminalNo()
-		
+
 		console.log(
 			`[TaskHistoryBridge] Getting task history - userId: ${effectiveUserId}, terminalNo: ${effectiveTerminalNo}`,
 		)
 
 		if (effectiveUserId && effectiveTerminalNo !== undefined) {
 			// Try user+terminal key first
-			const userTerminalKey = TaskHistoryBridge.getUserTerminalKey("taskHistory", effectiveUserId, effectiveTerminalNo)
+			const userTerminalKey = TaskHistoryBridge.getUserTerminalKey(
+				"taskHistory",
+				effectiveUserId,
+				effectiveTerminalNo,
+			)
 			console.log(`[TaskHistoryBridge] Trying user+terminal key: ${userTerminalKey}`)
 
 			const userTerminalHistory = ctx.globalState.get(userTerminalKey) as HistoryItem[] | undefined
 			// IMPORTANT: Return even if empty array - empty means user deleted all tasks, not "no data"
 			if (userTerminalHistory !== undefined) {
-				console.log(`[TaskHistoryBridge] Retrieved ${userTerminalHistory.length} tasks for user ${effectiveUserId} terminal ${effectiveTerminalNo}`)
+				console.log(
+					`[TaskHistoryBridge] Retrieved ${userTerminalHistory.length} tasks for user ${effectiveUserId} terminal ${effectiveTerminalNo}`,
+				)
 				return userTerminalHistory
 			}
 
@@ -137,7 +143,9 @@ export class TaskHistoryBridge {
 			const userHistory = ctx.globalState.get(userKey) as HistoryItem[] | undefined
 			// IMPORTANT: Return even if empty array - empty means user deleted all tasks, not "no data"
 			if (userHistory !== undefined) {
-				console.log(`[TaskHistoryBridge] Retrieved ${userHistory.length} tasks for user ${effectiveUserId} (no terminal)`)
+				console.log(
+					`[TaskHistoryBridge] Retrieved ${userHistory.length} tasks for user ${effectiveUserId} (no terminal)`,
+				)
 				return userHistory
 			}
 
@@ -157,7 +165,11 @@ export class TaskHistoryBridge {
 	 * @param history - Task history to update
 	 * @param immediate - Whether to sync to Redis immediately (default: false). Set to true for delete operations.
 	 */
-	static async updateTaskHistory(context?: vscode.ExtensionContext, history?: HistoryItem[], immediate: boolean = false): Promise<void> {
+	static async updateTaskHistory(
+		context?: vscode.ExtensionContext,
+		history?: HistoryItem[],
+		immediate: boolean = false,
+	): Promise<void> {
 		const ctx = context || TaskHistoryBridge.extensionContext
 		if (!ctx) {
 			console.error("[TaskHistoryBridge] Extension context not available")
@@ -191,7 +203,7 @@ export class TaskHistoryBridge {
 			// Use immediate sync for delete operations to ensure Redis is updated right away
 			TaskHistoryBridge.redis.set(redisKey, recentHistory, immediate)
 			console.log(
-				`[TaskHistoryBridge] ${immediate ? 'Immediately synced' : 'Queued sync for'} ${recentHistory.length} tasks to Redis key: ${redisKey}`,
+				`[TaskHistoryBridge] ${immediate ? "Immediately synced" : "Queued sync for"} ${recentHistory.length} tasks to Redis key: ${redisKey}`,
 			)
 		} else if (TaskHistoryBridge.currentUserId) {
 			// Fallback to user-only key if no terminal
@@ -245,26 +257,29 @@ export class TaskHistoryBridge {
 		// Command to get task history
 		const getTaskHistoryCommand = vscode.commands.registerCommand(
 			"roo-cline.getTaskHistory",
-			async (data?: { userId?: string; terminalNo?: number }): Promise<{ tasks: HistoryItem[]; activeTaskId?: string }> => {
+			async (data?: {
+				userId?: string
+				terminalNo?: number
+			}): Promise<{ tasks: HistoryItem[]; activeTaskId?: string }> => {
 				try {
 					// Log the incoming request
 					console.log("[TaskHistoryBridge] getTaskHistory command called with:", {
 						requestedUserId: data?.userId,
 						requestedTerminalNo: data?.terminalNo,
 						currentUserId: TaskHistoryBridge.currentUserId,
-						currentTerminalNo: VoidBridge.getCurrentTerminalNo()
+						currentTerminalNo: VoidBridge.getCurrentTerminalNo(),
 					})
-					
+
 					// IMPORTANT: Directly read from the correct user-prefixed key in globalState
 					// This ensures we get the latest data without cache issues
 					const currentUserId = TaskHistoryBridge.currentUserId
 					let taskHistory: HistoryItem[] = []
-					
+
 					if (currentUserId && provider.contextProxy) {
 						// Build the user-prefixed key the same way ContextProxy does
 						const userKey = `user_${currentUserId}_taskHistory`
 						console.log("[TaskHistoryBridge] Reading from user key:", userKey)
-						
+
 						// Directly read from globalState to bypass any cache
 						const userHistory = context.globalState.get(userKey) as HistoryItem[] | undefined
 						if (userHistory) {
@@ -283,7 +298,7 @@ export class TaskHistoryBridge {
 						const generalHistory = context.globalState.get("taskHistory") as HistoryItem[] | undefined
 						taskHistory = generalHistory || []
 					}
-					
+
 					const currentTaskId = provider.getCurrentCline()?.taskId
 
 					console.log("[TaskHistoryBridge] Final task history result:", {
