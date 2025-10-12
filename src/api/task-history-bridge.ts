@@ -314,18 +314,14 @@ export class TaskHistoryBridge {
 			try {
 				console.log("[TaskHistoryBridge] Deleting task:", taskId)
 
-				// Get the task history BEFORE deletion to calculate the updated list
-				const beforeHistory = await TaskHistoryBridge.getTaskHistory(context)
-				console.log("[TaskHistoryBridge] Tasks before delete:", beforeHistory?.length ?? 0)
-
-				// Delete the task
+				// Delete the task (this internally updates TaskHistoryBridge and contextProxy)
 				await provider.deleteTaskWithId(taskId)
 
-				// Manually filter out the deleted task to get the correct updated list
-				const updatedHistory = beforeHistory.filter((task) => task.id !== taskId)
+				// Get the updated task history AFTER deletion to ensure we have the latest state
+				const updatedHistory = await TaskHistoryBridge.getTaskHistory(context)
 				console.log("[TaskHistoryBridge] Tasks after delete:", updatedHistory.length, "tasks")
 
-				// Send the manually calculated updated list
+				// Send the updated list
 				await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
 					tasks: updatedHistory,
 					activeTaskId: provider.getCurrentCline()?.taskId,

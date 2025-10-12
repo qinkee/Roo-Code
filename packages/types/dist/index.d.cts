@@ -4711,13 +4711,16 @@ declare const rooCodeEventsSchema: z.ZodObject<{
                     instructions?: string | undefined;
                     reasoning_summary?: string | undefined;
                 }>>;
+                taskId: z.ZodOptional<z.ZodString>;
             }, "strip", z.ZodTypeAny, {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
                     reasoning_summary?: string | undefined;
                 } | undefined;
             }, {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -4730,6 +4733,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -4760,6 +4764,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -4792,6 +4797,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -4826,6 +4832,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -4910,6 +4917,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -4980,6 +4988,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -5274,13 +5283,16 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
                     instructions?: string | undefined;
                     reasoning_summary?: string | undefined;
                 }>>;
+                taskId: z.ZodOptional<z.ZodString>;
             }, "strip", z.ZodTypeAny, {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
                     reasoning_summary?: string | undefined;
                 } | undefined;
             }, {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -5293,6 +5305,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -5323,6 +5336,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -5355,6 +5369,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -5389,6 +5404,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -5427,6 +5443,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -5465,6 +5482,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -19372,13 +19390,16 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         instructions?: string | undefined;
                         reasoning_summary?: string | undefined;
                     }>>;
+                    taskId: z.ZodOptional<z.ZodString>;
                 }, "strip", z.ZodTypeAny, {
+                    taskId?: string | undefined;
                     gpt5?: {
                         previous_response_id?: string | undefined;
                         instructions?: string | undefined;
                         reasoning_summary?: string | undefined;
                     } | undefined;
                 }, {
+                    taskId?: string | undefined;
                     gpt5?: {
                         previous_response_id?: string | undefined;
                         instructions?: string | undefined;
@@ -19391,6 +19412,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
                 metadata?: {
+                    taskId?: string | undefined;
                     gpt5?: {
                         previous_response_id?: string | undefined;
                         instructions?: string | undefined;
@@ -19421,6 +19443,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
                 metadata?: {
+                    taskId?: string | undefined;
                     gpt5?: {
                         previous_response_id?: string | undefined;
                         instructions?: string | undefined;
@@ -19453,6 +19476,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
                 metadata?: {
+                    taskId?: string | undefined;
                     gpt5?: {
                         previous_response_id?: string | undefined;
                         instructions?: string | undefined;
@@ -19487,6 +19511,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
                 metadata?: {
+                    taskId?: string | undefined;
                     gpt5?: {
                         previous_response_id?: string | undefined;
                         instructions?: string | undefined;
@@ -19525,6 +19550,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
                 metadata?: {
+                    taskId?: string | undefined;
                     gpt5?: {
                         previous_response_id?: string | undefined;
                         instructions?: string | undefined;
@@ -19563,6 +19589,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
                 metadata?: {
+                    taskId?: string | undefined;
                     gpt5?: {
                         previous_response_id?: string | undefined;
                         instructions?: string | undefined;
@@ -19767,6 +19794,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
                 metadata?: {
+                    taskId?: string | undefined;
                     gpt5?: {
                         previous_response_id?: string | undefined;
                         instructions?: string | undefined;
@@ -19897,6 +19925,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
                 metadata?: {
+                    taskId?: string | undefined;
                     gpt5?: {
                         previous_response_id?: string | undefined;
                         instructions?: string | undefined;
@@ -24570,13 +24599,16 @@ declare const clineMessageSchema: z.ZodObject<{
             instructions?: string | undefined;
             reasoning_summary?: string | undefined;
         }>>;
+        taskId: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
+        taskId?: string | undefined;
         gpt5?: {
             previous_response_id?: string | undefined;
             instructions?: string | undefined;
             reasoning_summary?: string | undefined;
         } | undefined;
     }, {
+        taskId?: string | undefined;
         gpt5?: {
             previous_response_id?: string | undefined;
             instructions?: string | undefined;
@@ -24589,6 +24621,7 @@ declare const clineMessageSchema: z.ZodObject<{
     reasoning?: string | undefined;
     partial?: boolean | undefined;
     metadata?: {
+        taskId?: string | undefined;
         gpt5?: {
             previous_response_id?: string | undefined;
             instructions?: string | undefined;
@@ -24619,6 +24652,7 @@ declare const clineMessageSchema: z.ZodObject<{
     reasoning?: string | undefined;
     partial?: boolean | undefined;
     metadata?: {
+        taskId?: string | undefined;
         gpt5?: {
             previous_response_id?: string | undefined;
             instructions?: string | undefined;
@@ -25595,13 +25629,16 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
                     instructions?: string | undefined;
                     reasoning_summary?: string | undefined;
                 }>>;
+                taskId: z.ZodOptional<z.ZodString>;
             }, "strip", z.ZodTypeAny, {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
                     reasoning_summary?: string | undefined;
                 } | undefined;
             }, {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -25614,6 +25651,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -25644,6 +25682,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -25707,6 +25746,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -25761,6 +25801,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -25818,6 +25859,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;
@@ -25875,6 +25917,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             reasoning?: string | undefined;
             partial?: boolean | undefined;
             metadata?: {
+                taskId?: string | undefined;
                 gpt5?: {
                     previous_response_id?: string | undefined;
                     instructions?: string | undefined;

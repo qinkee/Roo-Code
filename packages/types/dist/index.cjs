@@ -1201,7 +1201,8 @@ var clineMessageSchema = import_zod7.z.object({
       previous_response_id: import_zod7.z.string().optional(),
       instructions: import_zod7.z.string().optional(),
       reasoning_summary: import_zod7.z.string().optional()
-    }).optional()
+    }).optional(),
+    taskId: import_zod7.z.string().optional()
   }).optional()
 });
 var tokenUsageSchema = import_zod7.z.object({
