@@ -79,7 +79,7 @@ import { forceFullModelDetailsLoad, hasLoadedFullDetails } from "../../api/provi
 import { ContextProxy } from "../config/ContextProxy"
 import { ProviderSettingsManager } from "../config/ProviderSettingsManager"
 import { CustomModesManager } from "../config/CustomModesManager"
-import { Task, TaskOptions } from "../task/Task"
+import { Task, TaskOptions, AgentTaskContext } from "../task/Task"
 import { getSystemPromptFilePath } from "../prompts/sections/custom-system-prompt"
 import { AgentManager } from "../agent/AgentManager"
 
@@ -109,6 +109,8 @@ export class ClineProvider
 	// 🔥 追踪每个消息的上次发送位置（用于增量发送）
 	// Key: `${taskId}_${messageTimestamp}`, Value: lastSentLength
 	private lastSentPositions: Map<string, number> = new Map()
+	// 🔥 标记用户是否正在主动查看智能体任务（用于区分静默执行和主动查看）
+	private isViewingAgentTask: boolean = false
 	private codeIndexStatusSubscription?: vscode.Disposable
 	private currentWorkspaceManager?: CodeIndexManager
 	private _workspaceTracker?: WorkspaceTracker // workSpaceTracker read-only for access outside this class
@@ -314,6 +316,10 @@ export class ClineProvider
 	// The instance is pushed to the top of the stack (LIFO order).
 	// When the task is completed, the top instance is removed, reactivating the previous task.
 	async addClineToStack(task: Task) {
+		// 🔥 添加新任务时，如果不是智能体任务，重置查看标志
+		if (!task.agentTaskContext) {
+			this.isViewingAgentTask = false
+		}
 		// Add this cline instance into the stack that represents the order of all the called tasks.
 		this.clineStack.push(task)
 		task.emit(RooCodeEventName.TaskFocused)
@@ -415,6 +421,8 @@ export class ClineProvider
 	// Clear the current task without treating it as a subtask
 	// This is used when the user cancels a task that is not a subtask
 	async clearTask() {
+		// 🔥 清理任务时重置查看标志
+		this.isViewingAgentTask = false
 		await this.removeClineFromStack()
 	}
 
@@ -808,7 +816,8 @@ export class ClineProvider
 
 				if (profile?.name) {
 					try {
-						await this.activateProviderProfile({ name: profile.name })
+						// 🔥 跳过状态更新，避免在任务初始化过程中发送错误的状态
+						await this.activateProviderProfile({ name: profile.name }, true)
 					} catch (error) {
 						// Log the error but continue with task restoration
 						this.log(
@@ -835,6 +844,15 @@ export class ClineProvider
 		// Determine if TaskBridge should be enabled
 		const enableTaskBridge = isRemoteControlEnabled(cloudUserInfo, remoteControlEnabled)
 
+		// Restore agent context if this was an agent task
+		let agentTaskContext: AgentTaskContext | undefined
+		if (historyItem.source === "agent" && historyItem.agentId) {
+			agentTaskContext = {
+				agentId: historyItem.agentId,
+				taskId: historyItem.id,
+			}
+		}
+
 		const task = new Task({
 			provider: this,
 			apiConfiguration,
@@ -849,6 +867,7 @@ export class ClineProvider
 			taskNumber: historyItem.number,
 			onCreated: this.taskCreationCallback,
 			enableTaskBridge,
+			agentTaskContext,
 		})
 
 		await this.addClineToStack(task)
@@ -860,18 +879,16 @@ export class ClineProvider
 		return task
 	}
 
-	public async postMessageToWebview(message: ExtensionMessage) {
-		// 🔥 检查是否是智能体任务
+	public async postMessageToWebview(message: ExtensionMessage, forceToWebview: boolean = false) {
 		const currentTask = this.clineStack[this.clineStack.length - 1]
 
-		if (currentTask?.agentTaskContext) {
-			// 智能体任务 → 转发到 IM WebSocket
-			this.log(`[postMessageToWebview] Agent task detected, forwarding message type: ${message.type}`)
+		// 🔥 智能体任务静默执行：转发到 IM，不发送到 webview
+		if (currentTask?.agentTaskContext && !this.isViewingAgentTask) {
 			this.forwardToIMWebSocket(currentTask, message)
-			return // 不发送到 Webview
+			return // 静默执行，不干扰用户 UI
 		}
 
-		// 用户任务 → 原逻辑
+		// 🔥 用户任务 或 用户主动查看智能体任务时
 		await this.view?.webview.postMessage(message)
 	}
 
@@ -1416,7 +1433,7 @@ export class ClineProvider
 		await this.postStateToWebview()
 	}
 
-	async activateProviderProfile(args: { name: string } | { id: string }) {
+	async activateProviderProfile(args: { name: string } | { id: string }, skipStateUpdate: boolean = false) {
 		const { name, id, ...providerSettings } = await this.providerSettingsManager.activateProfile(args)
 
 		// See `upsertProviderProfile` for a description of what this is doing.
@@ -1439,7 +1456,10 @@ export class ClineProvider
 			task.api = buildApiHandler(providerSettings)
 		}
 
-		await this.postStateToWebview()
+		// 🔥 允许跳过状态更新，避免在任务初始化过程中干扰
+		if (!skipStateUpdate) {
+			await this.postStateToWebview()
+		}
 	}
 
 	/**
@@ -1652,13 +1672,60 @@ export class ClineProvider
 	}
 
 	async showTaskWithId(id: string) {
+		this.log(`[fixagenttaskbug] showTaskWithId 开始激活任务: ${id}`)
+		let isAgentTask = false
 		if (id !== this.getCurrentCline()?.taskId) {
 			// Non-current task.
 			const { historyItem } = await this.getTaskWithId(id)
+			isAgentTask = historyItem.source === "agent"
+
+			// 🔥 如果是智能体任务，标记为用户正在查看
+			if (isAgentTask) {
+				this.isViewingAgentTask = true
+			}
+			this.log(`[fixagenttaskbug] showTaskWithId 任务类型: ${historyItem.source}, isAgentTask: ${isAgentTask}`)
 			await this.initClineWithHistoryItem(historyItem) // Clears existing task.
+
+			// 🔥 等待任务初始化完成（加载消息历史）
+			const currentTask = this.getCurrentCline()
+			this.log(`[fixagenttaskbug] showTaskWithId 当前任务状态: isInitialized=${currentTask?.isInitialized}, messages=${currentTask?.clineMessages.length || 0}`)
+
+			if (currentTask && !currentTask.isInitialized) {
+				this.log(`[fixagenttaskbug] showTaskWithId 等待任务初始化完成...`)
+				// Wait for task initialization to complete (resumeTaskFromHistory loads messages)
+				await new Promise<void>((resolve) => {
+					const checkInterval = setInterval(() => {
+						if (currentTask.isInitialized || currentTask.clineMessages.length > 0) {
+							clearInterval(checkInterval)
+							this.log(`[fixagenttaskbug] showTaskWithId 任务初始化完成, messages: ${currentTask.clineMessages.length}`)
+							resolve()
+						}
+					}, 50)
+					// Timeout after 5 seconds
+					setTimeout(() => {
+						clearInterval(checkInterval)
+						this.log(`[fixagenttaskbug] showTaskWithId 任务初始化超时, messages: ${currentTask.clineMessages.length}`)
+						resolve()
+					}, 5000)
+				})
+			} else {
+				this.log(`[fixagenttaskbug] showTaskWithId 任务已初始化，无需等待`)
+			}
+
+			// 更新UI状态
+			this.log(`[fixagenttaskbug] showTaskWithId 调用 postStateToWebview()`)
+			await this.postStateToWebview()
+		} else {
+			// Check if current task is agent task
+			const currentTask = this.getCurrentCline()
+			isAgentTask = currentTask?.agentTaskContext !== undefined
+			this.log(`[fixagenttaskbug] showTaskWithId 当前任务已激活, isAgentTask: ${isAgentTask}`)
 		}
 
+		// 打开聊天界面
+		this.log(`[fixagenttaskbug] showTaskWithId 调用 chatButtonClicked`)
 		await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+		this.log(`[fixagenttaskbug] showTaskWithId 任务激活完成`)
 	}
 
 	async exportTaskWithId(id: string) {
@@ -1736,10 +1803,13 @@ export class ClineProvider
 	async deleteTaskFromState(id: string) {
 		// Ensure we read and write with the same user context
 		const taskHistory = (await TaskHistoryBridge.getTaskHistory()) ?? []
+		console.log(`[ClineProvider] Deleting task ${id}, current count: ${taskHistory.length}`)
 
 		const updatedTaskHistory = taskHistory.filter((task) => task.id !== id)
+		console.log(`[ClineProvider] After deletion, task count: ${updatedTaskHistory.length}`)
 
-		await TaskHistoryBridge.updateTaskHistory(undefined, updatedTaskHistory)
+		// Pass immediate: true to sync to Redis immediately for delete operations
+		await TaskHistoryBridge.updateTaskHistory(undefined, updatedTaskHistory, true)
 
 		// IMPORTANT: Also update the contextProxy cache so that getState() returns the updated history
 		// This ensures postStateToWebview() sends the correct task history to the React UI
@@ -1748,16 +1818,8 @@ export class ClineProvider
 		await this.postStateToWebview()
 	}
 
-	async postStateToWebview() {
-		// 🔥 检查是否是智能体任务
-		const currentTask = this.clineStack[this.clineStack.length - 1]
-
-		// 智能体任务 → 不发送状态到 UI
-		if (currentTask?.agentTaskContext) {
-			return
-		}
-
-		// 用户任务 → 原逻辑
+	async postStateToWebview(forceUpdate: boolean = false) {
+		// 获取状态并发送到 webview
 		const state = await this.getStateToPostToWebview()
 		this.postMessageToWebview({ type: "state", state })
 
@@ -2103,6 +2165,10 @@ export class ClineProvider
 		const stateValues = this.contextProxy.getValues()
 		const customModes = await this.customModesManager.getCustomModes()
 
+		// Get task history from TaskHistoryBridge to ensure we get the latest user+terminal specific data
+		const { TaskHistoryBridge } = await import("../../api/task-history-bridge")
+		const taskHistory = await TaskHistoryBridge.getTaskHistory()
+
 		// Determine apiProvider with the same logic as before.
 		const apiProvider: ProviderName = stateValues.apiProvider ? stateValues.apiProvider : "anthropic"
 
@@ -2181,7 +2247,7 @@ export class ClineProvider
 			allowedMaxCost: stateValues.allowedMaxCost,
 			autoCondenseContext: stateValues.autoCondenseContext ?? true,
 			autoCondenseContextPercent: stateValues.autoCondenseContextPercent ?? 100,
-			taskHistory: stateValues.taskHistory,
+			taskHistory: taskHistory,
 			allowedCommands: stateValues.allowedCommands,
 			deniedCommands: stateValues.deniedCommands,
 			soundEnabled: stateValues.soundEnabled ?? false,

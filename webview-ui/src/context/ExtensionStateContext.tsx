@@ -292,6 +292,12 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			switch (message.type) {
 				case "state": {
 					const newState = message.state!
+					console.log('[fixagenttaskbug] 前端收到state消息:', {
+						hasCurrentTaskItem: !!newState.currentTaskItem,
+						taskId: newState.currentTaskItem?.id,
+						taskSource: newState.currentTaskItem?.source,
+						messagesCount: newState.clineMessages?.length || 0
+					})
 					setState((prevState) => mergeExtensionState(prevState, newState))
 					setShowWelcome(!checkExistKey(newState.apiConfiguration))
 					setDidHydrateState(true)

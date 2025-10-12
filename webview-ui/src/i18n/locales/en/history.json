@@ -41,5 +41,7 @@
 		"mostTokens": "Most Tokens",
 		"mostRelevant": "Most Relevant"
 	},
-	"viewAllHistory": "View all tasks"
+	"viewAllHistory": "View all tasks",
+	"myTasks": "My Tasks",
+	"agentTasks": "Agent Tasks"
 }

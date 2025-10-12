@@ -26,6 +26,7 @@ type HistoryViewProps = {
 }
 
 type SortOption = "newest" | "oldest" | "mostExpensive" | "mostTokens" | "mostRelevant"
+type TaskTypeFilter = "user" | "agent"
 
 const HistoryView = ({ onDone }: HistoryViewProps) => {
 	const {
@@ -44,6 +45,16 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 	const [isSelectionMode, setIsSelectionMode] = useState(false)
 	const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([])
 	const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState<boolean>(false)
+	const [taskTypeFilter, setTaskTypeFilter] = useState<TaskTypeFilter>("user")
+
+	// Filter tasks by type
+	const filteredTasks = React.useMemo(() => {
+		return tasks.filter((task) => {
+			// If no source field, treat as user task for backward compatibility
+			const taskSource = task.source || "user"
+			return taskSource === taskTypeFilter
+		})
+	}, [tasks, taskTypeFilter])
 
 	// Toggle selection mode
 	const toggleSelectionMode = () => {
@@ -62,10 +73,10 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 		}
 	}
 
-	// Toggle select all tasks
+	// Toggle select all tasks (only select filtered tasks)
 	const toggleSelectAll = (selectAll: boolean) => {
 		if (selectAll) {
-			setSelectedTaskIds(tasks.map((task) => task.id))
+			setSelectedTaskIds(filteredTasks.map((task) => task.id))
 		} else {
 			setSelectedTaskIds([])
 		}
@@ -82,7 +93,25 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 		<Tab>
 			<TabHeader className="flex flex-col gap-2">
 				<div className="flex justify-between items-center">
-					<h3 className="text-vscode-foreground m-0">{t("history:history")}</h3>
+					{/* Task type filter tabs - left side */}
+					<div className="flex gap-1">
+						<Button
+							variant="ghost"
+							className={`rounded-none border-b-2 px-2 ${taskTypeFilter === "user" ? "border-vscode-button-background" : "border-transparent"}`}
+							onClick={() => setTaskTypeFilter("user")}
+							data-testid="filter-user-tasks">
+							{t("history:myTasks")}
+						</Button>
+						<Button
+							variant="ghost"
+							className={`rounded-none border-b-2 px-2 ${taskTypeFilter === "agent" ? "border-vscode-button-background" : "border-transparent"}`}
+							onClick={() => setTaskTypeFilter("agent")}
+							data-testid="filter-agent-tasks">
+							{t("history:agentTasks")}
+						</Button>
+					</div>
+
+					{/* Action buttons - right side */}
 					<div className="flex gap-2">
 						<StandardTooltip
 							content={
@@ -103,6 +132,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 						<Button onClick={onDone}>{t("history:done")}</Button>
 					</div>
 				</div>
+
 				<div className="flex flex-col gap-2">
 					<VSCodeTextField
 						className="w-full"
@@ -197,23 +227,23 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 					</div>
 
 					{/* Select all control in selection mode */}
-					{isSelectionMode && tasks.length > 0 && (
+					{isSelectionMode && filteredTasks.length > 0 && (
 						<div className="flex items-center py-1">
 							<div className="flex items-center gap-2">
 								<Checkbox
-									checked={tasks.length > 0 && selectedTaskIds.length === tasks.length}
+									checked={filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length}
 									onCheckedChange={(checked) => toggleSelectAll(checked === true)}
 									variant="description"
 								/>
 								<span className="text-vscode-foreground">
-									{selectedTaskIds.length === tasks.length
+									{selectedTaskIds.length === filteredTasks.length
 										? t("history:deselectAll")
 										: t("history:selectAll")}
 								</span>
 								<span className="ml-auto text-vscode-descriptionForeground text-xs">
 									{t("history:selectedItems", {
 										selected: selectedTaskIds.length,
-										total: tasks.length,
+										total: filteredTasks.length,
 									})}
 								</span>
 							</div>
@@ -225,7 +255,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 			<TabContent className="px-2 py-0">
 				<Virtuoso
 					className="flex-1 overflow-y-scroll"
-					data={tasks}
+					data={filteredTasks}
 					data-testid="virtuoso-container"
 					initialTopMostItemIndex={0}
 					components={{
@@ -253,7 +283,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 			{isSelectionMode && selectedTaskIds.length > 0 && (
 				<div className="fixed bottom-0 left-0 right-2 bg-vscode-editor-background border-t border-vscode-panel-border p-2 flex justify-between items-center">
 					<div className="text-vscode-foreground">
-						{t("history:selectedItems", { selected: selectedTaskIds.length, total: tasks.length })}
+						{t("history:selectedItems", { selected: selectedTaskIds.length, total: filteredTasks.length })}
 					</div>
 					<div className="flex gap-2">
 						<Button variant="secondary" onClick={() => setSelectedTaskIds([])}>

@@ -716,6 +716,7 @@ export const webviewMessageHandler = async (
 			}
 			break
 		case "showTaskWithId":
+			provider.log(`[fixagenttaskbug] webviewMessageHandler 收到 showTaskWithId 消息: ${message.text}`)
 			provider.showTaskWithId(message.text!)
 			break
 		case "condenseTaskContextRequest":

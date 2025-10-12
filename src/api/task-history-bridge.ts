@@ -105,21 +105,38 @@ export class TaskHistoryBridge {
 			// Try user+terminal key first
 			const userTerminalKey = TaskHistoryBridge.getUserTerminalKey("taskHistory", effectiveUserId, effectiveTerminalNo)
 			console.log(`[TaskHistoryBridge] Trying user+terminal key: ${userTerminalKey}`)
-			
+
 			const userTerminalHistory = ctx.globalState.get(userTerminalKey) as HistoryItem[] | undefined
-			if (userTerminalHistory && userTerminalHistory.length > 0) {
+			// IMPORTANT: Return even if empty array - empty means user deleted all tasks, not "no data"
+			if (userTerminalHistory !== undefined) {
 				console.log(`[TaskHistoryBridge] Retrieved ${userTerminalHistory.length} tasks for user ${effectiveUserId} terminal ${effectiveTerminalNo}`)
 				return userTerminalHistory
 			}
+
+			// If no local data, try to load from Redis once
+			console.log(`[TaskHistoryBridge] No local data found, trying to load from Redis...`)
+			try {
+				const redisKey = `roo:${effectiveUserId}:${effectiveTerminalNo}:tasks`
+				const redisData = await TaskHistoryBridge.redis.get(redisKey)
+				if (redisData && Array.isArray(redisData)) {
+					console.log(`[TaskHistoryBridge] Loaded ${redisData.length} tasks from Redis`)
+					// Save to local storage
+					await ctx.globalState.update(userTerminalKey, redisData)
+					return redisData
+				}
+			} catch (error) {
+				console.warn(`[TaskHistoryBridge] Failed to load from Redis:`, error)
+			}
 		}
-		
+
 		if (effectiveUserId) {
 			// Fallback to user-only key for backward compatibility
 			const userKey = `user_${effectiveUserId}_taskHistory`
 			console.log(`[TaskHistoryBridge] Trying user-only key: ${userKey}`)
 
 			const userHistory = ctx.globalState.get(userKey) as HistoryItem[] | undefined
-			if (userHistory && userHistory.length > 0) {
+			// IMPORTANT: Return even if empty array - empty means user deleted all tasks, not "no data"
+			if (userHistory !== undefined) {
 				console.log(`[TaskHistoryBridge] Retrieved ${userHistory.length} tasks for user ${effectiveUserId} (no terminal)`)
 				return userHistory
 			}
@@ -136,8 +153,11 @@ export class TaskHistoryBridge {
 
 	/**
 	 * Update task history for current user and terminal
+	 * @param context - Extension context
+	 * @param history - Task history to update
+	 * @param immediate - Whether to sync to Redis immediately (default: false). Set to true for delete operations.
 	 */
-	static async updateTaskHistory(context?: vscode.ExtensionContext, history?: HistoryItem[]): Promise<void> {
+	static async updateTaskHistory(context?: vscode.ExtensionContext, history?: HistoryItem[], immediate: boolean = false): Promise<void> {
 		const ctx = context || TaskHistoryBridge.extensionContext
 		if (!ctx) {
 			console.error("[TaskHistoryBridge] Extension context not available")
@@ -165,10 +185,14 @@ export class TaskHistoryBridge {
 				`[TaskHistoryBridge] Updated task history for user ${TaskHistoryBridge.currentUserId} terminal ${terminalNo}: ${history.length} tasks`,
 			)
 
-			// Async sync to Redis with terminal distinction
+			// Sync to Redis with terminal distinction (sync empty array too to represent user deletion)
 			const recentHistory = history.slice(0, 50)
 			const redisKey = `roo:${TaskHistoryBridge.currentUserId}:${terminalNo}:tasks`
-			TaskHistoryBridge.redis.set(redisKey, recentHistory)
+			// Use immediate sync for delete operations to ensure Redis is updated right away
+			TaskHistoryBridge.redis.set(redisKey, recentHistory, immediate)
+			console.log(
+				`[TaskHistoryBridge] ${immediate ? 'Immediately synced' : 'Queued sync for'} ${recentHistory.length} tasks to Redis key: ${redisKey}`,
+			)
 		} else if (TaskHistoryBridge.currentUserId) {
 			// Fallback to user-only key if no terminal
 			const userKey = `user_${TaskHistoryBridge.currentUserId}_taskHistory`
