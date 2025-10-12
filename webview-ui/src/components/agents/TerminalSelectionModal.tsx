@@ -96,8 +96,12 @@ const TerminalSelectionModal: React.FC<TerminalSelectionModalProps> = ({ isOpen,
 	if (!isOpen) return null
 
 	return (
-		<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div className="bg-vscode-editor-background border border-vscode-panel-border rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden">
+		<div className="fixed inset-0 flex items-center justify-center z-50">
+			{/* 半透明遮罩层 */}
+			<div className="absolute inset-0 bg-black/30" onClick={onClose}></div>
+
+			{/* 弹出窗口 */}
+			<div className="relative bg-vscode-editor-background border border-vscode-panel-border rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl">
 				{/* Header */}
 				<div className="flex items-center justify-between p-4 border-b border-vscode-panel-border">
 					<div>
