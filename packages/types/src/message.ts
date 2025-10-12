@@ -185,6 +185,7 @@ export const clineMessageSchema = z.object({
 					reasoning_summary: z.string().optional(),
 				})
 				.optional(),
+			taskId: z.string().optional(),
 		})
 		.optional(),
 })

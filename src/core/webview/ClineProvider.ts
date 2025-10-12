@@ -902,7 +902,27 @@ export class ClineProvider
 			// 生成消息唯一ID（用于追踪发送位置）
 			const msgKey = `${task.taskId}_${clineMsg.ts}`
 
-			if (clineMsg.say === "text") {
+			if (clineMsg.type === "ask" && clineMsg.ask === "tool") {
+				// tool_use - 全量发送
+				if (!isPartial) {
+					this.log(`[forwardToIMWebSocket] Sending tool_use message`)
+				}
+				llmService.imConnection.sendLLMChunk(
+					ctx.streamId,
+					JSON.stringify({
+						type: "tool_use",
+						text: clineMsg.text,
+						partial: isPartial,
+						ts: clineMsg.ts,
+						metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
+					}),
+					ctx.imMetadata.recvId,
+					ctx.imMetadata.targetTerminal,
+					ctx.imMetadata.chatType,
+					ctx.imMetadata.sendId,
+					ctx.imMetadata.senderTerminal,
+				)
+			} else if (clineMsg.type === "say" && clineMsg.say === "text") {
 				// thinking - 增量发送
 				const fullText = clineMsg.text || ""
 				const lastPos = this.lastSentPositions.get(msgKey) || 0
@@ -941,29 +961,7 @@ export class ClineProvider
 				if (!isPartial) {
 					this.lastSentPositions.delete(msgKey)
 				}
-			} else if (clineMsg.say === "tool") {
-				// tool_use - 全量发送
-				if (!isPartial) {
-					this.log(`[forwardToIMWebSocket] Sending tool_use message: ${clineMsg.tool}`)
-				}
-				llmService.imConnection.sendLLMChunk(
-					ctx.streamId,
-					JSON.stringify({
-						type: "tool_use",
-						tool: clineMsg.tool,
-						status: clineMsg.status,
-						input: clineMsg.input,
-						partial: isPartial,
-						ts: clineMsg.ts,
-						metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
-					}),
-					ctx.imMetadata.recvId,
-					ctx.imMetadata.targetTerminal,
-					ctx.imMetadata.chatType,
-					ctx.imMetadata.sendId,
-					ctx.imMetadata.senderTerminal,
-				)
-			} else if (clineMsg.say === "completion_result") {
+			} else if (clineMsg.type === "say" && clineMsg.say === "completion_result") {
 				// completion - 增量发送
 				const fullText = clineMsg.text || ""
 				const lastPos = this.lastSentPositions.get(msgKey) || 0
@@ -1018,28 +1016,20 @@ export class ClineProvider
 						const incrementalText = fullText.substring(lastPos)
 
 						if (!isPartial) {
+							const msgType = clineMsg.type === "say" ? clineMsg.say : clineMsg.ask
 							this.log(
-								`[forwardToIMWebSocket] Sending ${clineMsg.say} increment: ${incrementalText.length} chars`,
+								`[forwardToIMWebSocket] Sending ${msgType} increment: ${incrementalText.length} chars`,
 							)
 						}
 
 						llmService.imConnection.sendLLMChunk(
 							ctx.streamId,
 							JSON.stringify({
-								type: clineMsg.say, // reasoning, error, etc
+								type: clineMsg.type === "say" ? clineMsg.say : clineMsg.ask,
 								content: incrementalText,
 								partial: isPartial,
 								ts: clineMsg.ts,
-								// 🔥 传递完整的消息元数据，让客户端自己决定如何使用
-								metadata: {
-									...(clineMsg.metadata || {}), // 🔥 包含来自 Task.say() 的 metadata（包括 taskId）
-									tool: clineMsg.tool,
-									status: clineMsg.status,
-									input: clineMsg.input,
-									path: clineMsg.path,
-									diff: clineMsg.diff,
-									error: clineMsg.error,
-								},
+								metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
 							}),
 							ctx.imMetadata.recvId,
 							ctx.imMetadata.targetTerminal,
@@ -1057,25 +1047,17 @@ export class ClineProvider
 				} else {
 					// 无文本内容的消息 - 全量发送（如状态更新、错误等）
 					if (!isPartial) {
-						this.log(`[forwardToIMWebSocket] Sending ${clineMsg.say} message (no text content)`)
+						const msgType = clineMsg.type === "say" ? clineMsg.say : clineMsg.ask
+						this.log(`[forwardToIMWebSocket] Sending ${msgType} message (no text content)`)
 					}
 
 					llmService.imConnection.sendLLMChunk(
 						ctx.streamId,
 						JSON.stringify({
-							type: clineMsg.say,
+							type: clineMsg.type === "say" ? clineMsg.say : clineMsg.ask,
 							partial: isPartial,
 							ts: clineMsg.ts,
-							// 🔥 传递完整消息对象，让客户端处理
-							metadata: {
-								tool: clineMsg.tool,
-								status: clineMsg.status,
-								input: clineMsg.input,
-								path: clineMsg.path,
-								diff: clineMsg.diff,
-								error: clineMsg.error,
-								apiMetrics: clineMsg.apiMetrics,
-							},
+							metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
 						}),
 						ctx.imMetadata.recvId,
 						ctx.imMetadata.targetTerminal,
@@ -2697,9 +2679,9 @@ export class ClineProvider
 	/**
 	 * 获取模式配置
 	 */
-	getModeConfig(modeName: string): any {
+	async getModeConfig(modeName: string): Promise<any> {
 		try {
-			const modes = this.customModesManager.getCustomModes()
+			const modes = await this.customModesManager.getCustomModes()
 
 			if (!modes) {
 				return null

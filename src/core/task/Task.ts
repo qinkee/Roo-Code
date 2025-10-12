@@ -1836,7 +1836,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		// 🔥 触发任务完成事件（智能体任务需要）
 		if (!this.abort) {
-			this.emit(RooCodeEventName.TaskCompleted)
+			this.emit(RooCodeEventName.TaskCompleted, this.taskId, this.getTokenUsage(), this.toolUsage)
 		}
 	}
 

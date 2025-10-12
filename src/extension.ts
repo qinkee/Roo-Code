@@ -263,7 +263,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		if (agentConfig.mode) {
 			try {
-				const modeConfig = provider.getModeConfig(agentConfig.mode)
+				const modeConfig = await provider.getModeConfig(agentConfig.mode)
 				if (modeConfig) {
 					outputChannel.appendLine(`[Agent] ✅ Mode config loaded: ${modeConfig.slug}`)
 					task.setModeConfig(modeConfig)
