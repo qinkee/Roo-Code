@@ -136,8 +136,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			throw new Error("Missing agentId in question and taskName")
 		}
 
-		// 保持原始消息格式传递，让A2AServer处理
-		const message = JSON.stringify(questionData)
+		// 提取消息内容 - IM桥接不经过A2AServer，直接使用content字段
+		// questionData格式: { type: 'say_hi' | 'text', content: string, timestamp: number, agentId?: string }
+		const message = questionData.content || JSON.stringify(questionData)
 
 		// 获取智能体配置
 		const a2aManager = A2AServerManager.getInstance()

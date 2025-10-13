@@ -564,10 +564,23 @@ export const webviewMessageHandler = async (
 			await updateGlobalState("agentA2AMode", null)
 			provider.log(`[newTask] Cleared A2A mode for direct task creation`)
 
+			// 解析IM消息格式：{ type: 'say_hi' | 'text', content: string, timestamp: number }
+			// 如果是JSON格式，提取content字段；否则直接使用原始文本
+			let taskText = message.text
+			try {
+				const parsed = JSON.parse(message.text)
+				if (parsed && typeof parsed === 'object' && 'content' in parsed && 'type' in parsed) {
+					taskText = parsed.content
+					provider.log(`[newTask] Parsed IM message format, extracted content: ${taskText.substring(0, 100)}`)
+				}
+			} catch (e) {
+				// 不是JSON格式，直接使用原始文本
+			}
+
 			// Initializing new instance of Cline will make sure that any
 			// agentically running promises in old instance don't affect our new
 			// task. This essentially creates a fresh slate for the new task.
-			await provider.initClineWithTask(message.text, message.images)
+			await provider.initClineWithTask(taskText, message.images)
 			break
 		case "customInstructions":
 			await provider.updateCustomInstructions(message.text)
