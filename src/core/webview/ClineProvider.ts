@@ -922,14 +922,10 @@ export class ClineProvider
 		// Determine if TaskBridge should be enabled
 		const enableTaskBridge = isRemoteControlEnabled(cloudUserInfo, remoteControlEnabled)
 
-		// Restore agent context if this was an agent task
-		let agentTaskContext: AgentTaskContext | undefined
-		if (historyItem.source === "agent" && historyItem.agentId) {
-			agentTaskContext = {
-				agentId: historyItem.agentId,
-				taskId: historyItem.id,
-			}
-		}
+		// Note: Don't restore agentTaskContext when loading from history
+		// Agent tasks loaded from history are for viewing only, not for active execution
+		// The agentTaskContext is only needed for actively running agent tasks
+		let agentTaskContext: AgentTaskContext | undefined = undefined
 
 		const task = new Task({
 			provider: this,

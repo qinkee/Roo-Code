@@ -122,18 +122,21 @@ export type TaskOptions = {
 	taskNumber?: number
 	onCreated?: (task: Task) => void
 	// 🔥 新增: 智能体任务上下文
-	agentTaskContext?: {
-		agentId: string
-		streamId: string
-		mode: string
-		roleDescription?: string
-		imMetadata: {
-			sendId: number
-			recvId: number
-			senderTerminal: number
-			targetTerminal: number
-			chatType: string
-		}
+	agentTaskContext?: AgentTaskContext
+}
+
+// 🔥 Export AgentTaskContext type
+export type AgentTaskContext = {
+	agentId: string
+	streamId: string
+	mode: string
+	roleDescription?: string
+	imMetadata: {
+		sendId: number
+		recvId: number
+		senderTerminal: number
+		targetTerminal: number
+		chatType: string
 	}
 }
 
@@ -289,7 +292,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	/**
 	 * History item for persisted task information
 	 */
-	private historyItem?: HistoryItem
+	public historyItem?: HistoryItem
 
 	constructor({
 		provider,
