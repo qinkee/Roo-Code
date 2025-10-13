@@ -66,7 +66,7 @@ const TaskListModal: React.FC<TaskListModalProps> = ({ isOpen, onClose, onSelect
 			onClick={handleBackdropClick}>
 			<div className="bg-vscode-editor-background border border-vscode-panel-border rounded-lg w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
 				{/* Header */}
-				<div className="flex items-center justify-between px-6 py-4 border-b border-vscode-panel-border">
+				<div className="flex items-center justify-between py-4 border-b border-vscode-panel-border">
 					<div className="flex items-center gap-2">
 						<Sparkles size={18} className="text-vscode-foreground" />
 						<h2 className="text-lg font-bold text-vscode-foreground">

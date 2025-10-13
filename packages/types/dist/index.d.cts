@@ -745,6 +745,7 @@ declare const agentConfigSchema: z.ZodObject<{
     name: z.ZodString;
     avatar: z.ZodString;
     roleDescription: z.ZodString;
+    welcomeMessage: z.ZodOptional<z.ZodString>;
     apiConfigId: z.ZodString;
     apiConfig: z.ZodOptional<z.ZodObject<{
         codeIndexOpenAiKey: z.ZodOptional<z.ZodString>;
@@ -1519,6 +1520,7 @@ declare const agentConfigSchema: z.ZodObject<{
     isPrivate: boolean;
     isPublished: boolean;
     isActive: boolean;
+    welcomeMessage?: string | undefined;
     apiConfig?: {
         reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
         codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -1747,6 +1749,7 @@ declare const agentConfigSchema: z.ZodObject<{
         priority?: "low" | "medium" | "high" | undefined;
     }[];
     isActive: boolean;
+    welcomeMessage?: string | undefined;
     apiConfig?: {
         reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
         codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -1990,6 +1993,7 @@ declare const agentExportDataSchema: z.ZodObject<{
         name: z.ZodString;
         avatar: z.ZodString;
         roleDescription: z.ZodString;
+        welcomeMessage: z.ZodOptional<z.ZodString>;
         apiConfigId: z.ZodString;
         apiConfig: z.ZodOptional<z.ZodObject<{
             codeIndexOpenAiKey: z.ZodOptional<z.ZodString>;
@@ -2764,6 +2768,7 @@ declare const agentExportDataSchema: z.ZodObject<{
         isPrivate: boolean;
         isPublished: boolean;
         isActive: boolean;
+        welcomeMessage?: string | undefined;
         apiConfig?: {
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -2992,6 +2997,7 @@ declare const agentExportDataSchema: z.ZodObject<{
             priority?: "low" | "medium" | "high" | undefined;
         }[];
         isActive: boolean;
+        welcomeMessage?: string | undefined;
         apiConfig?: {
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -3239,6 +3245,7 @@ declare const agentExportDataSchema: z.ZodObject<{
         isPrivate: boolean;
         isPublished: boolean;
         isActive: boolean;
+        welcomeMessage?: string | undefined;
         apiConfig?: {
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -3474,6 +3481,7 @@ declare const agentExportDataSchema: z.ZodObject<{
             priority?: "low" | "medium" | "high" | undefined;
         }[];
         isActive: boolean;
+        welcomeMessage?: string | undefined;
         apiConfig?: {
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { X, Upload, RotateCcw } from "lucide-react"
 import { cn } from "@src/lib/utils"
 import { StandardTooltip } from "@src/components/ui"
+import { uploadImage } from "@src/api/upload"
 
 interface ChangeAvatarModalProps {
 	isOpen: boolean
@@ -26,6 +27,8 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 	const [selectedAvatar, setSelectedAvatar] = useState<string>(currentAvatar || "")
 	const [showNameInput, setShowNameInput] = useState(false)
 	const [tempName, setTempName] = useState("")
+	const [uploading, setUploading] = useState(false)
+	const [uploadError, setUploadError] = useState<string>("")
 
 	// Reset state when modal opens/closes
 	useEffect(() => {
@@ -33,6 +36,8 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 			setSelectedAvatar(currentAvatar || "")
 			setShowNameInput(false)
 			setTempName("")
+			setUploading(false)
+			setUploadError("")
 		}
 	}, [isOpen, currentAvatar])
 
@@ -40,15 +45,31 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 		fileInputRef.current?.click()
 	}, [])
 
-	const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0]
 		if (file && file.type.startsWith("image/")) {
-			const reader = new FileReader()
-			reader.onload = (e) => {
-				const result = e.target?.result as string
-				setSelectedAvatar(result)
+			setUploadError("")
+			setUploading(true)
+
+			try {
+				// 上传图片到后端服务器
+				const result = await uploadImage(file)
+				// 使用原图URL作为头像
+				setSelectedAvatar(result.originUrl)
+			} catch (error) {
+				console.error("Upload failed:", error)
+				setUploadError(error instanceof Error ? error.message : "上传失败")
+
+				// 上传失败时，仍然显示本地预览
+				const reader = new FileReader()
+				reader.onload = (e) => {
+					const result = e.target?.result as string
+					setSelectedAvatar(result)
+				}
+				reader.readAsDataURL(file)
+			} finally {
+				setUploading(false)
 			}
-			reader.readAsDataURL(file)
 		}
 	}, [])
 
@@ -133,8 +154,13 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 				<div className="p-4">
 					{/* Avatar Preview */}
 					<div className="flex justify-center mb-4">
-						<div className="w-24 h-24 rounded-lg overflow-hidden bg-vscode-input-background border-2 border-vscode-input-border flex items-center justify-center">
-							{selectedAvatar ? (
+						<div className="w-24 h-24 rounded-lg overflow-hidden bg-vscode-input-background border-2 border-vscode-input-border flex items-center justify-center relative">
+							{uploading ? (
+								<div className="flex flex-col items-center justify-center">
+									<div className="w-8 h-8 border-2 border-vscode-button-background border-t-transparent rounded-full animate-spin"></div>
+									<span className="text-xs text-vscode-foreground/70 mt-2">上传中...</span>
+								</div>
+							) : selectedAvatar ? (
 								<img src={selectedAvatar} alt="Avatar preview" className="w-full h-full object-cover" />
 							) : (
 								<div className="w-16 h-16 bg-vscode-button-background rounded-lg flex items-center justify-center">
@@ -143,6 +169,13 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 							)}
 						</div>
 					</div>
+
+					{/* Upload Error Message */}
+					{uploadError && (
+						<div className="mb-3 p-2 bg-red-500/10 border border-red-500/30 rounded-md">
+							<p className="text-xs text-red-400">{uploadError}</p>
+						</div>
+					)}
 
 					{/* Name Input Section - Show when needed (above buttons) */}
 					{showNameInput && (
@@ -192,9 +225,17 @@ const ChangeAvatarModal: React.FC<ChangeAvatarModalProps> = ({
 						<StandardTooltip content={t("agents:uploadFromDevice", "从本地上传")}>
 							<button
 								onClick={handleFileSelect}
-								className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-vscode-input-background hover:bg-vscode-list-hoverBackground border border-vscode-input-border rounded-md text-vscode-foreground transition-colors">
+								disabled={uploading}
+								className={cn(
+									"w-full flex items-center justify-center gap-2 px-4 py-3 border border-vscode-input-border rounded-md transition-colors",
+									uploading
+										? "bg-vscode-input-background/50 text-vscode-foreground/50 cursor-not-allowed"
+										: "bg-vscode-input-background hover:bg-vscode-list-hoverBackground text-vscode-foreground",
+								)}>
 								<Upload size={16} />
-								{t("agents:uploadFromDevice", "从本地上传")}
+								{uploading
+									? t("agents:uploading", "上传中...")
+									: t("agents:uploadFromDevice", "从本地上传")}
 							</button>
 						</StandardTooltip>
 					</div>

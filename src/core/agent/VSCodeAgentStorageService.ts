@@ -25,12 +25,12 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 	private async getUserAgents(userId: string): Promise<Record<string, AgentConfig>> {
 		const key = this.getUserAgentsKey(userId)
 		const agents = (await this.context.globalState.get(key, {})) as Record<string, AgentConfig>
-		
+
 		// 向后兼容性：为旧的智能体添加默认的新字段
-		Object.values(agents).forEach(agent => {
+		Object.values(agents).forEach((agent) => {
 			this.migrateAgentConfig(agent)
 		})
-		
+
 		return agents
 	}
 
@@ -85,7 +85,10 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 		return `todo_${timestamp}_${random}`
 	}
 
-	async createAgent(userId: string, config: Omit<AgentConfig, "id" | "createdAt" | "updatedAt">): Promise<AgentConfig> {
+	async createAgent(
+		userId: string,
+		config: Omit<AgentConfig, "id" | "createdAt" | "updatedAt">,
+	): Promise<AgentConfig> {
 		try {
 			const now = Date.now()
 			const agent: AgentConfig = {
@@ -112,8 +115,11 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 		try {
 			const agents = await this.getUserAgents(userId)
 			const agent = agents[agentId]
-			
+
 			if (agent && agent.userId === userId) {
+				logger.info(
+					`[VSCodeAgentStorageService] 🔍 getAgent - welcomeMessage: ${agent.welcomeMessage || "NOT FOUND"}`,
+				)
 				return agent
 			}
 			return null
@@ -144,6 +150,12 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 			await this.setUserAgents(userId, agents)
 
 			logger.info(`[VSCodeAgentStorageService] Updated agent ${agentId} for user ${userId}`)
+			logger.info(
+				`[VSCodeAgentStorageService] 🔍 welcomeMessage in updates: ${updates.welcomeMessage || "NOT IN UPDATES"}`,
+			)
+			logger.info(
+				`[VSCodeAgentStorageService] 🔍 welcomeMessage after merge: ${updated.welcomeMessage || "NOT IN MERGED"}`,
+			)
 			return updated
 		} catch (error) {
 			logger.error(`[VSCodeAgentStorageService] Failed to update agent ${agentId}:`, error)
@@ -173,15 +185,15 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 	async listUserAgents(userId: string, options?: AgentListOptions): Promise<AgentConfig[]> {
 		try {
 			const agents = await this.getUserAgents(userId)
-			let agentList = Object.values(agents).filter(agent => agent.userId === userId)
+			let agentList = Object.values(agents).filter((agent) => agent.userId === userId)
 
 			// 应用过滤器
 			if (options?.filterByMode) {
-				agentList = agentList.filter(agent => agent.mode === options.filterByMode)
+				agentList = agentList.filter((agent) => agent.mode === options.filterByMode)
 			}
 
 			if (options?.onlyActive) {
-				agentList = agentList.filter(agent => agent.isActive)
+				agentList = agentList.filter((agent) => agent.isActive)
 			}
 
 			// 排序
@@ -189,15 +201,13 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 				agentList.sort((a, b) => {
 					const aVal = a[options.sortBy!] as number | string
 					const bVal = b[options.sortBy!] as number | string
-					
-					if (typeof aVal === 'number' && typeof bVal === 'number') {
-						return options.sortOrder === 'desc' ? bVal - aVal : aVal - bVal
+
+					if (typeof aVal === "number" && typeof bVal === "number") {
+						return options.sortOrder === "desc" ? bVal - aVal : aVal - bVal
 					} else {
-						const aStr = String(aVal || '')
-						const bStr = String(bVal || '')
-						return options.sortOrder === 'desc' 
-							? bStr.localeCompare(aStr) 
-							: aStr.localeCompare(bStr)
+						const aStr = String(aVal || "")
+						const bStr = String(bVal || "")
+						return options.sortOrder === "desc" ? bStr.localeCompare(aStr) : aStr.localeCompare(bStr)
 					}
 				})
 			} else {
@@ -224,10 +234,11 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 			const agents = await this.listUserAgents(userId)
 			const lowercaseQuery = query.toLowerCase()
 
-			return agents.filter(agent => 
-				agent.name.toLowerCase().includes(lowercaseQuery) ||
-				agent.roleDescription.toLowerCase().includes(lowercaseQuery) ||
-				agent.mode.toLowerCase().includes(lowercaseQuery)
+			return agents.filter(
+				(agent) =>
+					agent.name.toLowerCase().includes(lowercaseQuery) ||
+					agent.roleDescription.toLowerCase().includes(lowercaseQuery) ||
+					agent.mode.toLowerCase().includes(lowercaseQuery),
 			)
 		} catch (error) {
 			logger.error(`[VSCodeAgentStorageService] Failed to search agents for user ${userId}:`, error)
@@ -238,7 +249,7 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 	async addTodo(
 		userId: string,
 		agentId: string,
-		todo: Omit<AgentTodo, "id" | "createdAt" | "updatedAt">
+		todo: Omit<AgentTodo, "id" | "createdAt" | "updatedAt">,
 	): Promise<AgentTodo> {
 		try {
 			const agent = await this.getAgent(userId, agentId)
@@ -265,19 +276,14 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 		}
 	}
 
-	async updateTodo(
-		userId: string,
-		agentId: string,
-		todoId: string,
-		updates: Partial<AgentTodo>
-	): Promise<AgentTodo> {
+	async updateTodo(userId: string, agentId: string, todoId: string, updates: Partial<AgentTodo>): Promise<AgentTodo> {
 		try {
 			const agent = await this.getAgent(userId, agentId)
 			if (!agent) {
 				throw new Error(`Agent ${agentId} not found for user ${userId}`)
 			}
 
-			const todoIndex = agent.todos.findIndex(todo => todo.id === todoId)
+			const todoIndex = agent.todos.findIndex((todo) => todo.id === todoId)
 			if (todoIndex === -1) {
 				throw new Error(`Todo ${todoId} not found in agent ${agentId}`)
 			}
@@ -309,12 +315,12 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 				return false
 			}
 
-			const todoIndex = agent.todos.findIndex(todo => todo.id === todoId)
+			const todoIndex = agent.todos.findIndex((todo) => todo.id === todoId)
 			if (todoIndex === -1) {
 				return false
 			}
 
-			const updatedTodos = agent.todos.filter(todo => todo.id !== todoId)
+			const updatedTodos = agent.todos.filter((todo) => todo.id !== todoId)
 			await this.updateAgent(userId, agentId, { todos: updatedTodos })
 
 			logger.info(`[VSCodeAgentStorageService] Deleted todo ${todoId} from agent ${agentId}`)
@@ -381,16 +387,16 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 	 * 更新智能体的共享配置
 	 */
 	async updateAgentSharing(
-		userId: string, 
-		agentId: string, 
+		userId: string,
+		agentId: string,
 		sharing: {
 			isPrivate?: boolean
-			shareScope?: 'friends' | 'groups' | 'public'
+			shareScope?: "friends" | "groups" | "public"
 			shareLevel?: number
 			allowedUsers?: string[]
 			allowedGroups?: string[]
 			deniedUsers?: string[]
-		}
+		},
 	): Promise<AgentConfig> {
 		try {
 			const agent = await this.getAgent(userId, agentId)
@@ -431,12 +437,12 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 	 * 更新智能体的A2A配置
 	 */
 	async updateAgentA2AConfig(
-		userId: string, 
-		agentId: string, 
+		userId: string,
+		agentId: string,
 		a2aConfig: {
 			a2aAgentCard?: A2AAgentCard
 			a2aEndpoint?: string
-		}
+		},
 	): Promise<AgentConfig> {
 		try {
 			const agent = await this.getAgent(userId, agentId)
@@ -457,22 +463,20 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 			return await this.updateAgent(userId, agentId, updates)
 		} catch (error) {
 			logger.error(`[VSCodeAgentStorageService] Failed to update agent A2A config ${agentId}:`, error)
-			throw new Error(`Failed to update agent A2A config: ${error instanceof Error ? error.message : String(error)}`)
+			throw new Error(
+				`Failed to update agent A2A config: ${error instanceof Error ? error.message : String(error)}`,
+			)
 		}
 	}
 
 	/**
 	 * 搜索可访问的智能体（包括共享的智能体）
 	 */
-	async searchAccessibleAgents(
-		userId: string, 
-		query: string, 
-		includeShared: boolean = true
-	): Promise<AgentConfig[]> {
+	async searchAccessibleAgents(userId: string, query: string, includeShared: boolean = true): Promise<AgentConfig[]> {
 		try {
 			// 首先获取用户自己的智能体
 			const userAgents = await this.searchAgents(userId, query)
-			
+
 			if (!includeShared) {
 				return userAgents
 			}
@@ -480,8 +484,10 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 			// TODO: 这里需要实现跨用户的共享智能体搜索
 			// 当前阶段只返回用户自己的智能体
 			// 后续需要集成Redis注册中心来支持共享智能体发现
-			
-			logger.debug(`[VSCodeAgentStorageService] Searched ${userAgents.length} accessible agents for user ${userId}`)
+
+			logger.debug(
+				`[VSCodeAgentStorageService] Searched ${userAgents.length} accessible agents for user ${userId}`,
+			)
 			return userAgents
 		} catch (error) {
 			logger.error(`[VSCodeAgentStorageService] Failed to search accessible agents for user ${userId}:`, error)
@@ -517,9 +523,9 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 	 * 检查用户是否有权限访问指定智能体
 	 */
 	async checkAgentAccess(
-		userId: string, 
-		agentId: string, 
-		action: 'read' | 'execute' | 'modify' = 'read'
+		userId: string,
+		agentId: string,
+		action: "read" | "execute" | "modify" = "read",
 	): Promise<boolean> {
 		try {
 			// 首先检查是否是用户自己的智能体
@@ -530,7 +536,9 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 
 			// TODO: 这里需要实现共享智能体的权限检查
 			// 需要从Redis注册中心获取智能体信息并检查权限
-			logger.debug(`[VSCodeAgentStorageService] Check agent access for ${agentId} - shared agent access not implemented yet`)
+			logger.debug(
+				`[VSCodeAgentStorageService] Check agent access for ${agentId} - shared agent access not implemented yet`,
+			)
 			return false
 		} catch (error) {
 			logger.error(`[VSCodeAgentStorageService] Failed to check agent access ${agentId}:`, error)
@@ -545,12 +553,12 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 		try {
 			const agents = await this.listUserAgents(userId)
 			return {
-				agent: agents[0] || {} as any,
+				agent: agents[0] || ({} as any),
 				metadata: {
 					exportedAt: Date.now(),
 					exportedBy: userId,
-					version: "1.0"
-				}
+					version: "1.0",
+				},
 			}
 		} catch (error) {
 			logger.error(`[VSCodeAgentStorageService] Failed to export agents for user ${userId}:`, error)
@@ -564,12 +572,12 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 	async importAgents(userId: string, data: AgentExportData): Promise<AgentConfig[]> {
 		try {
 			const importedAgents: AgentConfig[] = []
-			
+
 			if (data.agent) {
 				try {
-					const importedAgent = await this.importAgent(userId, { 
+					const importedAgent = await this.importAgent(userId, {
 						agent: data.agent,
-						metadata: data.metadata
+						metadata: data.metadata,
 					})
 					importedAgents.push(importedAgent)
 				} catch (error) {
@@ -577,7 +585,7 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 					// Continue with other agents
 				}
 			}
-			
+
 			return importedAgents
 		} catch (error) {
 			logger.error(`[VSCodeAgentStorageService] Failed to import agents for user ${userId}:`, error)

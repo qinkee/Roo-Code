@@ -65,6 +65,10 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 		if (editMode && editData) return editData.roleDescription || ""
 		return ""
 	})
+	const [welcomeMessage, setWelcomeMessage] = useState(() => {
+		if (editMode && editData) return editData.welcomeMessage || ""
+		return ""
+	})
 	const [todos, setTodos] = useState<Array<{ id: string; content: string; completed: boolean }>>(() => {
 		if (editMode && editData && editData.todos) {
 			return editData.todos.map((todo: any, index: number) => ({
@@ -416,6 +420,7 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 				name: agentName.trim(),
 				avatar: agentAvatar,
 				roleDescription: roleDescription,
+				welcomeMessage: welcomeMessage.trim() || undefined,
 				apiConfigId: selectedApiConfig,
 				// 嵌入完整的ProviderSettings副本
 				apiConfig: selectedApiConfigDetails || undefined,
@@ -461,6 +466,7 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 						apiConfig: selectedApiConfig,
 						avatar: agentAvatar,
 						roleDescription: roleDescription,
+						welcomeMessage: welcomeMessage.trim() || undefined,
 						todos: todos.filter((todo) => todo.content.trim() !== ""),
 					}
 					onUpdate(legacyData)
@@ -480,6 +486,7 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 					apiConfig: selectedApiConfig,
 					avatar: agentAvatar,
 					roleDescription: roleDescription,
+					welcomeMessage: welcomeMessage.trim() || undefined,
 					todos: todos.filter((todo) => todo.content.trim() !== ""),
 				}
 				onCreate(legacyData)
@@ -495,6 +502,7 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 		selectedApiConfig,
 		agentAvatar,
 		roleDescription,
+		welcomeMessage,
 		todos,
 		templateData,
 		onCreate,
@@ -909,7 +917,7 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 	return (
 		<div className="flex flex-col h-full bg-vscode-editor-background text-vscode-foreground">
 			{/* Header */}
-			<div className="flex items-center justify-between px-6 py-4 border-b border-vscode-panel-border">
+			<div className="flex items-center justify-between py-4 border-b border-vscode-panel-border">
 				<div className="flex items-center gap-3">
 					<button
 						onClick={onBack}
@@ -925,7 +933,7 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 			</div>
 
 			{/* Content */}
-			<div className="flex-1 overflow-auto px-6 py-4 space-y-6">
+			<div className="flex-1 overflow-auto py-4 space-y-6">
 				{/* Template Info - Show when creating from task */}
 				{templateData && (
 					<div className="p-4 bg-vscode-textCodeBlock-background border border-vscode-button-background rounded-md">
@@ -1022,6 +1030,22 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 							onChange={(e) => setRoleDescription(e.target.value)}
 							placeholder={t("agents:roleDescriptionPlaceholder", "请输入智能体的角色描述...")}
 							rows={4}
+							className="w-full px-3 py-2 bg-vscode-input-background border border-vscode-input-border rounded-md text-sm text-vscode-foreground placeholder-vscode-foreground/50 focus:outline-none focus:ring-1 focus:ring-vscode-focusBorder resize-none"
+						/>
+					</div>
+
+					{/* Welcome Message Section */}
+					<div>
+						<div className="flex items-center gap-2 mb-3">
+							<h2 className="text-sm font-bold text-vscode-foreground/90">
+								{t("agents:welcomeMessage", "欢迎语")}
+							</h2>
+						</div>
+						<textarea
+							value={welcomeMessage}
+							onChange={(e) => setWelcomeMessage(e.target.value)}
+							placeholder={t("agents:welcomeMessagePlaceholder", "请输入智能体的欢迎语...")}
+							rows={2}
 							className="w-full px-3 py-2 bg-vscode-input-background border border-vscode-input-border rounded-md text-sm text-vscode-foreground placeholder-vscode-foreground/50 focus:outline-none focus:ring-1 focus:ring-vscode-focusBorder resize-none"
 						/>
 					</div>

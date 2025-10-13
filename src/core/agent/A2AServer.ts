@@ -1249,21 +1249,45 @@ export class A2AServer {
 		const startTime = Date.now()
 
 		try {
-			// 获取用户消息 - 添加详细的调试日志
-			console.log(`[A2AServer] 🔍 Request object:`, {
-				hasTask: !!request.task,
-				task: request.task,
-				hasParams: !!request.params,
-				paramsMessage: request.params?.message,
-				hasMessage: !!request.message,
-				message: request.message,
-				hasData: !!request.data,
-				dataMessage: request.data?.message,
-				allKeys: Object.keys(request || {}),
-			})
+			// 统一解析IM侧发送的消息格式
+			// 标准格式：{ type: 'say_hi' | 'text', content: string, timestamp: number, params?: any }
+			let messageObj = null
+			let userMessage = null
 
-			const userMessage =
-				request.task || request.params?.message || request.message || request.data?.message || "Hello"
+			// 从 request.params.message 中解析
+			if (request.params?.message) {
+				try {
+					// 尝试解析JSON格式的消息体
+					messageObj =
+						typeof request.params.message === "string"
+							? JSON.parse(request.params.message)
+							: request.params.message
+
+					logger.info(`[A2AServer] Parsed message object:`, messageObj)
+				} catch (e) {
+					// 解析失败，当作普通文本处理（向后兼容）
+					userMessage = request.params.message
+					logger.debug(`[A2AServer] Using plain text message: ${userMessage}`)
+				}
+			}
+
+			// 获取用户消息内容
+			if (!userMessage) {
+				userMessage =
+					messageObj?.content || // 从标准格式中取 content
+					request.task ||
+					request.message ||
+					request.data?.message ||
+					"Hello"
+			}
+
+			// 添加详细的调试日志
+			console.log(`[A2AServer] 🔍 Message processing:`, {
+				messageType: messageObj?.type || "text",
+				userMessage,
+				hasParams: !!messageObj?.params,
+				requestKeys: Object.keys(request || {}),
+			})
 
 			console.log(`[A2AServer] 📝 Executing agent ${agent.id} with message: "${userMessage}"`)
 

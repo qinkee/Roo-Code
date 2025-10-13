@@ -2360,6 +2360,25 @@ export const webviewMessageHandler = async (
 			break
 		}
 
+		case "getAccessToken": {
+			try {
+				const { IMAuthService } = await import("../../services/im-auth-service")
+				const authService = IMAuthService.getInstance(provider.context, provider.outputChannel)
+				const token = await authService.getAccessToken()
+				provider.postMessageToWebview({
+					type: "accessTokenResponse",
+					token: token,
+				})
+			} catch (error) {
+				provider.log(`IMAuthService#getAccessToken failed: ${error}`)
+				provider.postMessageToWebview({
+					type: "accessTokenResponse",
+					token: null,
+				})
+			}
+			break
+		}
+
 		case "saveCodeIndexSettingsAtomic": {
 			if (!message.codeIndexSettings) {
 				break

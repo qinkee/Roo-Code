@@ -744,6 +744,8 @@ var agentConfigSchema = import_zod4.z.object({
   name: import_zod4.z.string(),
   avatar: import_zod4.z.string(),
   roleDescription: import_zod4.z.string(),
+  welcomeMessage: import_zod4.z.string().optional(),
+  // 欢迎语
   apiConfigId: import_zod4.z.string(),
   // 保留向后兼容
   apiConfig: agentApiConfigSchema.optional(),

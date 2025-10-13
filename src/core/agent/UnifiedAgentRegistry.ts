@@ -1,5 +1,10 @@
 import { logger } from "../../utils/logging"
-import { UnifiedAgentRegistry as UnifiedAgentRegistryType, AgentDiscoveryQuery, AgentDiscoveryResult, AgentEndpoint } from "@roo-code/types"
+import {
+	UnifiedAgentRegistry as UnifiedAgentRegistryType,
+	AgentDiscoveryQuery,
+	AgentDiscoveryResult,
+	AgentEndpoint,
+} from "@roo-code/types"
 import { AgentRedisAdapter } from "./AgentRedisAdapter"
 
 /**
@@ -31,16 +36,16 @@ export class UnifiedAgentRegistry {
 		}
 
 		try {
-			// 使用RedisSyncService的同步功能
+			// 使用RedisSyncService的同步功能，包含 publishInfo 相关字段
 			await this.redisAdapter.syncAgentToRegistry({
 				id: registry.agentId,
 				userId: registry.userId,
 				name: registry.name,
 				avatar: registry.avatar,
 				roleDescription: registry.description,
-				apiConfigId: 'default',
-				mode: 'assistant',
-				tools: registry.capabilities.tools.map(toolId => ({ toolId, enabled: true })),
+				apiConfigId: "default",
+				mode: "assistant",
+				tools: registry.capabilities.tools.map((toolId) => ({ toolId, enabled: true })),
 				todos: [],
 				isPrivate: registry.sharing.isPrivate,
 				shareScope: registry.sharing.shareScope,
@@ -51,12 +56,31 @@ export class UnifiedAgentRegistry {
 				deniedUsers: registry.sharing.deniedUsers,
 				createdAt: registry.metadata.createdAt,
 				updatedAt: registry.metadata.updatedAt,
-				isActive: registry.status.state === 'online',
-				version: registry.metadata.version
+				isActive: registry.status.state === "online",
+				version: registry.metadata.version,
+
+				// 🔑 关键优化：同步 publishInfo 相关字段到 Redis
+				isPublished: registry.status.state === "online",
+				publishInfo: {
+					serviceStatus: registry.status.state as "online" | "offline" | "error",
+					lastHeartbeat: registry.status.lastSeen,
+					serverUrl: registry.deployment.directUrl,
+					publishedAt: new Date().toISOString(),
+					terminalType: "local" as const,
+				},
+				serviceEndpoint: registry.deployment.directUrl,
+				serviceStatus: registry.status.state as "online" | "offline" | "error",
+				lastHeartbeat: registry.status.lastSeen,
+				deployment: registry.deployment,
+				capabilities: {
+					messageTypes: ["text", "json"],
+					taskTypes: ["execute", "query"],
+					dataFormats: ["text", "json"],
+					maxConcurrency: 5,
+				},
 			})
 
 			logger.info(`[UnifiedAgentRegistry] Registered agent ${registry.agentId}`)
-
 		} catch (error) {
 			logger.error(`[UnifiedAgentRegistry] Failed to register agent ${registry.agentId}:`, error)
 			throw error
@@ -74,7 +98,6 @@ export class UnifiedAgentRegistry {
 		try {
 			await this.redisAdapter.removeAgentFromRegistry(userId, agentId)
 			logger.info(`[UnifiedAgentRegistry] Unregistered agent ${agentId}`)
-
 		} catch (error) {
 			logger.error(`[UnifiedAgentRegistry] Failed to unregister agent ${agentId}:`, error)
 			throw error
@@ -97,7 +120,6 @@ export class UnifiedAgentRegistry {
 			const paginated = this.paginate(sorted, query.offset, query.limit)
 
 			return paginated
-
 		} catch (error) {
 			logger.error(`[UnifiedAgentRegistry] Failed to discover agents:`, error)
 			return []
@@ -113,20 +135,19 @@ export class UnifiedAgentRegistry {
 		try {
 			// 获取在线智能体
 			const onlineAgents = await this.redisAdapter.getOnlineAgents()
-			
+
 			// 获取共享智能体
 			const sharedAgents = await this.getSharedAgents(query)
-			
+
 			// 合并结果
 			const allAgents = new Set([...onlineAgents, ...sharedAgents])
-			
+
 			for (const agentId of allAgents) {
 				const agentInfo = await this.getAgentDiscoveryInfo(agentId)
 				if (agentInfo && this.matchesQuery(agentInfo, query)) {
 					results.push(agentInfo)
 				}
 			}
-
 		} catch (error) {
 			logger.error(`[UnifiedAgentRegistry] Search error:`, error)
 		}
@@ -158,9 +179,7 @@ export class UnifiedAgentRegistry {
 	private matchesQuery(agent: AgentDiscoveryResult, query: AgentDiscoveryQuery): boolean {
 		// 检查能力匹配
 		if (query.capabilities && query.capabilities.length > 0) {
-			const hasMatchingCapability = query.capabilities.some(cap =>
-				agent.matchedCapabilities.includes(cap)
-			)
+			const hasMatchingCapability = query.capabilities.some((cap) => agent.matchedCapabilities.includes(cap))
 			if (!hasMatchingCapability) {
 				return false
 			}
@@ -175,9 +194,7 @@ export class UnifiedAgentRegistry {
 
 		// 检查标签匹配
 		if (query.tags && query.tags.length > 0) {
-			const hasMatchingTag = query.tags.some(tag =>
-				agent.tags.includes(tag)
-			)
+			const hasMatchingTag = query.tags.some((tag) => agent.tags.includes(tag))
 			if (!hasMatchingTag) {
 				return false
 			}
@@ -196,11 +213,11 @@ export class UnifiedAgentRegistry {
 		}
 
 		// 检查可见性
-		if (query.visibility && query.visibility !== 'all') {
-			if (query.visibility === 'private' && !agent.isPrivate) {
+		if (query.visibility && query.visibility !== "all") {
+			if (query.visibility === "private" && !agent.isPrivate) {
 				return false
 			}
-			if (query.visibility === 'public' && agent.isPrivate) {
+			if (query.visibility === "public" && agent.isPrivate) {
 				return false
 			}
 		}
@@ -208,13 +225,10 @@ export class UnifiedAgentRegistry {
 		// 关键词搜索
 		if (query.keywords) {
 			const keywords = query.keywords.toLowerCase()
-			const searchableText = [
-				agent.name,
-				agent.description,
-				...agent.tags,
-				agent.category || ''
-			].join(' ').toLowerCase()
-			
+			const searchableText = [agent.name, agent.description, ...agent.tags, agent.category || ""]
+				.join(" ")
+				.toLowerCase()
+
 			if (!searchableText.includes(keywords)) {
 				return false
 			}
@@ -226,10 +240,7 @@ export class UnifiedAgentRegistry {
 	/**
 	 * 权限过滤
 	 */
-	private async filterByPermissions(
-		agents: AgentDiscoveryResult[],
-		userId: string
-	): Promise<AgentDiscoveryResult[]> {
+	private async filterByPermissions(agents: AgentDiscoveryResult[], userId: string): Promise<AgentDiscoveryResult[]> {
 		const filtered: AgentDiscoveryResult[] = []
 
 		for (const agent of agents) {
@@ -256,11 +267,7 @@ export class UnifiedAgentRegistry {
 	/**
 	 * 排序结果
 	 */
-	private sortResults(
-		agents: AgentDiscoveryResult[],
-		sortBy?: string,
-		sortOrder?: string
-	): AgentDiscoveryResult[] {
+	private sortResults(agents: AgentDiscoveryResult[], sortBy?: string, sortOrder?: string): AgentDiscoveryResult[] {
 		if (!sortBy) {
 			return agents
 		}
@@ -270,19 +277,19 @@ export class UnifiedAgentRegistry {
 			let bVal: any
 
 			switch (sortBy) {
-				case 'relevance':
+				case "relevance":
 					aVal = a.relevanceScore
 					bVal = b.relevanceScore
 					break
-				case 'performance':
+				case "performance":
 					aVal = a.avgResponseTime
 					bVal = b.avgResponseTime
 					break
-				case 'popularity':
+				case "popularity":
 					aVal = a.totalCalls
 					bVal = b.totalCalls
 					break
-				case 'rating':
+				case "rating":
 					aVal = a.rating || 0
 					bVal = b.rating || 0
 					break
@@ -290,8 +297,8 @@ export class UnifiedAgentRegistry {
 					return 0
 			}
 
-			if (typeof aVal === 'number' && typeof bVal === 'number') {
-				return sortOrder === 'desc' ? bVal - aVal : aVal - bVal
+			if (typeof aVal === "number" && typeof bVal === "number") {
+				return sortOrder === "desc" ? bVal - aVal : aVal - bVal
 			}
 
 			return 0
@@ -303,11 +310,7 @@ export class UnifiedAgentRegistry {
 	/**
 	 * 分页处理
 	 */
-	private paginate(
-		agents: AgentDiscoveryResult[],
-		offset?: number,
-		limit?: number
-	): AgentDiscoveryResult[] {
+	private paginate(agents: AgentDiscoveryResult[], offset?: number, limit?: number): AgentDiscoveryResult[] {
 		if (!offset && !limit) {
 			return agents
 		}
@@ -321,10 +324,7 @@ export class UnifiedAgentRegistry {
 	/**
 	 * 智能推荐
 	 */
-	async recommendAgents(
-		userId: string,
-		context: RecommendationContext
-	): Promise<AgentRecommendation[]> {
+	async recommendAgents(userId: string, context: RecommendationContext): Promise<AgentRecommendation[]> {
 		if (!this.redisAdapter.isEnabled()) {
 			return []
 		}
@@ -332,15 +332,14 @@ export class UnifiedAgentRegistry {
 		try {
 			// 获取用户历史使用记录
 			const userHistory = await this.getUserUsageHistory(userId)
-			
+
 			// 分析用户偏好
 			const preferences = this.analyzeUserPreferences(userHistory)
-			
+
 			// 基于内容的推荐
 			const recommendations = await this.contentBasedRecommendation(context, preferences)
-			
-			return recommendations.slice(0, 10) // 返回前10个推荐
 
+			return recommendations.slice(0, 10) // 返回前10个推荐
 		} catch (error) {
 			logger.error(`[UnifiedAgentRegistry] Failed to get recommendations:`, error)
 			return []
@@ -364,7 +363,7 @@ export class UnifiedAgentRegistry {
 			preferredCapabilities: [],
 			preferredCategories: [],
 			avgUsageTime: 0,
-			preferredPerformance: 'balanced'
+			preferredPerformance: "balanced",
 		}
 	}
 
@@ -373,7 +372,7 @@ export class UnifiedAgentRegistry {
 	 */
 	private async contentBasedRecommendation(
 		context: RecommendationContext,
-		preferences: UserPreferences
+		preferences: UserPreferences,
 	): Promise<AgentRecommendation[]> {
 		// TODO: 实现基于内容的推荐算法
 		return []
@@ -390,24 +389,23 @@ export class UnifiedAgentRegistry {
 				privateAgents: 0,
 				sharedAgents: 0,
 				categories: {},
-				regions: {}
+				regions: {},
 			}
 		}
 
 		try {
 			const onlineAgents = await this.redisAdapter.getOnlineAgents()
-			
+
 			// TODO: 从Redis获取其他统计信息
-			
+
 			return {
 				totalAgents: 0, // TODO: 实际统计
 				onlineAgents: onlineAgents.length,
 				privateAgents: 0, // TODO: 实际统计
 				sharedAgents: 0, // TODO: 实际统计
 				categories: {}, // TODO: 实际统计
-				regions: {} // TODO: 实际统计
+				regions: {}, // TODO: 实际统计
 			}
-
 		} catch (error) {
 			logger.error(`[UnifiedAgentRegistry] Failed to get registry stats:`, error)
 			return {
@@ -416,7 +414,7 @@ export class UnifiedAgentRegistry {
 				privateAgents: 0,
 				sharedAgents: 0,
 				categories: {},
-				regions: {}
+				regions: {},
 			}
 		}
 	}
@@ -457,7 +455,7 @@ export interface UserPreferences {
 	preferredCapabilities: string[]
 	preferredCategories: string[]
 	avgUsageTime: number
-	preferredPerformance: 'fast' | 'balanced' | 'quality'
+	preferredPerformance: "fast" | "balanced" | "quality"
 }
 
 export interface RegistryStats {

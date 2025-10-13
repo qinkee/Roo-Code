@@ -152,12 +152,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		outputChannel.appendLine(`[Agent] Agent ID: ${agentId}`)
 
-		const message = questionData.params?.message
-		if (!message) {
-			outputChannel.appendLine(`[Agent] ❌ Missing message in params`)
-			throw new Error("Missing message in params")
-		}
-		outputChannel.appendLine(`[Agent] Message: ${message.substring(0, 100)}...`)
+		// 保持原始消息格式传递，让A2AServer处理
+		// questionData 就是完整的消息对象 {type, content, timestamp}
+		const message = JSON.stringify(questionData)
+		outputChannel.appendLine(`[Agent] Message object: ${message}`)
 
 		// 获取智能体配置
 		outputChannel.appendLine(`[Agent] Getting agent config for ${agentId}...`)
@@ -168,6 +166,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			throw new Error(`Agent ${agentId} not found`)
 		}
 		outputChannel.appendLine(`[Agent] ✅ Agent config loaded: ${JSON.stringify(agentConfig)}`)
+		outputChannel.appendLine(`[Agent] 🔍 welcomeMessage in config: ${agentConfig.welcomeMessage || "NOT FOUND"}`)
 
 		// 响应时交换发送者/接收者
 		const responseSendId = recvId
@@ -409,6 +408,54 @@ export async function activate(context: vscode.ExtensionContext) {
 			outputChannel.appendLine(`[LLM] Calling prepareAgentTask...`)
 			const taskParams = await prepareAgentTask(data, provider)
 			outputChannel.appendLine(`[LLM] ✅ prepareAgentTask completed`)
+
+			// 检查是否是 say_hi 消息
+			let messageObj: any
+			try {
+				messageObj = JSON.parse(taskParams.message)
+			} catch (e) {
+				messageObj = null
+			}
+
+			if (messageObj?.type === "say_hi") {
+				// 直接返回欢迎语，不创建Task
+				outputChannel.appendLine(`[LLM] Detected say_hi message, returning welcome message`)
+				const welcomeMessage =
+					taskParams.agentConfig.welcomeMessage ||
+					`你好！我是 ${taskParams.agentConfig.name}，很高兴为你服务！`
+				outputChannel.appendLine(`[LLM] 🔍 Sending welcomeMessage: "${welcomeMessage}"`)
+				outputChannel.appendLine(
+					`[LLM] 🔍 taskParams.agentConfig.welcomeMessage: "${taskParams.agentConfig.welcomeMessage}"`,
+				)
+
+				// 发送欢迎语消息
+				llmService.imConnection.sendLLMChunk(
+					taskParams.streamId,
+					welcomeMessage,
+					taskParams.imMetadata.recvId,
+					taskParams.imMetadata.targetTerminal,
+					taskParams.imMetadata.chatType,
+					taskParams.imMetadata.sendId,
+					taskParams.imMetadata.senderTerminal,
+				)
+
+				// 发送结束事件
+				llmService.imConnection.sendLLMEnd(
+					taskParams.streamId,
+					taskParams.imMetadata.recvId,
+					taskParams.imMetadata.targetTerminal,
+					taskParams.imMetadata.chatType,
+					{
+						name: `agent_${taskParams.agentId}`,
+						id: taskParams.agentId,
+					},
+					taskParams.imMetadata.sendId,
+					taskParams.imMetadata.senderTerminal,
+					null, // say_hi 不需要 conversationId
+				)
+				outputChannel.appendLine(`[LLM] ✅ Welcome message sent successfully`)
+				return
+			}
 
 			// 创建并执行任务
 			outputChannel.appendLine(`[LLM] Calling createAndExecuteAgentTask...`)

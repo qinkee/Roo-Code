@@ -782,7 +782,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 		<>
 			<div className="flex flex-col h-full bg-vscode-editor-background text-vscode-foreground">
 				{/* Header */}
-				<div className="flex items-center justify-between px-6 py-4 border-b border-vscode-panel-border">
+				<div className="flex items-center justify-between py-4 border-b border-vscode-panel-border">
 					<div className="flex items-center gap-2">
 						<h1 className="text-lg font-bold">{t("agents:title", "智能体")}</h1>
 						<StandardTooltip content="管理和配置您的智能体">
@@ -793,7 +793,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 				</div>
 
 				{/* Content */}
-				<div className="flex-1 overflow-auto px-6 py-4 space-y-5">
+				<div className="flex-1 overflow-auto py-4 space-y-5">
 					{/* Custom Agents Section */}
 					<div>
 						<div className="flex items-center gap-2 mb-3">
@@ -838,13 +838,23 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 												className="flex items-center justify-between p-3 cursor-pointer"
 												onClick={() => handleCardExpand(agent.id)}>
 												<div className="flex items-center gap-3 flex-1 min-w-0">
-													<div
-														className={cn(
-															"w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm flex-shrink-0",
-															agentStyle.bg,
-														)}>
-														{agentStyle.icon}
-													</div>
+													{agent.icon ? (
+														<div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 bg-vscode-input-background border border-vscode-input-border">
+															<img
+																src={agent.icon}
+																alt={agent.name}
+																className="w-full h-full object-cover"
+															/>
+														</div>
+													) : (
+														<div
+															className={cn(
+																"w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm flex-shrink-0",
+																agentStyle.bg,
+															)}>
+															{agentStyle.icon}
+														</div>
+													)}
 													<div className="flex-1 min-w-0">
 														<div className="flex items-center gap-2">
 															<div className="font-bold text-sm text-vscode-foreground truncate">
