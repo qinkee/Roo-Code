@@ -1908,19 +1908,22 @@ export class ClineProvider
 	async deleteTaskFromState(id: string) {
 		// Ensure we read and write with the same user context
 		const taskHistory = (await TaskHistoryBridge.getTaskHistory()) ?? []
-		console.log(`[ClineProvider] Deleting task ${id}, current count: ${taskHistory.length}`)
+		this.log(`[deleteTaskFromState] Deleting task ${id}, current count: ${taskHistory.length}`)
 
 		const updatedTaskHistory = taskHistory.filter((task) => task.id !== id)
-		console.log(`[ClineProvider] After deletion, task count: ${updatedTaskHistory.length}`)
+		this.log(`[deleteTaskFromState] After deletion, task count: ${updatedTaskHistory.length}`)
 
 		// Pass immediate: true to sync to Redis immediately for delete operations
 		await TaskHistoryBridge.updateTaskHistory(undefined, updatedTaskHistory, true)
+		this.log(`[deleteTaskFromState] TaskHistoryBridge.updateTaskHistory completed`)
 
 		// IMPORTANT: Also update the contextProxy cache so that getState() returns the updated history
 		// This ensures postStateToWebview() sends the correct task history to the React UI
 		await this.contextProxy.setValue("taskHistory", updatedTaskHistory)
+		this.log(`[deleteTaskFromState] contextProxy.setValue completed`)
 
 		await this.postStateToWebview()
+		this.log(`[deleteTaskFromState] postStateToWebview completed`)
 	}
 
 	async postStateToWebview(forceUpdate: boolean = false) {

@@ -831,44 +831,10 @@ import { z as z14 } from "zod";
 import { z as z12 } from "zod";
 
 // src/history.ts
-import { z as z5 } from "zod";
-var historyItemSchema = z5.object({
-  id: z5.string(),
-  number: z5.number(),
-  ts: z5.number(),
-  task: z5.string(),
-  tokensIn: z5.number(),
-  tokensOut: z5.number(),
-  cacheWrites: z5.number().optional(),
-  cacheReads: z5.number().optional(),
-  totalCost: z5.number(),
-  size: z5.number().optional(),
-  workspace: z5.string().optional(),
-  mode: z5.string().optional(),
-  terminalNo: z5.number().optional(),
-  // 🔥 智能体任务标记
-  source: z5.enum(["user", "agent"]).optional(),
-  // 任务来源：用户或智能体
-  agentId: z5.string().optional()
-  // 智能体ID（仅当 source === "agent" 时存在）
-});
-
-// src/experiment.ts
 import { z as z6 } from "zod";
-var experimentIds = ["powerSteering", "multiFileApplyDiff", "preventFocusDisruption", "assistantMessageParser"];
-var experimentIdsSchema = z6.enum(experimentIds);
-var experimentsSchema = z6.object({
-  powerSteering: z6.boolean().optional(),
-  multiFileApplyDiff: z6.boolean().optional(),
-  preventFocusDisruption: z6.boolean().optional(),
-  assistantMessageParser: z6.boolean().optional()
-});
-
-// src/telemetry.ts
-import { z as z8 } from "zod";
 
 // src/message.ts
-import { z as z7 } from "zod";
+import { z as z5 } from "zod";
 var clineAsks = [
   "followup",
   "command",
@@ -883,7 +849,7 @@ var clineAsks = [
   "use_mcp_server",
   "auto_approval_max_req_reached"
 ];
-var clineAskSchema = z7.enum(clineAsks);
+var clineAskSchema = z5.enum(clineAsks);
 var blockingAsks = [
   "api_req_failed",
   "mistake_limit_reached",
@@ -923,51 +889,87 @@ var clineSays = [
   "codebase_search_result",
   "user_edit_todos"
 ];
-var clineSaySchema = z7.enum(clineSays);
-var toolProgressStatusSchema = z7.object({
-  icon: z7.string().optional(),
-  text: z7.string().optional()
+var clineSaySchema = z5.enum(clineSays);
+var toolProgressStatusSchema = z5.object({
+  icon: z5.string().optional(),
+  text: z5.string().optional()
 });
-var contextCondenseSchema = z7.object({
-  cost: z7.number(),
-  prevContextTokens: z7.number(),
-  newContextTokens: z7.number(),
-  summary: z7.string()
+var contextCondenseSchema = z5.object({
+  cost: z5.number(),
+  prevContextTokens: z5.number(),
+  newContextTokens: z5.number(),
+  summary: z5.string()
 });
-var clineMessageSchema = z7.object({
-  ts: z7.number(),
-  type: z7.union([z7.literal("ask"), z7.literal("say")]),
+var clineMessageSchema = z5.object({
+  ts: z5.number(),
+  type: z5.union([z5.literal("ask"), z5.literal("say")]),
   ask: clineAskSchema.optional(),
   say: clineSaySchema.optional(),
-  text: z7.string().optional(),
-  images: z7.array(z7.string()).optional(),
-  partial: z7.boolean().optional(),
-  reasoning: z7.string().optional(),
-  conversationHistoryIndex: z7.number().optional(),
-  checkpoint: z7.record(z7.string(), z7.unknown()).optional(),
+  text: z5.string().optional(),
+  images: z5.array(z5.string()).optional(),
+  partial: z5.boolean().optional(),
+  reasoning: z5.string().optional(),
+  conversationHistoryIndex: z5.number().optional(),
+  checkpoint: z5.record(z5.string(), z5.unknown()).optional(),
   progressStatus: toolProgressStatusSchema.optional(),
   contextCondense: contextCondenseSchema.optional(),
-  isProtected: z7.boolean().optional(),
-  apiProtocol: z7.union([z7.literal("openai"), z7.literal("anthropic")]).optional(),
-  metadata: z7.object({
-    gpt5: z7.object({
-      previous_response_id: z7.string().optional(),
-      instructions: z7.string().optional(),
-      reasoning_summary: z7.string().optional()
+  isProtected: z5.boolean().optional(),
+  apiProtocol: z5.union([z5.literal("openai"), z5.literal("anthropic")]).optional(),
+  metadata: z5.object({
+    gpt5: z5.object({
+      previous_response_id: z5.string().optional(),
+      instructions: z5.string().optional(),
+      reasoning_summary: z5.string().optional()
     }).optional(),
-    taskId: z7.string().optional()
+    taskId: z5.string().optional()
   }).optional()
 });
-var tokenUsageSchema = z7.object({
-  totalTokensIn: z7.number(),
-  totalTokensOut: z7.number(),
-  totalCacheWrites: z7.number().optional(),
-  totalCacheReads: z7.number().optional(),
-  totalCost: z7.number(),
-  contextTokens: z7.number()
+var tokenUsageSchema = z5.object({
+  totalTokensIn: z5.number(),
+  totalTokensOut: z5.number(),
+  totalCacheWrites: z5.number().optional(),
+  totalCacheReads: z5.number().optional(),
+  totalCost: z5.number(),
+  contextTokens: z5.number()
+});
+
+// src/history.ts
+var historyItemSchema = z6.object({
+  id: z6.string(),
+  number: z6.number(),
+  ts: z6.number(),
+  task: z6.string(),
+  tokensIn: z6.number(),
+  tokensOut: z6.number(),
+  cacheWrites: z6.number().optional(),
+  cacheReads: z6.number().optional(),
+  totalCost: z6.number(),
+  size: z6.number().optional(),
+  workspace: z6.string().optional(),
+  mode: z6.string().optional(),
+  terminalNo: z6.number().optional(),
+  // 🔥 智能体任务标记
+  source: z6.enum(["user", "agent"]).optional(),
+  // 任务来源：用户或智能体
+  agentId: z6.string().optional(),
+  // 智能体ID（仅当 source === "agent" 时存在）
+  // 🔥 消息历史（用于查看已完成的智能体任务）
+  clineMessages: z6.array(clineMessageSchema).optional()
+});
+
+// src/experiment.ts
+import { z as z7 } from "zod";
+var experimentIds = ["powerSteering", "multiFileApplyDiff", "preventFocusDisruption", "assistantMessageParser"];
+var experimentIdsSchema = z7.enum(experimentIds);
+var experimentsSchema = z7.object({
+  powerSteering: z7.boolean().optional(),
+  multiFileApplyDiff: z7.boolean().optional(),
+  preventFocusDisruption: z7.boolean().optional(),
+  assistantMessageParser: z7.boolean().optional()
 });
 
 // src/telemetry.ts
+import { z as z8 } from "zod";
 var telemetrySettings = ["unset", "enabled", "disabled"];
 var telemetrySettingsSchema = z8.enum(telemetrySettings);
 var TelemetryEventName = /* @__PURE__ */ ((TelemetryEventName2) => {

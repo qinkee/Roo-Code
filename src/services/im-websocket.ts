@@ -27,7 +27,6 @@ export class RooCodeIMConnection {
 	 */
 	async connect(): Promise<void> {
 		if (this.isConnected) {
-			this.outputChannel.appendLine("[RooCode IM] Already connected")
 			return
 		}
 
@@ -37,19 +36,16 @@ export class RooCodeIMConnection {
 			throw new Error("No access token available")
 		}
 
-		this.outputChannel.appendLine(`[RooCode IM] Connecting to IM server at: ${this.wsUrl}`)
-
 		return new Promise((resolve, reject) => {
 			try {
 				this.ws = new WebSocket(this.wsUrl)
 			} catch (error: any) {
-				this.outputChannel.appendLine(`[RooCode IM] Failed to create WebSocket: ${error?.message || error}`)
+				this.outputChannel.appendLine(`[RooCode IM] ❌ Create failed: ${error?.message || error}`)
 				reject(error)
 				return
 			}
 
 			this.ws.onopen = () => {
-				this.outputChannel.appendLine("[RooCode IM] WebSocket connected")
 				this.login()
 				resolve()
 			}
@@ -59,19 +55,14 @@ export class RooCodeIMConnection {
 			}
 
 			this.ws.onerror = (error: any) => {
-				const errorMsg = error?.message || error?.toString() || "Unknown error"
-				this.outputChannel.appendLine(`[RooCode IM] WebSocket error: ${errorMsg}`)
-				if (error?.code) {
-					this.outputChannel.appendLine(`[RooCode IM] Error code: ${error.code}`)
-				}
+				this.outputChannel.appendLine(`[RooCode IM] ❌ Error: ${error?.message || error}`)
 				reject(error)
 			}
 
 			this.ws.onclose = (event: any) => {
-				this.outputChannel.appendLine(
-					`[RooCode IM] WebSocket closed - code: ${event.code}, reason: ${event.reason || "No reason provided"}`,
-				)
-				this.outputChannel.appendLine(`[RooCode IM] Clean close: ${event.wasClean}`)
+				if (!event.wasClean) {
+					this.outputChannel.appendLine(`[RooCode IM] ❌ Disconnected: ${event.code}`)
+				}
 				this.isConnected = false
 				this.stopHeartbeat()
 				this.scheduleReconnect()
@@ -99,19 +90,17 @@ export class RooCodeIMConnection {
 	private handleMessage(rawData: string): void {
 		try {
 			const message = JSON.parse(rawData)
-			this.outputChannel.appendLine(`[RooCode IM] Received message: cmd=${message.cmd}`)
 
 			// 处理登录成功
 			if (message.cmd === 0) {
 				this.isConnected = true
 				this.startHeartbeat()
-				this.outputChannel.appendLine("[RooCode IM] Login successful")
+				this.outputChannel.appendLine("[RooCode IM] Connected")
 				return
 			}
 
 			// 处理心跳响应
 			if (message.cmd === 1) {
-				this.outputChannel.appendLine("[RooCode IM] Heartbeat response received")
 				this.resetHeartbeat()
 				return
 			}
@@ -119,13 +108,12 @@ export class RooCodeIMConnection {
 			// 处理LLM消息
 			const handler = this.messageHandlers.get(message.cmd)
 			if (handler) {
-				this.outputChannel.appendLine(`[RooCode IM] Found handler for cmd=${message.cmd}, calling...`)
 				handler(message.data)
 			} else {
-				this.outputChannel.appendLine(`[RooCode IM] No handler registered for cmd=${message.cmd}`)
+				this.outputChannel.appendLine(`[RooCode IM] ❌ No handler for cmd=${message.cmd}`)
 			}
 		} catch (error) {
-			this.outputChannel.appendLine(`[RooCode IM] Failed to handle message: ${error}`)
+			this.outputChannel.appendLine(`[RooCode IM] ❌ Message error: ${error}`)
 		}
 	}
 
@@ -134,25 +122,18 @@ export class RooCodeIMConnection {
 	 */
 	public sendLLMRequest(question: string, recvId?: number, targetTerminal?: number, chatType?: string): string {
 		const streamId = this.generateStreamId()
-
-		const request = {
-			cmd: 10, // LLM_STREAM_REQUEST
+		this.send({
+			cmd: 10,
 			data: {
 				streamId,
 				question,
-				recvId, // 接收用户ID
-				targetTerminal, // 目标终端类型
-				chatType, // 聊天类型 (PRIVATE/GROUP)
+				recvId,
+				targetTerminal,
+				chatType,
 				timestamp: Date.now(),
 			},
-		}
-
-		this.outputChannel.appendLine(
-			`[RooCode IM] Sending LLM REQUEST (cmd=10): streamId=${streamId}, question=${question.substring(0, 50)}..., recvId=${recvId}, targetTerminal=${targetTerminal}, chatType=${chatType}`,
-		)
-		this.send(request)
+		})
 		this.sequenceMap.set(streamId, 0)
-
 		return streamId
 	}
 
@@ -168,27 +149,20 @@ export class RooCodeIMConnection {
 		sendId?: number,
 		senderTerminal?: number,
 	): void {
-		const sequence = this.getNextSequence(streamId)
-
-		const message = {
-			cmd: 11, // LLM_STREAM_CHUNK
+		this.send({
+			cmd: 11,
 			data: {
 				streamId,
 				chunk,
-				sequence,
-				sendId, // 发送者用户ID（智能体所属用户）
-				recvId, // 接收用户ID
-				senderTerminal, // 发送者终端类型（智能体运行的终端）
-				targetTerminal, // 目标终端类型
-				chatType, // 聊天类型
+				sequence: this.getNextSequence(streamId),
+				sendId,
+				recvId,
+				senderTerminal,
+				targetTerminal,
+				chatType,
 				timestamp: Date.now(),
 			},
-		}
-
-		this.outputChannel.appendLine(
-			`[RooCode IM] Sending LLM CHUNK (cmd=11): streamId=${streamId}, seq=${sequence}, chunk=${chunk.substring(0, 20)}...`,
-		)
-		this.send(message)
+		})
 	}
 
 	/**
@@ -202,29 +176,23 @@ export class RooCodeIMConnection {
 		taskInfo?: { name: string; id?: string },
 		sendId?: number,
 		senderTerminal?: number,
-		conversationId?: string, // 🔥 新增：会话ID
+		conversationId?: string,
 	): void {
-		const message = {
-			cmd: 12, // LLM_STREAM_END
+		this.send({
+			cmd: 12,
 			data: {
 				streamId,
-				sendId, // 发送者用户ID
-				recvId, // 接收用户ID
-				senderTerminal, // 发送者终端类型
-				targetTerminal, // 目标终端类型
-				chatType, // 聊天类型
-				// 将taskInfo拆分为独立字段，避免JSON嵌套解析问题
+				sendId,
+				recvId,
+				senderTerminal,
+				targetTerminal,
+				chatType,
 				taskName: taskInfo?.name,
 				taskId: taskInfo?.id,
-				conversationId, // 🔥 返回会话ID
+				conversationId,
 				timestamp: Date.now(),
 			},
-		}
-
-		this.outputChannel.appendLine(
-			`[RooCode IM] Sending LLM END (cmd=12): streamId=${streamId}, taskName=${taskInfo?.name}, conversationId=${conversationId}`,
-		)
-		this.send(message)
+		})
 		this.sequenceMap.delete(streamId)
 	}
 
@@ -240,22 +208,19 @@ export class RooCodeIMConnection {
 		sendId?: number,
 		senderTerminal?: number,
 	): void {
-		const message = {
-			cmd: 13, // LLM_STREAM_ERROR
+		this.send({
+			cmd: 13,
 			data: {
 				streamId,
 				error,
-				sendId, // 发送者用户ID
-				recvId, // 接收用户ID
-				senderTerminal, // 发送者终端类型
-				targetTerminal, // 目标终端类型
-				chatType, // 聊天类型
+				sendId,
+				recvId,
+				senderTerminal,
+				targetTerminal,
+				chatType,
 				timestamp: Date.now(),
 			},
-		}
-
-		this.outputChannel.appendLine(`[RooCode IM] Sending LLM ERROR (cmd=13): streamId=${streamId}, error=${error}`)
-		this.send(message)
+		})
 		this.sequenceMap.delete(streamId)
 	}
 
@@ -283,20 +248,16 @@ export class RooCodeIMConnection {
 	 */
 	private send(data: any): void {
 		if (this.ws?.readyState === WebSocket.OPEN) {
-			const jsonData = JSON.stringify(data)
-			this.ws.send(jsonData)
-			this.outputChannel.appendLine(`[RooCode IM] Sent message: ${jsonData.substring(0, 200)}`)
+			this.ws.send(JSON.stringify(data))
 		} else {
-			this.outputChannel.appendLine("[RooCode IM] WebSocket not ready, message queued")
-			// TODO: 实现消息队列
+			this.outputChannel.appendLine("[RooCode IM] ❌ WebSocket not ready")
 		}
 	}
 
 	/**
-	 * 心跳机制 - 参考wssocket.js实现
+	 * 心跳机制
 	 */
 	private startHeartbeat(): void {
-		this.outputChannel.appendLine("[RooCode IM] Starting heartbeat mechanism")
 		this.resetHeartbeat()
 	}
 
@@ -324,12 +285,11 @@ export class RooCodeIMConnection {
 		// 设置新的心跳定时器（5秒后发送心跳）
 		this.heartbeatTimer = setTimeout(() => {
 			if (this.isConnected && this.ws?.readyState === WebSocket.OPEN) {
-				this.outputChannel.appendLine("[RooCode IM] Sending heartbeat")
 				this.send({ cmd: 1, data: {} })
 
 				// 设置心跳超时定时器（如果10秒内没有收到响应，认为连接断开）
 				this.heartbeatTimeoutTimer = setTimeout(() => {
-					this.outputChannel.appendLine("[RooCode IM] Heartbeat timeout, closing connection")
+					this.outputChannel.appendLine("[RooCode IM] ❌ Heartbeat timeout")
 					this.ws?.close()
 				}, 10000)
 			}
@@ -346,8 +306,7 @@ export class RooCodeIMConnection {
 
 		// 使用15秒延迟，避免过于频繁的重连
 		this.reconnectTimer = setTimeout(() => {
-			this.outputChannel.appendLine("[RooCode IM] Attempting to reconnect...")
-			this.connect().catch((err) => this.outputChannel.appendLine(`[RooCode IM] Reconnection failed: ${err}`))
+			this.connect().catch((err) => this.outputChannel.appendLine(`[RooCode IM] ❌ Reconnect failed: ${err}`))
 		}, 15000)
 	}
 
@@ -357,11 +316,9 @@ export class RooCodeIMConnection {
 	private async getAccessToken(): Promise<string> {
 		try {
 			const tokenHelper = IMTokenHelper.getInstance(this.context, this.outputChannel)
-			const token = await tokenHelper.getAccessToken()
-			this.outputChannel.appendLine("[RooCode IM] Successfully got access token for terminal=6")
-			return token
+			return await tokenHelper.getAccessToken()
 		} catch (error) {
-			this.outputChannel.appendLine(`[RooCode IM] Failed to get access token: ${error}`)
+			this.outputChannel.appendLine(`[RooCode IM] ❌ Token failed: ${error}`)
 			throw error
 		}
 	}

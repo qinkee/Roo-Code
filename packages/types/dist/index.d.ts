@@ -10551,6 +10551,138 @@ declare const globalSettingsSchema: z.ZodObject<{
         terminalNo: z.ZodOptional<z.ZodNumber>;
         source: z.ZodOptional<z.ZodEnum<["user", "agent"]>>;
         agentId: z.ZodOptional<z.ZodString>;
+        clineMessages: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            ts: z.ZodNumber;
+            type: z.ZodUnion<[z.ZodLiteral<"ask">, z.ZodLiteral<"say">]>;
+            ask: z.ZodOptional<z.ZodEnum<["followup", "command", "command_output", "completion_result", "tool", "api_req_failed", "resume_task", "resume_completed_task", "mistake_limit_reached", "browser_action_launch", "use_mcp_server", "auto_approval_max_req_reached"]>>;
+            say: z.ZodOptional<z.ZodEnum<["error", "api_req_started", "api_req_finished", "api_req_retried", "api_req_retry_delayed", "api_req_deleted", "text", "reasoning", "completion_result", "user_feedback", "user_feedback_diff", "command_output", "shell_integration_warning", "browser_action", "browser_action_result", "mcp_server_request_started", "mcp_server_response", "subtask_result", "checkpoint_saved", "rooignore_error", "diff_error", "condense_context", "condense_context_error", "codebase_search_result", "user_edit_todos"]>>;
+            text: z.ZodOptional<z.ZodString>;
+            images: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+            partial: z.ZodOptional<z.ZodBoolean>;
+            reasoning: z.ZodOptional<z.ZodString>;
+            conversationHistoryIndex: z.ZodOptional<z.ZodNumber>;
+            checkpoint: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+            progressStatus: z.ZodOptional<z.ZodObject<{
+                icon: z.ZodOptional<z.ZodString>;
+                text: z.ZodOptional<z.ZodString>;
+            }, "strip", z.ZodTypeAny, {
+                text?: string | undefined;
+                icon?: string | undefined;
+            }, {
+                text?: string | undefined;
+                icon?: string | undefined;
+            }>>;
+            contextCondense: z.ZodOptional<z.ZodObject<{
+                cost: z.ZodNumber;
+                prevContextTokens: z.ZodNumber;
+                newContextTokens: z.ZodNumber;
+                summary: z.ZodString;
+            }, "strip", z.ZodTypeAny, {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            }, {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            }>>;
+            isProtected: z.ZodOptional<z.ZodBoolean>;
+            apiProtocol: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"openai">, z.ZodLiteral<"anthropic">]>>;
+            metadata: z.ZodOptional<z.ZodObject<{
+                gpt5: z.ZodOptional<z.ZodObject<{
+                    previous_response_id: z.ZodOptional<z.ZodString>;
+                    instructions: z.ZodOptional<z.ZodString>;
+                    reasoning_summary: z.ZodOptional<z.ZodString>;
+                }, "strip", z.ZodTypeAny, {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                }, {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                }>>;
+                taskId: z.ZodOptional<z.ZodString>;
+            }, "strip", z.ZodTypeAny, {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            }, {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            }>>;
+        }, "strip", z.ZodTypeAny, {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }, {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }>, "many">>;
     }, "strip", z.ZodTypeAny, {
         number: number;
         id: string;
@@ -10567,6 +10699,38 @@ declare const globalSettingsSchema: z.ZodObject<{
         workspace?: string | undefined;
         terminalNo?: number | undefined;
         source?: "agent" | "user" | undefined;
+        clineMessages?: {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }[] | undefined;
     }, {
         number: number;
         id: string;
@@ -10583,6 +10747,38 @@ declare const globalSettingsSchema: z.ZodObject<{
         workspace?: string | undefined;
         terminalNo?: number | undefined;
         source?: "agent" | "user" | undefined;
+        clineMessages?: {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }[] | undefined;
     }>, "many">>;
     condensingApiConfigId: z.ZodOptional<z.ZodString>;
     customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -11049,6 +11245,38 @@ declare const globalSettingsSchema: z.ZodObject<{
         workspace?: string | undefined;
         terminalNo?: number | undefined;
         source?: "agent" | "user" | undefined;
+        clineMessages?: {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }[] | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -11245,6 +11473,38 @@ declare const globalSettingsSchema: z.ZodObject<{
         workspace?: string | undefined;
         terminalNo?: number | undefined;
         source?: "agent" | "user" | undefined;
+        clineMessages?: {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }[] | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -11660,6 +11920,138 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         terminalNo: z.ZodOptional<z.ZodNumber>;
         source: z.ZodOptional<z.ZodEnum<["user", "agent"]>>;
         agentId: z.ZodOptional<z.ZodString>;
+        clineMessages: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            ts: z.ZodNumber;
+            type: z.ZodUnion<[z.ZodLiteral<"ask">, z.ZodLiteral<"say">]>;
+            ask: z.ZodOptional<z.ZodEnum<["followup", "command", "command_output", "completion_result", "tool", "api_req_failed", "resume_task", "resume_completed_task", "mistake_limit_reached", "browser_action_launch", "use_mcp_server", "auto_approval_max_req_reached"]>>;
+            say: z.ZodOptional<z.ZodEnum<["error", "api_req_started", "api_req_finished", "api_req_retried", "api_req_retry_delayed", "api_req_deleted", "text", "reasoning", "completion_result", "user_feedback", "user_feedback_diff", "command_output", "shell_integration_warning", "browser_action", "browser_action_result", "mcp_server_request_started", "mcp_server_response", "subtask_result", "checkpoint_saved", "rooignore_error", "diff_error", "condense_context", "condense_context_error", "codebase_search_result", "user_edit_todos"]>>;
+            text: z.ZodOptional<z.ZodString>;
+            images: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+            partial: z.ZodOptional<z.ZodBoolean>;
+            reasoning: z.ZodOptional<z.ZodString>;
+            conversationHistoryIndex: z.ZodOptional<z.ZodNumber>;
+            checkpoint: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+            progressStatus: z.ZodOptional<z.ZodObject<{
+                icon: z.ZodOptional<z.ZodString>;
+                text: z.ZodOptional<z.ZodString>;
+            }, "strip", z.ZodTypeAny, {
+                text?: string | undefined;
+                icon?: string | undefined;
+            }, {
+                text?: string | undefined;
+                icon?: string | undefined;
+            }>>;
+            contextCondense: z.ZodOptional<z.ZodObject<{
+                cost: z.ZodNumber;
+                prevContextTokens: z.ZodNumber;
+                newContextTokens: z.ZodNumber;
+                summary: z.ZodString;
+            }, "strip", z.ZodTypeAny, {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            }, {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            }>>;
+            isProtected: z.ZodOptional<z.ZodBoolean>;
+            apiProtocol: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"openai">, z.ZodLiteral<"anthropic">]>>;
+            metadata: z.ZodOptional<z.ZodObject<{
+                gpt5: z.ZodOptional<z.ZodObject<{
+                    previous_response_id: z.ZodOptional<z.ZodString>;
+                    instructions: z.ZodOptional<z.ZodString>;
+                    reasoning_summary: z.ZodOptional<z.ZodString>;
+                }, "strip", z.ZodTypeAny, {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                }, {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                }>>;
+                taskId: z.ZodOptional<z.ZodString>;
+            }, "strip", z.ZodTypeAny, {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            }, {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            }>>;
+        }, "strip", z.ZodTypeAny, {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }, {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }>, "many">>;
     }, "strip", z.ZodTypeAny, {
         number: number;
         id: string;
@@ -11676,6 +12068,38 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         workspace?: string | undefined;
         terminalNo?: number | undefined;
         source?: "agent" | "user" | undefined;
+        clineMessages?: {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }[] | undefined;
     }, {
         number: number;
         id: string;
@@ -11692,6 +12116,38 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         workspace?: string | undefined;
         terminalNo?: number | undefined;
         source?: "agent" | "user" | undefined;
+        clineMessages?: {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }[] | undefined;
     }>, "many">>;
     condensingApiConfigId: z.ZodOptional<z.ZodString>;
     customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -12290,6 +12746,38 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         workspace?: string | undefined;
         terminalNo?: number | undefined;
         source?: "agent" | "user" | undefined;
+        clineMessages?: {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }[] | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -12626,6 +13114,38 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         workspace?: string | undefined;
         terminalNo?: number | undefined;
         source?: "agent" | "user" | undefined;
+        clineMessages?: {
+            type: "ask" | "say";
+            ts: number;
+            reasoning?: string | undefined;
+            partial?: boolean | undefined;
+            metadata?: {
+                taskId?: string | undefined;
+                gpt5?: {
+                    previous_response_id?: string | undefined;
+                    instructions?: string | undefined;
+                    reasoning_summary?: string | undefined;
+                } | undefined;
+            } | undefined;
+            text?: string | undefined;
+            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            images?: string[] | undefined;
+            conversationHistoryIndex?: number | undefined;
+            checkpoint?: Record<string, unknown> | undefined;
+            progressStatus?: {
+                text?: string | undefined;
+                icon?: string | undefined;
+            } | undefined;
+            contextCondense?: {
+                cost: number;
+                prevContextTokens: number;
+                newContextTokens: number;
+                summary: string;
+            } | undefined;
+            isProtected?: boolean | undefined;
+            apiProtocol?: "openai" | "anthropic" | undefined;
+        }[] | undefined;
     }[] | undefined;
     condensingApiConfigId?: string | undefined;
     customCondensingPrompt?: string | undefined;
@@ -13103,6 +13623,138 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 terminalNo: z.ZodOptional<z.ZodNumber>;
                 source: z.ZodOptional<z.ZodEnum<["user", "agent"]>>;
                 agentId: z.ZodOptional<z.ZodString>;
+                clineMessages: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                    ts: z.ZodNumber;
+                    type: z.ZodUnion<[z.ZodLiteral<"ask">, z.ZodLiteral<"say">]>;
+                    ask: z.ZodOptional<z.ZodEnum<["followup", "command", "command_output", "completion_result", "tool", "api_req_failed", "resume_task", "resume_completed_task", "mistake_limit_reached", "browser_action_launch", "use_mcp_server", "auto_approval_max_req_reached"]>>;
+                    say: z.ZodOptional<z.ZodEnum<["error", "api_req_started", "api_req_finished", "api_req_retried", "api_req_retry_delayed", "api_req_deleted", "text", "reasoning", "completion_result", "user_feedback", "user_feedback_diff", "command_output", "shell_integration_warning", "browser_action", "browser_action_result", "mcp_server_request_started", "mcp_server_response", "subtask_result", "checkpoint_saved", "rooignore_error", "diff_error", "condense_context", "condense_context_error", "codebase_search_result", "user_edit_todos"]>>;
+                    text: z.ZodOptional<z.ZodString>;
+                    images: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+                    partial: z.ZodOptional<z.ZodBoolean>;
+                    reasoning: z.ZodOptional<z.ZodString>;
+                    conversationHistoryIndex: z.ZodOptional<z.ZodNumber>;
+                    checkpoint: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+                    progressStatus: z.ZodOptional<z.ZodObject<{
+                        icon: z.ZodOptional<z.ZodString>;
+                        text: z.ZodOptional<z.ZodString>;
+                    }, "strip", z.ZodTypeAny, {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    }, {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    }>>;
+                    contextCondense: z.ZodOptional<z.ZodObject<{
+                        cost: z.ZodNumber;
+                        prevContextTokens: z.ZodNumber;
+                        newContextTokens: z.ZodNumber;
+                        summary: z.ZodString;
+                    }, "strip", z.ZodTypeAny, {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    }, {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    }>>;
+                    isProtected: z.ZodOptional<z.ZodBoolean>;
+                    apiProtocol: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"openai">, z.ZodLiteral<"anthropic">]>>;
+                    metadata: z.ZodOptional<z.ZodObject<{
+                        gpt5: z.ZodOptional<z.ZodObject<{
+                            previous_response_id: z.ZodOptional<z.ZodString>;
+                            instructions: z.ZodOptional<z.ZodString>;
+                            reasoning_summary: z.ZodOptional<z.ZodString>;
+                        }, "strip", z.ZodTypeAny, {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        }, {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        }>>;
+                        taskId: z.ZodOptional<z.ZodString>;
+                    }, "strip", z.ZodTypeAny, {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    }, {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    }>>;
+                }, "strip", z.ZodTypeAny, {
+                    type: "ask" | "say";
+                    ts: number;
+                    reasoning?: string | undefined;
+                    partial?: boolean | undefined;
+                    metadata?: {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    } | undefined;
+                    text?: string | undefined;
+                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    images?: string[] | undefined;
+                    conversationHistoryIndex?: number | undefined;
+                    checkpoint?: Record<string, unknown> | undefined;
+                    progressStatus?: {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    } | undefined;
+                    contextCondense?: {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    } | undefined;
+                    isProtected?: boolean | undefined;
+                    apiProtocol?: "openai" | "anthropic" | undefined;
+                }, {
+                    type: "ask" | "say";
+                    ts: number;
+                    reasoning?: string | undefined;
+                    partial?: boolean | undefined;
+                    metadata?: {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    } | undefined;
+                    text?: string | undefined;
+                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    images?: string[] | undefined;
+                    conversationHistoryIndex?: number | undefined;
+                    checkpoint?: Record<string, unknown> | undefined;
+                    progressStatus?: {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    } | undefined;
+                    contextCondense?: {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    } | undefined;
+                    isProtected?: boolean | undefined;
+                    apiProtocol?: "openai" | "anthropic" | undefined;
+                }>, "many">>;
             }, "strip", z.ZodTypeAny, {
                 number: number;
                 id: string;
@@ -13119,6 +13771,38 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
                 source?: "agent" | "user" | undefined;
+                clineMessages?: {
+                    type: "ask" | "say";
+                    ts: number;
+                    reasoning?: string | undefined;
+                    partial?: boolean | undefined;
+                    metadata?: {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    } | undefined;
+                    text?: string | undefined;
+                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    images?: string[] | undefined;
+                    conversationHistoryIndex?: number | undefined;
+                    checkpoint?: Record<string, unknown> | undefined;
+                    progressStatus?: {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    } | undefined;
+                    contextCondense?: {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    } | undefined;
+                    isProtected?: boolean | undefined;
+                    apiProtocol?: "openai" | "anthropic" | undefined;
+                }[] | undefined;
             }, {
                 number: number;
                 id: string;
@@ -13135,6 +13819,38 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
                 source?: "agent" | "user" | undefined;
+                clineMessages?: {
+                    type: "ask" | "say";
+                    ts: number;
+                    reasoning?: string | undefined;
+                    partial?: boolean | undefined;
+                    metadata?: {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    } | undefined;
+                    text?: string | undefined;
+                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    images?: string[] | undefined;
+                    conversationHistoryIndex?: number | undefined;
+                    checkpoint?: Record<string, unknown> | undefined;
+                    progressStatus?: {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    } | undefined;
+                    contextCondense?: {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    } | undefined;
+                    isProtected?: boolean | undefined;
+                    apiProtocol?: "openai" | "anthropic" | undefined;
+                }[] | undefined;
             }>, "many">>;
             condensingApiConfigId: z.ZodOptional<z.ZodString>;
             customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -13733,6 +14449,38 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
                 source?: "agent" | "user" | undefined;
+                clineMessages?: {
+                    type: "ask" | "say";
+                    ts: number;
+                    reasoning?: string | undefined;
+                    partial?: boolean | undefined;
+                    metadata?: {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    } | undefined;
+                    text?: string | undefined;
+                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    images?: string[] | undefined;
+                    conversationHistoryIndex?: number | undefined;
+                    checkpoint?: Record<string, unknown> | undefined;
+                    progressStatus?: {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    } | undefined;
+                    contextCondense?: {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    } | undefined;
+                    isProtected?: boolean | undefined;
+                    apiProtocol?: "openai" | "anthropic" | undefined;
+                }[] | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -14069,6 +14817,38 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
                 source?: "agent" | "user" | undefined;
+                clineMessages?: {
+                    type: "ask" | "say";
+                    ts: number;
+                    reasoning?: string | undefined;
+                    partial?: boolean | undefined;
+                    metadata?: {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    } | undefined;
+                    text?: string | undefined;
+                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    images?: string[] | undefined;
+                    conversationHistoryIndex?: number | undefined;
+                    checkpoint?: Record<string, unknown> | undefined;
+                    progressStatus?: {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    } | undefined;
+                    contextCondense?: {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    } | undefined;
+                    isProtected?: boolean | undefined;
+                    apiProtocol?: "openai" | "anthropic" | undefined;
+                }[] | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -14411,6 +15191,38 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
                 source?: "agent" | "user" | undefined;
+                clineMessages?: {
+                    type: "ask" | "say";
+                    ts: number;
+                    reasoning?: string | undefined;
+                    partial?: boolean | undefined;
+                    metadata?: {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    } | undefined;
+                    text?: string | undefined;
+                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    images?: string[] | undefined;
+                    conversationHistoryIndex?: number | undefined;
+                    checkpoint?: Record<string, unknown> | undefined;
+                    progressStatus?: {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    } | undefined;
+                    contextCondense?: {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    } | undefined;
+                    isProtected?: boolean | undefined;
+                    apiProtocol?: "openai" | "anthropic" | undefined;
+                }[] | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -14752,6 +15564,38 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
                 source?: "agent" | "user" | undefined;
+                clineMessages?: {
+                    type: "ask" | "say";
+                    ts: number;
+                    reasoning?: string | undefined;
+                    partial?: boolean | undefined;
+                    metadata?: {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    } | undefined;
+                    text?: string | undefined;
+                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    images?: string[] | undefined;
+                    conversationHistoryIndex?: number | undefined;
+                    checkpoint?: Record<string, unknown> | undefined;
+                    progressStatus?: {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    } | undefined;
+                    contextCondense?: {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    } | undefined;
+                    isProtected?: boolean | undefined;
+                    apiProtocol?: "openai" | "anthropic" | undefined;
+                }[] | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -15095,6 +15939,38 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
                 source?: "agent" | "user" | undefined;
+                clineMessages?: {
+                    type: "ask" | "say";
+                    ts: number;
+                    reasoning?: string | undefined;
+                    partial?: boolean | undefined;
+                    metadata?: {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    } | undefined;
+                    text?: string | undefined;
+                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    images?: string[] | undefined;
+                    conversationHistoryIndex?: number | undefined;
+                    checkpoint?: Record<string, unknown> | undefined;
+                    progressStatus?: {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    } | undefined;
+                    contextCondense?: {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    } | undefined;
+                    isProtected?: boolean | undefined;
+                    apiProtocol?: "openai" | "anthropic" | undefined;
+                }[] | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -15439,6 +16315,38 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
                 source?: "agent" | "user" | undefined;
+                clineMessages?: {
+                    type: "ask" | "say";
+                    ts: number;
+                    reasoning?: string | undefined;
+                    partial?: boolean | undefined;
+                    metadata?: {
+                        taskId?: string | undefined;
+                        gpt5?: {
+                            previous_response_id?: string | undefined;
+                            instructions?: string | undefined;
+                            reasoning_summary?: string | undefined;
+                        } | undefined;
+                    } | undefined;
+                    text?: string | undefined;
+                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    images?: string[] | undefined;
+                    conversationHistoryIndex?: number | undefined;
+                    checkpoint?: Record<string, unknown> | undefined;
+                    progressStatus?: {
+                        text?: string | undefined;
+                        icon?: string | undefined;
+                    } | undefined;
+                    contextCondense?: {
+                        cost: number;
+                        prevContextTokens: number;
+                        newContextTokens: number;
+                        summary: string;
+                    } | undefined;
+                    isProtected?: boolean | undefined;
+                    apiProtocol?: "openai" | "anthropic" | undefined;
+                }[] | undefined;
             }[] | undefined;
             condensingApiConfigId?: string | undefined;
             customCondensingPrompt?: string | undefined;
@@ -15915,6 +16823,138 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     terminalNo: z.ZodOptional<z.ZodNumber>;
                     source: z.ZodOptional<z.ZodEnum<["user", "agent"]>>;
                     agentId: z.ZodOptional<z.ZodString>;
+                    clineMessages: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                        ts: z.ZodNumber;
+                        type: z.ZodUnion<[z.ZodLiteral<"ask">, z.ZodLiteral<"say">]>;
+                        ask: z.ZodOptional<z.ZodEnum<["followup", "command", "command_output", "completion_result", "tool", "api_req_failed", "resume_task", "resume_completed_task", "mistake_limit_reached", "browser_action_launch", "use_mcp_server", "auto_approval_max_req_reached"]>>;
+                        say: z.ZodOptional<z.ZodEnum<["error", "api_req_started", "api_req_finished", "api_req_retried", "api_req_retry_delayed", "api_req_deleted", "text", "reasoning", "completion_result", "user_feedback", "user_feedback_diff", "command_output", "shell_integration_warning", "browser_action", "browser_action_result", "mcp_server_request_started", "mcp_server_response", "subtask_result", "checkpoint_saved", "rooignore_error", "diff_error", "condense_context", "condense_context_error", "codebase_search_result", "user_edit_todos"]>>;
+                        text: z.ZodOptional<z.ZodString>;
+                        images: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+                        partial: z.ZodOptional<z.ZodBoolean>;
+                        reasoning: z.ZodOptional<z.ZodString>;
+                        conversationHistoryIndex: z.ZodOptional<z.ZodNumber>;
+                        checkpoint: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+                        progressStatus: z.ZodOptional<z.ZodObject<{
+                            icon: z.ZodOptional<z.ZodString>;
+                            text: z.ZodOptional<z.ZodString>;
+                        }, "strip", z.ZodTypeAny, {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        }, {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        }>>;
+                        contextCondense: z.ZodOptional<z.ZodObject<{
+                            cost: z.ZodNumber;
+                            prevContextTokens: z.ZodNumber;
+                            newContextTokens: z.ZodNumber;
+                            summary: z.ZodString;
+                        }, "strip", z.ZodTypeAny, {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        }, {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        }>>;
+                        isProtected: z.ZodOptional<z.ZodBoolean>;
+                        apiProtocol: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"openai">, z.ZodLiteral<"anthropic">]>>;
+                        metadata: z.ZodOptional<z.ZodObject<{
+                            gpt5: z.ZodOptional<z.ZodObject<{
+                                previous_response_id: z.ZodOptional<z.ZodString>;
+                                instructions: z.ZodOptional<z.ZodString>;
+                                reasoning_summary: z.ZodOptional<z.ZodString>;
+                            }, "strip", z.ZodTypeAny, {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            }, {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            }>>;
+                            taskId: z.ZodOptional<z.ZodString>;
+                        }, "strip", z.ZodTypeAny, {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        }, {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        }>>;
+                    }, "strip", z.ZodTypeAny, {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }, {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }>, "many">>;
                 }, "strip", z.ZodTypeAny, {
                     number: number;
                     id: string;
@@ -15931,6 +16971,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
                     source?: "agent" | "user" | undefined;
+                    clineMessages?: {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }[] | undefined;
                 }, {
                     number: number;
                     id: string;
@@ -15947,6 +17019,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
                     source?: "agent" | "user" | undefined;
+                    clineMessages?: {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }[] | undefined;
                 }>, "many">>;
                 condensingApiConfigId: z.ZodOptional<z.ZodString>;
                 customCondensingPrompt: z.ZodOptional<z.ZodString>;
@@ -16545,6 +17649,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
                     source?: "agent" | "user" | undefined;
+                    clineMessages?: {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }[] | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -16881,6 +18017,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
                     source?: "agent" | "user" | undefined;
+                    clineMessages?: {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }[] | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -17223,6 +18391,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
                     source?: "agent" | "user" | undefined;
+                    clineMessages?: {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }[] | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -17564,6 +18764,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
                     source?: "agent" | "user" | undefined;
+                    clineMessages?: {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }[] | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -17907,6 +19139,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
                     source?: "agent" | "user" | undefined;
+                    clineMessages?: {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }[] | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -18251,6 +19515,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
                     source?: "agent" | "user" | undefined;
+                    clineMessages?: {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }[] | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -18616,6 +19912,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
                     source?: "agent" | "user" | undefined;
+                    clineMessages?: {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }[] | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -18971,6 +20299,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
                     source?: "agent" | "user" | undefined;
+                    clineMessages?: {
+                        type: "ask" | "say";
+                        ts: number;
+                        reasoning?: string | undefined;
+                        partial?: boolean | undefined;
+                        metadata?: {
+                            taskId?: string | undefined;
+                            gpt5?: {
+                                previous_response_id?: string | undefined;
+                                instructions?: string | undefined;
+                                reasoning_summary?: string | undefined;
+                            } | undefined;
+                        } | undefined;
+                        text?: string | undefined;
+                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        images?: string[] | undefined;
+                        conversationHistoryIndex?: number | undefined;
+                        checkpoint?: Record<string, unknown> | undefined;
+                        progressStatus?: {
+                            text?: string | undefined;
+                            icon?: string | undefined;
+                        } | undefined;
+                        contextCondense?: {
+                            cost: number;
+                            prevContextTokens: number;
+                            newContextTokens: number;
+                            summary: string;
+                        } | undefined;
+                        isProtected?: boolean | undefined;
+                        apiProtocol?: "openai" | "anthropic" | undefined;
+                    }[] | undefined;
                 }[] | undefined;
                 condensingApiConfigId?: string | undefined;
                 customCondensingPrompt?: string | undefined;
@@ -23946,6 +25306,138 @@ declare const historyItemSchema: z.ZodObject<{
     terminalNo: z.ZodOptional<z.ZodNumber>;
     source: z.ZodOptional<z.ZodEnum<["user", "agent"]>>;
     agentId: z.ZodOptional<z.ZodString>;
+    clineMessages: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        ts: z.ZodNumber;
+        type: z.ZodUnion<[z.ZodLiteral<"ask">, z.ZodLiteral<"say">]>;
+        ask: z.ZodOptional<z.ZodEnum<["followup", "command", "command_output", "completion_result", "tool", "api_req_failed", "resume_task", "resume_completed_task", "mistake_limit_reached", "browser_action_launch", "use_mcp_server", "auto_approval_max_req_reached"]>>;
+        say: z.ZodOptional<z.ZodEnum<["error", "api_req_started", "api_req_finished", "api_req_retried", "api_req_retry_delayed", "api_req_deleted", "text", "reasoning", "completion_result", "user_feedback", "user_feedback_diff", "command_output", "shell_integration_warning", "browser_action", "browser_action_result", "mcp_server_request_started", "mcp_server_response", "subtask_result", "checkpoint_saved", "rooignore_error", "diff_error", "condense_context", "condense_context_error", "codebase_search_result", "user_edit_todos"]>>;
+        text: z.ZodOptional<z.ZodString>;
+        images: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        partial: z.ZodOptional<z.ZodBoolean>;
+        reasoning: z.ZodOptional<z.ZodString>;
+        conversationHistoryIndex: z.ZodOptional<z.ZodNumber>;
+        checkpoint: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+        progressStatus: z.ZodOptional<z.ZodObject<{
+            icon: z.ZodOptional<z.ZodString>;
+            text: z.ZodOptional<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            text?: string | undefined;
+            icon?: string | undefined;
+        }, {
+            text?: string | undefined;
+            icon?: string | undefined;
+        }>>;
+        contextCondense: z.ZodOptional<z.ZodObject<{
+            cost: z.ZodNumber;
+            prevContextTokens: z.ZodNumber;
+            newContextTokens: z.ZodNumber;
+            summary: z.ZodString;
+        }, "strip", z.ZodTypeAny, {
+            cost: number;
+            prevContextTokens: number;
+            newContextTokens: number;
+            summary: string;
+        }, {
+            cost: number;
+            prevContextTokens: number;
+            newContextTokens: number;
+            summary: string;
+        }>>;
+        isProtected: z.ZodOptional<z.ZodBoolean>;
+        apiProtocol: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"openai">, z.ZodLiteral<"anthropic">]>>;
+        metadata: z.ZodOptional<z.ZodObject<{
+            gpt5: z.ZodOptional<z.ZodObject<{
+                previous_response_id: z.ZodOptional<z.ZodString>;
+                instructions: z.ZodOptional<z.ZodString>;
+                reasoning_summary: z.ZodOptional<z.ZodString>;
+            }, "strip", z.ZodTypeAny, {
+                previous_response_id?: string | undefined;
+                instructions?: string | undefined;
+                reasoning_summary?: string | undefined;
+            }, {
+                previous_response_id?: string | undefined;
+                instructions?: string | undefined;
+                reasoning_summary?: string | undefined;
+            }>>;
+            taskId: z.ZodOptional<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            taskId?: string | undefined;
+            gpt5?: {
+                previous_response_id?: string | undefined;
+                instructions?: string | undefined;
+                reasoning_summary?: string | undefined;
+            } | undefined;
+        }, {
+            taskId?: string | undefined;
+            gpt5?: {
+                previous_response_id?: string | undefined;
+                instructions?: string | undefined;
+                reasoning_summary?: string | undefined;
+            } | undefined;
+        }>>;
+    }, "strip", z.ZodTypeAny, {
+        type: "ask" | "say";
+        ts: number;
+        reasoning?: string | undefined;
+        partial?: boolean | undefined;
+        metadata?: {
+            taskId?: string | undefined;
+            gpt5?: {
+                previous_response_id?: string | undefined;
+                instructions?: string | undefined;
+                reasoning_summary?: string | undefined;
+            } | undefined;
+        } | undefined;
+        text?: string | undefined;
+        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+        images?: string[] | undefined;
+        conversationHistoryIndex?: number | undefined;
+        checkpoint?: Record<string, unknown> | undefined;
+        progressStatus?: {
+            text?: string | undefined;
+            icon?: string | undefined;
+        } | undefined;
+        contextCondense?: {
+            cost: number;
+            prevContextTokens: number;
+            newContextTokens: number;
+            summary: string;
+        } | undefined;
+        isProtected?: boolean | undefined;
+        apiProtocol?: "openai" | "anthropic" | undefined;
+    }, {
+        type: "ask" | "say";
+        ts: number;
+        reasoning?: string | undefined;
+        partial?: boolean | undefined;
+        metadata?: {
+            taskId?: string | undefined;
+            gpt5?: {
+                previous_response_id?: string | undefined;
+                instructions?: string | undefined;
+                reasoning_summary?: string | undefined;
+            } | undefined;
+        } | undefined;
+        text?: string | undefined;
+        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+        images?: string[] | undefined;
+        conversationHistoryIndex?: number | undefined;
+        checkpoint?: Record<string, unknown> | undefined;
+        progressStatus?: {
+            text?: string | undefined;
+            icon?: string | undefined;
+        } | undefined;
+        contextCondense?: {
+            cost: number;
+            prevContextTokens: number;
+            newContextTokens: number;
+            summary: string;
+        } | undefined;
+        isProtected?: boolean | undefined;
+        apiProtocol?: "openai" | "anthropic" | undefined;
+    }>, "many">>;
 }, "strip", z.ZodTypeAny, {
     number: number;
     id: string;
@@ -23962,6 +25454,38 @@ declare const historyItemSchema: z.ZodObject<{
     workspace?: string | undefined;
     terminalNo?: number | undefined;
     source?: "agent" | "user" | undefined;
+    clineMessages?: {
+        type: "ask" | "say";
+        ts: number;
+        reasoning?: string | undefined;
+        partial?: boolean | undefined;
+        metadata?: {
+            taskId?: string | undefined;
+            gpt5?: {
+                previous_response_id?: string | undefined;
+                instructions?: string | undefined;
+                reasoning_summary?: string | undefined;
+            } | undefined;
+        } | undefined;
+        text?: string | undefined;
+        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+        images?: string[] | undefined;
+        conversationHistoryIndex?: number | undefined;
+        checkpoint?: Record<string, unknown> | undefined;
+        progressStatus?: {
+            text?: string | undefined;
+            icon?: string | undefined;
+        } | undefined;
+        contextCondense?: {
+            cost: number;
+            prevContextTokens: number;
+            newContextTokens: number;
+            summary: string;
+        } | undefined;
+        isProtected?: boolean | undefined;
+        apiProtocol?: "openai" | "anthropic" | undefined;
+    }[] | undefined;
 }, {
     number: number;
     id: string;
@@ -23978,6 +25502,38 @@ declare const historyItemSchema: z.ZodObject<{
     workspace?: string | undefined;
     terminalNo?: number | undefined;
     source?: "agent" | "user" | undefined;
+    clineMessages?: {
+        type: "ask" | "say";
+        ts: number;
+        reasoning?: string | undefined;
+        partial?: boolean | undefined;
+        metadata?: {
+            taskId?: string | undefined;
+            gpt5?: {
+                previous_response_id?: string | undefined;
+                instructions?: string | undefined;
+                reasoning_summary?: string | undefined;
+            } | undefined;
+        } | undefined;
+        text?: string | undefined;
+        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
+        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+        images?: string[] | undefined;
+        conversationHistoryIndex?: number | undefined;
+        checkpoint?: Record<string, unknown> | undefined;
+        progressStatus?: {
+            text?: string | undefined;
+            icon?: string | undefined;
+        } | undefined;
+        contextCondense?: {
+            cost: number;
+            prevContextTokens: number;
+            newContextTokens: number;
+            summary: string;
+        } | undefined;
+        isProtected?: boolean | undefined;
+        apiProtocol?: "openai" | "anthropic" | undefined;
+    }[] | undefined;
 }>;
 type HistoryItem = z.infer<typeof historyItemSchema>;
 

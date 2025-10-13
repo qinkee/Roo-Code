@@ -104,11 +104,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	outputChannel.appendLine("[Redis] Sync service initialized")
 
 	// Initialize LLM Stream Service (without connecting yet)
-	outputChannel.appendLine("[LLM] Creating LLM Stream Service (deferred connection)...")
 	const llmService = new LLMStreamService(context, outputChannel)
-	// Make it globally available for Task to use
 	;(global as any).llmStreamService = llmService
-	outputChannel.appendLine("[LLM] LLM Stream Service created and registered globally")
 
 	// 🔥 智能体任务执行辅助函数
 	/**
@@ -380,7 +377,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		return finalConversationId
 	}
 
-	// 注册LLM流式请求处理器
+	// 🔥 注册LLM流式请求处理器 (必须在任何连接之前!)
 	llmService.imConnection.onLLMStreamRequest(async (data: any) => {
 		outputChannel.appendLine(`[LLM] ========== NEW REQUEST ==========`)
 		outputChannel.appendLine(`[LLM] Received LLM_STREAM_REQUEST`)
@@ -460,22 +457,20 @@ export async function activate(context: vscode.ExtensionContext) {
 		outputChannel.appendLine(`[LLM] ========== REQUEST END ==========`)
 	})
 
+	// 🔥 标记处理器已注册完成 - 防止竞态条件
+	llmService.markHandlersRegistered()
+
 	// 延迟初始化：检查tokenKey是否已设置
 	setTimeout(async () => {
 		const tokenManager = ImPlatformTokenManager.getInstance()
 		if (tokenManager.hasTokenKey()) {
-			outputChannel.appendLine("[LLM] TokenKey found, initializing IM connection...")
 			try {
 				await llmService.initialize()
-				outputChannel.appendLine("[LLM] IM connection established successfully")
 			} catch (error) {
-				outputChannel.appendLine(`[LLM] Failed to initialize IM connection: ${error}`)
+				outputChannel.appendLine(`[LLM] ❌ Init failed: ${error}`)
 			}
-		} else {
-			outputChannel.appendLine("[LLM] TokenKey not found, skipping IM connection initialization")
-			outputChannel.appendLine("[LLM] IM connection will be established when TokenKey is set")
 		}
-	}, 2000) // 等待2秒，让其他初始化完成
+	}, 2000)
 
 	// Initialize LLM Stream Target Manager
 	const llmTargetManager = LLMStreamTargetManager.getInstance()

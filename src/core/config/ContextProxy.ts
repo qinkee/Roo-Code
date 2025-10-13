@@ -326,6 +326,7 @@ export class ContextProxy {
 					terminalNo !== undefined
 						? `user_${this.userId}_terminal_${terminalNo}_${key}`
 						: this.getPrefixedKey(key)
+				console.log(`[ContextProxy] Updating taskHistory to local key: ${prefixedKey}, count: ${Array.isArray(value) ? value.length : 'N/A'}`)
 				updatePromise = this.originalContext.globalState.update(prefixedKey, value)
 			} else {
 				const prefixedKey = this.getPrefixedKey(key)
@@ -340,10 +341,12 @@ export class ContextProxy {
 			// 对于taskHistory，使用terminalNo区分不同终端
 			if (key === "taskHistory") {
 				const terminalNo = VoidBridge.getCurrentTerminalNo()
+				// 🔥 使用 "tasks" 作为 Redis key，与 TaskHistoryBridge 保持一致
 				const redisKey =
 					terminalNo !== undefined
-						? `roo:${this.userId}:${terminalNo}:${key as string}`
-						: `roo:${this.userId}:${key as string}`
+						? `roo:${this.userId}:${terminalNo}:tasks`
+						: `roo:${this.userId}:tasks`
+				console.log(`[ContextProxy] Syncing taskHistory to Redis key: ${redisKey}, count: ${Array.isArray(value) ? value.length : 'N/A'}`)
 				this.redis.set(redisKey, value)
 			} else {
 				this.redis.set(`roo:${this.userId}:${key as string}`, value)

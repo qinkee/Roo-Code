@@ -5,44 +5,54 @@ export class LLMStreamService {
     public imConnection: RooCodeIMConnection;
     private isInitialized: boolean = false;
     private initializePromise: Promise<void> | null = null;
-    
+    private handlersRegistered: boolean = false;
+
     constructor(
         private context: vscode.ExtensionContext,
         private outputChannel: vscode.OutputChannel
     ) {
         this.imConnection = new RooCodeIMConnection(context, outputChannel);
-        // 不再自动初始化，等待token设置后再连接
-        this.outputChannel.appendLine('[LLMStreamService] Service created, waiting for manual initialization');
+    }
+
+    /**
+     * 标记处理器已注册（必须在连接前调用）
+     */
+    public markHandlersRegistered(): void {
+        this.handlersRegistered = true;
     }
     
     /**
      * 手动初始化服务（确保tokenKey已设置）
      */
     public async initialize(): Promise<void> {
+        // 🔥 关键安全检查：必须先注册处理器才能连接
+        if (!this.handlersRegistered) {
+            const error = 'CRITICAL: Handlers must be registered before connecting! Call markHandlersRegistered() first.';
+            this.outputChannel.appendLine(`[LLMStreamService] ❌ ${error}`);
+            throw new Error(error);
+        }
+
         // 防止重复初始化
         if (this.isInitialized) {
-            this.outputChannel.appendLine('[LLMStreamService] Already initialized');
             return;
         }
-        
+
         // 如果正在初始化，等待完成
         if (this.initializePromise) {
             return this.initializePromise;
         }
-        
+
         this.initializePromise = this.doInitialize();
         return this.initializePromise;
     }
-    
+
     private async doInitialize(): Promise<void> {
         try {
-            this.outputChannel.appendLine('[LLMStreamService] Starting initialization...');
             await this.imConnection.connect();
             this.isInitialized = true;
-            this.outputChannel.appendLine('[LLMStreamService] Service initialized with terminal=6');
         } catch (error) {
-            this.outputChannel.appendLine(`[LLMStreamService] Failed to initialize: ${error}`);
-            this.initializePromise = null; // 允许重试
+            this.outputChannel.appendLine(`[LLMStreamService] ❌ Init failed: ${error}`);
+            this.initializePromise = null;
             throw error;
         }
     }
@@ -58,37 +68,20 @@ export class LLMStreamService {
      * 发送问题到LLM并流式传输响应
      */
     async streamLLMResponse(question: string, recvId?: number, targetTerminal?: number, chatType?: string): Promise<void> {
-        // 确保已连接
         if (!this.isInitialized) {
-            this.outputChannel.appendLine('[LLMStreamService] Not initialized, attempting to connect...');
             await this.initialize();
         }
-        
-        this.outputChannel.appendLine(`[LLMStreamService] Starting LLM stream for question: ${question}, recvId=${recvId}, targetTerminal=${targetTerminal}, chatType=${chatType}`);
+
         const streamId = this.imConnection.sendLLMRequest(question, recvId, targetTerminal, chatType);
-        this.outputChannel.appendLine(`[LLMStreamService] Created stream with ID: ${streamId}`);
-        
+
         try {
-            // 调用实际的LLM API（这里是示例）
             const response = await this.callLLMAPI(question);
-            this.outputChannel.appendLine(`[LLMStreamService] Got LLM response: ${response}`);
-            
-            // 模拟流式输出
-            let chunkCount = 0;
             for (const chunk of this.simulateStream(response)) {
                 this.imConnection.sendLLMChunk(streamId, chunk, recvId, targetTerminal, chatType);
-                chunkCount++;
-                this.outputChannel.appendLine(`[LLMStreamService] Sent chunk ${chunkCount}: ${chunk}`);
-                await this.delay(50); // 控制发送速率
+                await this.delay(50);
             }
-            
-            // 发送结束标记
             this.imConnection.sendLLMEnd(streamId, recvId, targetTerminal, chatType);
-            this.outputChannel.appendLine(`[LLMStreamService] Stream ended, sent ${chunkCount} chunks`);
-            
         } catch (error: any) {
-            // 发送错误
-            this.outputChannel.appendLine(`[LLMStreamService] Stream error: ${error.message}`);
             this.imConnection.sendLLMError(streamId, error.message, recvId, targetTerminal, chatType);
         }
     }
