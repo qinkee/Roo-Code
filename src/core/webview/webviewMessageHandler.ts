@@ -566,12 +566,14 @@ export const webviewMessageHandler = async (
 
 			// 解析IM消息格式：{ type: 'say_hi' | 'text', content: string, timestamp: number }
 			// 如果是JSON格式，提取content字段；否则直接使用原始文本
-			let taskText = message.text
+			let taskText = message.text || ""
 			try {
-				const parsed = JSON.parse(message.text)
-				if (parsed && typeof parsed === 'object' && 'content' in parsed && 'type' in parsed) {
-					taskText = parsed.content
-					provider.log(`[newTask] Parsed IM message format, extracted content: ${taskText.substring(0, 100)}`)
+				if (message.text) {
+					const parsed = JSON.parse(message.text)
+					if (parsed && typeof parsed === 'object' && 'content' in parsed && 'type' in parsed) {
+						taskText = parsed.content
+						provider.log(`[newTask] Parsed IM message format, extracted content: ${taskText.substring(0, 100)}`)
+					}
 				}
 			} catch (e) {
 				// 不是JSON格式，直接使用原始文本
@@ -2372,18 +2374,18 @@ export const webviewMessageHandler = async (
 		case "getAccessToken": {
 			try {
 				const { IMAuthService } = await import("../../services/im-auth-service")
-				const authService = IMAuthService.getInstance(provider.context, provider.outputChannel)
+				const authService = IMAuthService.getInstance(provider.context, (provider as any).outputChannel)
 				const token = await authService.getAccessToken()
 				provider.postMessageToWebview({
-					type: "accessTokenResponse",
+					type: "accessTokenResponse" as any,
 					token: token,
-				})
+				} as any)
 			} catch (error) {
 				provider.log(`IMAuthService#getAccessToken failed: ${error}`)
 				provider.postMessageToWebview({
-					type: "accessTokenResponse",
+					type: "accessTokenResponse" as any,
 					token: null,
-				})
+				} as any)
 			}
 			break
 		}

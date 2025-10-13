@@ -328,7 +328,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					},
 					taskParams.imMetadata.sendId,
 					taskParams.imMetadata.senderTerminal,
-					null,
+					undefined,
 				)
 				return
 			}
