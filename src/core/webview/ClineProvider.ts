@@ -401,6 +401,12 @@ export class ClineProvider
 	// Removes and destroys the top Cline instance (the current finished task),
 	// activating the previous one (resuming the parent task).
 	async removeClineFromStack() {
+		// 🔥 如果正在查看智能体任务,清除查看状态
+		if (this.viewingAgentTaskId) {
+			this.log(`[removeClineFromStack] 清除智能体任务查看状态: ${this.viewingAgentTaskId}`)
+			this.viewingAgentTaskId = null
+		}
+
 		if (this.clineStack.length === 0) {
 			this.log(`[removeClineFromStack] Stack is empty, nothing to remove`)
 			return

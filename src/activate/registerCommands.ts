@@ -108,12 +108,22 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 
 		TelemetryService.instance.captureTitleButtonClicked("plus")
 
+		outputChannel.appendLine(`[plusButtonClicked] 开始处理新建任务`)
 		await visibleProvider.removeClineFromStack()
+		outputChannel.appendLine(`[plusButtonClicked] 已清除任务栈和查看状态`)
 		await visibleProvider.postStateToWebview()
+		outputChannel.appendLine(`[plusButtonClicked] 已发送状态更新`)
+
+		// 🔥 添加短暂延迟，确保前端 React 完成 state 更新后再发送 action
+		// React 的 setState 是异步的，需要等待一个事件循环
+		await delay(50)
+
 		await visibleProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+		outputChannel.appendLine(`[plusButtonClicked] 已发送 chatButtonClicked`)
 		// Send focusInput action immediately after chatButtonClicked
 		// This ensures the focus happens after the view has switched
 		await visibleProvider.postMessageToWebview({ type: "action", action: "focusInput" })
+		outputChannel.appendLine(`[plusButtonClicked] 已发送 focusInput，新建任务流程完成`)
 	},
 	mcpButtonClicked: () => {
 		const visibleProvider = getVisibleProviderOrLog(outputChannel)

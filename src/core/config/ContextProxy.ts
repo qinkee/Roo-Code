@@ -138,11 +138,11 @@ export class ContextProxy {
 		await Promise.all(promises)
 
 		this._isInitialized = true
-		
+
 		// 不再从Redis恢复数据，只向Redis单向同步
 		// Redis is now write-only for task history
 	}
-	
+
 	// 移除从Redis恢复数据的方法
 	// 现在Redis只用于单向写入同步，不再读取
 	// private async tryRestoreFromRedis() - REMOVED
@@ -287,6 +287,18 @@ export class ContextProxy {
 		if (isPassThroughStateKey(key)) {
 			// For pass-through keys, use user prefix if applicable
 			if (this.shouldUseUserPrefix(key)) {
+				// 🔥 对于 taskHistory，尝试读取 user+terminal key
+				if (key === "taskHistory") {
+					const terminalNo = VoidBridge.getCurrentTerminalNo()
+					if (terminalNo !== undefined && this.userId) {
+						const terminalKey = `user_${this.userId}_terminal_${terminalNo}_${key}`
+						const value = this.originalContext.globalState.get<GlobalState[K]>(terminalKey)
+						if (value !== undefined && value !== null) {
+							return value
+						}
+					}
+				}
+				// Fallback to user-only prefix
 				const prefixedKey = this.getPrefixedKey(key)
 				const value = this.originalContext.globalState.get<GlobalState[K]>(prefixedKey)
 				return value === undefined || value === null ? defaultValue : value
@@ -307,30 +319,43 @@ export class ContextProxy {
 		// Update storage with appropriate key
 		let updatePromise: Thenable<void>
 		if (this.shouldUseUserPrefix(key)) {
-			const prefixedKey = this.getPrefixedKey(key)
-			updatePromise = this.originalContext.globalState.update(prefixedKey, value)
+			// 🔥 对于 taskHistory，使用 user+terminal 前缀，与 TaskHistoryBridge 保持一致
+			if (key === "taskHistory") {
+				const terminalNo = VoidBridge.getCurrentTerminalNo()
+				const prefixedKey =
+					terminalNo !== undefined
+						? `user_${this.userId}_terminal_${terminalNo}_${key}`
+						: this.getPrefixedKey(key)
+				updatePromise = this.originalContext.globalState.update(prefixedKey, value)
+			} else {
+				const prefixedKey = this.getPrefixedKey(key)
+				updatePromise = this.originalContext.globalState.update(prefixedKey, value)
+			}
 		} else {
 			updatePromise = this.originalContext.globalState.update(key, value)
 		}
-		
+
 		// Async sync to Redis (non-blocking)
 		if (this.userId && this.shouldSyncToRedis(key as string)) {
 			// 对于taskHistory，使用terminalNo区分不同终端
-			if (key === 'taskHistory') {
+			if (key === "taskHistory") {
 				const terminalNo = VoidBridge.getCurrentTerminalNo()
-				const redisKey = terminalNo ? `roo:${this.userId}:${terminalNo}:${key as string}` : `roo:${this.userId}:${key as string}`
+				const redisKey =
+					terminalNo !== undefined
+						? `roo:${this.userId}:${terminalNo}:${key as string}`
+						: `roo:${this.userId}:${key as string}`
 				this.redis.set(redisKey, value)
 			} else {
 				this.redis.set(`roo:${this.userId}:${key as string}`, value)
 			}
 		}
-		
+
 		return updatePromise
 	}
-	
+
 	private shouldSyncToRedis(key: string): boolean {
 		// Only sync important data to Redis
-		const syncKeys = ['taskHistory', 'customInstructions', 'pinnedApiConfigs']
+		const syncKeys = ["taskHistory", "customInstructions", "pinnedApiConfigs"]
 		return syncKeys.includes(key)
 	}
 
