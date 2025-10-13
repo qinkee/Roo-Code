@@ -26,6 +26,7 @@ import {
 	type TerminalActionPromptType,
 	type HistoryItem,
 	type CloudUserInfo,
+	type ClineMessage,
 	RooCodeEventName,
 	requestyDefaultModelId,
 	openRouterDefaultModelId,
@@ -113,6 +114,10 @@ export class ClineProvider
 	private lastSentPositions: Map<string, number> = new Map()
 	// 🔥 用户正在查看的智能体任务ID（null表示未查看或查看用户任务）
 	private viewingAgentTaskId: string | null = null
+	// 🔥 TaskHistory 缓存，避免频繁读取
+	private taskHistoryCache: HistoryItem[] | null = null
+	private taskHistoryCacheTime: number = 0
+	private readonly TASK_HISTORY_CACHE_TTL = 1000 // 缓存1秒
 	private codeIndexStatusSubscription?: vscode.Disposable
 	private currentWorkspaceManager?: CodeIndexManager
 	private _workspaceTracker?: WorkspaceTracker // workSpaceTracker read-only for access outside this class
@@ -192,11 +197,40 @@ export class ClineProvider
 		this.taskCreationCallback = (instance: Task) => {
 			this.emit(RooCodeEventName.TaskCreated, instance)
 
+			// Agent task cleanup: save final state and remove from pool
+			const cleanupAgentTask = async (taskId: string, reason: string) => {
+				if (!instance.agentTaskContext || !this.agentTaskPool.has(taskId)) {
+					return
+				}
+
+				// Save final messages to TaskHistory
+				if (instance.historyItem && instance.clineMessages.length > 0) {
+					const historyItemWithMessages = {
+						...instance.historyItem,
+						clineMessages: instance.clineMessages,
+					}
+					await this.updateTaskHistory(historyItemWithMessages)
+				}
+
+				// Remove from pool
+				this.agentTaskPool.delete(taskId)
+
+				// Clear viewing state if viewing this task
+				if (this.viewingAgentTaskId === taskId) {
+					this.viewingAgentTaskId = null
+				}
+			}
+
 			// Create named listener functions so we can remove them later.
 			const onTaskStarted = () => this.emit(RooCodeEventName.TaskStarted, instance.taskId)
-			const onTaskCompleted = (taskId: string, tokenUsage: any, toolUsage: any) =>
+			const onTaskCompleted = async (taskId: string, tokenUsage: any, toolUsage: any) => {
+				await cleanupAgentTask(taskId, "TaskCompleted")
 				this.emit(RooCodeEventName.TaskCompleted, taskId, tokenUsage, toolUsage)
-			const onTaskAborted = () => this.emit(RooCodeEventName.TaskAborted, instance.taskId)
+			}
+			const onTaskAborted = async () => {
+				await cleanupAgentTask(instance.taskId, "TaskAborted")
+				this.emit(RooCodeEventName.TaskAborted, instance.taskId)
+			}
 			const onTaskFocused = () => this.emit(RooCodeEventName.TaskFocused, instance.taskId)
 			const onTaskUnfocused = () => this.emit(RooCodeEventName.TaskUnfocused, instance.taskId)
 			const onTaskActive = (taskId: string) => this.emit(RooCodeEventName.TaskActive, taskId)
@@ -318,21 +352,20 @@ export class ClineProvider
 	// The instance is pushed to the top of the stack (LIFO order).
 	// When the task is completed, the top instance is removed, reactivating the previous task.
 	async addClineToStack(task: Task) {
-		// 🔥 智能体任务：放入任务池，后台并行执行
+		// Agent task: add to pool for parallel execution
 		if (task.agentTaskContext) {
 			this.agentTaskPool.set(task.taskId, task)
 			task.emit(RooCodeEventName.TaskFocused)
-			this.log(`[AgentTaskPool] Added agent task ${task.taskId} to pool, pool size: ${this.agentTaskPool.size}`)
 
-			// 异步启动任务，不阻塞
-			this.performPreparationTasks(task).catch(err => {
-				this.log(`[AgentTaskPool] Task ${task.taskId} preparation failed: ${err}`)
+			// Start task asynchronously, non-blocking
+			this.performPreparationTasks(task).catch((err) => {
+				this.log(`Agent task ${task.taskId} preparation failed: ${err}`)
 			})
-			return // 🔥 不进入用户任务栈
+			return // Don't add to user task stack
 		}
 
-		// 🔥 用户任务：保持原有单栈逻辑
-		this.viewingAgentTaskId = null // 切换到用户任务，清除查看状态
+		// User task: maintain original stack logic
+		this.viewingAgentTaskId = null // Switch to user task, clear viewing state
 		this.clineStack.push(task)
 		task.emit(RooCodeEventName.TaskFocused)
 
@@ -369,11 +402,17 @@ export class ClineProvider
 	// activating the previous one (resuming the parent task).
 	async removeClineFromStack() {
 		if (this.clineStack.length === 0) {
+			this.log(`[removeClineFromStack] Stack is empty, nothing to remove`)
 			return
 		}
 
+		this.log(`[removeClineFromStack] Removing task from stack, current size: ${this.clineStack.length}`)
+
 		// Pop the top Cline instance from the stack.
 		let task = this.clineStack.pop()
+		this.log(
+			`[removeClineFromStack] Removed task: ${task?.taskId}, remaining stack size: ${this.clineStack.length}`,
+		)
 
 		if (task) {
 			try {
@@ -404,17 +443,23 @@ export class ClineProvider
 
 	// returns the current cline object in the stack (the top one)
 	// if the stack is empty, returns undefined
-	getCurrentCline(): Task | undefined {
-		// 🔥 如果用户正在查看智能体任务，返回该任务
-		if (this.viewingAgentTaskId) {
-			return this.agentTaskPool.get(this.viewingAgentTaskId)
-		}
-
-		// 否则返回用户任务栈顶
+	// 🔥 获取当前正在执行的用户任务（不包括智能体任务）
+	getCurrentUserTask(): Task | undefined {
 		if (this.clineStack.length === 0) {
 			return undefined
 		}
 		return this.clineStack[this.clineStack.length - 1]
+	}
+
+	// 🔥 获取当前查看的任务（可能是用户任务或智能体任务）
+	getCurrentCline(): Task | undefined {
+		// If user is viewing an agent task, return that task
+		if (this.viewingAgentTaskId) {
+			return this.agentTaskPool.get(this.viewingAgentTaskId)
+		}
+
+		// Otherwise return top of user task stack
+		return this.getCurrentUserTask()
 	}
 
 	// returns the current clineStack length (how many cline objects are in the stack)
@@ -433,7 +478,7 @@ export class ClineProvider
 		// remove the last cline instance from the stack (this is the finished sub task)
 		await this.removeClineFromStack()
 		// resume the last cline instance in the stack (if it exists - this is the 'parent' calling task)
-		await this.getCurrentCline()?.resumePausedTask(lastMessage)
+		await this.getCurrentUserTask()?.resumePausedTask(lastMessage)
 	}
 
 	// Clear the current task without treating it as a subtask
@@ -441,12 +486,15 @@ export class ClineProvider
 	async clearTask() {
 		// 🔥 如果正在查看智能体任务，只清除查看状态
 		if (this.viewingAgentTaskId) {
+			this.log(`[clearTask] 清除智能体任务查看状态: ${this.viewingAgentTaskId}`)
 			this.viewingAgentTaskId = null
 			await this.postStateToWebview()
+			this.log(`[clearTask] 智能体任务查看状态已清除，UI 应显示空白状态`)
 			return
 		}
 
 		// 用户任务：保持原有逻辑
+		this.log(`[clearTask] 清除用户任务，当前栈大小: ${this.clineStack.length}`)
 		await this.removeClineFromStack()
 	}
 
@@ -539,8 +587,8 @@ export class ClineProvider
 			return false
 		}
 
-		// Check if there is a cline instance in the stack (if this provider has an active task)
-		if (visibleProvider.getCurrentCline()) {
+		// 🔥 检查用户是否有活动任务（不考虑智能体任务）
+		if (visibleProvider.getCurrentUserTask()) {
 			return true
 		}
 
@@ -763,6 +811,12 @@ export class ClineProvider
 			>
 		> = {},
 	) {
+		// Clear viewing state when creating a new user task
+		// This ensures UI shows the new task, not the viewed agent task
+		if (!options.agentTaskContext && this.viewingAgentTaskId) {
+			this.viewingAgentTaskId = null
+		}
+
 		const {
 			apiConfiguration,
 			organizationAllowList,
@@ -904,17 +958,33 @@ export class ClineProvider
 	}
 
 	public async postMessageToWebview(message: ExtensionMessage, sourceTaskId?: string) {
-		// 🔥 确定消息来源任务
+		// 🔥 方案1：黑名单模式 - 只拦截明确的任务相关消息
+		// 定义任务相关的消息类型（这些消息需要检查是否是智能体任务并转发到 IM）
+		// messageUpdated: 任务消息更新（包括 ask、say 等）
+		// invoke: LLM 调用
+		// completion: 任务完成
+		// thinking: 思考过程
+		const taskRelatedTypes = ["messageUpdated", "invoke", "completion", "thinking"]
+
+		// 🔥 非任务消息：直接发送到 webview（包括 state、theme、action、openAiModels 等所有全局消息）
+		if (!taskRelatedTypes.includes(message.type)) {
+			await this.view?.webview.postMessage(message)
+			return
+		}
+
+		// 🔥 任务相关消息：需要检查是否是智能体任务
 		const taskId = sourceTaskId || this.getCurrentCline()?.taskId
 		if (!taskId) {
-			this.log(`[postMessageToWebview] No task ID, skipping message: ${message.type}`)
+			// 没有任务时，任务消息也直接发送（保持原有行为）
+			await this.view?.webview.postMessage(message)
 			return
 		}
 
 		// 查找任务（可能在用户栈或智能体池）
-		const task = this.agentTaskPool.get(taskId) || this.clineStack.find(t => t.taskId === taskId)
+		const task = this.agentTaskPool.get(taskId) || this.clineStack.find((t) => t.taskId === taskId)
 		if (!task) {
-			this.log(`[postMessageToWebview] Task ${taskId} not found`)
+			// 任务不存在，直接发送
+			await this.view?.webview.postMessage(message)
 			return
 		}
 
@@ -1312,7 +1382,8 @@ export class ClineProvider
 	 * @param newMode The mode to switch to
 	 */
 	public async handleModeSwitch(newMode: Mode) {
-		const cline = this.getCurrentCline()
+		// 🔥 模式切换应该针对用户任务，不是查看中的任务
+		const cline = this.getCurrentUserTask()
 
 		if (cline) {
 			TelemetryService.instance.captureModeSwitch(cline.taskId, newMode)
@@ -1396,12 +1467,14 @@ export class ClineProvider
 		activate: boolean = true,
 	): Promise<string | undefined> {
 		try {
+			this.log(`[upsertProviderProfile] name: ${name}, activate: ${activate}`)
 			// TODO: Do we need to be calling `activateProfile`? It's not
 			// clear to me what the source of truth should be; in some cases
 			// we rely on the `ContextProxy`'s data store and in other cases
 			// we rely on the `ProviderSettingsManager`'s data store. It might
 			// be simpler to unify these two.
 			const id = await this.providerSettingsManager.saveConfig(name, providerSettings)
+			this.log(`[upsertProviderProfile] saved config with id: ${id}`)
 
 			if (activate) {
 				const { mode } = await this.getState()
@@ -1425,9 +1498,11 @@ export class ClineProvider
 
 				// Change the provider for the current task.
 				// TODO: We should rename `buildApiHandler` for clarity (e.g. `getProviderClient`).
-				const task = this.getCurrentCline()
+				const task = this.getCurrentUserTask()
+				this.log(`[upsertProviderProfile] current user task: ${task?.taskId || "none"}`)
 
 				if (task) {
+					this.log(`[upsertProviderProfile] updated task API handler`)
 					task.api = buildApiHandler(providerSettings)
 				}
 			} else {
@@ -1485,8 +1560,8 @@ export class ClineProvider
 			await this.providerSettingsManager.setModeConfig(mode, id)
 		}
 
-		// Change the provider for the current task.
-		const task = this.getCurrentCline()
+		// 🔥 API 切换应该针对用户任务，不是查看中的任务
+		const task = this.getCurrentUserTask()
 
 		if (task) {
 			task.api = buildApiHandler(providerSettings)
@@ -1513,7 +1588,8 @@ export class ClineProvider
 	// Task Management
 
 	async cancelTask() {
-		const cline = this.getCurrentCline()
+		// 🔥 取消任务应该针对用户任务，不是查看中的任务
+		const cline = this.getCurrentUserTask()
 
 		if (!cline) {
 			return
@@ -1526,15 +1602,16 @@ export class ClineProvider
 
 		cline.abortTask()
 
+		// 🔥 等待任务 abort，应该针对用户任务
 		await pWaitFor(
 			() =>
-				this.getCurrentCline()! === undefined ||
-				this.getCurrentCline()!.isStreaming === false ||
-				this.getCurrentCline()!.didFinishAbortingStream ||
+				this.getCurrentUserTask()! === undefined ||
+				this.getCurrentUserTask()!.isStreaming === false ||
+				this.getCurrentUserTask()!.didFinishAbortingStream ||
 				// If only the first chunk is processed, then there's no
 				// need to wait for graceful abort (closes edits, browser,
 				// etc).
-				this.getCurrentCline()!.isWaitingForFirstChunk,
+				this.getCurrentUserTask()!.isWaitingForFirstChunk,
 			{
 				timeout: 3_000,
 			},
@@ -1542,11 +1619,12 @@ export class ClineProvider
 			// Failed to abort task gracefully
 		})
 
-		if (this.getCurrentCline()) {
+		// 🔥 检查用户任务是否还在执行
+		if (this.getCurrentUserTask()) {
 			// 'abandoned' will prevent this Cline instance from affecting
 			// future Cline instances. This may happen if its hanging on a
 			// streaming request.
-			this.getCurrentCline()!.abandoned = true
+			this.getCurrentUserTask()!.abandoned = true
 		}
 
 		// Clears task again, so we need to abortTask manually above.
@@ -1710,10 +1788,12 @@ export class ClineProvider
 	async showTaskWithId(id: string) {
 		this.log(`[showTaskWithId] 开始激活任务: ${id}`)
 
-		// 🔥 检查是否是智能体任务
-		const agentTask = this.agentTaskPool.get(id)
-		if (agentTask) {
-			// 智能体任务：标记为正在查看
+		// 🔥 获取任务历史信息，判断任务类型
+		const { historyItem } = await this.getTaskWithId(id)
+		const isAgentTask = historyItem.source === "agent"
+
+		// 🔥 智能体任务：标记为正在查看（无论是否还在执行）
+		if (isAgentTask) {
 			this.viewingAgentTaskId = id
 			this.log(`[showTaskWithId] 查看智能体任务: ${id}`)
 
@@ -1726,7 +1806,6 @@ export class ClineProvider
 		// 用户任务：保持原有逻辑
 		if (id !== this.getCurrentCline()?.taskId) {
 			// Non-current task.
-			const { historyItem } = await this.getTaskWithId(id)
 			this.log(`[showTaskWithId] 任务类型: ${historyItem.source}`)
 			await this.initClineWithHistoryItem(historyItem) // Clears existing task.
 
@@ -1765,11 +1844,25 @@ export class ClineProvider
 			// get the task directory full path
 			const { taskDirPath } = await this.getTaskWithId(id)
 
-			// remove task from stack if it's the current task
-			if (id === this.getCurrentCline()?.taskId) {
-				// if we found the taskid to delete - call finish to abort this task and allow a new task to be started,
-				// if we are deleting a subtask and parent task is still waiting for subtask to finish - it allows the parent to resume (this case should neve exist)
-				await this.finishSubTask(t("common:tasks.deleted"))
+			// 🔥 检查是否是智能体任务
+			const agentTask = this.agentTaskPool.get(id)
+			if (agentTask) {
+				// 从任务池中移除
+				this.agentTaskPool.delete(id)
+				// 如果正在查看此任务，清除查看状态
+				if (this.viewingAgentTaskId === id) {
+					this.viewingAgentTaskId = null
+				}
+				// 中止任务
+				await agentTask.abortTask()
+			} else {
+				// 用户任务：保持原有逻辑
+				// remove task from stack if it's the current task
+				if (id === this.getCurrentCline()?.taskId) {
+					// if we found the taskid to delete - call finish to abort this task and allow a new task to be started,
+					// if we are deleting a subtask and parent task is still waiting for subtask to finish - it allows the parent to resume (this case should neve exist)
+					await this.finishSubTask(t("common:tasks.deleted"))
+				}
 			}
 
 			// delete task from the task history state
@@ -1831,6 +1924,9 @@ export class ClineProvider
 	async postStateToWebview(forceUpdate: boolean = false) {
 		// 获取状态并发送到 webview
 		const state = await this.getStateToPostToWebview()
+		this.log(
+			`[postStateToWebview] currentTaskItem: ${state.currentTaskItem?.id || "none"}, clineMessages: ${state.clineMessages?.length || 0}`,
+		)
 		this.postMessageToWebview({ type: "state", state })
 
 		// Check MDM compliance and send user to account tab if not compliant
@@ -2044,6 +2140,28 @@ export class ClineProvider
 		const currentMode = mode ?? defaultModeSlug
 		const hasSystemPromptOverride = await this.hasFileBasedSystemPromptOverride(currentMode)
 
+		// 🔥 获取当前任务信息（可能是用户任务或正在查看的智能体任务）
+		const currentTask = this.getCurrentCline()
+		const currentTaskId = currentTask?.taskId || this.viewingAgentTaskId // 智能体任务可能已完成，从 viewingAgentTaskId 获取
+		const currentTaskItem = currentTaskId
+			? (taskHistory || []).find((item: HistoryItem) => item.id === currentTaskId)
+			: undefined
+
+		this.log(
+			`[getStateToPostToWebview] viewingAgentTaskId: ${this.viewingAgentTaskId}, currentTask: ${currentTask?.taskId}, currentTaskId: ${currentTaskId}`,
+		)
+
+		// 🔥 智能体任务：显示历史消息，不显示实时消息（避免干扰任务执行）
+		// 用户任务：显示实时消息
+		let clineMessages: ClineMessage[] = []
+		if (this.viewingAgentTaskId) {
+			// Viewing agent task: use history messages (whether task is still running or not)
+			clineMessages = currentTaskItem?.clineMessages || []
+		} else {
+			// User task or no task: use real-time messages
+			clineMessages = currentTask?.clineMessages || []
+		}
+
 		return {
 			version: this.context.extension?.packageJSON?.version ?? "",
 			apiConfiguration,
@@ -2064,10 +2182,9 @@ export class ClineProvider
 			autoCondenseContext: autoCondenseContext ?? true,
 			autoCondenseContextPercent: autoCondenseContextPercent ?? 100,
 			uriScheme: vscode.env.uriScheme,
-			currentTaskItem: this.getCurrentCline()?.taskId
-				? (taskHistory || []).find((item: HistoryItem) => item.id === this.getCurrentCline()?.taskId)
-				: undefined,
-			clineMessages: this.getCurrentCline()?.clineMessages || [],
+			currentTaskItem,
+			clineMessages,
+			viewingAgentTask: !!this.viewingAgentTaskId, // Flag to indicate viewing an agent task (read-only mode)
 			taskHistory: (taskHistory || [])
 				.filter((item: HistoryItem) => item.ts && item.task)
 				.sort((a: HistoryItem, b: HistoryItem) => b.ts - a.ts),
@@ -2171,13 +2288,32 @@ export class ClineProvider
 	 * https://www.eliostruyf.com/devhack-code-extension-storage-options/
 	 */
 
+	// 🔥 缓存的 TaskHistory 获取方法，避免频繁读取
+	private async getCachedTaskHistory(): Promise<HistoryItem[]> {
+		const now = Date.now()
+		if (this.taskHistoryCache && now - this.taskHistoryCacheTime < this.TASK_HISTORY_CACHE_TTL) {
+			return this.taskHistoryCache
+		}
+
+		const { TaskHistoryBridge } = await import("../../api/task-history-bridge")
+		const taskHistory = await TaskHistoryBridge.getTaskHistory()
+		this.taskHistoryCache = taskHistory
+		this.taskHistoryCacheTime = now
+		return taskHistory
+	}
+
+	// 🔥 清除 TaskHistory 缓存（在更新后调用）
+	private invalidateTaskHistoryCache(): void {
+		this.taskHistoryCache = null
+		this.taskHistoryCacheTime = 0
+	}
+
 	async getState() {
 		const stateValues = this.contextProxy.getValues()
 		const customModes = await this.customModesManager.getCustomModes()
 
-		// Get task history from TaskHistoryBridge to ensure we get the latest user+terminal specific data
-		const { TaskHistoryBridge } = await import("../../api/task-history-bridge")
-		const taskHistory = await TaskHistoryBridge.getTaskHistory()
+		// 🔥 使用缓存的 TaskHistory，避免频繁读取
+		const taskHistory = await this.getCachedTaskHistory()
 
 		// Determine apiProvider with the same logic as before.
 		const apiProvider: ProviderName = stateValues.apiProvider ? stateValues.apiProvider : "anthropic"
@@ -2521,7 +2657,8 @@ export class ClineProvider
 		)
 
 		if (isRemoteControlEnabled(userInfo, enabled)) {
-			const currentTask = this.getCurrentCline()
+			// 🔥 桥接服务只为用户任务设置
+			const currentTask = this.getCurrentUserTask()
 
 			if (currentTask && !currentTask.bridgeService) {
 				try {

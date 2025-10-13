@@ -386,6 +386,7 @@ export type ExtensionState = Pick<
 	marketplaceInstalledMetadata?: { project: Record<string, any>; global: Record<string, any> }
 	profileThresholds: Record<string, number>
 	hasOpenedModeSelector: boolean
+	viewingAgentTask?: boolean // Flag to indicate viewing an agent task in read-only mode
 	agentA2AMode?: {
 		enabled: boolean
 		agentId: string

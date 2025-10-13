@@ -792,7 +792,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	private async addToClineMessages(message: ClineMessage) {
 		this.clineMessages.push(message)
 		const provider = this.providerRef.deref()
-		await provider?.postStateToWebview()
+		// 🔥 智能体任务：跳过频繁的状态更新，减少性能开销
+		if (!this.agentTaskContext) {
+			await provider?.postStateToWebview()
+		}
 		this.emit(RooCodeEventName.Message, { action: "created", message })
 		await this.saveClineMessages()
 
@@ -854,7 +857,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// Update the stored historyItem
 			this.historyItem = historyItem
 
-			await this.providerRef.deref()?.updateTaskHistory(historyItem)
+			// 🔥 智能体任务：减少 TaskHistory 更新频率，避免性能问题
+			// 智能体任务只在任务完成或出错时更新，不在每次消息保存时更新
+			if (!this.agentTaskContext) {
+				await this.providerRef.deref()?.updateTaskHistory(historyItem)
+			}
 		} catch (error) {
 			console.error("Failed to save Roo messages:", error)
 		}
@@ -958,6 +965,61 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, isProtected })
 		}
 
+		// 🔥 智能体任务：自动响应所有 ask，无需用户交互
+		if (this.agentTaskContext && !partial) {
+			this.providerRef.deref()?.log(`[AgentTask] Auto-responding to ask type: ${type} for task ${this.taskId}`)
+
+			// 根据不同的 ask 类型提供自动响应
+			switch (type) {
+				case "followup":
+					// 智能体任务不需要 followup
+					this.askResponse = "messageResponse"
+					this.askResponseText = "" // 空消息表示跳过
+					break
+
+				case "command":
+				case "tool":
+				case "browser_action_launch":
+				case "use_mcp_server":
+					// 自动批准所有操作
+					this.askResponse = "yesButtonClicked"
+					break
+
+				case "command_output":
+					// 命令输出后自动继续
+					this.askResponse = "yesButtonClicked"
+					break
+
+				case "api_req_failed":
+				case "mistake_limit_reached":
+					// 自动重试
+					this.askResponse = "yesButtonClicked"
+					break
+
+				case "resume_task":
+				case "resume_completed_task":
+					// 自动恢复任务
+					this.askResponse = "yesButtonClicked"
+					break
+
+				case "completion_result":
+					// 自动接受完成结果
+					this.askResponse = "yesButtonClicked"
+					break
+
+				case "auto_approval_max_req_reached":
+					// 自动批准继续（智能体任务没有限制）
+					this.askResponse = "yesButtonClicked"
+					break
+
+				default:
+					// 未知类型，默认批准
+					this.providerRef.deref()?.log(`[AgentTask] Unknown ask type: ${type}, defaulting to approve`)
+					this.askResponse = "yesButtonClicked"
+					break
+			}
+		}
+
 		// Detect if the task will enter an idle state.
 		const isReady = this.askResponse !== undefined || this.lastMessageTs !== askTs
 
@@ -1018,12 +1080,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 
 			// 🔥 传递 taskId
-			void provider.postMessageToWebview({
-				type: "invoke",
-				invoke: "sendMessage",
-				text: trimmed,
-				images: imgs,
-			}, this.taskId)
+			void provider.postMessageToWebview(
+				{
+					type: "invoke",
+					invoke: "sendMessage",
+					text: trimmed,
+					images: imgs,
+				},
+				this.taskId,
+			)
 		} catch (error) {
 			console.error("[Task#submitUserMessage] Failed to submit user message:", error)
 		}
@@ -1316,14 +1381,20 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				const TaskHistoryBridge = (await import("../../api/task-history-bridge")).TaskHistoryBridge
 				await TaskHistoryBridge.notifyTaskCreated(historyItem)
 				// Update state to webview to reflect the new task in the list
-				await provider.postStateToWebview()
+				// 🔥 智能体任务：跳过状态更新
+				if (!this.agentTaskContext) {
+					await provider.postStateToWebview()
+				}
 			}
 		} catch (error) {
 			console.error("Failed to create initial task history entry:", error)
 			// Continue with task even if history creation fails
 		}
 
-		await this.providerRef.deref()?.postStateToWebview()
+		// 🔥 智能体任务：跳过状态更新
+		if (!this.agentTaskContext) {
+			await this.providerRef.deref()?.postStateToWebview()
+		}
 
 		await this.say("text", task, images)
 		this.isInitialized = true
@@ -1779,6 +1850,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		try {
 			// Save the countdown message in the automatic retry or other content.
 			await this.saveClineMessages()
+
+			// 🔥 智能体任务：在任务 abort 时更新 TaskHistory（关键时刻）
+			if (this.agentTaskContext && this.historyItem) {
+				await this.providerRef.deref()?.updateTaskHistory(this.historyItem)
+			}
 		} catch (error) {
 			console.error(`Error saving messages during abort for task ${this.taskId}.${this.instanceId}:`, error)
 		}
@@ -1954,7 +2030,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		} satisfies ClineApiReqInfo)
 
 		await this.saveClineMessages()
-		await provider?.postStateToWebview()
+		// 🔥 智能体任务：跳过状态更新
+		if (!this.agentTaskContext) {
+			await provider?.postStateToWebview()
+		}
 
 		try {
 			let cacheWriteTokens = 0

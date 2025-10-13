@@ -483,6 +483,9 @@ export const webviewMessageHandler = async (
 		provider.log(`[WebviewMessageHandler] 🎯 Received startAgentTask message: ${JSON.stringify(message)}`)
 	}
 
+	// 🔥 调试：记录所有前端消息
+	provider.log(`[fixagenttaskbug] webviewMessageHandler 收到消息: ${message.type}`)
+
 	switch (message.type) {
 		case "webviewDidLaunch":
 			// Load custom modes first
@@ -625,7 +628,8 @@ export const webviewMessageHandler = async (
 			await provider.postStateToWebview()
 			break
 		case "askResponse":
-			provider.getCurrentCline()?.handleWebviewAskResponse(message.askResponse!, message.text, message.images)
+			// 🔥 用户响应应该发送给用户任务，不是查看中的智能体任务
+			provider.getCurrentUserTask()?.handleWebviewAskResponse(message.askResponse!, message.text, message.images)
 			break
 		case "autoCondenseContext":
 			await updateGlobalState("autoCondenseContext", message.bool)
@@ -637,13 +641,15 @@ export const webviewMessageHandler = async (
 			break
 		case "terminalOperation":
 			if (message.terminalOperation) {
-				provider.getCurrentCline()?.handleTerminalOperation(message.terminalOperation)
+				// 🔥 终端操作应该针对用户任务
+				provider.getCurrentUserTask()?.handleTerminalOperation(message.terminalOperation)
 			}
 			break
 		case "clearTask":
+			// 🔥 清除任务应该清除用户任务，不是查看中的智能体任务
 			// clear task resets the current session and allows for a new task to be started, if this session is a subtask - it allows the parent task to be resumed
 			// Check if the current task actually has a parent task
-			const currentTask = provider.getCurrentCline()
+			const currentTask = provider.getCurrentUserTask()
 			if (currentTask && currentTask.parentTask) {
 				await provider.finishSubTask(t("common:tasks.canceled"))
 			} else {
