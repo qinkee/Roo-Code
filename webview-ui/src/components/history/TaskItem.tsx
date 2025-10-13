@@ -36,11 +36,6 @@ const TaskItem = ({
 		if (isSelectionMode && onToggleSelection) {
 			onToggleSelection(item.id, !isSelected)
 		} else {
-			console.log(`[fixagenttaskbug] TaskItem 点击任务:`, {
-				taskId: item.id,
-				source: item.source,
-				task: item.task?.substring(0, 50)
-			})
 			vscode.postMessage({ type: "showTaskWithId", text: item.id })
 		}
 	}

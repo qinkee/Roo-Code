@@ -454,25 +454,14 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		}
 	},
 	autoConfigureProvider: async (token?: string) => {
-		outputChannel.appendLine("[autoConfigureProvider] Command started")
 		const tokenManager = ImPlatformTokenManager.getInstance()
 
 		try {
-			// 获取当前可见的 provider 实例
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) {
-				// 如果没有可见的实例，尝试使用传入的 provider
-				outputChannel.appendLine("[autoConfigureProvider] No visible provider found, using default provider")
-			}
-
 			const currentProvider = visibleProvider || provider
-			outputChannel.appendLine(
-				`[autoConfigureProvider] Using provider instance: ${currentProvider ? "found" : "not found"}`,
-			)
 
 			// 如果没有提供 token，通过输入框获取
 			if (!token) {
-				outputChannel.appendLine("[autoConfigureProvider] No token provided, showing input box")
 				const input = await vscode.window.showInputBox({
 					prompt: "请输入 API Token",
 					password: true,
@@ -480,28 +469,18 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				})
 
 				if (!input) {
-					outputChannel.appendLine("[autoConfigureProvider] User cancelled input or provided empty token")
 					vscode.window.showWarningMessage("配置取消：未提供 API Token")
 					return
 				}
 
 				token = input
-				outputChannel.appendLine("[autoConfigureProvider] Token received from input box")
 			}
 
-			outputChannel.appendLine(`[autoConfigureProvider] Processing with token: ${token.substring(0, 10)}...`)
-
 			// Set IM Platform token
-			outputChannel.appendLine("[autoConfigureProvider] Setting IM Platform token...")
 			await tokenManager.setTokenKey(token, true) // skipRestart=true, we'll restart later if needed
-			outputChannel.appendLine("[autoConfigureProvider] IM Platform token set")
 
 			// Get current state to preserve existing settings
-			outputChannel.appendLine("[autoConfigureProvider] Getting current state...")
 			const currentState = await currentProvider.getState()
-			outputChannel.appendLine(
-				`[autoConfigureProvider] Current state retrieved, apiProvider: ${currentState.apiConfiguration.apiProvider}`,
-			)
 
 			// Create the configuration - merge with existing settings
 			const config = {
@@ -516,14 +495,6 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				consecutiveMistakeLimit: currentState.apiConfiguration.consecutiveMistakeLimit ?? 3,
 				todoListEnabled: currentState.apiConfiguration.todoListEnabled ?? true,
 			}
-
-			outputChannel.appendLine(`[autoConfigureProvider] New config prepared:`)
-			outputChannel.appendLine(`  - apiProvider: ${config.apiProvider}`)
-			outputChannel.appendLine(`  - openAiBaseUrl: ${config.openAiBaseUrl}`)
-			outputChannel.appendLine(`  - openAiModelId: ${config.openAiModelId}`)
-			outputChannel.appendLine(`  - Has API key: ${!!config.openAiApiKey}`)
-
-			outputChannel.appendLine("[autoConfigureProvider] Setting global settings...")
 
 			// Set telemetry, language and auto-approval settings using contextProxy
 			await currentProvider.contextProxy.setValues({
@@ -556,54 +527,28 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				commandTimeoutAllowlist: [],
 			})
 
-			outputChannel.appendLine("[autoConfigureProvider] Global settings updated")
-			outputChannel.appendLine("[autoConfigureProvider] Calling upsertProviderProfile...")
-
 			// Use upsertProviderProfile - this is what the UI uses and handles all state updates
 			await currentProvider.upsertProviderProfile("default", config, true)
 
 			// added by qinkee.同步设置mcp的token,用于设别用户
 			tokenManager.setTokenKey(token)
 
-			outputChannel.appendLine("[autoConfigureProvider] upsertProviderProfile completed")
-
-			// Verify the configuration was applied
-			const newState = await currentProvider.getState()
-			outputChannel.appendLine(
-				`[autoConfigureProvider] Verification - new apiProvider: ${newState.apiConfiguration.apiProvider}`,
-			)
-			outputChannel.appendLine(
-				`[autoConfigureProvider] Verification - currentApiConfigName: ${newState.currentApiConfigName}`,
-			)
-
-			outputChannel.appendLine("[autoConfigureProvider] Provider auto-configured successfully")
-
 			// 设置 lastShownAnnouncementId 为当前版本，避免显示版本更新面板
 			const latestId = currentProvider.latestAnnouncementId
-			outputChannel.appendLine(`[autoConfigureProvider] Setting lastShownAnnouncementId to: ${latestId}`)
 			await currentProvider.contextProxy.setValue("lastShownAnnouncementId", latestId)
-
-			// 验证设置是否成功
-			const storedId = currentProvider.contextProxy.getValue("lastShownAnnouncementId")
-			outputChannel.appendLine(`[autoConfigureProvider] Stored lastShownAnnouncementId: ${storedId}`)
 
 			// 刷新 webview 状态
 			await currentProvider.postStateToWebview()
-			outputChannel.appendLine(`[autoConfigureProvider] Posted updated state to webview`)
 
 			// Restart IM Platform MCP connection with new token
 			try {
 				const { McpServerManager } = await import("../services/mcp/McpServerManager")
 				const mcpHub = await McpServerManager.getInstance(context, currentProvider)
 				if (mcpHub) {
-					outputChannel.appendLine(
-						`[autoConfigureProvider] Restarting IM Platform connection with new token...`,
-					)
 					await mcpHub.restartConnection("im-platform")
-					outputChannel.appendLine(`[autoConfigureProvider] IM Platform connection restarted`)
 				}
 			} catch (mcpError) {
-				outputChannel.appendLine(`[autoConfigureProvider] Failed to restart IM Platform: ${mcpError}`)
+				outputChannel.appendLine(`❌ Failed to restart IM Platform: ${mcpError}`)
 				// Don't fail the whole operation just because MCP restart failed
 			}
 		} catch (error) {

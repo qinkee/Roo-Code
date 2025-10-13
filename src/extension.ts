@@ -112,21 +112,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	 * 准备智能体任务参数
 	 */
 	async function prepareAgentTask(data: any, provider: ClineProvider) {
-		outputChannel.appendLine(`[Agent] === prepareAgentTask START ===`)
-		outputChannel.appendLine(`[Agent] Raw data: ${JSON.stringify(data)}`)
-
 		const { streamId, question, sendId, recvId, senderTerminal, targetTerminal, chatType, conversationId } = data
-		outputChannel.appendLine(
-			`[Agent] Extracted: streamId=${streamId}, sendId=${sendId}, recvId=${recvId}, conversationId=${conversationId}`,
-		)
 
 		// 解析 question
 		let questionData: any
 		try {
 			questionData = typeof question === "string" ? JSON.parse(question) : question
-			outputChannel.appendLine(`[Agent] Parsed question: ${JSON.stringify(questionData)}`)
 		} catch (e) {
-			outputChannel.appendLine(`[Agent] ❌ Failed to parse question: ${e}`)
 			throw new Error("Invalid question format")
 		}
 
@@ -134,39 +126,25 @@ export async function activate(context: vscode.ExtensionContext) {
 		let agentId = questionData.agentId
 
 		if (!agentId) {
-			// 从 taskName 中提取 agentId (格式: agent_xxx)
 			const { taskName } = data
 			if (taskName && taskName.startsWith("agent_")) {
-				// 移除 "agent_" 前缀
 				agentId = taskName.substring(6)
-				outputChannel.appendLine(`[Agent] Extracted agentId from taskName: ${agentId}`)
 			}
 		}
 
 		if (!agentId) {
-			outputChannel.appendLine(`[Agent] ❌ Missing agentId in both question and taskName`)
-			outputChannel.appendLine(`[Agent] question: ${JSON.stringify(questionData)}`)
-			outputChannel.appendLine(`[Agent] taskName: ${data.taskName}`)
 			throw new Error("Missing agentId in question and taskName")
 		}
 
-		outputChannel.appendLine(`[Agent] Agent ID: ${agentId}`)
-
 		// 保持原始消息格式传递，让A2AServer处理
-		// questionData 就是完整的消息对象 {type, content, timestamp}
 		const message = JSON.stringify(questionData)
-		outputChannel.appendLine(`[Agent] Message object: ${message}`)
 
 		// 获取智能体配置
-		outputChannel.appendLine(`[Agent] Getting agent config for ${agentId}...`)
 		const a2aManager = A2AServerManager.getInstance()
 		const agentConfig = await a2aManager.getAgentConfig(agentId)
 		if (!agentConfig) {
-			outputChannel.appendLine(`[Agent] ❌ Agent config not found for ${agentId}`)
 			throw new Error(`Agent ${agentId} not found`)
 		}
-		outputChannel.appendLine(`[Agent] ✅ Agent config loaded: ${JSON.stringify(agentConfig)}`)
-		outputChannel.appendLine(`[Agent] 🔍 welcomeMessage in config: ${agentConfig.welcomeMessage || "NOT FOUND"}`)
 
 		// 响应时交换发送者/接收者
 		const responseSendId = recvId
@@ -174,7 +152,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const responseSenderTerminal = targetTerminal
 		const responseTargetTerminal = senderTerminal
 
-		const result = {
+		return {
 			agentId,
 			agentConfig,
 			message,
@@ -188,52 +166,25 @@ export async function activate(context: vscode.ExtensionContext) {
 				chatType,
 			},
 		}
-
-		outputChannel.appendLine(`[Agent] === prepareAgentTask END ===`)
-		return result
 	}
 
 	/**
 	 * 创建并执行智能体任务
 	 */
 	async function createAndExecuteAgentTask(taskParams: any, provider: ClineProvider) {
-		outputChannel.appendLine(`[Agent] === createAndExecuteAgentTask START ===`)
 		const { agentId, agentConfig, message, streamId, conversationId, imMetadata } = taskParams
-		outputChannel.appendLine(
-			`[Agent] AgentID: ${agentId}, StreamID: ${streamId}, ConversationID: ${conversationId}`,
-		)
 
 		// 初始化或加载历史对话
 		let apiHistory: any[] = []
 		if (conversationId) {
-			outputChannel.appendLine(`[Agent] Loading conversation history for ${conversationId}...`)
-			// 从 provider 加载历史对话
 			const storedHistory = await provider.getAgentConversationHistory(conversationId)
 			if (storedHistory) {
 				apiHistory = storedHistory
-				outputChannel.appendLine(
-					`[Agent] ✅ Loaded ${apiHistory.length} messages for conversation ${conversationId}`,
-				)
-			} else {
-				outputChannel.appendLine(`[Agent] No existing conversation history found`)
 			}
 		}
 
-		// 创建任务（使用正确的 API）
-		outputChannel.appendLine(`[Agent] Creating task with initClineWithTask...`)
-		outputChannel.appendLine(`[Agent] Task message: ${message.substring(0, 100)}...`)
-		outputChannel.appendLine(
-			`[Agent] AgentTaskContext: ${JSON.stringify({
-				agentId,
-				streamId,
-				mode: agentConfig.mode || "code",
-				roleDescription: agentConfig.roleDescription ? "exists" : "none",
-				imMetadata,
-			})}`,
-		)
-
-		// 🔥 显式设置 startTask: true 确保任务自动启动
-		const taskOptions: any = {
+		// 创建任务
+		const task = await provider.initClineWithTask(message, [], undefined, {
 			agentTaskContext: {
 				agentId,
 				streamId,
@@ -241,19 +192,11 @@ export async function activate(context: vscode.ExtensionContext) {
 				roleDescription: agentConfig.roleDescription,
 				imMetadata,
 			},
-			startTask: true, // 🔥 明确设置为 true
-		}
-
-		outputChannel.appendLine(`[Agent] Task options: ${JSON.stringify({ ...taskOptions, agentTaskContext: "..." })}`)
-
-		const task = await provider.initClineWithTask(message, [], undefined, taskOptions)
-
-		outputChannel.appendLine(`[Agent] ✅ Task created: taskId=${task.taskId}, instanceId=${task.instanceId}`)
+			startTask: true,
+		})
 
 		// 配置智能体参数
-		outputChannel.appendLine(`[Agent] Configuring agent parameters...`)
 		if (agentConfig.allowedTools) {
-			outputChannel.appendLine(`[Agent] Setting allowed tools: ${agentConfig.allowedTools.join(", ")}`)
 			task.setAllowedTools(agentConfig.allowedTools)
 		}
 
@@ -261,105 +204,60 @@ export async function activate(context: vscode.ExtensionContext) {
 			try {
 				const modeConfig = await provider.getModeConfig(agentConfig.mode)
 				if (modeConfig) {
-					outputChannel.appendLine(`[Agent] ✅ Mode config loaded: ${modeConfig.slug}`)
 					task.setModeConfig(modeConfig)
 				}
-				// 找不到就跳过，使用默认配置
 			} catch (error) {
-				outputChannel.appendLine(`[Agent] Mode config lookup failed (using defaults): ${error}`)
+				// 使用默认配置
 			}
 		}
 
 		if (agentConfig.roleDescription) {
-			outputChannel.appendLine(
-				`[Agent] Setting custom instructions: ${agentConfig.roleDescription.substring(0, 50)}...`,
-			)
 			task.setCustomInstructions(agentConfig.roleDescription)
 		}
 
 		// 恢复历史对话
 		if (apiHistory.length > 0) {
-			outputChannel.appendLine(`[Agent] Restoring ${apiHistory.length} conversation history messages...`)
 			for (const msg of apiHistory) {
 				await task.addToApiConversationHistory(msg)
 			}
-			outputChannel.appendLine(`[Agent] ✅ Conversation history restored`)
 		}
 
-		// 执行任务 - Task 创建后会自动启动
-		// 等待任务完成（监听任务事件）
-		outputChannel.appendLine(`[Agent] Waiting for task to complete...`)
-		outputChannel.appendLine(`[Agent] Task should be auto-started by constructor (startTask=true)`)
-
-		await new Promise<void>((resolve, reject) => {
-			// 导入 RooCodeEventName
+		// 等待任务完成
+		await new Promise<void>((resolve) => {
 			const { RooCodeEventName } = require("@roo-code/types")
 
-			// 监听任务完成事件
-			const onCompleted = (...args: any[]) => {
-				outputChannel.appendLine(
-					`[Agent] 🎉 TaskCompleted event received for conversation ${conversationId || streamId}`,
-				)
-				outputChannel.appendLine(`[Agent] Event args: ${JSON.stringify(args)}`)
-				cleanup()
-				resolve()
-			}
-
-			// 监听任务中止事件
-			const onAborted = (...args: any[]) => {
-				outputChannel.appendLine(
-					`[Agent] ⚠️ TaskAborted event received for conversation ${conversationId || streamId}`,
-				)
-				outputChannel.appendLine(`[Agent] Event args: ${JSON.stringify(args)}`)
-				cleanup()
-				resolve()
-			}
-
-			// 监听任务启动事件（用于调试）
-			const onStarted = () => {
-				outputChannel.appendLine(`[Agent] ✅ TaskStarted event received`)
-			}
-
-			// 清理监听器
 			const cleanup = () => {
-				task.off(RooCodeEventName.TaskStarted, onStarted)
 				task.off(RooCodeEventName.TaskCompleted, onCompleted)
 				task.off(RooCodeEventName.TaskAborted, onAborted)
-				if (timeoutId) {
-					clearTimeout(timeoutId)
-				}
+				if (timeoutId) clearTimeout(timeoutId)
 			}
 
-			// 注册事件监听器
-			outputChannel.appendLine(`[Agent] Registering event listeners...`)
-			task.on(RooCodeEventName.TaskStarted, onStarted)
+			const onCompleted = () => {
+				cleanup()
+				resolve()
+			}
+
+			const onAborted = () => {
+				cleanup()
+				resolve()
+			}
+
 			task.on(RooCodeEventName.TaskCompleted, onCompleted)
 			task.on(RooCodeEventName.TaskAborted, onAborted)
 
-			// 超时保护 (10分钟)
 			const timeoutId = setTimeout(
 				() => {
-					outputChannel.appendLine(
-						`[Agent] ⏰ Task timeout (10 minutes) for conversation ${conversationId || streamId}`,
-					)
 					cleanup()
 					resolve()
 				},
 				10 * 60 * 1000,
 			)
-
-			outputChannel.appendLine(`[Agent] Event listeners registered, waiting for task events...`)
 		})
 
-		// 保存对话历史
-		outputChannel.appendLine(`[Agent] Saving conversation history...`)
-		const finalHistory = task.apiConversationHistory
-		await provider.saveAgentConversationHistory(conversationId || streamId, finalHistory)
-		outputChannel.appendLine(`[Agent] ✅ Conversation history saved: ${finalHistory.length} messages`)
-
-		// 🔥 发送 LLM_END 事件到 IM WebSocket
-		outputChannel.appendLine(`[Agent] Sending LLM_END event...`)
+		// 保存对话历史并发送结束事件
 		const finalConversationId = conversationId || streamId
+		await provider.saveAgentConversationHistory(finalConversationId, task.apiConversationHistory)
+
 		llmService.imConnection.sendLLMEnd(
 			streamId,
 			finalConversationId,
@@ -369,31 +267,20 @@ export async function activate(context: vscode.ExtensionContext) {
 			imMetadata.sendId,
 			imMetadata.senderTerminal,
 		)
-		outputChannel.appendLine(`[Agent] ✅ LLM_END event sent with conversationId: ${finalConversationId}`)
-
-		outputChannel.appendLine(`[Agent] === createAndExecuteAgentTask END ===`)
 
 		return finalConversationId
 	}
 
 	// 🔥 注册LLM流式请求处理器 (必须在任何连接之前!)
 	llmService.imConnection.onLLMStreamRequest(async (data: any) => {
-		outputChannel.appendLine(`[LLM] ========== NEW REQUEST ==========`)
-		outputChannel.appendLine(`[LLM] Received LLM_STREAM_REQUEST`)
-		outputChannel.appendLine(`[LLM] Request data keys: ${Object.keys(data).join(", ")}`)
-
 		try {
-			// 延迟获取 provider（必须等待初始化完成）
-			outputChannel.appendLine(`[LLM] Waiting for provider initialization...`)
+			// 等待 provider 初始化
 			let provider: ClineProvider | undefined
 			let attempts = 0
-			const maxAttempts = 50 // 5 seconds max
-
-			while (!provider && attempts < maxAttempts) {
+			while (!provider && attempts < 50) {
 				provider = (global as any).clineProvider
 				if (!provider) {
 					attempts++
-					outputChannel.appendLine(`[LLM] Provider not ready, attempt ${attempts}/${maxAttempts}`)
 					await new Promise((resolve) => setTimeout(resolve, 100))
 				}
 			}
@@ -402,12 +289,8 @@ export async function activate(context: vscode.ExtensionContext) {
 				throw new Error("Provider not initialized after 5 seconds")
 			}
 
-			outputChannel.appendLine(`[LLM] ✅ Provider found after ${attempts} attempts`)
-
 			// 准备任务参数
-			outputChannel.appendLine(`[LLM] Calling prepareAgentTask...`)
 			const taskParams = await prepareAgentTask(data, provider)
-			outputChannel.appendLine(`[LLM] ✅ prepareAgentTask completed`)
 
 			// 检查是否是 say_hi 消息
 			let messageObj: any
@@ -418,17 +301,11 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 
 			if (messageObj?.type === "say_hi") {
-				// 直接返回欢迎语，不创建Task
-				outputChannel.appendLine(`[LLM] Detected say_hi message, returning welcome message`)
+				// 直接返回欢迎语
 				const welcomeMessage =
 					taskParams.agentConfig.welcomeMessage ||
 					`你好！我是 ${taskParams.agentConfig.name}，很高兴为你服务！`
-				outputChannel.appendLine(`[LLM] 🔍 Sending welcomeMessage: "${welcomeMessage}"`)
-				outputChannel.appendLine(
-					`[LLM] 🔍 taskParams.agentConfig.welcomeMessage: "${taskParams.agentConfig.welcomeMessage}"`,
-				)
 
-				// 发送欢迎语消息
 				llmService.imConnection.sendLLMChunk(
 					taskParams.streamId,
 					welcomeMessage,
@@ -439,7 +316,6 @@ export async function activate(context: vscode.ExtensionContext) {
 					taskParams.imMetadata.senderTerminal,
 				)
 
-				// 发送结束事件
 				llmService.imConnection.sendLLMEnd(
 					taskParams.streamId,
 					taskParams.imMetadata.recvId,
@@ -451,19 +327,14 @@ export async function activate(context: vscode.ExtensionContext) {
 					},
 					taskParams.imMetadata.sendId,
 					taskParams.imMetadata.senderTerminal,
-					null, // say_hi 不需要 conversationId
+					null,
 				)
-				outputChannel.appendLine(`[LLM] ✅ Welcome message sent successfully`)
 				return
 			}
 
 			// 创建并执行任务
-			outputChannel.appendLine(`[LLM] Calling createAndExecuteAgentTask...`)
 			const conversationId = await createAndExecuteAgentTask(taskParams, provider)
-			outputChannel.appendLine(`[LLM] ✅ createAndExecuteAgentTask completed`)
 
-			// 发送结束事件（带conversationId）
-			outputChannel.appendLine(`[LLM] Sending LLM_END event...`)
 			llmService.imConnection.sendLLMEnd(
 				taskParams.streamId,
 				taskParams.imMetadata.recvId,
@@ -477,13 +348,8 @@ export async function activate(context: vscode.ExtensionContext) {
 				taskParams.imMetadata.senderTerminal,
 				conversationId,
 			)
-			outputChannel.appendLine(`[LLM] ✅ Request processing completed successfully`)
 		} catch (error: any) {
-			outputChannel.appendLine(`[LLM] ❌❌❌ Error processing LLM request ❌❌❌`)
-			outputChannel.appendLine(`[LLM] Error message: ${error.message}`)
-			outputChannel.appendLine(`[LLM] Error stack: ${error.stack}`)
-
-			// 发送错误响应
+			outputChannel.appendLine(`[LLM] ❌ Error: ${error.message}`)
 			try {
 				const { streamId, sendId, recvId, senderTerminal, targetTerminal, chatType } = data
 				llmService.imConnection.sendLLMError(
@@ -495,13 +361,10 @@ export async function activate(context: vscode.ExtensionContext) {
 					sendId,
 					senderTerminal,
 				)
-				outputChannel.appendLine(`[LLM] ✅ Error response sent to client`)
 			} catch (sendError: any) {
-				outputChannel.appendLine(`[LLM] ❌ Failed to send error response: ${sendError.message}`)
+				outputChannel.appendLine(`[LLM] ❌ Send error failed: ${sendError.message}`)
 			}
 		}
-
-		outputChannel.appendLine(`[LLM] ========== REQUEST END ==========`)
 	})
 
 	// 🔥 标记处理器已注册完成 - 防止竞态条件

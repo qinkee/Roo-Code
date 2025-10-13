@@ -1929,9 +1929,6 @@ export class ClineProvider
 	async postStateToWebview(forceUpdate: boolean = false) {
 		// 获取状态并发送到 webview
 		const state = await this.getStateToPostToWebview()
-		this.log(
-			`[postStateToWebview] currentTaskItem: ${state.currentTaskItem?.id || "none"}, clineMessages: ${state.clineMessages?.length || 0}`,
-		)
 		this.postMessageToWebview({ type: "state", state })
 
 		// Check MDM compliance and send user to account tab if not compliant
@@ -2151,10 +2148,6 @@ export class ClineProvider
 		const currentTaskItem = currentTaskId
 			? (taskHistory || []).find((item: HistoryItem) => item.id === currentTaskId)
 			: undefined
-
-		this.log(
-			`[getStateToPostToWebview] viewingAgentTaskId: ${this.viewingAgentTaskId}, currentTask: ${currentTask?.taskId}, currentTaskId: ${currentTaskId}`,
-		)
 
 		// 🔥 智能体任务：显示历史消息，不显示实时消息（避免干扰任务执行）
 		// 用户任务：显示实时消息

@@ -589,23 +589,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					// Mark that user has responded - this prevents any pending auto-approvals
 					userRespondedRef.current = true
 
-					console.log(
-						"[fixagenttaskbug] 📝 handleSendMessage called, messages.length:",
-						messagesRef.current.length,
-						"viewingAgentTask:",
-						viewingAgentTaskRef.current,
-					)
-
 					if (messagesRef.current.length === 0 || viewingAgentTaskRef.current) {
 						// Create new task if no messages OR viewing agent task (read-only)
 						// 检查是否是A2A模式 - 只有在当前任务启动时才检查A2A状态
 						console.log("[A2A] 🔍 Checking A2A mode, agentA2AMode:", agentA2AMode)
-						console.log(
-							"[fixagenttaskbug] ✅ Creating new task, viewingAgentTask:",
-							viewingAgentTaskRef.current,
-							"messages:",
-							messagesRef.current.length,
-						)
 
 						// 如果是通过智能体列表启动的调试模式，agentA2AMode 应该包含完整的调试信息
 						if (
