@@ -325,9 +325,11 @@ export class VoidBridge {
 					}
 
 					// 通知 void 任务历史已更新（基于新用户）
-					const taskHistory = TaskHistoryBridge.getTaskHistory(context)
+					const taskHistory = await TaskHistoryBridge.getTaskHistory(context)
+					// Filter out agent tasks - only sync user tasks to void
+					const userTasks = taskHistory.filter((task) => task.source !== "agent")
 					await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
-						tasks: taskHistory,
+						tasks: userTasks,
 						activeTaskId: undefined,
 						userId: data.userId,
 					})

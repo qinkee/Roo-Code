@@ -218,6 +218,16 @@ export class TaskHistoryBridge {
 	}
 
 	/**
+	 * Filter out agent tasks - only sync user tasks to void
+	 * Agent tasks are only visible in roo-code UI
+	 */
+	private static filterUserTasks(tasks: HistoryItem[]): HistoryItem[] {
+		const filtered = tasks.filter((task) => task.source !== "agent")
+		console.log(`[TaskHistoryBridge] Filtered tasks: ${tasks.length} total -> ${filtered.length} user tasks`)
+		return filtered
+	}
+
+	/**
 	 * Notify void about a newly created task
 	 */
 	static async notifyTaskCreated(historyItem: HistoryItem): Promise<void> {
@@ -231,9 +241,12 @@ export class TaskHistoryBridge {
 				taskHistory.push(historyItem)
 			}
 
+			// Filter out agent tasks before sending to void
+			const userTasks = TaskHistoryBridge.filterUserTasks(taskHistory)
+
 			// Notify void about the updated task history
 			await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
-				tasks: taskHistory,
+				tasks: userTasks,
 				activeTaskId: historyItem.id,
 				userId: TaskHistoryBridge.currentUserId,
 				terminalNo: VoidBridge.getCurrentTerminalNo(),
@@ -369,9 +382,12 @@ export class TaskHistoryBridge {
 				const updatedHistory = await TaskHistoryBridge.getTaskHistory(context)
 				console.log("[TaskHistoryBridge] Tasks after delete:", updatedHistory.length, "tasks")
 
+				// Filter out agent tasks before sending to void
+				const userTasks = TaskHistoryBridge.filterUserTasks(updatedHistory)
+
 				// Send the updated list
 				await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
-					tasks: updatedHistory,
+					tasks: userTasks,
 					activeTaskId: provider.getCurrentCline()?.taskId,
 					userId: TaskHistoryBridge.currentUserId,
 					terminalNo: VoidBridge.getCurrentTerminalNo(),
@@ -405,9 +421,12 @@ export class TaskHistoryBridge {
 						console.log(`[TaskHistoryBridge] Set userId ${userId} for all ${taskHistory.length} tasks`)
 					}
 
+					// Filter out agent tasks before sending to void
+					const userTasks = TaskHistoryBridge.filterUserTasks(taskHistory)
+
 					// Notify void about the update
 					await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
-						tasks: taskHistory,
+						tasks: userTasks,
 						activeTaskId: provider.getCurrentCline()?.taskId,
 						userId: userId,
 						terminalNo: VoidBridge.getCurrentTerminalNo(),
@@ -429,8 +448,11 @@ export class TaskHistoryBridge {
 				const taskHistory = await TaskHistoryBridge.getTaskHistory(context)
 				const currentTaskId = provider.getCurrentCline()?.taskId
 
+				// Filter out agent tasks before sending to void
+				const userTasks = TaskHistoryBridge.filterUserTasks(taskHistory)
+
 				await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
-					tasks: taskHistory,
+					tasks: userTasks,
 					activeTaskId: currentTaskId,
 					userId: TaskHistoryBridge.currentUserId,
 					terminalNo: VoidBridge.getCurrentTerminalNo(),
