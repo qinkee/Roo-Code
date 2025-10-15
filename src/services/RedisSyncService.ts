@@ -191,13 +191,13 @@ export class RedisSyncService {
 			console.debug('[Redis] Not connected, cannot delete key:', key)
 			return false
 		}
-		
+
 		return new Promise((resolve) => {
 			const timeout = setTimeout(() => {
 				console.debug('[Redis] Delete timeout for key:', key)
 				resolve(false)
 			}, 5000)
-			
+
 			this.client!.del(key)
 				.then((result) => {
 					clearTimeout(timeout)
@@ -207,6 +207,36 @@ export class RedisSyncService {
 					clearTimeout(timeout)
 					console.debug('[Redis] Delete failed:', err.message)
 					resolve(false)
+				})
+		})
+	}
+
+	/**
+	 * 扫描匹配模式的所有key
+	 * @param pattern 匹配模式，如 "roo:166:agents:*"
+	 * @returns 匹配的key列表
+	 */
+	async keys(pattern: string): Promise<string[]> {
+		if (!this.isConnected || !this.client) {
+			console.debug('[Redis] Not connected, cannot scan keys')
+			return []
+		}
+
+		return new Promise((resolve) => {
+			const timeout = setTimeout(() => {
+				console.debug('[Redis] Keys timeout for pattern:', pattern)
+				resolve([])
+			}, 5000)
+
+			this.client!.keys(pattern)
+				.then((keys) => {
+					clearTimeout(timeout)
+					resolve(keys)
+				})
+				.catch((err) => {
+					clearTimeout(timeout)
+					console.debug('[Redis] Keys failed:', err.message)
+					resolve([])
 				})
 		})
 	}

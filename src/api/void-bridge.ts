@@ -19,6 +19,50 @@ export class VoidBridge {
 	 */
 	static setProvider(provider: ClineProvider) {
 		VoidBridge.provider = provider
+
+		// 启动时自动触发智能体同步（如果有当前用户）
+		if (VoidBridge.currentUserId) {
+			console.log(
+				`[VoidBridge] 🚀 Provider set, triggering initial agent sync for user ${VoidBridge.currentUserId}`,
+			)
+
+			// 延迟执行，确保 provider 和 agentManager 完全初始化
+			setTimeout(async () => {
+				console.log(`[VoidBridge] ⏰ setTimeout callback fired after 2s`)
+				try {
+					console.log(`[VoidBridge] 🔍 DEBUG: provider exists:`, !!VoidBridge.provider)
+					console.log(
+						`[VoidBridge] 🔍 DEBUG: provider.agentManager exists:`,
+						!!VoidBridge.provider?.agentManager,
+					)
+
+					const agentStorage = VoidBridge.provider?.getAgentStorageService()
+					console.log(`[VoidBridge] 🔍 DEBUG: agentStorage exists:`, !!agentStorage)
+					console.log(`[VoidBridge] 🔍 DEBUG: agentStorage type:`, typeof agentStorage)
+
+					if (agentStorage && "syncOnUserLogin" in agentStorage) {
+						console.log(
+							`[VoidBridge] 📞 Calling initial syncOnUserLogin for user ${VoidBridge.currentUserId}`,
+						)
+						await (agentStorage as any).syncOnUserLogin(VoidBridge.currentUserId)
+						console.log(`[VoidBridge] ✅ Initial agent sync completed for user ${VoidBridge.currentUserId}`)
+					} else {
+						console.log(`[VoidBridge] ⚠️ Initial sync skipped - agent storage not available`)
+						if (agentStorage) {
+							console.log(
+								`[VoidBridge] 🔍 DEBUG: agentStorage keys:`,
+								Object.keys(agentStorage).slice(0, 10),
+							)
+						}
+					}
+				} catch (error) {
+					console.error(`[VoidBridge] ❌ Failed to sync agents on startup:`, error)
+					console.error(`[VoidBridge] ❌ Error stack:`, (error as Error).stack)
+				}
+			}, 2000) // 等待2秒，确保所有服务都已初始化
+		} else {
+			console.log(`[VoidBridge] ℹ️ No current user, skipping initial agent sync`)
+		}
 	}
 
 	/**
@@ -115,7 +159,13 @@ export class VoidBridge {
 		// Command for void to notify user switch
 		const onUserSwitchCommand = vscode.commands.registerCommand(
 			"roo-cline.onUserSwitch",
-			async (data: { userId: string; userName?: string; terminalNo?: number; terminal?: number; skToken?: string }) => {
+			async (data: {
+				userId: string
+				userName?: string
+				terminalNo?: number
+				terminal?: number
+				skToken?: string
+			}) => {
 				try {
 					console.log("[VoidBridge] ===== USER SWITCH STARTED =====")
 					console.log("[VoidBridge] Received data:", JSON.stringify(data, null, 2))
@@ -191,7 +241,9 @@ export class VoidBridge {
 					console.log(`[VoidBridge] Setting currentTerminalNo to terminal type: ${effectiveTerminalNo}`)
 					VoidBridge.currentTerminalNo = effectiveTerminalNo
 					if (data.skToken) {
-						console.log(`[VoidBridge] Setting currentSkToken (first 10 chars): ${data.skToken.substring(0, 10)}...`)
+						console.log(
+							`[VoidBridge] Setting currentSkToken (first 10 chars): ${data.skToken.substring(0, 10)}...`,
+						)
 						VoidBridge.currentSkToken = data.skToken
 						await context.globalState.update("lastSkToken", data.skToken)
 					}
@@ -266,6 +318,51 @@ export class VoidBridge {
 						if (currentApiConfig) {
 							await VoidBridge.provider.contextProxy.setValue("currentApiConfigName", currentApiConfig)
 						}
+
+						// 触发智能体同步
+						console.log(`[VoidBridge] 🔍 DEBUG: About to trigger agent sync for user ${data.userId}`)
+						console.log(`[VoidBridge] 🔍 DEBUG: provider exists:`, !!VoidBridge.provider)
+						console.log(
+							`[VoidBridge] 🔍 DEBUG: provider.agentManager exists:`,
+							!!VoidBridge.provider.agentManager,
+						)
+
+						try {
+							const agentStorage = VoidBridge.provider.getAgentStorageService()
+							console.log(`[VoidBridge] 🔍 DEBUG: agentStorage result:`, !!agentStorage)
+							console.log(`[VoidBridge] 🔍 DEBUG: agentStorage type:`, typeof agentStorage)
+							console.log(
+								`[VoidBridge] 🔍 DEBUG: has syncOnUserLogin:`,
+								agentStorage && "syncOnUserLogin" in agentStorage,
+							)
+							console.log(
+								`[VoidBridge] 🔍 DEBUG: syncOnUserLogin type:`,
+								agentStorage && typeof (agentStorage as any).syncOnUserLogin,
+							)
+
+							if (agentStorage && "syncOnUserLogin" in agentStorage) {
+								console.log(`[VoidBridge] 📞 Calling syncOnUserLogin for user ${data.userId}`)
+
+								// 直接调用方法，确保真的执行了
+								const result = (agentStorage as any).syncOnUserLogin(data.userId)
+								console.log(`[VoidBridge] 🔍 DEBUG: syncOnUserLogin returned:`, result)
+								console.log(`[VoidBridge] 🔍 DEBUG: result is Promise:`, result instanceof Promise)
+
+								await result
+								console.log(`[VoidBridge] ✅ Agent sync completed for user ${data.userId}`)
+							} else {
+								console.log(`[VoidBridge] ⚠️ Agent storage service not available for sync`)
+								console.log(
+									`[VoidBridge] 🔍 DEBUG: agentStorage keys:`,
+									agentStorage ? Object.keys(agentStorage).slice(0, 10) : "null",
+								)
+							}
+						} catch (error) {
+							console.error(`[VoidBridge] ❌ Failed to sync agents on user switch:`, error)
+							console.error(`[VoidBridge] ❌ Error stack:`, (error as Error).stack)
+						}
+					} else {
+						console.log(`[VoidBridge] ⚠️ VoidBridge.provider is not set, skipping agent sync`)
 					}
 
 					// Clear webview cache to force reload of user-specific data
@@ -277,7 +374,7 @@ export class VoidBridge {
 						if (VoidBridge.provider.customModesManager) {
 							VoidBridge.provider.customModesManager.setUserId(data.userId)
 							console.log(`[VoidBridge] Updated CustomModesManager userId to ${data.userId}`)
-							
+
 							// Force sync modes from Redis for the new user
 							await VoidBridge.provider.customModesManager.forceSyncFromRedis()
 							console.log(`[VoidBridge] Synced modes from Redis for user ${data.userId}`)

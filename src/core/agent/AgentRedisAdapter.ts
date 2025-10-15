@@ -20,12 +20,12 @@ export class AgentRedisAdapter {
 		try {
 			// 首先检查Redis是否可用
 			const redisEnabled = this.isEnabled()
-			
+
 			if (!redisEnabled) {
 				logger.warn(`[AgentRedisAdapter] Cannot sync agent ${agent.id} - Redis is not connected`)
 				return
 			}
-			
+
 			const key = `roo:${agent.userId}:agents:${agent.id}`
 
 			// 保存完整的智能体信息，包括服务注册相关字段
@@ -69,7 +69,6 @@ export class AgentRedisAdapter {
 			}
 
 			// 立即写入Redis，确保智能体注册信息第一时间生效
-			
 			await this.redisService.set(key, agentData, true)
 
 			// 同时添加到在线智能体列表
@@ -151,14 +150,51 @@ export class AgentRedisAdapter {
 	}
 
 	/**
+	 * 获取用户的所有智能体ID列表（使用模式匹配）
+	 */
+	async getUserAgentIds(userId: string): Promise<string[]> {
+		try {
+			const pattern = `roo:${userId}:agents:*`
+			console.log(`[AgentRedisAdapter] 🔍 Using pattern: ${pattern}`)
+
+			const keys = await this.redisService.keys(pattern)
+			console.log(`[AgentRedisAdapter] 🔍 Found ${keys.length} keys matching pattern`)
+
+			// 过滤掉索引key和其他非智能体数据key，只保留智能体数据key
+			const agentIds = keys
+				.filter(key => !key.endsWith(':index') && !key.includes(':online_agents'))
+				.map(key => {
+					// 从 "roo:166:agents:agent_xxx" 提取 "agent_xxx"
+					const parts = key.split(':')
+					return parts[parts.length - 1]
+				})
+
+			console.log(`[AgentRedisAdapter] 🔍 Extracted ${agentIds.length} agent IDs:`, agentIds)
+			return agentIds
+		} catch (error) {
+			logger.error(`[AgentRedisAdapter] Failed to get user agent ids for ${userId}:`, error)
+			return []
+		}
+	}
+
+	/**
 	 * 获取用户的所有智能体
 	 */
 	async getUserAgentsFromRegistry(userId: string): Promise<AgentConfig[]> {
 		try {
-			// 由于现有Redis服务没有模式匹配查询，这里返回空数组
-			// 在实际使用中，建议维护一个用户智能体列表的索引
-			logger.debug(`[AgentRedisAdapter] getUserAgentsFromRegistry not fully implemented for Redis`)
-			return []
+			// 使用新的索引方法
+			const agentIds = await this.getUserAgentIds(userId)
+			const agents: AgentConfig[] = []
+
+			for (const agentId of agentIds) {
+				const agent = await this.getAgentFromRegistry(userId, agentId)
+				if (agent) {
+					agents.push(agent)
+				}
+			}
+
+			logger.debug(`[AgentRedisAdapter] Got ${agents.length} agents for user ${userId}`)
+			return agents
 		} catch (error) {
 			logger.error(`[AgentRedisAdapter] Failed to get user agents for ${userId}:`, error)
 			return []
@@ -179,7 +215,7 @@ export class AgentRedisAdapter {
 		// 现有RedisSyncService在构造时自动连接，这里启动健康检查
 		logger.info(`[AgentRedisAdapter] Starting initialization...`)
 		this.redisService.startHealthCheck()
-		
+
 		// 检查连接状态
 		const isConnected = this.redisService.getConnectionStatus()
 		if (isConnected) {
@@ -274,7 +310,7 @@ export class AgentRedisAdapter {
 			const agentIds = new Set<string>()
 			for (const key of searchKeys) {
 				try {
-					const ids = await this.redisService.get(key) as string[] || []
+					const ids = ((await this.redisService.get(key)) as string[]) || []
 					ids.forEach((id: string) => agentIds.add(id))
 				} catch (error) {
 					logger.warn(`[AgentRedisAdapter] Failed to get agents from ${key}:`, error)

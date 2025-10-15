@@ -83,6 +83,7 @@ import { CustomModesManager } from "../config/CustomModesManager"
 import { Task, TaskOptions, AgentTaskContext } from "../task/Task"
 import { getSystemPromptFilePath } from "../prompts/sections/custom-system-prompt"
 import { AgentManager } from "../agent/AgentManager"
+import { EnhancedAgentStorageService } from "../agent/EnhancedAgentStorageService"
 
 import { webviewMessageHandler } from "./webviewMessageHandler"
 import { getNonce } from "./getNonce"
@@ -2970,6 +2971,13 @@ export class ClineProvider
 			// 静默失败，返回 null 让调用方使用默认配置
 			return null
 		}
+	}
+
+	/**
+	 * 获取智能体存储服务 (用于VoidBridge触发同步)
+	 */
+	getAgentStorageService(): EnhancedAgentStorageService | undefined {
+		return this.agentManager?.getStorageService()
 	}
 }
 

@@ -2,6 +2,7 @@ import { AgentConfig, AgentTodo, AgentListOptions, AgentExportData, A2AAgentCard
 import { VSCodeAgentStorageService } from "./VSCodeAgentStorageService"
 import { AgentRedisAdapter } from "./AgentRedisAdapter"
 import { AgentStorageService } from "./AgentStorageService"
+import { AgentSyncManager } from "./AgentSyncManager"
 import { logger } from "../../utils/logging"
 import * as vscode from "vscode"
 
@@ -12,11 +13,15 @@ import * as vscode from "vscode"
 export class EnhancedAgentStorageService implements AgentStorageService {
 	private localStorage: VSCodeAgentStorageService
 	private redisAdapter: AgentRedisAdapter
+	private syncManager: AgentSyncManager
 	private syncEnabled: boolean = false
+	private syncTimer: NodeJS.Timeout | null = null
+	private currentUserId: string | null = null
 
 	constructor(context: vscode.ExtensionContext) {
 		this.localStorage = new VSCodeAgentStorageService(context)
 		this.redisAdapter = new AgentRedisAdapter()
+		this.syncManager = new AgentSyncManager(this.localStorage, this.redisAdapter)
 		this.initializeRedisSync()
 	}
 
@@ -26,13 +31,13 @@ export class EnhancedAgentStorageService implements AgentStorageService {
 	private async initializeRedisSync(): Promise<void> {
 		try {
 			logger.info(`[EnhancedAgentStorageService] Initializing Redis sync...`)
-			
+
 			// 尝试初始化Redis连接
 			await this.redisAdapter.initialize()
-			
+
 			// 等待一小段时间让连接完全建立
-			await new Promise(resolve => setTimeout(resolve, 1000))
-			
+			await new Promise((resolve) => setTimeout(resolve, 1000))
+
 			this.syncEnabled = this.redisAdapter.isEnabled()
 
 			if (this.syncEnabled) {
@@ -103,15 +108,14 @@ export class EnhancedAgentStorageService implements AgentStorageService {
 
 			// 2. 检查Redis连接状态并同步
 			const redisEnabled = this.redisAdapter.isEnabled()
-			
+
 			if (this.syncEnabled && redisEnabled) {
-				this.redisAdapter.syncAgentToRegistry(updatedAgent)
-					.catch((error) => {
-						logger.error(
-							`[EnhancedAgentStorageService] Failed to sync updated agent ${agentId} to Redis:`,
-							error,
-						)
-					})
+				this.redisAdapter.syncAgentToRegistry(updatedAgent).catch((error) => {
+					logger.error(
+						`[EnhancedAgentStorageService] Failed to sync updated agent ${agentId} to Redis:`,
+						error,
+					)
+				})
 			}
 
 			return updatedAgent
@@ -669,9 +673,87 @@ export class EnhancedAgentStorageService implements AgentStorageService {
 	}
 
 	/**
+	 * 用户登录时同步智能体数据
+	 */
+	async syncOnUserLogin(userId: string): Promise<void> {
+		// 动态检查 Redis 是否可用（因为初始化是异步的）
+		const redisEnabled = this.redisAdapter.isEnabled()
+
+		console.log(`[EnhancedAgentStorageService] 🔍 syncOnUserLogin called for user ${userId}`)
+		console.log(`[EnhancedAgentStorageService] 🔍 Redis enabled check: ${redisEnabled}`)
+		console.log(`[EnhancedAgentStorageService] 🔍 syncEnabled flag: ${this.syncEnabled}`)
+
+		if (!redisEnabled) {
+			console.log(`[EnhancedAgentStorageService] ⚠️ Redis not enabled, skipping sync for user ${userId}`)
+			return
+		}
+
+		console.log(`[EnhancedAgentStorageService] ✅ Triggering sync for user ${userId}`)
+		console.log(`[EnhancedAgentStorageService] 🔍 syncManager exists:`, !!this.syncManager)
+		console.log(`[EnhancedAgentStorageService] 🔍 syncManager.syncOnLogin exists:`, !!this.syncManager?.syncOnLogin)
+
+		try {
+			await this.syncManager.syncOnLogin(userId)
+			console.log(`[EnhancedAgentStorageService] ✅ Sync completed successfully`)
+
+			// 启动定时同步
+			this.startPeriodicSync(userId)
+		} catch (error) {
+			console.error(`[EnhancedAgentStorageService] ❌ Sync failed:`, error)
+			console.error(`[EnhancedAgentStorageService] ❌ Error stack:`, (error as Error).stack)
+			throw error
+		}
+	}
+
+	/**
+	 * 启动定时同步（5分钟一次）
+	 */
+	private startPeriodicSync(userId: string): void {
+		// 停止现有定时器
+		this.stopPeriodicSync()
+
+		// 保存当前用户ID
+		this.currentUserId = userId
+
+		// 启动新定时器：5分钟 = 300000毫秒
+		this.syncTimer = setInterval(async () => {
+			try {
+				const redisEnabled = this.redisAdapter.isEnabled()
+				if (!redisEnabled) {
+					console.log(`[EnhancedAgentStorageService] ⏰ Periodic sync skipped - Redis not available`)
+					return
+				}
+
+				console.log(`[EnhancedAgentStorageService] ⏰ Running periodic sync for user ${userId}...`)
+				await this.syncManager.syncOnLogin(userId)
+				console.log(`[EnhancedAgentStorageService] ⏰ Periodic sync completed successfully`)
+			} catch (error) {
+				console.error(`[EnhancedAgentStorageService] ⏰ Periodic sync failed:`, error)
+			}
+		}, 5 * 60 * 1000) // 5分钟
+
+		console.log(`[EnhancedAgentStorageService] ⏰ Periodic sync started for user ${userId} (every 5 minutes)`)
+	}
+
+	/**
+	 * 停止定时同步
+	 */
+	private stopPeriodicSync(): void {
+		if (this.syncTimer) {
+			clearInterval(this.syncTimer)
+			this.syncTimer = null
+			console.log(`[EnhancedAgentStorageService] ⏰ Periodic sync stopped`)
+		}
+	}
+
+	/**
 	 * 关闭服务
 	 */
 	async close(): Promise<void> {
+		// 停止定时同步
+		this.stopPeriodicSync()
+
+		// 关闭Redis连接
 		if (this.syncEnabled) {
 			await this.redisAdapter.close()
 		}
