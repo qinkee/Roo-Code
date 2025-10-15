@@ -208,6 +208,9 @@ export const globalSettingsSchema = z.object({
 		})
 		.nullable()
 		.optional(),
+
+	// Agent waiting for user input state
+	waitingForAgentInput: z.boolean().optional(),
 })
 
 export type GlobalSettings = z.infer<typeof globalSettingsSchema>

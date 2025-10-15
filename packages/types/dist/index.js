@@ -1468,7 +1468,9 @@ var globalSettingsSchema = z12.object({
     serverPort: z12.number(),
     isDebugMode: z12.boolean().optional()
     // 标识是否为调试模式
-  }).nullable().optional()
+  }).nullable().optional(),
+  // Agent waiting for user input state
+  waitingForAgentInput: z12.boolean().optional()
 });
 var GLOBAL_SETTINGS_KEYS = globalSettingsSchema.keyof().options;
 var rooCodeSettingsSchema = providerSettingsSchema.merge(globalSettingsSchema);

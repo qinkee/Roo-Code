@@ -1715,7 +1715,9 @@ var globalSettingsSchema = import_zod12.z.object({
     serverPort: import_zod12.z.number(),
     isDebugMode: import_zod12.z.boolean().optional()
     // 标识是否为调试模式
-  }).nullable().optional()
+  }).nullable().optional(),
+  // Agent waiting for user input state
+  waitingForAgentInput: import_zod12.z.boolean().optional()
 });
 var GLOBAL_SETTINGS_KEYS = globalSettingsSchema.keyof().options;
 var rooCodeSettingsSchema = providerSettingsSchema.merge(globalSettingsSchema);

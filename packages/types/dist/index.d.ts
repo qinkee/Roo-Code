@@ -11208,6 +11208,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         agentName: string;
         isDebugMode?: boolean | undefined;
     }>>>;
+    waitingForAgentInput: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     diffEnabled?: boolean | undefined;
     fuzzyMatchThreshold?: number | undefined;
@@ -11436,6 +11437,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         agentName: string;
         isDebugMode?: boolean | undefined;
     } | null | undefined;
+    waitingForAgentInput?: boolean | undefined;
 }, {
     diffEnabled?: boolean | undefined;
     fuzzyMatchThreshold?: number | undefined;
@@ -11664,9 +11666,10 @@ declare const globalSettingsSchema: z.ZodObject<{
         agentName: string;
         isDebugMode?: boolean | undefined;
     } | null | undefined;
+    waitingForAgentInput?: boolean | undefined;
 }>;
 type GlobalSettings = z.infer<typeof globalSettingsSchema>;
-declare const GLOBAL_SETTINGS_KEYS: ["diffEnabled", "fuzzyMatchThreshold", "rateLimitSeconds", "mode", "language", "customInstructions", "customModes", "currentApiConfigName", "listApiConfigMeta", "pinnedApiConfigs", "lastShownAnnouncementId", "taskHistory", "condensingApiConfigId", "customCondensingPrompt", "autoApprovalEnabled", "alwaysAllowReadOnly", "alwaysAllowReadOnlyOutsideWorkspace", "alwaysAllowWrite", "alwaysAllowWriteOutsideWorkspace", "alwaysAllowWriteProtected", "writeDelayMs", "alwaysAllowBrowser", "alwaysApproveResubmit", "requestDelaySeconds", "alwaysAllowMcp", "alwaysAllowModeSwitch", "alwaysAllowSubtasks", "alwaysAllowExecute", "alwaysAllowFollowupQuestions", "followupAutoApproveTimeoutMs", "alwaysAllowUpdateTodoList", "allowedCommands", "deniedCommands", "commandExecutionTimeout", "commandTimeoutAllowlist", "preventCompletionWithOpenTodos", "allowedMaxRequests", "allowedMaxCost", "autoCondenseContext", "autoCondenseContextPercent", "maxConcurrentFileReads", "includeDiagnosticMessages", "maxDiagnosticMessages", "browserToolEnabled", "browserViewportSize", "screenshotQuality", "remoteBrowserEnabled", "remoteBrowserHost", "cachedChromeHostUrl", "enableCheckpoints", "ttsEnabled", "ttsSpeed", "soundEnabled", "soundVolume", "maxOpenTabsContext", "maxWorkspaceFiles", "showRooIgnoredFiles", "maxReadFileLine", "maxImageFileSize", "maxTotalImageSize", "terminalOutputLineLimit", "terminalOutputCharacterLimit", "terminalShellIntegrationTimeout", "terminalShellIntegrationDisabled", "terminalCommandDelay", "terminalPowershellCounter", "terminalZshClearEolMark", "terminalZshOhMy", "terminalZshP10k", "terminalZdotdir", "terminalCompressProgressBar", "diagnosticsEnabled", "experiments", "codebaseIndexModels", "codebaseIndexConfig", "telemetrySetting", "mcpEnabled", "enableMcpServerCreation", "remoteControlEnabled", "modeApiConfigs", "customModePrompts", "customSupportPrompts", "enhancementApiConfigId", "includeTaskHistoryInEnhance", "historyPreviewCollapsed", "profileThresholds", "hasOpenedModeSelector", "lastModeExportPath", "lastModeImportPath", "imContacts", "agentA2AMode"];
+declare const GLOBAL_SETTINGS_KEYS: ["diffEnabled", "fuzzyMatchThreshold", "rateLimitSeconds", "mode", "language", "customInstructions", "customModes", "currentApiConfigName", "listApiConfigMeta", "pinnedApiConfigs", "lastShownAnnouncementId", "taskHistory", "condensingApiConfigId", "customCondensingPrompt", "autoApprovalEnabled", "alwaysAllowReadOnly", "alwaysAllowReadOnlyOutsideWorkspace", "alwaysAllowWrite", "alwaysAllowWriteOutsideWorkspace", "alwaysAllowWriteProtected", "writeDelayMs", "alwaysAllowBrowser", "alwaysApproveResubmit", "requestDelaySeconds", "alwaysAllowMcp", "alwaysAllowModeSwitch", "alwaysAllowSubtasks", "alwaysAllowExecute", "alwaysAllowFollowupQuestions", "followupAutoApproveTimeoutMs", "alwaysAllowUpdateTodoList", "allowedCommands", "deniedCommands", "commandExecutionTimeout", "commandTimeoutAllowlist", "preventCompletionWithOpenTodos", "allowedMaxRequests", "allowedMaxCost", "autoCondenseContext", "autoCondenseContextPercent", "maxConcurrentFileReads", "includeDiagnosticMessages", "maxDiagnosticMessages", "browserToolEnabled", "browserViewportSize", "screenshotQuality", "remoteBrowserEnabled", "remoteBrowserHost", "cachedChromeHostUrl", "enableCheckpoints", "ttsEnabled", "ttsSpeed", "soundEnabled", "soundVolume", "maxOpenTabsContext", "maxWorkspaceFiles", "showRooIgnoredFiles", "maxReadFileLine", "maxImageFileSize", "maxTotalImageSize", "terminalOutputLineLimit", "terminalOutputCharacterLimit", "terminalShellIntegrationTimeout", "terminalShellIntegrationDisabled", "terminalCommandDelay", "terminalPowershellCounter", "terminalZshClearEolMark", "terminalZshOhMy", "terminalZshP10k", "terminalZdotdir", "terminalCompressProgressBar", "diagnosticsEnabled", "experiments", "codebaseIndexModels", "codebaseIndexConfig", "telemetrySetting", "mcpEnabled", "enableMcpServerCreation", "remoteControlEnabled", "modeApiConfigs", "customModePrompts", "customSupportPrompts", "enhancementApiConfigId", "includeTaskHistoryInEnhance", "historyPreviewCollapsed", "profileThresholds", "hasOpenedModeSelector", "lastModeExportPath", "lastModeImportPath", "imContacts", "agentA2AMode", "waitingForAgentInput"];
 /**
  * RooCodeSettings
  */
@@ -12569,6 +12572,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         agentName: string;
         isDebugMode?: boolean | undefined;
     }>>>;
+    waitingForAgentInput: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -12937,6 +12941,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         agentName: string;
         isDebugMode?: boolean | undefined;
     } | null | undefined;
+    waitingForAgentInput?: boolean | undefined;
 }, {
     reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
     codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -13305,6 +13310,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         agentName: string;
         isDebugMode?: boolean | undefined;
     } | null | undefined;
+    waitingForAgentInput?: boolean | undefined;
 }>;
 type RooCodeSettings = GlobalSettings & ProviderSettings;
 /**
@@ -14272,6 +14278,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentName: string;
                 isDebugMode?: boolean | undefined;
             }>>>;
+            waitingForAgentInput: z.ZodOptional<z.ZodBoolean>;
         }, "strip", z.ZodTypeAny, {
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -14640,6 +14647,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentName: string;
                 isDebugMode?: boolean | undefined;
             } | null | undefined;
+            waitingForAgentInput?: boolean | undefined;
         }, {
             reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
             codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -15008,6 +15016,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentName: string;
                 isDebugMode?: boolean | undefined;
             } | null | undefined;
+            waitingForAgentInput?: boolean | undefined;
         }>;
         text: z.ZodString;
         images: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
@@ -15382,6 +15391,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentName: string;
                 isDebugMode?: boolean | undefined;
             } | null | undefined;
+            waitingForAgentInput?: boolean | undefined;
         };
         images?: string[] | undefined;
         newTab?: boolean | undefined;
@@ -15755,6 +15765,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentName: string;
                 isDebugMode?: boolean | undefined;
             } | null | undefined;
+            waitingForAgentInput?: boolean | undefined;
         };
         images?: string[] | undefined;
         newTab?: boolean | undefined;
@@ -16130,6 +16141,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentName: string;
                 isDebugMode?: boolean | undefined;
             } | null | undefined;
+            waitingForAgentInput?: boolean | undefined;
         };
         images?: string[] | undefined;
         newTab?: boolean | undefined;
@@ -16506,6 +16518,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentName: string;
                 isDebugMode?: boolean | undefined;
             } | null | undefined;
+            waitingForAgentInput?: boolean | undefined;
         };
         images?: string[] | undefined;
         newTab?: boolean | undefined;
@@ -17472,6 +17485,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentName: string;
                     isDebugMode?: boolean | undefined;
                 }>>>;
+                waitingForAgentInput: z.ZodOptional<z.ZodBoolean>;
             }, "strip", z.ZodTypeAny, {
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -17840,6 +17854,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentName: string;
                     isDebugMode?: boolean | undefined;
                 } | null | undefined;
+                waitingForAgentInput?: boolean | undefined;
             }, {
                 reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
                 codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
@@ -18208,6 +18223,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentName: string;
                     isDebugMode?: boolean | undefined;
                 } | null | undefined;
+                waitingForAgentInput?: boolean | undefined;
             }>;
             text: z.ZodString;
             images: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
@@ -18582,6 +18598,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentName: string;
                     isDebugMode?: boolean | undefined;
                 } | null | undefined;
+                waitingForAgentInput?: boolean | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
@@ -18955,6 +18972,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentName: string;
                     isDebugMode?: boolean | undefined;
                 } | null | undefined;
+                waitingForAgentInput?: boolean | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
@@ -19330,6 +19348,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentName: string;
                     isDebugMode?: boolean | undefined;
                 } | null | undefined;
+                waitingForAgentInput?: boolean | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
@@ -19706,6 +19725,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentName: string;
                     isDebugMode?: boolean | undefined;
                 } | null | undefined;
+                waitingForAgentInput?: boolean | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
@@ -20103,6 +20123,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentName: string;
                     isDebugMode?: boolean | undefined;
                 } | null | undefined;
+                waitingForAgentInput?: boolean | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
@@ -20490,6 +20511,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentName: string;
                     isDebugMode?: boolean | undefined;
                 } | null | undefined;
+                waitingForAgentInput?: boolean | undefined;
             };
             images?: string[] | undefined;
             newTab?: boolean | undefined;
