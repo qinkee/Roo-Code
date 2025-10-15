@@ -559,10 +559,24 @@ export const webviewMessageHandler = async (
 			provider.isViewLaunched = true
 			break
 		case "newTask":
-			// Clear agent A2A mode state when starting a new task directly
-			// This ensures that direct tasks are not confused with agent debug tasks
-			await updateGlobalState("agentA2AMode", null)
-			provider.log(`[newTask] Cleared A2A mode for direct task creation`)
+			// Check if we're waiting for agent input
+			const waitingForInput = getGlobalState("waitingForAgentInput")
+			const currentA2AMode = getGlobalState("agentA2AMode")
+
+			provider.log(`[newTask] 🎯 Received newTask message:`)
+			provider.log(`[newTask]   - waitingForInput: ${waitingForInput}`)
+			provider.log(`[newTask]   - currentA2AMode: ${JSON.stringify(currentA2AMode)}`)
+			provider.log(`[newTask]   - taskText: ${message.text?.substring(0, 100)}`)
+
+			if (waitingForInput) {
+				// User is providing input for agent task, keep A2A mode
+				await updateGlobalState("waitingForAgentInput", false)
+				provider.log(`[newTask] ✅ User input received for agent task, keeping A2A mode`)
+			} else {
+				// This is a direct task creation, clear agent mode
+				await updateGlobalState("agentA2AMode", null)
+				provider.log(`[newTask] 🔄 Cleared A2A mode for direct task creation`)
+			}
 
 			// 解析IM消息格式：{ type: 'say_hi' | 'text', content: string, timestamp: number }
 			// 如果是JSON格式，提取content字段；否则直接使用原始文本
@@ -570,19 +584,39 @@ export const webviewMessageHandler = async (
 			try {
 				if (message.text) {
 					const parsed = JSON.parse(message.text)
-					if (parsed && typeof parsed === 'object' && 'content' in parsed && 'type' in parsed) {
+					if (parsed && typeof parsed === "object" && "content" in parsed && "type" in parsed) {
 						taskText = parsed.content
-						provider.log(`[newTask] Parsed IM message format, extracted content: ${taskText.substring(0, 100)}`)
+						provider.log(
+							`[newTask] Parsed IM message format, extracted content: ${taskText.substring(0, 100)}`,
+						)
 					}
 				}
 			} catch (e) {
 				// 不是JSON格式，直接使用原始文本
 			}
 
+			// 如果是智能体任务，添加智能体标识和source标记
+			const finalA2AMode = getGlobalState("agentA2AMode")
+			let taskOptions: any = {}
+			if (finalA2AMode && finalA2AMode.enabled) {
+				taskText = `🤖 [智能体测试] ${finalA2AMode.agentName}\n\n${taskText}`
+				// A2A调试模式：标记source为agent，但不设置agentTaskContext
+				// 这样可以标识为智能体任务，但不会进入后台运行
+				// agentTaskContext会导致任务在后台运行，这是给真正的Agent-to-Agent调用使用的
+				// 调试模式下用户需要看到执行过程，所以不能后台运行
+				taskOptions = {
+					// 不设置 agentTaskContext，避免后台运行
+					// 但传递智能体信息，确保正确标记任务类型
+					isAgentTask: true,
+					agentTaskId: finalA2AMode.agentId,
+				}
+				provider.log(`[newTask] 🏷️ Added agent label and metadata for debug mode (foreground task)`)
+			}
+
 			// Initializing new instance of Cline will make sure that any
 			// agentically running promises in old instance don't affect our new
 			// task. This essentially creates a fresh slate for the new task.
-			await provider.initClineWithTask(taskText, message.images)
+			await provider.initClineWithTask(taskText, message.images, undefined, taskOptions)
 			break
 		case "customInstructions":
 			await provider.updateCustomInstructions(message.text)
@@ -668,6 +702,12 @@ export const webviewMessageHandler = async (
 				// Regular task - just clear it
 				await provider.clearTask()
 			}
+
+			// 清除 A2A 模式和等待输入标志，防止任务完成后又启动新任务
+			await updateGlobalState("agentA2AMode", null)
+			await updateGlobalState("waitingForAgentInput", false)
+			provider.log(`[clearTask] Cleared A2A mode and waitingForAgentInput flag`)
+
 			await provider.postStateToWebview()
 			break
 		case "didShowAnnouncement":
@@ -3220,9 +3260,15 @@ export const webviewMessageHandler = async (
 					// 7. 等待较长时间确保状态完全同步
 					await new Promise((resolve) => setTimeout(resolve, 500))
 
-					// 8. 启动新任务（这会使用上面设置的配置）
-					await vscode.commands.executeCommand("roo-cline.newTask")
-					provider.log(`[startAgentTask] New task command executed`)
+					// 8. 清空任务,准备接收用户输入
+					await provider.clearTask()
+
+					// 9. 设置一个标志,告诉前端不要在用户输入时创建新任务
+					// 因为我们已经配置好智能体了,只需要等待用户输入
+					await updateGlobalState("waitingForAgentInput", true)
+
+					await provider.postStateToWebview()
+					provider.log(`[startAgentTask] Ready and waiting for user input`)
 
 					// 发送成功响应，前端会切换到聊天界面
 					await provider.postMessageToWebview({

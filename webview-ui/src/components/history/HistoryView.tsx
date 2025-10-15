@@ -56,6 +56,12 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 		})
 	}, [tasks, taskTypeFilter])
 
+	// Clean up selectedTaskIds when tasks change (e.g., after deletion)
+	React.useEffect(() => {
+		const taskIds = new Set(filteredTasks.map((t) => t.id))
+		setSelectedTaskIds((prev) => prev.filter((id) => taskIds.has(id)))
+	}, [filteredTasks])
+
 	// Toggle selection mode
 	const toggleSelectionMode = () => {
 		setIsSelectionMode(!isSelectionMode)
@@ -231,7 +237,9 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 						<div className="flex items-center py-1">
 							<div className="flex items-center gap-2">
 								<Checkbox
-									checked={filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length}
+									checked={
+										filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length
+									}
 									onCheckedChange={(checked) => toggleSelectAll(checked === true)}
 									variant="description"
 								/>

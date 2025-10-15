@@ -57,6 +57,7 @@ export interface WebviewMessage {
 		| "askResponse"
 		| "terminalOperation"
 		| "clearTask"
+		| "clearWaitingForAgentInput"
 		| "didShowAnnouncement"
 		| "selectImages"
 		| "exportCurrentTask"

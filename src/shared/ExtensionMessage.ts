@@ -387,6 +387,7 @@ export type ExtensionState = Pick<
 	profileThresholds: Record<string, number>
 	hasOpenedModeSelector: boolean
 	viewingAgentTask?: boolean // Flag to indicate viewing an agent task in read-only mode
+	waitingForAgentInput?: boolean // Flag to indicate waiting for user input after starting an agent
 	agentA2AMode?: {
 		enabled: boolean
 		agentId: string

@@ -123,6 +123,9 @@ export type TaskOptions = {
 	onCreated?: (task: Task) => void
 	// 🔥 新增: 智能体任务上下文
 	agentTaskContext?: AgentTaskContext
+	// 🔥 新增: 智能体任务标识（用于调试模式）
+	isAgentTask?: boolean
+	agentTaskId?: string
 }
 
 // 🔥 Export AgentTaskContext type
@@ -267,6 +270,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	enableTaskBridge: boolean
 	bridgeService: UnifiedBridgeService | null = null
 
+	// Agent Task Info (for debugging mode)
+	private isAgentTask: boolean = false
+	private agentTaskId?: string
+
 	// Streaming
 	isWaitingForFirstChunk = false
 	isStreaming = false
@@ -311,6 +318,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		taskNumber = -1,
 		onCreated,
 		agentTaskContext,
+		isAgentTask: isAgentTaskParam,
+		agentTaskId: agentTaskIdParam,
 	}: TaskOptions) {
 		super()
 
@@ -499,7 +508,42 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.taskNumber = taskNumber
 		provider.log(`[Task Constructor] ✅ Step 10 complete`)
 
-		provider.log(`[Task Constructor] 🔧 Step 11: Setting up task mode`)
+		provider.log(`[Task Constructor] 🔧 Step 11: Checking if agent task`)
+		// 🔥 任务类型判断逻辑：
+		// 三种任务模式：
+		// 1. 用户任务：UI触发，在clineStack执行，source="user"
+		// 2. 后台智能体任务：被调用，在agentTaskPool执行，source="agent"，有agentTaskContext
+		// 3. 调试智能体任务：UI触发，在clineStack执行，source="agent"，无agentTaskContext
+
+		if (historyItem) {
+			// 🔥 从历史加载：使用 historyItem.source（绝对权威，不能改变）
+			this.isAgentTask = historyItem.source === "agent"
+			this.agentTaskId = historyItem.agentId
+			provider.log(
+				`[Task Constructor] 📚 Task loaded from history: source=${historyItem.source}, agentId=${this.agentTaskId}`,
+			)
+		} else {
+			// 🔥 新建任务：根据上下文判断类型
+			if (agentTaskContext) {
+				// 后台智能体任务
+				this.isAgentTask = true
+				this.agentTaskId = agentTaskContext.agentId
+				provider.log(`[Task Constructor] 🤖 Background agent task: ${this.agentTaskId}`)
+			} else if (isAgentTaskParam && agentTaskIdParam) {
+				// 调试模式智能体任务
+				this.isAgentTask = true
+				this.agentTaskId = agentTaskIdParam
+				provider.log(`[Task Constructor] 🐛 Debug agent task: ${this.agentTaskId}`)
+			} else {
+				// 用户任务
+				this.isAgentTask = false
+				this.agentTaskId = undefined
+				provider.log(`[Task Constructor] 👤 User task`)
+			}
+		}
+		provider.log(`[Task Constructor] ✅ Step 11 complete`)
+
+		provider.log(`[Task Constructor] 🔧 Step 12: Setting up task mode`)
 		// Store the task's mode when it's created.
 		// For history items, use the stored mode; for new tasks, we'll set it
 		// after getting state.
@@ -850,9 +894,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				workspace: this.cwd,
 				mode: this._taskMode || defaultModeSlug, // Use the task's own mode, not the current provider mode
 				terminalNo: VoidBridge.getCurrentTerminalNo(),
-				// 🔥 智能体任务标记
-				source: this.agentTaskContext ? "agent" : "user",
-				agentId: this.agentTaskContext?.agentId,
+				// 🔥 智能体任务标记 - 使用构造函数中设置的标志
+				source: this.agentTaskContext ? "agent" : this.isAgentTask ? "agent" : "user",
+				agentId: this.agentTaskContext?.agentId || this.agentTaskId,
 			})
 
 			this.emit(RooCodeEventName.TaskTokenUsageUpdated, this.taskId, tokenUsage)
@@ -1368,9 +1412,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				workspace: this.cwd,
 				mode: this._taskMode || defaultModeSlug,
 				terminalNo: VoidBridge.getCurrentTerminalNo(),
-				// 🔥 智能体任务标记
-				source: this.agentTaskContext ? "agent" : "user",
-				agentId: this.agentTaskContext?.agentId,
+				// 🔥 智能体任务标记 - 使用构造函数中设置的标志
+				source: this.agentTaskContext ? "agent" : this.isAgentTask ? "agent" : "user",
+				agentId: this.agentTaskContext?.agentId || this.agentTaskId,
 			})
 
 			// Store the historyItem for later use
@@ -3060,6 +3104,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					this.llmTargetUserId = target.userId
 					this.llmTargetTerminal = target.terminal
 				}
+			}
+
+			// 🔥 如果没有目标用户ID，说明这不是IM发起的任务，直接返回
+			// 只有IM任务才应该发送流式消息到IM通道
+			if (this.llmTargetUserId === undefined) {
+				return
 			}
 
 			// Start new stream if needed

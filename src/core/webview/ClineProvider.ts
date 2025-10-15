@@ -814,6 +814,8 @@ export class ClineProvider
 				| "experiments"
 				| "agentTaskContext"
 				| "startTask"
+				| "isAgentTask"
+				| "agentTaskId"
 			>
 		> = {},
 	) {
@@ -1798,10 +1800,45 @@ export class ClineProvider
 		if (isAgentTask) {
 			this.viewingAgentTaskId = id
 			this.log(`[showTaskWithId] 查看智能体任务: ${id}`)
+			this.log(`[showTaskWithId] 当前 clineStack 大小: ${this.clineStack.length}`)
+
+			// 🔥 加载智能体任务的历史消息
+			// 检查任务是否还在执行中
+			const runningTask = this.clineStack.find((t) => t.taskId === id)
+			this.log(`[showTaskWithId] 查找运行中任务结果: ${runningTask ? "找到" : "未找到"}`)
+
+			if (runningTask) {
+				// 任务还在执行，使用运行中的任务数据
+				this.log(`[showTaskWithId] 智能体任务正在执行中，使用运行时数据`)
+				this.log(`[showTaskWithId] 运行中任务消息数: ${runningTask.clineMessages.length}`)
+			} else {
+				// 任务已完成，从历史加载
+				this.log(`[showTaskWithId] 智能体任务已完成，从历史加载消息`)
+				this.log(`[showTaskWithId] historyItem.id: ${historyItem.id}`)
+
+				try {
+					// 加载历史任务 (会自动读取消息)
+					await this.initClineWithHistoryItem(historyItem)
+					this.log(`[showTaskWithId] initClineWithHistoryItem 完成`)
+
+					// 🔥 重新设置 viewingAgentTaskId (initClineWithTask 会清除它)
+					this.viewingAgentTaskId = id
+					this.log(`[showTaskWithId] 重新设置 viewingAgentTaskId: ${id}`)
+				} catch (error) {
+					this.log(`[showTaskWithId] ❌ 加载历史任务失败: ${error}`)
+					this.log(
+						`[showTaskWithId] ❌ 错误详情: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`,
+					)
+					// 即使失败也要设置 viewingAgentTaskId，这样至少能显示只读状态
+					this.viewingAgentTaskId = id
+				}
+			}
 
 			// 更新 UI
 			await this.postStateToWebview()
+			this.log(`[showTaskWithId] postStateToWebview 完成`)
 			await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+			this.log(`[showTaskWithId] 智能体任务查看流程完成`)
 			return
 		}
 
@@ -1846,19 +1883,23 @@ export class ClineProvider
 			// get the task directory full path
 			const { taskDirPath } = await this.getTaskWithId(id)
 
-			// 🔥 检查是否是智能体任务
+			// 🔥 如果正在查看此任务，清除查看状态并更新UI
+			if (this.viewingAgentTaskId === id) {
+				this.viewingAgentTaskId = null
+				this.log(`[deleteTaskWithId] Cleared viewingAgentTaskId: ${id}`)
+				// 立即更新UI，确保UI不再显示被删除的任务
+				await this.postStateToWebview()
+			}
+
+			// 🔥 检查是否是后台智能体任务
 			const agentTask = this.agentTaskPool.get(id)
 			if (agentTask) {
 				// 从任务池中移除
 				this.agentTaskPool.delete(id)
-				// 如果正在查看此任务，清除查看状态
-				if (this.viewingAgentTaskId === id) {
-					this.viewingAgentTaskId = null
-				}
 				// 中止任务
 				await agentTask.abortTask()
 			} else {
-				// 用户任务：保持原有逻辑
+				// 用户任务或调试智能体任务：保持原有逻辑
 				// remove task from stack if it's the current task
 				if (id === this.getCurrentCline()?.taskId) {
 					// if we found the taskid to delete - call finish to abort this task and allow a new task to be started,
@@ -1921,6 +1962,10 @@ export class ClineProvider
 		// This ensures postStateToWebview() sends the correct task history to the React UI
 		await this.contextProxy.setValue("taskHistory", updatedTaskHistory)
 		this.log(`[deleteTaskFromState] contextProxy.setValue completed`)
+
+		// 🔥 CRITICAL: Invalidate task history cache to ensure getCachedTaskHistory() returns fresh data
+		this.invalidateTaskHistoryCache()
+		this.log(`[deleteTaskFromState] Task history cache invalidated`)
 
 		await this.postStateToWebview()
 		this.log(`[deleteTaskFromState] postStateToWebview completed`)
@@ -2153,8 +2198,17 @@ export class ClineProvider
 		// 用户任务：显示实时消息
 		let clineMessages: ClineMessage[] = []
 		if (this.viewingAgentTaskId) {
-			// Viewing agent task: use history messages (whether task is still running or not)
-			clineMessages = currentTaskItem?.clineMessages || []
+			// Check if viewing task is currently running
+			const viewingTask = this.clineStack.find((t) => t.taskId === this.viewingAgentTaskId)
+			if (viewingTask) {
+				// Task is running, use real-time messages
+				clineMessages = viewingTask.clineMessages || []
+				this.log(`[getState] 智能体任务正在运行，使用实时消息: ${clineMessages.length} 条`)
+			} else {
+				// Task completed, use history messages
+				clineMessages = currentTaskItem?.clineMessages || []
+				this.log(`[getState] 智能体任务已完成，使用历史消息: ${clineMessages.length} 条`)
+			}
 		} else {
 			// User task or no task: use real-time messages
 			clineMessages = currentTask?.clineMessages || []
@@ -2502,6 +2556,9 @@ export class ClineProvider
 		// IMPORTANT: Also update the contextProxy cache so that getState() returns the updated history
 		// This ensures postStateToWebview() sends the correct task history to the UI
 		await this.contextProxy.setValue("taskHistory", history)
+
+		// 🔥 Invalidate task history cache to ensure fresh data
+		this.invalidateTaskHistoryCache()
 
 		return history
 	}
