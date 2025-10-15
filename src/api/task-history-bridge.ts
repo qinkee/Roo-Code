@@ -308,8 +308,17 @@ export class TaskHistoryBridge {
 						activeTaskId: currentTaskId,
 					})
 
-					// Sort by timestamp (newest first)
-					const sortedTasks = taskHistory.filter((item) => item.ts && item.task).sort((a, b) => b.ts - a.ts)
+					// Sort by timestamp (newest first) and filter out agent tasks
+					// Only sync user tasks to void, agent tasks are only visible in roo-code UI
+					const sortedTasks = taskHistory
+						.filter((item) => item.ts && item.task && item.source !== "agent")
+						.sort((a, b) => b.ts - a.ts)
+
+					console.log("[TaskHistoryBridge] Filtered result:", {
+						totalTasks: taskHistory.length,
+						userTasks: sortedTasks.length,
+						filteredAgentTasks: taskHistory.length - sortedTasks.length,
+					})
 
 					return {
 						tasks: sortedTasks,
