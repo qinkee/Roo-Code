@@ -758,9 +758,10 @@ export async function activate(context: vscode.ExtensionContext) {
 					`[A2AServerManager] ✅ Auto-startup completed: ${result.started}/${result.total} agents started`,
 				)
 
-				if (result.started > 0) {
-					vscode.window.showInformationMessage(`🤖 Started ${result.started} published agents automatically`)
-				}
+				// 已自动启动智能体，不显示提示消息以避免干扰用户
+				// if (result.started > 0) {
+				// 	vscode.window.showInformationMessage(`🤖 Started ${result.started} published agents automatically`)
+				// }
 
 				if (result.errors.length > 0) {
 					outputChannel.appendLine(`[A2AServerManager] ❌ ${result.errors.length} agents failed to start:`)

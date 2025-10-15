@@ -141,24 +141,11 @@ async function initializeLocalAgent(agent: any, provider: any, preferredPort?: n
 		console.log(`[AgentInitializer] 🔍 State after updateGlobalState:`, JSON.stringify(currentState.agentA2AMode))
 
 		if (currentState.agentA2AMode?.serverPort !== serverInfo.port) {
-			console.error(
-				`[AgentInitializer] ❌ CRITICAL ERROR: updateGlobalState failed! Expected port ${serverInfo.port}, got ${currentState.agentA2AMode?.serverPort}`,
-			)
-
-			// 尝试直接通过provider设置状态
-			console.log(`[AgentInitializer] 🚨 Attempting direct state update via provider...`)
-			const allState = await provider.getState()
-			allState.agentA2AMode = updatedA2AConfig
-			await provider.setState(allState)
-
-			// 再次验证
-			const finalState = await provider.getState()
-			console.log(
-				`[AgentInitializer] 🔍 Final state after direct update:`,
-				JSON.stringify(finalState.agentA2AMode),
+			console.warn(
+				`[AgentInitializer] ⚠️ State mismatch (multiple agents racing): expected port ${serverInfo.port}, got ${currentState.agentA2AMode?.serverPort}. Continuing...`,
 			)
 		} else {
-			console.log(`[AgentInitializer] ✅ State update successful!`)
+			console.log(`[AgentInitializer] ✅ State verified for port ${serverInfo.port}`)
 		}
 
 		// 立即同步状态到webview
