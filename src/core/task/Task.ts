@@ -287,6 +287,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	didRejectTool = false
 	didAlreadyUseTool = false
 	didCompleteReadingStream = false
+	shouldEndLoop = false // 🔥 标记智能体任务应该结束循环
 	assistantMessageParser?: AssistantMessageParser
 	isAssistantMessageParserEnabled = false
 	private lastUsedInstructions?: string
@@ -1050,8 +1051,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					break
 
 				case "completion_result":
-					// 自动接受完成结果
-					this.askResponse = "yesButtonClicked"
+					// 智能体任务不需要等待用户响应，由 attemptCompletionTool 设置 shouldEndLoop 标志
+					// Agent tasks don't wait for user response, attemptCompletionTool sets shouldEndLoop flag
+					// 这里不设置 askResponse，让 ask 等待，但工具已经设置了 shouldEndLoop 所以循环会结束
 					break
 
 				case "auto_approval_max_req_reached":
@@ -2618,6 +2620,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				})
 			}
 
+			// 🔥 智能体任务完成后返回 true 结束循环
+			if (this.shouldEndLoop) {
+				return true
+			}
 			return didEndLoop // Will always be false for now.
 		} catch (error) {
 			// This should never happen since the only thing that can throw an

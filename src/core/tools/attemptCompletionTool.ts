@@ -107,6 +107,14 @@ export async function attemptCompletionTool(
 				return
 			}
 
+			// 智能体任务完成后直接返回，不需要等待用户响应
+			// Agent tasks finish directly without waiting for user response
+			if (cline.agentTaskContext) {
+				// 设置标志让循环结束，不推送 tool result
+				cline.shouldEndLoop = true
+				return
+			}
+
 			// We already sent completion_result says, an
 			// empty string asks relinquishes control over
 			// button and field.

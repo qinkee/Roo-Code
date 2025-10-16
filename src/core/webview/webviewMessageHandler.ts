@@ -160,11 +160,29 @@ async function initializeLocalAgent(agent: any, provider: any, preferredPort?: n
 			serverPort: serverInfo.port,
 			serverUrl: serverInfo.url,
 			publishedAt: new Date().toISOString(),
+			serviceStatus: "online" as const, // 🎯 设置服务状态为 online
+			lastHeartbeat: Date.now(),
 		})
 
-		// 4. 向Redis注册智能体服务（后注册，确保包含完整服务信息）
-		console.log(`[AgentInitializer] Registering agent ${agent.id} in Redis`)
-		await registerAgentInRedis(agent, serverInfo)
+		// 🎯 重新获取更新后的智能体数据
+		const VoidBridge = require("../../api/void-bridge").VoidBridge
+		const userId = VoidBridge.getCurrentUserId() || "default"
+		const updatedAgentResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
+			userId,
+			agentId: agent.id,
+		})) as any
+
+		const updatedAgent = updatedAgentResult.success ? updatedAgentResult.agent : agent
+
+		console.log(`[AgentInitializer] 🔍 Agent data after local update:`, {
+			agentId: updatedAgent.id,
+			isPublished: updatedAgent.isPublished,
+			publishInfo: updatedAgent.publishInfo,
+		})
+
+		// 4. 向Redis注册智能体服务（使用更新后的数据）
+		console.log(`[AgentInitializer] Registering agent ${agent.id} in Redis with updated data`)
+		await registerAgentInRedis(updatedAgent, serverInfo)
 
 		console.log(`[AgentInitializer] Local agent ${agent.id} initialized successfully`)
 	} catch (error) {
@@ -186,18 +204,24 @@ async function updateAgentPublishStatus(agentId: string, isPublished: boolean, p
 			publishInfo,
 		})
 
+		// 🎯 关键修复：只更新必要的字段，让 updateAgent 自动处理 updatedAt
 		const result = (await vscode.commands.executeCommand("roo-cline.updateAgent", {
 			userId,
 			agentId,
 			updates: {
 				isPublished,
 				publishInfo,
-				updatedAt: new Date().toISOString(),
+				// updatedAt 会在 updateAgent 中自动设置为 Date.now()
 			},
 		})) as any
 
 		if (result.success) {
 			console.log(`[updateAgentPublishStatus] ✅ Agent ${agentId} publish status updated successfully`)
+			console.log(`[updateAgentPublishStatus] 🔍 Updated agent state:`, {
+				isPublished: result.agent?.isPublished,
+				hasPublishInfo: !!result.agent?.publishInfo,
+				publishInfo: result.agent?.publishInfo,
+			})
 		} else {
 			console.error(
 				`[updateAgentPublishStatus] ❌ Failed to update agent ${agentId} publish status:`,
@@ -235,36 +259,18 @@ async function registerAgentInRedis(agent: any, serverInfo: any): Promise<void> 
 			return
 		}
 
-		// 扩展智能体信息，加入服务注册相关字段
-		const serviceAgent = {
-			...agent,
-			// 服务发现信息
-			serviceEndpoint: serverInfo.url,
-			servicePort: serverInfo.port,
-			serviceStatus: "online",
-			publishedAt: new Date().toISOString(),
-			terminalType: "local",
-
-			// A2A服务信息
-			a2aCard: serverInfo.agentCard,
-			capabilities: serverInfo.agentCard?.capabilities,
-			deployment: serverInfo.agentCard?.deployment,
-
-			// 运行时状态
-			isPublished: true,
-			lastHeartbeat: Date.now(),
-		}
-
-		console.log(`[AgentInitializer] 📋 Agent data prepared for Redis:`, {
+		// 🎯 关键修复：不要在这里构造顶层字段，直接使用 agent.publishInfo
+		// syncAgentToRegistry 会自动从 publishInfo 提取到顶层字段
+		console.log(`[AgentInitializer] 📋 Agent data for Redis sync:`, {
 			agentId: agent.id,
-			serviceEndpoint: serviceAgent.serviceEndpoint,
-			servicePort: serviceAgent.servicePort,
-			serviceStatus: serviceAgent.serviceStatus,
-			hasA2ACard: !!serviceAgent.a2aCard,
+			isPublished: agent.isPublished,
+			publishInfo: agent.publishInfo,
+			hasA2ACard: !!serverInfo.agentCard,
 		})
 
 		// 🔥 立即同步到Redis（强制即时写入）
-		await redisAdapter.syncAgentToRegistry(serviceAgent)
+		// syncAgentToRegistry 会从 agent.publishInfo 提取所有服务信息
+		await redisAdapter.syncAgentToRegistry(agent)
 		console.log(`[AgentInitializer] ✅ Agent ${agent.id} synced to Redis`)
 
 		// 添加到在线智能体服务列表
@@ -2860,6 +2866,22 @@ export const webviewMessageHandler = async (
 					agentConfig: message.agentConfig,
 				})) as any
 
+				// 🎯 修复：创建智能体后同步到Redis（Redis是本地的完整镜像）
+				if (result.success && result.agent) {
+					console.log(`🔄 [createAgent] Syncing new agent ${result.agent.id} to Redis`)
+					try {
+						const { AgentRedisAdapter } = require("../agent/AgentRedisAdapter")
+						const redisAdapter = new AgentRedisAdapter()
+
+						// ✅ 无条件同步：即使未发布也同步到Redis
+						await redisAdapter.syncAgentToRegistry(result.agent)
+						console.log(`✅ [createAgent] Agent ${result.agent.id} synced to Redis`)
+					} catch (error) {
+						console.error(`❌ [createAgent] Failed to sync to Redis:`, error)
+						// 不抛出错误，不影响本地创建
+					}
+				}
+
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "createAgentResult",
@@ -2941,6 +2963,22 @@ export const webviewMessageHandler = async (
 					updates: message.agentConfig,
 				})) as any
 
+				// 🎯 修复：更新智能体后同步到Redis（无条件同步，Redis是本地的完整镜像）
+				if (result.success && result.agent) {
+					console.log(`🔄 [updateAgent] Syncing updated agent ${message.agentId} to Redis`)
+					try {
+						const { AgentRedisAdapter } = require("../agent/AgentRedisAdapter")
+						const redisAdapter = new AgentRedisAdapter()
+
+						// ✅ 无条件同步：Redis始终是本地状态的镜像
+						await redisAdapter.syncAgentToRegistry(result.agent)
+						console.log(`✅ [updateAgent] Agent ${message.agentId} synced to Redis (isPublished=${result.agent.isPublished})`)
+					} catch (error) {
+						console.error(`❌ [updateAgent] Failed to sync to Redis:`, error)
+						// 不抛出错误，不影响本地更新
+					}
+				}
+
 				await provider.postMessageToWebview({
 					type: "action",
 					action: "updateAgentResult",
@@ -2986,6 +3024,18 @@ export const webviewMessageHandler = async (
 					userId,
 					agentId: message.agentId,
 				})) as any
+
+				// 🎯 删除智能体时，同时从Redis移除注册信息
+				if (result.success) {
+					console.log(`🗑️ [deleteAgent] Removing agent ${message.agentId} from Redis`)
+					try {
+						await removeAgentFromRedis(message.agentId || "", userId)
+						console.log(`✅ [deleteAgent] Agent ${message.agentId} removed from Redis`)
+					} catch (error) {
+						console.error(`❌ [deleteAgent] Failed to remove agent from Redis:`, error)
+						// 不抛出错误，本地删除已成功
+					}
+				}
 
 				await provider.postMessageToWebview({
 					type: "action",
@@ -3089,7 +3139,70 @@ export const webviewMessageHandler = async (
 			break
 		}
 
-		case "stopAgent": {
+		case "startAgent": {
+		try {
+			const VoidBridge = require("../../api/void-bridge").VoidBridge
+			const userId = VoidBridge.getCurrentUserId() || "default"
+
+			// 🎯 启动智能体：使用已有的发布配置，直接启动A2A服务
+			console.log(`🚀 [startAgent] Starting agent ${message.agentId}`)
+
+			// 获取智能体当前配置
+			const agentResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
+				userId,
+				agentId: message.agentId,
+			})) as any
+
+			if (!agentResult.success || !agentResult.agent) {
+				throw new Error("智能体不存在")
+			}
+
+			const agent = agentResult.agent
+
+			// 检查是否已发布过
+			if (!agent.isPublished || !agent.publishInfo) {
+				throw new Error("智能体未发布，请先发布智能体")
+			}
+
+			console.log(`🎯 [startAgent] Agent ${message.agentId} found with publishInfo:`, agent.publishInfo)
+
+			// 使用历史配置启动（本地或云端）
+			const terminal = {
+				id: agent.publishInfo.terminalType === "cloud" ? "cloud-computer" : "local-computer",
+				name: agent.publishInfo.terminalType === "cloud" ? "云电脑" : "本地计算机",
+			}
+
+			// 🎯 直接启动A2A服务，使用首选端口
+			await initializeAgentOnTerminal(agent, terminal, provider, agent.publishInfo.serverPort)
+
+			// 获取更新后的智能体数据
+			const updatedResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
+				userId,
+				agentId: message.agentId,
+			})) as any
+
+			await provider.postMessageToWebview({
+				type: "action",
+				action: "startAgentResult",
+				success: true,
+				agentId: message.agentId,
+				updatedAgent: updatedResult.success ? updatedResult.agent : null,
+			})
+
+			vscode.window.showInformationMessage(`智能体 "${agent.name}" 已成功启动`)
+		} catch (error) {
+			provider.log(`Error starting agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+			await provider.postMessageToWebview({
+				type: "action",
+				action: "startAgentResult",
+				success: false,
+				error: error instanceof Error ? error.message : String(error),
+			})
+		}
+		break
+	}
+
+	case "stopAgent": {
 			try {
 				// 先显示确认对话框
 				const confirmed = await vscode.window.showWarningMessage(
@@ -3117,7 +3230,7 @@ export const webviewMessageHandler = async (
 				const serverManager = A2AServerManager.getInstance()
 				await serverManager.stopAgentServer(message.agentId)
 
-				// 🎯 UX优化：停止时保留发布信息，只更新运行状态
+				// 🎯 修复：停止时保持 isPublished=true，只更新 serviceStatus=offline
 				console.log(`🛑 [stopAgent] Starting stop process for agent ${message.agentId}`)
 
 				// 先获取当前智能体的发布信息
@@ -3129,24 +3242,55 @@ export const webviewMessageHandler = async (
 
 				console.log(`🛑 [stopAgent] Current agent result:`, currentAgentResult)
 
-				if (currentAgentResult.success && currentAgentResult.agent?.publishInfo) {
-					// 保留发布信息，只更新运行状态
-					console.log(
-						`🎯 [stopAgent] Preserving publishInfo, setting isPublished=false for agent ${message.agentId}`,
-					)
-					await updateAgentPublishStatus(message.agentId || "", false, currentAgentResult.agent.publishInfo)
-					console.log(
-						`🎯 [stopAgent] Preserved publishInfo for agent ${message.agentId}:`,
-						currentAgentResult.agent.publishInfo,
-					)
-				} else {
-					// 如果没有发布信息，则清除
-					console.log(`🛑 [stopAgent] No publishInfo found, clearing for agent ${message.agentId}`)
-					await updateAgentPublishStatus(message.agentId || "", false, null)
-				}
+				if (currentAgentResult.success && currentAgentResult.agent) {
+					const agent = currentAgentResult.agent
 
-				// 从Redis移除服务注册
-				await removeAgentFromRedis(message.agentId || "", userId)
+					// 🎯 关键修复：停止 = 保持 isPublished=true，只更新 serviceStatus=offline
+					const updatedPublishInfo = {
+						...(agent.publishInfo || {}),
+						serviceStatus: "offline" as const,
+						lastHeartbeat: Date.now(),
+					}
+
+					console.log(
+						`🎯 [stopAgent] Setting serviceStatus=offline while keeping isPublished=true for agent ${message.agentId}`,
+					)
+
+					await updateAgentPublishStatus(message.agentId || "", true, updatedPublishInfo)
+
+					console.log(
+						`🎯 [stopAgent] Updated agent state:`,
+						{ isPublished: true, serviceStatus: "offline", publishInfo: updatedPublishInfo }
+					)
+
+					// 🎯 修复：停止时只更新Redis在线状态，不删除注册信息
+					console.log(`🔄 [stopAgent] Updating Redis online status to offline for agent ${message.agentId}`)
+					try {
+						const { AgentRedisAdapter } = require("../agent/AgentRedisAdapter")
+						const redisAdapter = new AgentRedisAdapter()
+
+						// ✅ 只更新在线状态为false，保留注册信息
+						await redisAdapter.updateAgentOnlineStatus(message.agentId || "", false)
+						console.log(`✅ [stopAgent] Redis online status updated to offline`)
+
+						// ✅ 同时在Redis中更新智能体的完整数据（包括 serviceStatus）
+						// 需要获取更新后的智能体数据
+						const updatedResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
+							userId,
+							agentId: message.agentId,
+						})) as any
+
+						if (updatedResult.success && updatedResult.agent) {
+							await redisAdapter.syncAgentToRegistry(updatedResult.agent)
+							console.log(`✅ [stopAgent] Redis agent data synced with serviceStatus=offline`)
+						}
+					} catch (error) {
+						console.error(`❌ [stopAgent] Failed to update Redis status:`, error)
+						// 不抛出错误，不影响本地停止操作
+					}
+				} else {
+					console.error(`🛑 [stopAgent] Failed to get agent data for ${message.agentId}`)
+				}
 
 				await provider.postMessageToWebview({
 					type: "action",

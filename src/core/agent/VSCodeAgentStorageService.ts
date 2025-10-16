@@ -138,11 +138,19 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 				throw new Error(`Agent ${agentId} not found for user ${userId}`)
 			}
 
+			// 🎯 关键修复：使用深度合并策略，避免覆盖未传递的字段
 			const updated: AgentConfig = {
 				...existing,
 				...updates,
-				id: agentId, // 确保ID不被覆盖
-				userId, // 确保用户ID不被覆盖
+				// 特殊处理嵌套对象：publishInfo
+				publishInfo: updates.publishInfo !== undefined
+					? (updates.publishInfo === null
+						? null
+						: { ...existing.publishInfo, ...updates.publishInfo })
+					: existing.publishInfo,
+				// 确保关键字段不被覆盖
+				id: agentId,
+				userId,
 				updatedAt: Date.now(),
 			}
 
@@ -150,12 +158,6 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 			await this.setUserAgents(userId, agents)
 
 			logger.info(`[VSCodeAgentStorageService] Updated agent ${agentId} for user ${userId}`)
-			logger.info(
-				`[VSCodeAgentStorageService] 🔍 welcomeMessage in updates: ${updates.welcomeMessage || "NOT IN UPDATES"}`,
-			)
-			logger.info(
-				`[VSCodeAgentStorageService] 🔍 welcomeMessage after merge: ${updated.welcomeMessage || "NOT IN MERGED"}`,
-			)
 			return updated
 		} catch (error) {
 			logger.error(`[VSCodeAgentStorageService] Failed to update agent ${agentId}:`, error)

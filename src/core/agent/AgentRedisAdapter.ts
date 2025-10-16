@@ -28,45 +28,43 @@ export class AgentRedisAdapter {
 
 			const key = `roo:${agent.userId}:agents:${agent.id}`
 
-			// 保存完整的智能体信息，包括服务注册相关字段
-			const agentData = {
-				// 基础智能体信息
-				id: agent.id,
-				userId: agent.userId,
-				name: agent.name,
-				avatar: agent.avatar,
-				roleDescription: agent.roleDescription,
-				apiConfigId: agent.apiConfigId,
-				apiConfig: agent.apiConfig, // 保存完整的API配置
-				mode: agent.mode,
-				tools: agent.tools,
-				isPrivate: agent.isPrivate ?? true,
-				shareScope: agent.shareScope || "none",
-				shareLevel: agent.shareLevel || 0,
-				permissions: agent.permissions || [],
-				allowedUsers: agent.allowedUsers || [],
-				allowedGroups: agent.allowedGroups || [],
-				deniedUsers: agent.deniedUsers || [],
-				createdAt: agent.createdAt,
-				updatedAt: agent.updatedAt,
-				lastUsedAt: agent.lastUsedAt,
-				isActive: agent.isActive ?? true,
-				version: agent.version || 1,
+			// 🎯 从 publishInfo 提取服务信息，映射到Redis顶层字段
+			const publishInfo = agent.publishInfo || {}
 
-				// 服务注册相关字段（如果存在）
-				...(agent.serviceEndpoint && {
-					serviceEndpoint: agent.serviceEndpoint,
-					servicePort: agent.servicePort,
-					serviceStatus: agent.serviceStatus,
-					publishedAt: agent.publishedAt,
-					terminalType: agent.terminalType,
-					a2aCard: agent.a2aCard,
-					capabilities: agent.capabilities,
-					deployment: agent.deployment,
-					isPublished: agent.isPublished,
-					lastHeartbeat: agent.lastHeartbeat,
-				}),
+			// 🎯 关键修复：先展开所有字段，确保不遗漏任何字段（如 welcomeMessage）
+			// 注意：undefined 字段在 JSON 序列化时会被忽略，需要显式处理
+			const agentData: any = {}
+
+			// 复制所有字段（包括undefined的字段也要保留）
+			Object.keys(agent).forEach((key) => {
+				agentData[key] = (agent as any)[key]
+			})
+
+			// 🎯 特殊处理：发布信息字段需要从 publishInfo 提取到顶层
+			if (agent.isPublished && publishInfo) {
+				agentData.serviceEndpoint = publishInfo.serverUrl
+				agentData.servicePort = publishInfo.serverPort
+				agentData.serviceStatus = publishInfo.serviceStatus || "offline"
+				agentData.publishedAt = publishInfo.publishedAt
+				agentData.terminalType = publishInfo.terminalType
+				agentData.lastHeartbeat = publishInfo.lastHeartbeat
+
+				// 确保默认值
+				agentData.capabilities = agent.capabilities || {
+					messageTypes: ["text", "json"],
+					taskTypes: ["execute", "query"],
+					dataFormats: ["text", "json"],
+					maxConcurrency: 5,
+				}
+				agentData.deployment = agent.deployment || {
+					type: "pc",
+					endpointType: "network_reachable",
+					directUrl: publishInfo.serverUrl,
+				}
 			}
+
+			// 同步信息日志
+			logger.info(`[AgentRedisAdapter] Syncing agent ${agent.id} to Redis (isPublished=${agent.isPublished}, serviceStatus=${agentData.serviceStatus})`)
 
 			// 立即写入Redis，确保智能体注册信息第一时间生效
 			await this.redisService.set(key, agentData, true)
@@ -81,7 +79,7 @@ export class AgentRedisAdapter {
 				}
 			}
 
-			logger.info(`[AgentRedisAdapter] ✅ Successfully synced agent ${agent.id} to Redis`)
+			logger.info(`[AgentRedisAdapter] Successfully synced agent ${agent.id} to Redis`)
 		} catch (error) {
 			logger.error(`[AgentRedisAdapter] ❌ Failed to sync agent ${agent.id}:`, error)
 			throw error
@@ -142,7 +140,27 @@ export class AgentRedisAdapter {
 				return null
 			}
 
-			return data as AgentConfig
+			// 🎯 关键修复：将Redis扁平结构转换回本地嵌套结构
+			// Redis存储：serviceStatus, servicePort 等在顶层
+			// 本地存储：这些字段应该在 publishInfo 中
+			const agent: AgentConfig = {
+				...data,
+				// 如果有发布信息，将顶层字段移到 publishInfo
+				...(data.isPublished && {
+					publishInfo: {
+						serviceStatus: data.serviceStatus,
+						serverPort: data.servicePort,
+						serverUrl: data.serviceEndpoint,
+						terminalType: data.terminalType,
+						publishedAt: data.publishedAt,
+						lastHeartbeat: data.lastHeartbeat,
+					},
+				}),
+			}
+
+			logger.debug(`[AgentRedisAdapter] Converted Redis data to local format for agent ${agentId}`)
+
+			return agent as AgentConfig
 		} catch (error) {
 			logger.error(`[AgentRedisAdapter] Failed to get agent ${agentId}:`, error)
 			return null

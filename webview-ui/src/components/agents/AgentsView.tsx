@@ -399,6 +399,36 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 						}
 						break
 
+					case "startAgentResult":
+						setLoading(false)
+						if (message.success) {
+							// 智能体启动成功
+							console.log("🚀 [AgentsView] Agent started successfully:", message.agentId)
+
+							// 🎯 如果返回了更新后的智能体数据，直接更新状态
+							if (message.updatedAgent) {
+								console.log("🔄 [AgentsView] Updating state with fresh agent data after start")
+								setCustomAgents((prevAgents) => {
+									return prevAgents.map((agent) => {
+										if (agent.id === message.updatedAgent.id) {
+											return {
+												...agent,
+												isPublished: message.updatedAgent.isPublished,
+												publishInfo: message.updatedAgent.publishInfo,
+											}
+										}
+										return agent
+									})
+								})
+							} else {
+								// 重新加载智能体列表
+								loadAgents()
+							}
+						} else {
+							console.error("❌ [AgentsView] Failed to start agent:", message.error)
+						}
+						break
+
 					case "stopAgentResult":
 						setLoading(false)
 						if (message.success) {
@@ -542,13 +572,11 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 
 		setLoading(true)
 
-		// 直接发布到本地计算机，不需要显示终端选择对话框
+		// 🎯 修复：使用 startAgent 命令而不是 publishAgent
 		vscode.postMessage({
-			type: "publishAgent",
+			type: "startAgent",
 			agentId: agent.id,
 			agentName: agent.name,
-			terminal: { id: "local-computer", name: "本地计算机" }, // 使用默认终端
-			preferredPort: agentData.publishInfo?.serverPort, // 🎯 传递首选端口
 		})
 	}, [])
 
