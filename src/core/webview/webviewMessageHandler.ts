@@ -3183,7 +3183,7 @@ export const webviewMessageHandler = async (
 
 			await provider.postMessageToWebview({
 				type: "action",
-				action: "startAgentResult",
+				action: "startAgentTaskResult",
 				success: true,
 				agentId: message.agentId,
 				updatedAgent: updatedResult.success ? updatedResult.agent : null,
@@ -3194,7 +3194,7 @@ export const webviewMessageHandler = async (
 			provider.log(`Error starting agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
 			await provider.postMessageToWebview({
 				type: "action",
-				action: "startAgentResult",
+				action: "startAgentTaskResult",
 				success: false,
 				error: error instanceof Error ? error.message : String(error),
 			})

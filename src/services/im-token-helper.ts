@@ -52,15 +52,7 @@ export class IMTokenHelper {
      * 监听IM登录事件
      */
     setupLoginListener(): void {
-        // 监听来自WebView的登录事件
-        const listener = (event: any) => {
-            if (event.detail?.accessToken) {
-                console.log('[IMTokenHelper] Received login event with token');
-                this.setAccessToken(event.detail.accessToken);
-            }
-        };
-        
-        // 这里需要通过某种方式监听WebView事件
-        // 可能需要在ClineProvider中转发
+        // 监听来自WebView的登录事件 - 已废弃，现在每次都通过 skToken 重新登录
+        // 不再需要手动设置 token
     }
 }

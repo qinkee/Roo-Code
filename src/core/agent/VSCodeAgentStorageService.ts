@@ -145,7 +145,7 @@ export class VSCodeAgentStorageService implements AgentStorageService {
 				// 特殊处理嵌套对象：publishInfo
 				publishInfo: updates.publishInfo !== undefined
 					? (updates.publishInfo === null
-						? null
+						? undefined
 						: { ...existing.publishInfo, ...updates.publishInfo })
 					: existing.publishInfo,
 				// 确保关键字段不被覆盖
