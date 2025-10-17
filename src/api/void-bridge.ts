@@ -186,9 +186,65 @@ export class VoidBridge {
 						hasSkToken: !!data.skToken,
 					})
 
-					// Save previous user's data if exists
+					// === 🔥 切换前清理旧用户资源 ===
 					const previousUserId = VoidBridge.currentUserId
 					if (previousUserId) {
+						// 1. 停止所有运行中的智能体
+						try {
+							const { A2AServerManager } = require("../core/agent/A2AServerManager")
+							const serverManager = A2AServerManager.getInstance()
+							const runningAgents = serverManager.getRunningServers()
+
+							if (runningAgents.length > 0) {
+								// 获取智能体名称用于通知
+								const agentNames: string[] = []
+								for (const agentId of runningAgents) {
+									try {
+										const config = await serverManager.getAgentConfig(agentId)
+										if (config) {
+											agentNames.push(config.name || agentId)
+										}
+									} catch (err) {
+										agentNames.push(agentId)
+									}
+								}
+
+								console.log(
+									`[VoidBridge] 用户切换：发现 ${runningAgents.length} 个运行中的智能体，准备停止`,
+								)
+
+								// 停止所有运行中的智能体
+								await serverManager.stopAllServers()
+								console.log(`[VoidBridge] ✅ 已停止所有运行中的智能体`)
+							}
+						} catch (error) {
+							console.error("[VoidBridge] ❌ 停止智能体失败:", error)
+							// 错误不阻塞切换流程
+						}
+
+						// 2. 断开IM WebSocket连接（阻止自动重连）
+						try {
+							const llmService = (global as any).llmStreamService
+							console.log(`[VoidBridge] 检查 IM 服务:`, {
+								hasLlmService: !!llmService,
+								hasImConnection: !!llmService?.imConnection,
+								isConnected: llmService?.imConnection?.isConnected,
+							})
+
+							if (llmService?.imConnection) {
+								console.log(`[VoidBridge] 断开 IM WebSocket 连接（阻止重连）...`)
+								llmService.imConnection.disconnect(true) // 传入 true 阻止自动重连
+								llmService.resetConnectionState() // 重置连接状态，允许下次重新连接
+								console.log(`[VoidBridge] ✅ IM WebSocket 已断开，已阻止自动重连`)
+							} else {
+								console.log(`[VoidBridge] ℹ️ IM WebSocket 未初始化或已断开`)
+							}
+						} catch (error) {
+							console.error("[VoidBridge] ❌ 断开IM连接失败:", error)
+							// 错误不阻塞切换流程
+						}
+
+						// === 保存旧用户数据 ===
 						// Save current IM contacts to user-specific key
 						const currentContacts = context.globalState.get("imContacts")
 						if (currentContacts) {
@@ -421,6 +477,62 @@ export class VoidBridge {
 						await VoidBridge.provider.postStateToWebview()
 					}
 
+					// === 🔥 为新用户重新建立连接和启动智能体 ===
+					try {
+						// 1. 设置新用户的 TokenKey 并重新连接IM WebSocket
+						if (data.skToken) {
+							console.log(`[VoidBridge] 为新用户 ${data.userId} 设置 TokenKey...`)
+
+							// 设置新用户的 ImPlatformTokenKey
+							const { ImPlatformTokenManager } = require("../services/im-platform/ImPlatformTokenManager")
+							const tokenManager = ImPlatformTokenManager.getInstance()
+							await tokenManager.setTokenKey(data.skToken, true) // skipRestart=true，避免重启MCP
+							console.log(`[VoidBridge] ✅ TokenKey 已设置`)
+
+							// 重新连接IM WebSocket
+							const llmService = (global as any).llmStreamService
+							if (llmService) {
+								console.log(`[VoidBridge] 为新用户 ${data.userId} 重新建立 IM WebSocket 连接...`)
+								try {
+									// 如果LLMStreamService已经注册了处理器，可以初始化
+									if (llmService.handlersRegistered) {
+										await llmService.initialize()
+										console.log(`[VoidBridge] ✅ IM WebSocket 已连接`)
+									} else {
+										console.log(`[VoidBridge] ℹ️ IM处理器未注册，跳过自动连接`)
+									}
+								} catch (error) {
+									console.error(`[VoidBridge] ⚠️ IM连接失败（非关键错误）:`, error)
+								}
+							}
+						} else {
+							console.log(`[VoidBridge] ℹ️ 无 skToken，跳过 IM 连接`)
+						}
+
+						// 2. 自动启动新用户的已发布智能体
+						const { A2AServerManager } = require("../core/agent/A2AServerManager")
+						const serverManager = A2AServerManager.getInstance()
+						console.log(`[VoidBridge] 为新用户 ${data.userId} 自动启动已发布的智能体...`)
+
+						// 使用非阻塞方式启动（不等待完成）
+						serverManager
+							.startAllPublishedAgents()
+							.then((result: any) => {
+								console.log(
+									`[VoidBridge] ✅ 智能体自动启动完成: ${result.started}/${result.total} 个成功启动`,
+								)
+								if (result.errors.length > 0) {
+									console.warn(`[VoidBridge] ⚠️ ${result.errors.length} 个智能体启动失败`)
+								}
+							})
+							.catch((error: any) => {
+								console.error(`[VoidBridge] ❌ 智能体自动启动失败:`, error)
+							})
+					} catch (error) {
+						console.error("[VoidBridge] ❌ 新用户连接初始化失败:", error)
+						// 错误不阻塞切换流程
+					}
+
 					// 通知 void 任务历史已更新（基于新用户）
 					const taskHistory = await TaskHistoryBridge.getTaskHistory(context)
 					// Filter out agent tasks - only sync user tasks to void
@@ -475,17 +587,89 @@ export class VoidBridge {
 		context.subscriptions.push(onUserSwitchCommand)
 
 		// Command for void to notify user logout
+		console.log("[VoidBridge] Registering roo-cline.onUserLogout command")
 		const onUserLogoutCommand = vscode.commands.registerCommand(
 			"roo-cline.onUserLogout",
 			async (data: { userId?: string; isLoggedOut: boolean }) => {
 				try {
+					console.log("[VoidBridge] ===== USER LOGOUT STARTED =====")
 					console.log("[VoidBridge] User logout detected:", {
 						userId: data.userId,
 						isLoggedOut: data.isLoggedOut,
 					})
+					console.log("[VoidBridge] Current user before logout:", VoidBridge.currentUserId)
 
-					// Clear local tracking
+					// === 🔥 用户登出前的资源清理 ===
 					const previousUserId = VoidBridge.currentUserId
+
+					// 1. 停止所有运行中的智能体
+					try {
+						const { A2AServerManager } = require("../core/agent/A2AServerManager")
+						const serverManager = A2AServerManager.getInstance()
+						const runningAgents = serverManager.getRunningServers()
+
+						if (runningAgents.length > 0) {
+							// 获取智能体名称用于通知
+							const agentNames: string[] = []
+							for (const agentId of runningAgents) {
+								try {
+									const config = await serverManager.getAgentConfig(agentId)
+									if (config) {
+										agentNames.push(config.name || agentId)
+									}
+								} catch (err) {
+									agentNames.push(agentId)
+								}
+							}
+
+							console.log(
+								`[VoidBridge] 用户登出：发现 ${runningAgents.length} 个运行中的智能体，准备停止`,
+							)
+
+							// 停止所有运行中的智能体
+							await serverManager.stopAllServers()
+							console.log(`[VoidBridge] ✅ 已停止所有运行中的智能体`)
+						}
+					} catch (error) {
+						console.error("[VoidBridge] ❌ 停止智能体失败:", error)
+						// 错误不阻塞登出流程
+					}
+
+					// 2. 清除 TokenKey
+					try {
+						const { ImPlatformTokenManager } = require("../services/im-platform/ImPlatformTokenManager")
+						const tokenManager = ImPlatformTokenManager.getInstance()
+						console.log(`[VoidBridge] 清除用户 TokenKey...`)
+						await tokenManager.clearTokenKey()
+						console.log(`[VoidBridge] ✅ TokenKey 已清除`)
+					} catch (error) {
+						console.error("[VoidBridge] ❌ 清除 TokenKey 失败:", error)
+						// 错误不阻塞登出流程
+					}
+
+					// 3. 断开IM WebSocket连接（阻止自动重连）
+					try {
+						const llmService = (global as any).llmStreamService
+						console.log(`[VoidBridge] 检查 IM 服务:`, {
+							hasLlmService: !!llmService,
+							hasImConnection: !!llmService?.imConnection,
+							isConnected: llmService?.imConnection?.isConnected,
+						})
+
+						if (llmService?.imConnection) {
+							console.log(`[VoidBridge] 断开 IM WebSocket 连接（阻止重连）...`)
+							llmService.imConnection.disconnect(true) // 传入 true 阻止自动重连
+							llmService.resetConnectionState() // 重置连接状态
+							console.log(`[VoidBridge] ✅ IM WebSocket 已断开，已阻止自动重连`)
+						} else {
+							console.log(`[VoidBridge] ℹ️ IM WebSocket 未初始化或已断开`)
+						}
+					} catch (error) {
+						console.error("[VoidBridge] ❌ 断开IM连接失败:", error)
+						// 错误不阻塞登出流程
+					}
+
+					// === 清除用户状态 ===
 					VoidBridge.currentUserId = undefined
 					VoidBridge.currentTerminalNo = undefined
 					TaskHistoryBridge.setCurrentUserId(undefined)

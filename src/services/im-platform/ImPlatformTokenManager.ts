@@ -48,9 +48,9 @@ export class ImPlatformTokenManager {
 			if (!skipRestart && this.mcpHub) {
 				await this.restartImPlatformConnection()
 			}
-			
-			// 如果设置了tokenKey，尝试初始化IM WebSocket连接
-			if (tokenKey && (global as any).llmStreamService) {
+
+			// 如果设置了tokenKey且不跳过重启，尝试初始化IM WebSocket连接
+			if (!skipRestart && tokenKey && (global as any).llmStreamService) {
 				console.log("[IM Platform Token] TokenKey set, initializing IM WebSocket connection...")
 				const llmService = (global as any).llmStreamService
 				if (!llmService.isConnected()) {

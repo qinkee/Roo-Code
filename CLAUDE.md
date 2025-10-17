@@ -83,3 +83,32 @@ await this.postStateToWebview()
 - **配置项**: `PREVENT_FOCUS_DISRUPTION: { enabled: true }`
 - **作用**: 新建文件时跳过VSCode diff编辑器，直接在目标文件位置创建和保存
 - **好处**: 避免打断工作流程，减少UI切换干扰
+
+
+# 用户系统流程
+
+  用户登录/切换流程（onUserSwitch）
+
+  1. 清理旧用户资源
+    - 停止所有运行中的智能体
+    - 断开 IM WebSocket 连接（阻止自动重连）
+    - 保存旧用户数据
+  2. 设置新用户信息
+    - 更新 currentUserId、currentTerminalNo、currentSkToken
+    - 恢复新用户的数据
+  3. 🆕 为新用户设置 Token 并建立连接
+    - 设置 ImPlatformTokenKey：tokenManager.setTokenKey(data.skToken, true)
+    - 重新连接 IM WebSocket：llmService.initialize()
+    - 自动启动已发布的智能体
+
+  用户登出流程（onUserLogout）
+
+  1. 停止所有运行中的智能体
+  2. 清除所有 Token
+    - 清除 ImPlatformTokenKey
+    - 清除 rooCodeAccessToken
+  3. 断开 IM WebSocket 连接（阻止自动重连）
+  4. 清除用户状态
+
+  这样在用户登录时会先设置好 TokenKey，然后 IMAuthService.getAccessToken() 就能正确获取到 token 并发起连接了。
+

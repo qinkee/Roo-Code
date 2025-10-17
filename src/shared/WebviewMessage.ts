@@ -237,6 +237,7 @@ export interface WebviewMessage {
 		| "updateAgentTodo"
 		| "deleteAgentTodo"
 		| "publishAgent"
+		| "startAgent"
 		| "stopAgent"
 		| "checkAgentHealth"
 		| "getCurrentA2AMode"

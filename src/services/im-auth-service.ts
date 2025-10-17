@@ -117,35 +117,11 @@ export class IMAuthService {
 	}
 
 	/**
-	 * 获取accessToken（如果没有则自动登录）
+	 * 获取accessToken - 每次都通过 skToken 重新登录，不使用缓存
 	 */
 	async getAccessToken(): Promise<string> {
-		// 如果已有token，直接返回
-		if (this.accessToken) {
-			// 检查token是否即将过期（预留5分钟缓冲）
-			if (this.isTokenExpiringSoon()) {
-				this.outputChannel.appendLine("[IMAuth] Token is expiring soon, refreshing...")
-				await this.clearToken()
-				return await this.login()
-			}
-			return this.accessToken
-		}
-
-		// 尝试从存储中恢复
-		const storedToken = await this.context.globalState.get<string>("rooCodeAccessToken")
-		if (storedToken) {
-			this.accessToken = storedToken
-			// 检查恢复的token是否过期
-			if (this.isTokenExpiringSoon()) {
-				this.outputChannel.appendLine("[IMAuth] Stored token is expired, getting new one...")
-				await this.clearToken()
-				return await this.login()
-			}
-			this.outputChannel.appendLine("[IMAuth] Restored access token from storage")
-			return storedToken
-		}
-
-		// 执行登录
+		this.outputChannel.appendLine(`[IMAuth] Getting access token, will always login with current skToken`)
+		// 直接执行登录，不使用任何缓存
 		return await this.login()
 	}
 

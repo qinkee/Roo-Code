@@ -6,16 +6,15 @@ import { IMAuthService } from './im-auth-service';
  */
 export class IMTokenHelper {
     private static instance: IMTokenHelper;
-    private token: string | null = null;
     private authService: IMAuthService;
-    
+
     private constructor(
         private context: vscode.ExtensionContext,
         private outputChannel: vscode.OutputChannel
     ) {
         this.authService = IMAuthService.getInstance(context, outputChannel);
     }
-    
+
     static getInstance(context: vscode.ExtensionContext, outputChannel?: vscode.OutputChannel): IMTokenHelper {
         if (!IMTokenHelper.instance) {
             const channel = outputChannel || vscode.window.createOutputChannel('Roo-Code IM');
@@ -23,17 +22,16 @@ export class IMTokenHelper {
         }
         return IMTokenHelper.instance;
     }
-    
+
     /**
-     * 获取IM访问令牌 - 使用独立登录获取terminal=6的token
+     * 获取IM访问令牌 - 直接委托给IMAuthService，不做任何缓存
      */
     async getAccessToken(): Promise<string> {
         this.outputChannel.appendLine('[IMTokenHelper] Getting access token for terminal=6...');
-        
+
         try {
-            // 通过IMAuthService获取独立的accessToken
+            // 直接使用IMAuthService获取token，不做额外缓存
             const token = await this.authService.getAccessToken();
-            this.token = token;
             this.outputChannel.appendLine('[IMTokenHelper] Got independent access token for terminal=6');
             return token;
         } catch (error) {
@@ -41,25 +39,13 @@ export class IMTokenHelper {
             throw error;
         }
     }
-    
+
     /**
-     * 设置访问令牌
-     */
-    async setAccessToken(token: string): Promise<void> {
-        this.token = token;
-        await this.context.globalState.update('imAccessToken', token);
-        await this.context.workspaceState.update('imAccessToken', token);
-        console.log('[IMTokenHelper] Token saved');
-    }
-    
-    /**
-     * 清除访问令牌
+     * 清除访问令牌 - 直接委托给IMAuthService
      */
     async clearAccessToken(): Promise<void> {
-        this.token = null;
-        await this.context.globalState.update('imAccessToken', undefined);
-        await this.context.workspaceState.update('imAccessToken', undefined);
-        console.log('[IMTokenHelper] Token cleared');
+        await this.authService.clearToken();
+        this.outputChannel.appendLine('[IMTokenHelper] Token cleared');
     }
     
     /**

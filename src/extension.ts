@@ -374,12 +374,18 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 延迟初始化：检查tokenKey是否已设置
 	setTimeout(async () => {
 		const tokenManager = ImPlatformTokenManager.getInstance()
+		outputChannel.appendLine(`[LLM] 🔍 Checking token... hasTokenKey: ${tokenManager.hasTokenKey()}`)
+
 		if (tokenManager.hasTokenKey()) {
 			try {
+				outputChannel.appendLine(`[LLM] 🚀 Starting IM connection...`)
 				await llmService.initialize()
+				outputChannel.appendLine(`[LLM] ✅ IM connection established successfully`)
 			} catch (error) {
 				outputChannel.appendLine(`[LLM] ❌ Init failed: ${error}`)
 			}
+		} else {
+			outputChannel.appendLine(`[LLM] ℹ️ No token found, skipping IM connection`)
 		}
 	}, 2000)
 
@@ -850,6 +856,34 @@ export async function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated.
 export async function deactivate() {
 	outputChannel.appendLine(`${Package.name} extension deactivated`)
+
+	// === 🔥 扩展退出前的资源清理 ===
+	try {
+		// 1. 停止所有运行中的智能体
+		const { A2AServerManager } = await import("./core/agent/A2AServerManager")
+		const serverManager = A2AServerManager.getInstance()
+		const runningAgents = serverManager.getRunningServers()
+
+		if (runningAgents.length > 0) {
+			outputChannel.appendLine(`[Extension] Stopping ${runningAgents.length} running agents...`)
+			await serverManager.stopAllServers()
+			outputChannel.appendLine(`[Extension] ✅ All agents stopped`)
+		}
+	} catch (error) {
+		outputChannel.appendLine(`[Extension] ⚠️ Failed to stop agents: ${error}`)
+	}
+
+	try {
+		// 2. 断开IM WebSocket连接（阻止自动重连）
+		const llmService = (global as any).llmStreamService
+		if (llmService?.imConnection) {
+			outputChannel.appendLine(`[Extension] Disconnecting IM WebSocket...`)
+			llmService.imConnection.disconnect(true) // 传入 true 阻止自动重连
+			outputChannel.appendLine(`[Extension] ✅ IM WebSocket disconnected`)
+		}
+	} catch (error) {
+		outputChannel.appendLine(`[Extension] ⚠️ Failed to disconnect IM: ${error}`)
+	}
 
 	// Cleanup Redis connection
 	const redisSync = RedisSyncService.getInstance()

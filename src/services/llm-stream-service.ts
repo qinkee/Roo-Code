@@ -5,13 +5,22 @@ export class LLMStreamService {
     public imConnection: RooCodeIMConnection;
     private isInitialized: boolean = false;
     private initializePromise: Promise<void> | null = null;
-    private handlersRegistered: boolean = false;
+    public handlersRegistered: boolean = false;
 
     constructor(
         private context: vscode.ExtensionContext,
         private outputChannel: vscode.OutputChannel
     ) {
         this.imConnection = new RooCodeIMConnection(context, outputChannel);
+    }
+
+    /**
+     * 重置连接状态（用户登出/切换时调用）
+     */
+    public resetConnectionState(): void {
+        this.isInitialized = false;
+        this.initializePromise = null;
+        this.outputChannel.appendLine('[LLMStreamService] Connection state reset');
     }
 
     /**
@@ -51,7 +60,12 @@ export class LLMStreamService {
             await this.imConnection.connect();
             this.isInitialized = true;
         } catch (error) {
-            this.outputChannel.appendLine(`[LLMStreamService] ❌ Init failed: ${error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorStack = error instanceof Error ? error.stack : '';
+            this.outputChannel.appendLine(`[LLMStreamService] ❌ Init failed: ${errorMessage}`);
+            if (errorStack) {
+                this.outputChannel.appendLine(`[LLMStreamService] Stack: ${errorStack}`);
+            }
             this.initializePromise = null;
             throw error;
         }

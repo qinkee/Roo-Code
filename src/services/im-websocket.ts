@@ -354,20 +354,42 @@ export class RooCodeIMConnection {
 
 	/**
 	 * 断开连接
+	 * @param preventReconnect 是否阻止自动重连（用户登出时应设为true）
 	 */
-	public disconnect(): void {
+	public disconnect(preventReconnect: boolean = false): void {
+		// 如果已经断开，静默返回
+		if (!this.isConnected && !this.ws && !this.reconnectTimer) {
+			return
+		}
+
+		this.outputChannel.appendLine(`[RooCode IM] 🔌 Disconnecting... Current state: isConnected=${this.isConnected}, hasWS=${!!this.ws}, preventReconnect=${preventReconnect}`)
+
+		// 清除重连计时器
 		if (this.reconnectTimer) {
 			clearTimeout(this.reconnectTimer)
 			this.reconnectTimer = null
+			this.outputChannel.appendLine(`[RooCode IM] ⏹️ Cleared reconnect timer`)
 		}
 
+		// 停止心跳
 		this.stopHeartbeat()
+		this.outputChannel.appendLine(`[RooCode IM] 💓 Stopped heartbeat`)
 
+		// 关闭WebSocket连接
 		if (this.ws) {
+			// 如果需要阻止重连，移除onclose事件处理器以避免触发自动重连
+			if (preventReconnect) {
+				this.ws.onclose = null
+				this.outputChannel.appendLine(`[RooCode IM] 🚫 Disabled auto-reconnect`)
+			}
 			this.ws.close()
 			this.ws = null
+			this.outputChannel.appendLine(`[RooCode IM] ✅ WebSocket closed`)
+		} else {
+			this.outputChannel.appendLine(`[RooCode IM] ℹ️ No WebSocket to close`)
 		}
 
 		this.isConnected = false
+		this.outputChannel.appendLine(`[RooCode IM] ✅ Disconnect completed`)
 	}
 }
