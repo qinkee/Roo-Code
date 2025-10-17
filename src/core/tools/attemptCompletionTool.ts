@@ -95,23 +95,31 @@ export async function attemptCompletionTool(
 			TelemetryService.instance.captureTaskCompleted(cline.taskId)
 			cline.emit(RooCodeEventName.TaskCompleted, cline.taskId, cline.getTokenUsage(), cline.toolUsage)
 
+			// 🔥 子任务完成：调用 finishSubTask 返回结果给父任务（优先级高于智能体任务检查）
 			if (cline.parentTask) {
-				const didApprove = await askFinishSubTaskApproval()
+				// 智能体子任务：自动批准，直接完成
+				if (cline.agentTaskContext) {
+					await cline.providerRef.deref()?.finishSubTask(result)
+					return
+				}
 
+				// 用户子任务：需要用户批准
+				const didApprove = await askFinishSubTaskApproval()
 				if (!didApprove) {
 					return
 				}
 
-				// tell the provider to remove the current subtask and resume the previous task in the stack
 				await cline.providerRef.deref()?.finishSubTask(result)
 				return
 			}
 
-			// 智能体任务完成后直接返回，不需要等待用户响应
-			// Agent tasks finish directly without waiting for user response
+			// 🔥 智能体根任务完成：后台任务不等待用户响应，自动结束循环
+			// Agent root task finish: set flag to end loop without waiting for user response
 			if (cline.agentTaskContext) {
-				// 设置标志让循环结束，不推送 tool result
+				// 设置循环结束标志，让 recursivelyMakeClineRequests 返回 true 结束循环
 				cline.shouldEndLoop = true
+				// 推送空的 tool result，确保会话历史完整记录工具使用（避免模型重复调用）
+				pushToolResult("")
 				return
 			}
 

@@ -118,7 +118,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		soundVolume,
 		cloudIsAuthenticated,
 		cwd,
-		agentA2AMode,
+		agentA2AMode: _agentA2AMode,
 		viewingAgentTask, // Flag to indicate viewing agent task in read-only mode
 		waitingForAgentInput, // Flag to indicate waiting for user input after agent started
 	} = useExtensionState()

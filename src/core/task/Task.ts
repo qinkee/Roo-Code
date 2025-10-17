@@ -2594,6 +2594,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 				await pWaitFor(() => this.userMessageContentReady)
 
+				// 🔥 智能体任务完成检查：在递归调用之前检查，避免发起新的 API 请求
+				// 关键时机：此时工具已执行完成，userMessageContentReady 已触发
+				// 如果 attemptCompletionTool 设置了 shouldEndLoop=true，这里必须立即返回
+				// 否则递归调用会发起新的 API 请求，导致模型重复调用 attempt_completion
+				if (this.shouldEndLoop) {
+					return true
+				}
+
 				// If the model did not tool use, then we need to tell it to
 				// either use a tool or attempt_completion.
 				const didToolUse = this.assistantMessageContent.some((block) => block.type === "tool_use")
@@ -2620,10 +2628,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				})
 			}
 
-			// 🔥 智能体任务完成后返回 true 结束循环
-			if (this.shouldEndLoop) {
-				return true
-			}
 			return didEndLoop // Will always be false for now.
 		} catch (error) {
 			// This should never happen since the only thing that can throw an

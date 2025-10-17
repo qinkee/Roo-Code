@@ -107,9 +107,27 @@ export class ClineProvider
 	private disposables: vscode.Disposable[] = []
 	private webviewDisposables: vscode.Disposable[] = []
 	private view?: vscode.WebviewView | vscode.WebviewPanel
-	private clineStack: Task[] = [] // 🔥 用户任务栈（单栈执行）
-	// 🔥 智能体任务池（支持并行执行）
-	private agentTaskPool: Map<string, Task> = new Map()
+	/*
+	 * 🔥 任务管理架构说明：
+	 *
+	 * 1. 用户任务（UI触发）：使用单一LIFO栈 clineStack
+	 *    - 串行执行，一次只能有一个活跃任务
+	 *    - 支持子任务嵌套（通过栈的push/pop实现）
+	 *
+	 * 2. 智能体任务（IM/A2A触发）：使用任务池 agentTaskPool
+	 *    - 并行执行，每个根任务独立运行
+	 *    - 结构：Map<rootTaskId, Task[]>，每个根任务维护自己的LIFO栈
+	 *    - 支持任意深度的子任务嵌套
+	 *    - 后台静默执行，不影响用户任务
+	 *
+	 * 3. 关键流程：
+	 *    - addClineToStack: 根据 agentTaskContext 判断任务类型，分发到对应栈
+	 *    - finishSubTask: 检测任务类型，调用对应的完成逻辑
+	 *    - finishAgentSubTask: LIFO弹出子任务，自动恢复父任务
+	 *    - cleanupAgentTask: 保存历史消息，清理栈资源
+	 */
+	private clineStack: Task[] = [] // 用户任务栈（单栈执行）
+	private agentTaskPool: Map<string, Task[]> = new Map() // 智能体任务池（并行执行，每个根任务一个栈）
 	// 🔥 追踪每个消息的上次发送位置（用于增量发送）
 	// Key: `${taskId}_${messageTimestamp}`, Value: lastSentLength
 	private lastSentPositions: Map<string, number> = new Map()
@@ -198,12 +216,21 @@ export class ClineProvider
 		this.taskCreationCallback = (instance: Task) => {
 			this.emit(RooCodeEventName.TaskCreated, instance)
 
-			// Agent task cleanup: save final state and remove from pool
+			// 🔥 智能体任务清理：保存最终状态并从栈中移除
 			const cleanupAgentTask = async (taskId: string, reason: string) => {
-				if (!instance.agentTaskContext || !this.agentTaskPool.has(taskId)) {
+				if (!instance.agentTaskContext) {
 					return
 				}
 
+				// 查找该任务所在的栈
+				const rootTaskId = instance.rootTask?.taskId || instance.taskId
+				const stack = this.agentTaskPool.get(rootTaskId)
+
+				this.outputChannel.appendLine(
+					`[ClineProvider] cleanupAgentTask called: taskId=${taskId}, rootTaskId=${rootTaskId}, reason=${reason}, stackExists=${!!stack}, stackLength=${stack?.length || 0}`,
+				)
+
+				// 🔥 即使栈不存在或已清空，也要保存历史消息
 				// Save final messages to TaskHistory
 				if (instance.historyItem && instance.clineMessages.length > 0) {
 					const historyItemWithMessages = {
@@ -211,10 +238,38 @@ export class ClineProvider
 						clineMessages: instance.clineMessages,
 					}
 					await this.updateTaskHistory(historyItemWithMessages)
+					this.outputChannel.appendLine(
+						`[ClineProvider] Saved ${instance.clineMessages.length} messages for task ${taskId}`,
+					)
+				} else {
+					this.outputChannel.appendLine(
+						`[ClineProvider] ⚠️ No messages to save: historyItem=${!!instance.historyItem}, messages=${instance.clineMessages.length}`,
+					)
 				}
 
-				// Remove from pool
-				this.agentTaskPool.delete(taskId)
+				if (!stack) {
+					this.outputChannel.appendLine(
+						`[ClineProvider] Stack already cleaned for task ${taskId}, skipping stack removal`,
+					)
+					return
+				}
+
+				// 🔥 从栈中移除该任务（可能不在栈顶，因为可能是异常退出）
+				const taskIndex = stack.findIndex((t) => t.taskId === taskId)
+				if (taskIndex !== -1) {
+					stack.splice(taskIndex, 1)
+					this.outputChannel.appendLine(
+						`[ClineProvider] Removed task from stack [${rootTaskId}]: ${taskId} at index ${taskIndex} (reason: ${reason}, remaining: ${stack.length})`,
+					)
+				}
+
+				// 🔥 如果栈为空，删除整个栈
+				if (stack.length === 0) {
+					this.agentTaskPool.delete(rootTaskId)
+					this.outputChannel.appendLine(
+						`[ClineProvider] Stack empty, removed from pool: ${rootTaskId} (reason: ${reason})`,
+					)
+				}
 
 				// Clear viewing state if viewing this task
 				if (this.viewingAgentTaskId === taskId) {
@@ -353,9 +408,25 @@ export class ClineProvider
 	// The instance is pushed to the top of the stack (LIFO order).
 	// When the task is completed, the top instance is removed, reactivating the previous task.
 	async addClineToStack(task: Task) {
-		// Agent task: add to pool for parallel execution
+		// 🔥 智能体任务：添加到独立任务池（每个根任务一个栈，支持并行执行和子任务嵌套）
 		if (task.agentTaskContext) {
-			this.agentTaskPool.set(task.taskId, task)
+			// 获取根任务ID（如果是子任务则使用父任务的根ID，否则使用自己的ID）
+			const rootTaskId = task.rootTask?.taskId || task.taskId
+
+			// 获取或创建该根任务的栈
+			let stack = this.agentTaskPool.get(rootTaskId)
+			if (!stack) {
+				stack = []
+				this.agentTaskPool.set(rootTaskId, stack)
+				this.outputChannel.appendLine(`[ClineProvider] Created new stack for root task: ${rootTaskId}`)
+			}
+
+			// 将任务推入栈（LIFO）
+			stack.push(task)
+			this.outputChannel.appendLine(
+				`[ClineProvider] Pushed task to stack [${rootTaskId}]: ${task.taskId} (depth: ${stack.length})`,
+			)
+
 			task.emit(RooCodeEventName.TaskFocused)
 
 			// Start task asynchronously, non-blocking
@@ -404,16 +475,12 @@ export class ClineProvider
 	async removeClineFromStack() {
 		// 🔥 如果正在查看智能体任务,清除查看状态
 		if (this.viewingAgentTaskId) {
-			this.log(`[removeClineFromStack] 清除智能体任务查看状态: ${this.viewingAgentTaskId}`)
 			this.viewingAgentTaskId = null
 		}
 
 		if (this.clineStack.length === 0) {
-			this.log(`[removeClineFromStack] Stack is empty, nothing to remove`)
 			return
 		}
-
-		this.log(`[removeClineFromStack] Removing task from stack, current size: ${this.clineStack.length}`)
 
 		// Pop the top Cline instance from the stack.
 		let task = this.clineStack.pop()
@@ -458,11 +525,22 @@ export class ClineProvider
 		return this.clineStack[this.clineStack.length - 1]
 	}
 
+	// 🔥 查找智能体任务（在所有栈中搜索）
+	private findAgentTask(taskId: string): Task | undefined {
+		for (const stack of this.agentTaskPool.values()) {
+			const task = stack.find((t) => t.taskId === taskId)
+			if (task) {
+				return task
+			}
+		}
+		return undefined
+	}
+
 	// 🔥 获取当前查看的任务（可能是用户任务或智能体任务）
 	getCurrentCline(): Task | undefined {
-		// If user is viewing an agent task, return that task
+		// If user is viewing an agent task, search in all stacks
 		if (this.viewingAgentTaskId) {
-			return this.agentTaskPool.get(this.viewingAgentTaskId)
+			return this.findAgentTask(this.viewingAgentTaskId)
 		}
 
 		// Otherwise return top of user task stack
@@ -481,11 +559,56 @@ export class ClineProvider
 	// remove the current task/cline instance (at the top of the stack), so this task is finished
 	// and resume the previous task/cline instance (if it exists)
 	// this is used when a sub task is finished and the parent task needs to be resumed
-	async finishSubTask(lastMessage: string) {
+	async finishSubTask(lastMessage: string, task?: Task) {
+		// 🔥 如果提供了task或者当前是智能体任务，使用新的智能体子任务完成逻辑
+		const targetTask = task || this.getCurrentCline()
+		if (targetTask?.agentTaskContext) {
+			await this.finishAgentSubTask(lastMessage, targetTask)
+			return
+		}
+
+		// 🔥 用户任务：保持原有逻辑
 		// remove the last cline instance from the stack (this is the finished sub task)
 		await this.removeClineFromStack()
 		// resume the last cline instance in the stack (if it exists - this is the 'parent' calling task)
 		await this.getCurrentUserTask()?.resumePausedTask(lastMessage)
+	}
+
+	// 🔥 智能体任务：完成子任务并恢复父任务（LIFO栈弹出）
+	async finishAgentSubTask(lastMessage: string, task: Task) {
+		// 获取根任务ID
+		const rootTaskId = task.rootTask?.taskId || task.taskId
+		const stack = this.agentTaskPool.get(rootTaskId)
+
+		if (!stack || stack.length === 0) {
+			this.outputChannel.appendLine(
+				`[ClineProvider] ❌ finishAgentSubTask: No stack found for root task ${rootTaskId}`,
+			)
+			return
+		}
+
+		// 从栈顶弹出已完成的子任务
+		const completedTask = stack.pop()
+		this.outputChannel.appendLine(
+			`[ClineProvider] Popped completed task from stack [${rootTaskId}]: ${completedTask?.taskId} (remaining depth: ${stack.length})`,
+		)
+
+		// 🔥 如果栈为空，说明根任务也完成了
+		// 注意：不在这里删除栈，让 cleanupAgentTask 来保存历史消息并清理
+		if (stack.length === 0) {
+			this.outputChannel.appendLine(
+				`[ClineProvider] Root task finished, stack will be cleaned by TaskCompleted event: ${rootTaskId}`,
+			)
+			return
+		}
+
+		// 获取父任务（栈顶元素）
+		const parentTask = stack[stack.length - 1]
+		if (parentTask) {
+			this.outputChannel.appendLine(`[ClineProvider] Resuming parent task [${rootTaskId}]: ${parentTask.taskId}`)
+			// 🔥 恢复父任务执行，传递子任务结果
+			await parentTask.resumePausedTask(lastMessage)
+		}
 	}
 
 	// Clear the current task without treating it as a subtask
@@ -493,15 +616,12 @@ export class ClineProvider
 	async clearTask() {
 		// 🔥 如果正在查看智能体任务，只清除查看状态
 		if (this.viewingAgentTaskId) {
-			this.log(`[clearTask] 清除智能体任务查看状态: ${this.viewingAgentTaskId}`)
 			this.viewingAgentTaskId = null
 			await this.postStateToWebview()
-			this.log(`[clearTask] 智能体任务查看状态已清除，UI 应显示空白状态`)
 			return
 		}
 
 		// 用户任务：保持原有逻辑
-		this.log(`[clearTask] 清除用户任务，当前栈大小: ${this.clineStack.length}`)
 		await this.removeClineFromStack()
 	}
 
@@ -985,8 +1105,8 @@ export class ClineProvider
 			return
 		}
 
-		// 查找任务（可能在用户栈或智能体池）
-		const task = this.agentTaskPool.get(taskId) || this.clineStack.find((t) => t.taskId === taskId)
+		// 🔥 查找任务（可能在用户栈或智能体池）
+		const task = this.findAgentTask(taskId) || this.clineStack.find((t) => t.taskId === taskId)
 		if (!task) {
 			// 任务不存在，直接发送
 			await this.view?.webview.postMessage(message)
@@ -1094,15 +1214,17 @@ export class ClineProvider
 				const fullText = clineMsg.text || ""
 				const lastPos = this.lastSentPositions.get(msgKey) || 0
 
+				this.log(
+					`[forwardToIMWebSocket] 🔍 completion_result: msgKey=${msgKey}, isPartial=${isPartial}, lastPos=${lastPos}, fullText.length=${fullText.length}`,
+				)
+
 				// 只发送新增的部分
 				if (fullText.length > lastPos) {
 					const incrementalText = fullText.substring(lastPos)
 
-					if (!isPartial) {
-						this.log(
-							`[forwardToIMWebSocket] Sending completion increment: ${incrementalText.length} chars (total: ${fullText.length})`,
-						)
-					}
+					this.log(
+						`[forwardToIMWebSocket] ✅ Sending completion increment: ${incrementalText.length} chars (total: ${fullText.length})`,
+					)
 
 					llmService.imConnection.sendLLMChunk(
 						ctx.streamId,
@@ -1791,8 +1913,6 @@ export class ClineProvider
 	}
 
 	async showTaskWithId(id: string) {
-		this.log(`[showTaskWithId] 开始激活任务: ${id}`)
-
 		// 🔥 获取任务历史信息，判断任务类型
 		const { historyItem } = await this.getTaskWithId(id)
 		const isAgentTask = historyItem.source === "agent"
@@ -1800,53 +1920,26 @@ export class ClineProvider
 		// 🔥 智能体任务：标记为正在查看（无论是否还在执行）
 		if (isAgentTask) {
 			this.viewingAgentTaskId = id
-			this.log(`[showTaskWithId] 查看智能体任务: ${id}`)
-			this.log(`[showTaskWithId] 当前 clineStack 大小: ${this.clineStack.length}`)
 
 			// 🔥 加载智能体任务的历史消息
-			// 检查任务是否还在执行中
-			const runningTask = this.clineStack.find((t) => t.taskId === id)
-			this.log(`[showTaskWithId] 查找运行中任务结果: ${runningTask ? "找到" : "未找到"}`)
+			// 检查任务是否还在执行中（在栈池中查找）
+			const runningTask = this.findAgentTask(id)
 
-			if (runningTask) {
-				// 任务还在执行，使用运行中的任务数据
-				this.log(`[showTaskWithId] 智能体任务正在执行中，使用运行时数据`)
-				this.log(`[showTaskWithId] 运行中任务消息数: ${runningTask.clineMessages.length}`)
-			} else {
-				// 任务已完成，从历史加载
-				this.log(`[showTaskWithId] 智能体任务已完成，从历史加载消息`)
-				this.log(`[showTaskWithId] historyItem.id: ${historyItem.id}`)
-
-				try {
-					// 加载历史任务 (会自动读取消息)
-					await this.initClineWithHistoryItem(historyItem)
-					this.log(`[showTaskWithId] initClineWithHistoryItem 完成`)
-
-					// 🔥 重新设置 viewingAgentTaskId (initClineWithTask 会清除它)
-					this.viewingAgentTaskId = id
-					this.log(`[showTaskWithId] 重新设置 viewingAgentTaskId: ${id}`)
-				} catch (error) {
-					this.log(`[showTaskWithId] ❌ 加载历史任务失败: ${error}`)
-					this.log(
-						`[showTaskWithId] ❌ 错误详情: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`,
-					)
-					// 即使失败也要设置 viewingAgentTaskId，这样至少能显示只读状态
-					this.viewingAgentTaskId = id
-				}
+			if (!runningTask) {
+				// 🔥 任务已完成，直接显示历史消息，不需要创建新Task实例
+				// 直接设置 viewingAgentTaskId，getState 会从 historyItem 读取消息
+				this.viewingAgentTaskId = id
 			}
 
 			// 更新 UI
 			await this.postStateToWebview()
-			this.log(`[showTaskWithId] postStateToWebview 完成`)
 			await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
-			this.log(`[showTaskWithId] 智能体任务查看流程完成`)
 			return
 		}
 
 		// 用户任务：保持原有逻辑
 		if (id !== this.getCurrentCline()?.taskId) {
 			// Non-current task.
-			this.log(`[showTaskWithId] 任务类型: ${historyItem.source}`)
 			await this.initClineWithHistoryItem(historyItem) // Clears existing task.
 
 			// 更新UI状态
@@ -1892,11 +1985,24 @@ export class ClineProvider
 				await this.postStateToWebview()
 			}
 
-			// 🔥 检查是否是后台智能体任务
-			const agentTask = this.agentTaskPool.get(id)
+			// 🔥 检查是否是后台智能体任务（在栈池中查找）
+			const agentTask = this.findAgentTask(id)
 			if (agentTask) {
-				// 从任务池中移除
-				this.agentTaskPool.delete(id)
+				// 🔥 查找该任务所在的栈并移除
+				const rootTaskId = agentTask.rootTask?.taskId || agentTask.taskId
+				const stack = this.agentTaskPool.get(rootTaskId)
+				if (stack) {
+					const taskIndex = stack.findIndex((t) => t.taskId === id)
+					if (taskIndex !== -1) {
+						stack.splice(taskIndex, 1)
+						this.log(`[deleteTaskWithId] Removed task from stack [${rootTaskId}]: ${id}`)
+					}
+					// 如果栈为空，删除整个栈
+					if (stack.length === 0) {
+						this.agentTaskPool.delete(rootTaskId)
+						this.log(`[deleteTaskWithId] Stack empty, removed from pool: ${rootTaskId}`)
+					}
+				}
 				// 中止任务
 				await agentTask.abortTask()
 			} else {
@@ -1950,26 +2056,20 @@ export class ClineProvider
 	async deleteTaskFromState(id: string) {
 		// Ensure we read and write with the same user context
 		const taskHistory = (await TaskHistoryBridge.getTaskHistory()) ?? []
-		this.log(`[deleteTaskFromState] Deleting task ${id}, current count: ${taskHistory.length}`)
 
 		const updatedTaskHistory = taskHistory.filter((task) => task.id !== id)
-		this.log(`[deleteTaskFromState] After deletion, task count: ${updatedTaskHistory.length}`)
 
 		// Pass immediate: true to sync to Redis immediately for delete operations
 		await TaskHistoryBridge.updateTaskHistory(undefined, updatedTaskHistory, true)
-		this.log(`[deleteTaskFromState] TaskHistoryBridge.updateTaskHistory completed`)
 
 		// IMPORTANT: Also update the contextProxy cache so that getState() returns the updated history
 		// This ensures postStateToWebview() sends the correct task history to the React UI
 		await this.contextProxy.setValue("taskHistory", updatedTaskHistory)
-		this.log(`[deleteTaskFromState] contextProxy.setValue completed`)
 
 		// 🔥 CRITICAL: Invalidate task history cache to ensure getCachedTaskHistory() returns fresh data
 		this.invalidateTaskHistoryCache()
-		this.log(`[deleteTaskFromState] Task history cache invalidated`)
 
 		await this.postStateToWebview()
-		this.log(`[deleteTaskFromState] postStateToWebview completed`)
 	}
 
 	async postStateToWebview(forceUpdate: boolean = false) {
@@ -2199,16 +2299,14 @@ export class ClineProvider
 		// 用户任务：显示实时消息
 		let clineMessages: ClineMessage[] = []
 		if (this.viewingAgentTaskId) {
-			// Check if viewing task is currently running
-			const viewingTask = this.clineStack.find((t) => t.taskId === this.viewingAgentTaskId)
+			// Check if viewing task is currently running (在栈池中查找)
+			const viewingTask = this.findAgentTask(this.viewingAgentTaskId)
 			if (viewingTask) {
 				// Task is running, use real-time messages
 				clineMessages = viewingTask.clineMessages || []
-				this.log(`[getState] 智能体任务正在运行，使用实时消息: ${clineMessages.length} 条`)
 			} else {
 				// Task completed, use history messages
 				clineMessages = currentTaskItem?.clineMessages || []
-				this.log(`[getState] 智能体任务已完成，使用历史消息: ${clineMessages.length} 条`)
 			}
 		} else {
 			// User task or no task: use real-time messages
