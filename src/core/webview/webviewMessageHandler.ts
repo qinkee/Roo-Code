@@ -3186,7 +3186,6 @@ export const webviewMessageHandler = async (
 				action: "startAgentTaskResult",
 				success: true,
 				agentId: message.agentId,
-				updatedAgent: updatedResult.success ? updatedResult.agent : null,
 			})
 
 			vscode.window.showInformationMessage(`智能体 "${agent.name}" 已成功启动`)
