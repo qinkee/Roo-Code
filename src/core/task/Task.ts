@@ -326,8 +326,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		// 🔥 强制确保EventEmitter方法立即可用 - 多重保障
 		if (typeof this.on !== "function" || typeof this.emit !== "function") {
-			console.error("[Task Constructor] EventEmitter methods not available, forcing initialization")
-
 			// 方法1: 重新设置原型
 			Object.setPrototypeOf(this, EventEmitter.prototype)
 
@@ -349,26 +347,18 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		;(global as any).currentTask = this
 
 		// 调试：记录任务创建参数
-		provider.log(
-			`[Task Constructor] Creating task ${this.taskId}: task="${task ? task.substring(0, 100) + "..." : "undefined"}", historyItem=${historyItem ? "exists" : "undefined"}`,
-		)
-
 		// 保存原始任务文本（包含零宽编码）
 		if (task) {
 			this.originalTaskText = task
-			provider.log(`[Task Constructor] 保存原始任务文本，长度: ${task.length}`)
 		}
 
 		// 如果是新任务且包含零宽编码，立即解析并设置目标
 		if (task && !historyItem) {
-			provider.log(`[Task Constructor] New task with content, checking for zero-width encoding`)
 			try {
 				const { ZeroWidthEncoder } = require("../../utils/zeroWidthEncoder")
 				const encodedParams = ZeroWidthEncoder.extractAllFromText(task)
 				if (encodedParams.length > 0) {
 					const params = encodedParams[0].params
-					provider.log(`[Task Constructor] Found zero-width params: ${JSON.stringify(params)}`)
-
 					if (params.targetId || params.chatType || params.senderTerminal !== undefined) {
 						let targetUserId: number | undefined = undefined
 						let targetTerminal: number | undefined = undefined
@@ -378,7 +368,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							// 判断是否为群聊场景（以group_开头或不是userId_terminal格式）
 							if (params.targetId.startsWith("group_") || !params.targetId.match(/^\d+_\d+$/)) {
 								// 群聊场景，targetId 是群组ID
-								provider.log(`[Task Constructor] 群聊场景，targetId: ${params.targetId}`)
 								// 群聊中，尝试解析userId（如果存在）
 								if (params.targetId.match(/^\d+$/)) {
 									targetUserId = parseInt(params.targetId)
@@ -390,7 +379,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 									targetUserId = parseInt(parts[0])
 									// 注意：这里解析出的是接收方终端，但我们不使用它作为响应目标
 									const receiverTerminal = parseInt(parts[1])
-									provider.log(`[Task Constructor] 接收方终端: ${receiverTerminal}（任务执行终端）`)
 								}
 							}
 						}
@@ -398,17 +386,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						// 重要：使用 senderTerminal 作为流式响应的目标终端
 						if (params.senderTerminal !== undefined) {
 							targetTerminal = params.senderTerminal
-							provider.log(`[Task Constructor] 发送方终端: ${params.senderTerminal}（流式响应目标）`)
 						} else if (params.targetId) {
 							// 降级：如果没有 senderTerminal，从 targetId 解析（仅限私聊场景）
 							if (params.targetId.match(/^\d+_\d+$/)) {
 								const parts = params.targetId.split("_")
 								if (parts.length === 2) {
 									targetTerminal = parseInt(parts[1])
-									provider.log(`[Task Constructor] 降级：使用 targetId 的终端: ${parts[1]}`)
 								}
 							} else {
-								provider.log(`[Task Constructor] 群聊或非标准格式，无法解析终端: ${params.targetId}`)
 							}
 						}
 
@@ -417,17 +402,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						this.llmTargetTerminal = targetTerminal
 						this.llmChatType = params.chatType
 
-						provider.log(`[Task Constructor] LLM 路由设置:`)
 						provider.log(`  - recvId: ${targetUserId} (接收用户)`)
 						provider.log(`  - targetTerminal: ${targetTerminal} (响应返回到发送方)`)
 						provider.log(`  - chatType: ${params.chatType}`)
 						provider.log(`  - 说明: 流式响应将发送到终端 ${targetTerminal}`)
 					}
 				} else {
-					provider.log(`[Task Constructor] No zero-width encoding found in task`)
 				}
 			} catch (error) {
-				provider.log(`[Task Constructor] Failed to parse zero-width encoding: ${error}`)
 			}
 		}
 
@@ -443,73 +425,40 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.rooProtectedController = new RooProtectedController(this.cwd)
 		this.fileContextTracker = new FileContextTracker(provider, this.taskId)
 
-		provider.log(`[Task Constructor] 🔧 Step 1: Starting RooIgnoreController initialization`)
 		this.rooIgnoreController.initialize().catch((error) => {
 			console.error("Failed to initialize RooIgnoreController:", error)
 		})
 
-		provider.log(`[Task Constructor] 🔧 Step 2: Setting API configuration`)
 		this.apiConfiguration = apiConfiguration
 
 		// 防御性检查：确保buildApiHandler可用
 		try {
-			provider.log(
-				`[Task Constructor] 🔧 Step 3: Building API handler for provider: ${apiConfiguration.apiProvider}`,
-			)
 			this.api = buildApiHandler(apiConfiguration)
-			provider.log(`[Task Constructor] ✅ Step 3 complete: API handler created successfully`)
 		} catch (apiError) {
-			provider.log(`[Task Constructor] ❌ Step 3 failed: ${apiError}`)
 			throw new Error(
 				`Failed to initialize API handler: ${apiError instanceof Error ? apiError.message : "Unknown error"}`,
 			)
 		}
 
-		provider.log(`[Task Constructor] 🔧 Step 4: Creating AutoApprovalHandler`)
 		this.autoApprovalHandler = new AutoApprovalHandler()
-		provider.log(`[Task Constructor] ✅ Step 4 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 5: Creating UrlContentFetcher`)
 		this.urlContentFetcher = new UrlContentFetcher(provider.context)
-		provider.log(`[Task Constructor] ✅ Step 5 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 6: Creating BrowserSession`)
 		this.browserSession = new BrowserSession(provider.context)
-		provider.log(`[Task Constructor] ✅ Step 6 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 7: Setting basic properties`)
 		this.diffEnabled = enableDiff
 		this.fuzzyMatchThreshold = fuzzyMatchThreshold
 		this.consecutiveMistakeLimit = consecutiveMistakeLimit ?? DEFAULT_CONSECUTIVE_MISTAKE_LIMIT
 		this.providerRef = new WeakRef(provider)
 		this.globalStoragePath = provider.context.globalStorageUri.fsPath
-		provider.log(`[Task Constructor] ✅ Step 7 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 8: Creating DiffViewProvider`)
 		this.diffViewProvider = new DiffViewProvider(this.cwd, this)
-		provider.log(`[Task Constructor] ✅ Step 8 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 9: Setting final properties`)
 		// 🔥 保存智能体任务上下文
 		this.agentTaskContext = agentTaskContext
 		if (agentTaskContext) {
-			provider.log(
-				`[Task Constructor] ✅ agentTaskContext set: agentId=${agentTaskContext.agentId}, streamId=${agentTaskContext.streamId}`,
-			)
 		} else {
-			provider.log(`[Task Constructor] ℹ️ No agentTaskContext (regular user task)`)
 		}
 		this.enableCheckpoints = enableCheckpoints
 		this.enableTaskBridge = enableTaskBridge
-		provider.log(`[Task Constructor] ✅ Step 9 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 10: Setting task hierarchy`)
 		this.rootTask = rootTask
 		this.parentTask = parentTask
 		this.taskNumber = taskNumber
-		provider.log(`[Task Constructor] ✅ Step 10 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 11: Checking if agent task`)
 		// 🔥 任务类型判断逻辑：
 		// 三种任务模式：
 		// 1. 用户任务：UI触发，在clineStack执行，source="user"
@@ -520,31 +469,22 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// 🔥 从历史加载：使用 historyItem.source（绝对权威，不能改变）
 			this.isAgentTask = historyItem.source === "agent"
 			this.agentTaskId = historyItem.agentId
-			provider.log(
-				`[Task Constructor] 📚 Task loaded from history: source=${historyItem.source}, agentId=${this.agentTaskId}`,
-			)
 		} else {
 			// 🔥 新建任务：根据上下文判断类型
 			if (agentTaskContext) {
 				// 后台智能体任务
 				this.isAgentTask = true
 				this.agentTaskId = agentTaskContext.agentId
-				provider.log(`[Task Constructor] 🤖 Background agent task: ${this.agentTaskId}`)
 			} else if (isAgentTaskParam && agentTaskIdParam) {
 				// 调试模式智能体任务
 				this.isAgentTask = true
 				this.agentTaskId = agentTaskIdParam
-				provider.log(`[Task Constructor] 🐛 Debug agent task: ${this.agentTaskId}`)
 			} else {
 				// 用户任务
 				this.isAgentTask = false
 				this.agentTaskId = undefined
-				provider.log(`[Task Constructor] 👤 User task`)
 			}
 		}
-		provider.log(`[Task Constructor] ✅ Step 11 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 12: Setting up task mode`)
 		// Store the task's mode when it's created.
 		// For history items, use the stored mode; for new tasks, we'll set it
 		// after getting state.
@@ -558,9 +498,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.taskModeReady = this.initializeTaskMode(provider)
 			TelemetryService.instance.captureTaskCreated(this.taskId)
 		}
-		provider.log(`[Task Constructor] ✅ Step 11 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 12: Setting up diff strategy`)
 		// Only set up diff strategy if diff is enabled.
 		if (this.diffEnabled) {
 			// Default to old strategy, will be updated if experiment is enabled.
@@ -568,12 +505,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 			// 🔥 修复关键问题：安全调用provider.getState()
 			try {
-				provider.log(`[Task Constructor] 🔧 Step 12a: Calling provider.getState()`)
 				const statePromise = provider.getState()
 				if (statePromise && typeof statePromise.then === "function") {
 					statePromise
 						.then((state) => {
-							provider.log(`[Task Constructor] 🔧 Step 12b: Processing experiment state`)
 							const isMultiFileApplyDiffEnabled = experiments.isEnabled(
 								state.experiments ?? {},
 								EXPERIMENT_IDS.MULTI_FILE_APPLY_DIFF,
@@ -582,45 +517,27 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							if (isMultiFileApplyDiffEnabled) {
 								this.diffStrategy = new MultiFileSearchReplaceDiffStrategy(this.fuzzyMatchThreshold)
 							}
-							provider.log(`[Task Constructor] ✅ Step 12b complete`)
 						})
 						.catch((stateError) => {
-							provider.log(`[Task Constructor] ⚠️ Step 12b failed: ${stateError}`)
 						})
 				} else {
-					provider.log(`[Task Constructor] ⚠️ Step 12a: provider.getState() did not return a promise`)
 				}
 			} catch (getStateError) {
-				provider.log(`[Task Constructor] ❌ Step 12a failed: ${getStateError}`)
 			}
 		} else {
-			provider.log(`[Task Constructor] ⚠️ Step 12: Diff disabled, skipping strategy setup`)
 		}
-		provider.log(`[Task Constructor] ✅ Step 12 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 13: Creating ToolRepetitionDetector`)
 		this.toolRepetitionDetector = new ToolRepetitionDetector(this.consecutiveMistakeLimit)
-		provider.log(`[Task Constructor] ✅ Step 13 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 14: Calling onCreated callback`)
 		onCreated?.(this)
-		provider.log(`[Task Constructor] ✅ Step 14 complete`)
-
-		provider.log(`[Task Constructor] 🔧 Step 15: Final task startup`)
 		if (startTask) {
 			if (task || images) {
-				provider.log(`[Task Constructor] 🔧 Step 15a: Starting task with content`)
 				this.startTask(task, images)
 			} else if (historyItem) {
-				provider.log(`[Task Constructor] 🔧 Step 15b: Resuming from history`)
 				this.resumeTaskFromHistory()
 			} else {
 				throw new Error("Either historyItem or task/images must be provided")
 			}
 		} else {
-			provider.log(`[Task Constructor] ⚠️ Step 15: startTask=false, not starting immediately`)
 		}
-		provider.log(`[Task Constructor] 🎉 CONSTRUCTOR COMPLETE - Task ${this.taskId} created successfully`)
 	}
 
 	/**

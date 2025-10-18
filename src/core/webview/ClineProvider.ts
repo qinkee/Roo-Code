@@ -410,6 +410,11 @@ export class ClineProvider
 	async addClineToStack(task: Task) {
 		// 🔥 智能体任务：添加到独立任务池（每个根任务一个栈，支持并行执行和子任务嵌套）
 		if (task.agentTaskContext) {
+			// 🔥 调试：记录任务层级信息
+			this.outputChannel.appendLine(
+				`[addClineToStack] 🔍 Task: ${task.taskId}, hasParent: ${!!task.parentTask}, parentId: ${task.parentTask?.taskId}, hasRoot: ${!!task.rootTask}, rootId: ${task.rootTask?.taskId}`,
+			)
+
 			// 获取根任务ID（如果是子任务则使用父任务的根ID，否则使用自己的ID）
 			const rootTaskId = task.rootTask?.taskId || task.taskId
 
@@ -419,6 +424,12 @@ export class ClineProvider
 				stack = []
 				this.agentTaskPool.set(rootTaskId, stack)
 				this.outputChannel.appendLine(`[ClineProvider] Created new stack for root task: ${rootTaskId}`)
+
+				// 🔥 如果是根任务（没有 parentTask），设置 rootTask 为自己
+				if (!task.parentTask && !task.rootTask) {
+					;(task as any).rootTask = task
+					this.outputChannel.appendLine(`[ClineProvider] Set rootTask for root task: ${task.taskId}`)
+				}
 			}
 
 			// 将任务推入栈（LIFO）
@@ -576,38 +587,58 @@ export class ClineProvider
 
 	// 🔥 智能体任务：完成子任务并恢复父任务（LIFO栈弹出）
 	async finishAgentSubTask(lastMessage: string, task: Task) {
+		this.outputChannel.appendLine(
+			`[finishAgentSubTask] 🎯 Called for task ${task.taskId}, lastMessage: ${lastMessage.substring(0, 100)}...`,
+		)
+
 		// 获取根任务ID
 		const rootTaskId = task.rootTask?.taskId || task.taskId
+		this.outputChannel.appendLine(`[finishAgentSubTask] Root task ID: ${rootTaskId}`)
+
 		const stack = this.agentTaskPool.get(rootTaskId)
 
 		if (!stack || stack.length === 0) {
 			this.outputChannel.appendLine(
-				`[ClineProvider] ❌ finishAgentSubTask: No stack found for root task ${rootTaskId}`,
+				`[finishAgentSubTask] ❌ No stack found for root task ${rootTaskId}, stack exists: ${!!stack}, stack length: ${stack?.length}`,
 			)
 			return
 		}
 
+		this.outputChannel.appendLine(
+			`[finishAgentSubTask] Found stack for root ${rootTaskId}, current depth: ${stack.length}`,
+		)
+
 		// 从栈顶弹出已完成的子任务
 		const completedTask = stack.pop()
 		this.outputChannel.appendLine(
-			`[ClineProvider] Popped completed task from stack [${rootTaskId}]: ${completedTask?.taskId} (remaining depth: ${stack.length})`,
+			`[finishAgentSubTask] 🔥 Popped completed task from stack [${rootTaskId}]: ${completedTask?.taskId} (remaining depth: ${stack.length})`,
+		)
+		this.outputChannel.appendLine(
+			`[finishAgentSubTask] ✅ Completed task shouldEndLoop: ${completedTask?.shouldEndLoop}`,
 		)
 
 		// 🔥 如果栈为空，说明根任务也完成了
 		// 注意：不在这里删除栈，让 cleanupAgentTask 来保存历史消息并清理
 		if (stack.length === 0) {
 			this.outputChannel.appendLine(
-				`[ClineProvider] Root task finished, stack will be cleaned by TaskCompleted event: ${rootTaskId}`,
+				`[finishAgentSubTask] Root task finished, stack will be cleaned by TaskCompleted event: ${rootTaskId}`,
 			)
 			return
 		}
 
 		// 获取父任务（栈顶元素）
 		const parentTask = stack[stack.length - 1]
+		this.outputChannel.appendLine(
+			`[finishAgentSubTask] Parent task found: ${parentTask?.taskId}, isPaused: ${parentTask?.isPaused}`,
+		)
+
 		if (parentTask) {
-			this.outputChannel.appendLine(`[ClineProvider] Resuming parent task [${rootTaskId}]: ${parentTask.taskId}`)
+			this.outputChannel.appendLine(
+				`[finishAgentSubTask] 🚀 Calling resumePausedTask on parent ${parentTask.taskId}...`,
+			)
 			// 🔥 恢复父任务执行，传递子任务结果
 			await parentTask.resumePausedTask(lastMessage)
+			this.outputChannel.appendLine(`[finishAgentSubTask] ✅ resumePausedTask completed for ${parentTask.taskId}`)
 		}
 	}
 
@@ -964,6 +995,20 @@ export class ClineProvider
 		// Note: Zero-width parameter parsing is now handled in Task constructor
 		// to properly support senderTerminal routing logic
 
+		// 🔥 智能体任务：rootTask 应该从父任务继承，或者是自己（如果是根任务）
+		// 用户任务：rootTask 是 clineStack 的第一个任务
+		let rootTask: Task | undefined
+		if (options.agentTaskContext && parentTask) {
+			// 智能体子任务：从父任务继承 rootTask
+			rootTask = parentTask.rootTask || parentTask
+		} else if (options.agentTaskContext && !parentTask) {
+			// 智能体根任务：自己就是 rootTask（稍后在 addClineToStack 中设置）
+			rootTask = undefined
+		} else {
+			// 用户任务：使用 clineStack[0]
+			rootTask = this.clineStack.length > 0 ? this.clineStack[0] : undefined
+		}
+
 		const task = new Task({
 			provider: this,
 			apiConfiguration,
@@ -974,7 +1019,7 @@ export class ClineProvider
 			task: text,
 			images,
 			experiments,
-			rootTask: this.clineStack.length > 0 ? this.clineStack[0] : undefined,
+			rootTask,
 			parentTask,
 			taskNumber: this.clineStack.length + 1,
 			onCreated: this.taskCreationCallback,
@@ -1214,17 +1259,17 @@ export class ClineProvider
 				const fullText = clineMsg.text || ""
 				const lastPos = this.lastSentPositions.get(msgKey) || 0
 
-				this.log(
-					`[forwardToIMWebSocket] 🔍 completion_result: msgKey=${msgKey}, isPartial=${isPartial}, lastPos=${lastPos}, fullText.length=${fullText.length}`,
-				)
+				// this.log(
+				// 	`[forwardToIMWebSocket] 🔍 completion_result: msgKey=${msgKey}, isPartial=${isPartial}, lastPos=${lastPos}, fullText.length=${fullText.length}`,
+				// )
 
 				// 只发送新增的部分
 				if (fullText.length > lastPos) {
 					const incrementalText = fullText.substring(lastPos)
 
-					this.log(
-						`[forwardToIMWebSocket] ✅ Sending completion increment: ${incrementalText.length} chars (total: ${fullText.length})`,
-					)
+					// this.log(
+					// 	`[forwardToIMWebSocket] ✅ Sending completion increment: ${incrementalText.length} chars (total: ${fullText.length})`,
+					// )
 
 					llmService.imConnection.sendLLMChunk(
 						ctx.streamId,

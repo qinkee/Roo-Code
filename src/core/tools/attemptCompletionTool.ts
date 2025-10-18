@@ -31,6 +31,14 @@ export async function attemptCompletionTool(
 	const result: string | undefined = block.params.result
 	const command: string | undefined = block.params.command
 
+	// 🔥 调试日志：只记录非 partial 的调用（避免日志过多）
+	const provider = cline.providerRef.deref()
+	if (!block.partial) {
+		provider?.log(
+			`[attemptCompletionTool] 📝 Called for task ${cline.taskId}, hasParent=${!!cline.parentTask}, isAgent=${!!cline.agentTaskContext}`,
+		)
+	}
+
 	// Get the setting for preventing completion with open todos from VSCode configuration
 	const preventCompletionWithOpenTodos = vscode.workspace
 		.getConfiguration(Package.name)
@@ -99,7 +107,22 @@ export async function attemptCompletionTool(
 			if (cline.parentTask) {
 				// 智能体子任务：自动批准，直接完成
 				if (cline.agentTaskContext) {
-					await cline.providerRef.deref()?.finishSubTask(result)
+					const provider = cline.providerRef.deref()
+					provider?.log(
+						`[attemptCompletionTool] 🔥 Agent subtask completing: ${cline.taskId}, parentTask: ${cline.parentTask.taskId}, result: ${result?.substring(0, 100)}...`,
+					)
+
+					// 🔥 关键修复：设置循环结束标志，避免子任务继续循环
+					cline.shouldEndLoop = true
+					provider?.log(`[attemptCompletionTool] ✅ Set shouldEndLoop = true for task: ${cline.taskId}`)
+
+					// 🔥 推送空的 tool result，确保会话历史完整记录工具使用（避免模型重复调用）
+					pushToolResult("")
+					provider?.log(`[attemptCompletionTool] ✅ Pushed empty tool result for task: ${cline.taskId}`)
+
+					provider?.log(`[attemptCompletionTool] 🚀 About to call finishSubTask with result and task...`)
+					await cline.providerRef.deref()?.finishSubTask(result, cline)
+					provider?.log(`[attemptCompletionTool] ✅ finishSubTask returned for: ${cline.taskId}`)
 					return
 				}
 
@@ -109,7 +132,7 @@ export async function attemptCompletionTool(
 					return
 				}
 
-				await cline.providerRef.deref()?.finishSubTask(result)
+				await cline.providerRef.deref()?.finishSubTask(result, cline)
 				return
 			}
 

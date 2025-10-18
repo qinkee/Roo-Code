@@ -19,12 +19,13 @@ export async function newTaskTool(
 	const mode: string | undefined = block.params.mode
 	const message: string | undefined = block.params.message
 
-	// 🔥 添加调试日志
+	// 🔥 只记录非 partial 的调用（避免日志过多）
 	const provider = cline.providerRef.deref()
-	provider?.log(
-		`[newTaskTool] Called with mode=${mode}, message=${message?.substring(0, 100)}..., partial=${block.partial}`,
-	)
-	provider?.log(`[newTaskTool] Is agent task: ${!!cline.agentTaskContext}`)
+	if (!block.partial) {
+		provider?.log(
+			`[newTaskTool] Called with mode=${mode}, message=${message?.substring(0, 100)}..., isAgent=${!!cline.agentTaskContext}`,
+		)
+	}
 
 	try {
 		if (block.partial) {
