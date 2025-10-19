@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test MarkdownBlock</title>
+</head>
+<body>
+    <div id="app"></div>
+
+    <!-- React 18 Runtime -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Roo Renderer -->
+    <script src="dist/index.global.js"></script>
+
+    <script>
+        // 测试代码
+        const testMarkdown = `# Hello World
+
+这是一个测试。
+
+## 列表测试
+
+- 项目 1
+- 项目 2
+- 项目 3
+
+## 段落测试
+
+首先，用户问"你是谁？"，这是一个简单的自我介绍问题。
+
+**加粗文本** 和 *斜体文本*。
+`;
+
+        console.log('React:', typeof window.React);
+        console.log('ReactDOM:', typeof window.ReactDOM);
+        console.log('RooRenderer:', typeof window.RooRenderer);
+        console.log('MarkdownBlock:', typeof window.RooRenderer?.MarkdownBlock);
+
+        if (window.RooRenderer && window.RooRenderer.MarkdownBlock) {
+            const container = document.getElementById('app');
+            const root = window.ReactDOM.createRoot(container);
+            const element = window.React.createElement(window.RooRenderer.MarkdownBlock, {
+                markdown: testMarkdown
+            });
+            root.render(element);
+            console.log('✅ MarkdownBlock 已渲染');
+        } else {
+            document.getElementById('app').innerHTML = '<h1 style="color: red;">❌ RooRenderer.MarkdownBlock 未加载</h1>';
+            console.error('❌ RooRenderer.MarkdownBlock 未加载');
+        }
+    </script>
+</body>
+</html>

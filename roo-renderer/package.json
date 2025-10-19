@@ -1,0 +1,55 @@
+{
+	"name": "@roo-code/renderer",
+	"version": "1.0.0",
+	"description": "Roo-Code pure rendering components library for im-web integration",
+	"main": "dist/index.global.js",
+	"module": "dist/index.mjs",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "node build.mjs",
+		"dev": "tsup --watch",
+		"clean": "rm -rf dist",
+		"sync": "./sync-to-im-web.sh"
+	},
+	"keywords": [
+		"roo-code",
+		"renderer",
+		"markdown",
+		"react",
+		"umd"
+	],
+	"dependencies": {
+		"hast-util-to-jsx-runtime": "^2.3.0",
+		"katex": "^0.16.9",
+		"mermaid": "^11.4.1",
+		"react": "^18.0.0",
+		"react-dom": "^18.0.0",
+		"react-markdown": "^8.0.7",
+		"react-use": "^17.5.0",
+		"rehype-katex": "^6.0.3",
+		"remark-gfm": "^3.0.1",
+		"remark-math": "^5.1.1",
+		"shiki": "^1.22.0",
+		"styled-components": "^6.1.0",
+		"unist-util-visit": "^5.0.0"
+	},
+	"devDependencies": {
+		"@rollup/plugin-commonjs": "^28.0.8",
+		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@rollup/plugin-replace": "^6.0.2",
+		"@rollup/plugin-typescript": "^12.1.4",
+		"@types/react": "^18.2.0",
+		"@types/react-dom": "^18.2.0",
+		"rollup": "^4.52.5",
+		"rollup-plugin-peer-deps-external": "^2.2.4",
+		"tsup": "^8.0.0",
+		"typescript": "^5.3.0"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0",
+		"react-dom": "^18.0.0"
+	}
+}
