@@ -103,6 +103,12 @@ export async function summarizeConversation(
 	const messagesToSummarize = getMessagesSinceLastSummary(messages.slice(0, -N_MESSAGES_TO_KEEP))
 
 	if (messagesToSummarize.length <= 1) {
+		// For manual triggers with insufficient messages, return without error
+		// to avoid showing confusing error messages to users
+		if (!isAutomaticTrigger && messages.length <= N_MESSAGES_TO_KEEP + 1) {
+			// Silently skip - not enough messages to condense
+			return { ...response }
+		}
 		const error =
 			messages.length <= N_MESSAGES_TO_KEEP + 1
 				? t("common:errors.condense_not_enough_messages")
@@ -115,6 +121,10 @@ export async function summarizeConversation(
 	const recentSummaryExists = keepMessages.some((message) => message.isSummary)
 
 	if (recentSummaryExists) {
+		// For manual triggers, silently skip if recently condensed
+		if (!isAutomaticTrigger) {
+			return { ...response }
+		}
 		const error = t("common:errors.condensed_recently")
 		return { ...response, error }
 	}
@@ -200,6 +210,11 @@ export async function summarizeConversation(
 
 	const newContextTokens = outputTokens + (await apiHandler.countTokens(contextBlocks))
 	if (newContextTokens >= prevContextTokens) {
+		// For manual triggers, silently skip if context grows
+		// This indicates condensing didn't help reduce context size
+		if (!isAutomaticTrigger) {
+			return { ...response, cost }
+		}
 		const error = t("common:errors.condense_context_grew")
 		return { ...response, cost, error }
 	}

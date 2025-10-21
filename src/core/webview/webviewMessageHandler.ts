@@ -780,35 +780,46 @@ export const webviewMessageHandler = async (
 			const ids = message.ids
 
 			if (Array.isArray(ids)) {
+				console.log(`[BatchDelete] Starting batch deletion of ${ids.length} tasks`)
+
+				// Batch delete tasks without triggering individual notifications
 				const results = []
-
-				// Only log start and end of the operation
-				console.log(`Batch deletion started: ${ids.length} tasks total`)
-
-				// Process tasks sequentially to avoid race conditions in state updates
 				for (const id of ids) {
 					try {
-						// Use the command to ensure proper event notification
-						await vscode.commands.executeCommand("roo-cline.deleteTask", id)
+						// Delete task directly without triggering command events
+						await provider.deleteTaskWithId(id)
 						results.push({ id, success: true })
 					} catch (error) {
-						// Keep error logging for debugging purposes
 						console.log(
-							`Failed to delete task ${id}: ${error instanceof Error ? error.message : String(error)}`,
+							`[BatchDelete] Failed to delete task ${id}: ${error instanceof Error ? error.message : String(error)}`,
 						)
 						results.push({ id, success: false })
 					}
 				}
 
-				// Update the UI after all deletions
+				// Update the UI once after all deletions are complete
 				await provider.postStateToWebview()
 
 				// Log final results
 				const successCount = results.filter((r) => r.success).length
-				const failCount = results.length - successCount
-				console.log(
-					`Batch deletion completed: ${successCount}/${ids.length} tasks successful, ${failCount} tasks failed`,
-				)
+				console.log(`[BatchDelete] Completed: ${successCount}/${ids.length} tasks deleted successfully`)
+
+				// Trigger a single void notification after all deletions
+				try {
+					const TaskHistoryBridge = require("../../api/task-history-bridge").TaskHistoryBridge
+					const updatedHistory = await TaskHistoryBridge.getTaskHistory(provider.context)
+					const userTasks = TaskHistoryBridge.filterUserTasks(updatedHistory)
+					const VoidBridge = require("../../api/void-bridge").VoidBridge
+
+					await vscode.commands.executeCommand("void.onTaskHistoryUpdated", {
+						tasks: userTasks,
+						activeTaskId: provider.getCurrentCline()?.taskId,
+						userId: TaskHistoryBridge.currentUserId,
+						terminalNo: VoidBridge.getCurrentTerminalNo(),
+					})
+				} catch (error) {
+					console.error("[BatchDelete] Failed to notify void:", error)
+				}
 			}
 			break
 		}

@@ -380,8 +380,8 @@
 		"ariaLabel": "版本 {{version}} - 点击查看发布说明"
 	},
 	"rooCloudCTA": {
-		"title": "ShadanAI Cloud 即将推出！",
-		"description": "在云端运行远程代理，随时随地访问任务，与他人协作等更多功能。",
+		"title": "傻蛋AI浏览器 即将推出！",
+		"description": "傻蛋AI浏览器，在浏览器中运行 ShadanAI 任务，与用户交互，执行复杂的操作。",
 		"joinWaitlist": "加入等待列表获取早期访问权限。"
 	},
 	"command": {

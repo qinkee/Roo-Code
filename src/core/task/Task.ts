@@ -1123,6 +1123,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			)
 			return
 		}
+		// If no summary was generated (e.g., not enough messages), silently skip
+		if (!summary) {
+			return
+		}
 		await this.overwriteApiConversationHistory(messages)
 		const contextCondense: ContextCondense = { summary, cost, newContextTokens, prevContextTokens }
 		await this.say(

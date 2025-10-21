@@ -28,6 +28,7 @@
 	"confirmDeleteTasks": "确认删除 {{count}} 项任务？",
 	"deleteTasksWarning": "删除后将无法恢复，请谨慎操作。",
 	"deleteItems": "删除 {{count}} 项",
+	"deletingTasks": "正在删除 {{count}} 项任务...",
 	"workspace": {
 		"prefix": "工作区:",
 		"current": "当前",
