@@ -221,55 +221,7 @@ body {
 	line-height: 1.25;
 }
 
-body.scrollable,
-.scrollable,
-body.code-block-scrollable,
-.code-block-scrollable {
-	border-color: transparent;
-	transition: border-color 0.7s linear;
-}
-
-body:hover.scrollable,
-body:hover .scrollable,
-body:focus-within.scrollable,
-body:focus-within .scrollable,
-body:hover.code-block-scrollable,
-body:hover .code-block-scrollable,
-body:focus-within.code-block-scrollable,
-body:focus-within .code-block-scrollable {
-	border-color: var(--vscode-scrollbarSlider-background);
-	transition: none;
-}
-
-.scrollable::-webkit-scrollbar {
-	width: 6px !important;
-	height: 6px !important;
-}
-
-.scrollable::-webkit-scrollbar-track {
-	border-radius: 4px !important;
-	background: transparent !important;
-}
-
-.scrollable::-webkit-scrollbar-corner {
-	background-color: transparent !important;
-}
-
-.scrollable::-webkit-scrollbar-thumb {
-	border-radius: 4px !important;
-	background: hsla(0, 0%, 73%, 0.5) !important;
-	border-right-style: unset !important;
-	border-right-width: unset !important;
-	border-color: unset !important;
-}
-
-.scrollable::-webkit-scrollbar-thumb:hover {
-	background: hsla(0, 0%, 60%, 0.7) !important;
-}
-
-.scrollable::-webkit-scrollbar-thumb:active {
-	background: hsla(0, 0%, 50%, 0.8) !important;
-}
+/* Scrollbar styles moved to unified section below */
 
 /**
  * Fix VSCode ignoring webkit scrollbar modifiers
@@ -282,31 +234,99 @@ body:focus-within .code-block-scrollable {
 }
 
 /**
- * The above scrollbar styling uses some transparent background color magic to accomplish its animation. However this doesn't play nicely with SyntaxHighlighter, so we need to set a background color for the code blocks' horizontal scrollbar. This actually has the unintended consequence of always showing the scrollbar which I prefer since it makes it more obvious that there is more content to scroll to.
+ * ==============================================
+ * UNIFIED SCROLLBAR STYLES
+ * ==============================================
+ * All scrollbar styles are centralized here using VSCode native variables.
+ * Applied to: .scrollable, .code-block-scrollable, [data-test-id="virtuoso-scroller"]
+ *
+ * If customization is needed, modify these styles in the void project.
  */
 
-.code-block-scrollable::-webkit-scrollbar-track {
+/* Base scrollbar configuration for all scrollable elements */
+body.scrollable,
+.scrollable,
+body.code-block-scrollable,
+.code-block-scrollable,
+[data-test-id="virtuoso-scroller"] {
+	scrollbar-width: thin; /* Firefox */
+	scrollbar-color: transparent transparent; /* Default hidden for Firefox */
+	scrollbar-gutter: stable; /* Prevent content shift */
+	transition: scrollbar-color 0.2s ease;
+}
+
+/* Firefox: Show scrollbar on hover */
+body.scrollable:hover,
+.scrollable:hover,
+body.code-block-scrollable:hover,
+.code-block-scrollable:hover,
+[data-test-id="virtuoso-scroller"]:hover {
+	scrollbar-color: var(--vscode-scrollbarSlider-background) transparent;
+}
+
+/* Webkit browsers (Chrome/Safari/VSCode) */
+.scrollable::-webkit-scrollbar,
+.code-block-scrollable::-webkit-scrollbar,
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+.scrollable::-webkit-scrollbar-track,
+.code-block-scrollable::-webkit-scrollbar-track,
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-track {
 	background: transparent;
+	border-radius: 3px;
 }
 
-.code-block-scrollable::-webkit-scrollbar-thumb {
-	background-color: var(--vscode-scrollbarSlider-background);
-	border-radius: 5px;
-	border: 2px solid transparent;
-	background-clip: content-box;
-}
-
-.code-block-scrollable::-webkit-scrollbar-thumb:hover {
-	background-color: var(--vscode-scrollbarSlider-hoverBackground);
-}
-
-.code-block-scrollable::-webkit-scrollbar-thumb:active {
-	background-color: var(--vscode-scrollbarSlider-activeBackground);
-}
-
-.code-block-scrollable::-webkit-scrollbar-corner {
+.scrollable::-webkit-scrollbar-corner,
+.code-block-scrollable::-webkit-scrollbar-corner,
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-corner {
 	background-color: transparent;
 }
+
+/* Default: scrollbar thumb is transparent (hidden) */
+.scrollable::-webkit-scrollbar-thumb,
+.code-block-scrollable::-webkit-scrollbar-thumb,
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb {
+	background: transparent;
+	border-radius: 3px;
+	transition: background 0.2s ease;
+}
+
+/* Show scrollbar thumb when hovering over the scrollable container */
+.scrollable:hover::-webkit-scrollbar-thumb,
+.code-block-scrollable:hover::-webkit-scrollbar-thumb,
+[data-test-id="virtuoso-scroller"]:hover::-webkit-scrollbar-thumb {
+	background: var(--vscode-scrollbarSlider-background);
+}
+
+/* Darker color when hovering over the thumb itself */
+.scrollable::-webkit-scrollbar-thumb:hover,
+.code-block-scrollable::-webkit-scrollbar-thumb:hover,
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb:hover {
+	background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+/* Darkest color when actively dragging the thumb */
+.scrollable::-webkit-scrollbar-thumb:active,
+.code-block-scrollable::-webkit-scrollbar-thumb:active,
+[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb:active {
+	background: var(--vscode-scrollbarSlider-activeBackground);
+}
+
+/* Virtuoso scroller specific: ensure content takes full width */
+[data-test-id="virtuoso-scroller"] {
+	overflow: auto !important;
+	padding-right: 0 !important;
+}
+
+[data-test-id="virtuoso-item-list"] {
+	padding-right: 0 !important;
+	width: 100% !important;
+}
+
+/* End of unified scrollbar styles */
 
 /**
  * Add a way to hide scrollbars.
@@ -490,69 +510,7 @@ input[cmdk-input]:focus {
 	transition-duration: 150ms;
 }
 
-/* 
- * Box-IM compatible scrollbar styles applied to .scrollable class
- * This ensures chat message containers and overflow areas use consistent styling
- */
-
-/**
- * Virtuoso scroller - 悬停显示滚动条，不占用宽度
- */
-[data-test-id="virtuoso-scroller"] {
-	overflow: auto !important;
-	scrollbar-gutter: stable; /* 防止内容跳动 */
-	padding-right: 0 !important; /* 确保内容充满整个宽度 */
-}
-
-/* Webkit浏览器（Chrome/Safari/VSCode）- 滚动条覆盖在内容上 */
-[data-test-id="virtuoso-scroller"]::-webkit-scrollbar {
-	width: 6px;
-	height: 6px;
-	position: absolute;
-	right: 0;
-}
-
-[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-track {
-	background: transparent;
-	border-radius: 3px;
-}
-
-[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb {
-	background: transparent;
-	border-radius: 3px;
-	transition: background 0.3s ease;
-}
-
-/* 鼠标悬停在滚动区域时显示滚动条 */
-[data-test-id="virtuoso-scroller"]:hover::-webkit-scrollbar-thumb {
-	background: rgba(var(--vscode-scrollbarSlider-background), 0.3);
-}
-
-[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb:hover {
-	background: rgba(var(--vscode-scrollbarSlider-hoverBackground), 0.5);
-}
-
-[data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb:active {
-	background: rgba(var(--vscode-scrollbarSlider-activeBackground), 0.7);
-}
-
-/* 让滚动条真正浮在内容上方 */
-[data-test-id="virtuoso-item-list"] {
-	padding-right: 0 !important;
-	width: 100% !important;
-}
-
-/* Firefox - 使用细滚动条 */
-@supports (scrollbar-width: thin) {
-	[data-test-id="virtuoso-scroller"] {
-		scrollbar-width: thin;
-		scrollbar-color: transparent transparent;
-	}
-	
-	[data-test-id="virtuoso-scroller"]:hover {
-		scrollbar-color: rgba(125, 125, 125, 0.3) transparent;
-	}
-}
+/* Virtuoso scroller styles moved to unified scrollbar section below */
 
 /**
  * IM-style message bubbles - 紧凑布局
@@ -657,7 +615,7 @@ img.message-avatar.assistant {
 
 /* 用户消息气泡小三角 - 指向用户头像 */
 .message-wrapper.user .message-content::before {
-	content: '';
+	content: "";
 	position: absolute;
 	top: 8px;
 	right: -6px; /* 指向右侧头像 */
@@ -669,7 +627,7 @@ img.message-avatar.assistant {
 }
 
 .message-wrapper.user .message-content::after {
-	content: '';
+	content: "";
 	position: absolute;
 	top: 8px;
 	right: -5px; /* 指向右侧头像 */
@@ -677,7 +635,8 @@ img.message-avatar.assistant {
 	height: 0;
 	border-style: solid;
 	border-width: 6px 0 6px 6px;
-	border-color: transparent transparent transparent color-mix(in srgb, var(--vscode-editor-background) 90%, var(--vscode-foreground) 10%);
+	border-color: transparent transparent transparent
+		color-mix(in srgb, var(--vscode-editor-background) 90%, var(--vscode-foreground) 10%);
 }
 
 /* AI消息内容区样式 - 紧凑专业 */
@@ -696,7 +655,7 @@ img.message-avatar.assistant {
 
 /* AI消息气泡小三角 - 指向标题 */
 .message-wrapper.assistant .message-content::before {
-	content: '';
+	content: "";
 	position: absolute;
 	top: -6px;
 	left: 45px; /* 调整位置以适应新的logo大小 */
@@ -708,7 +667,7 @@ img.message-avatar.assistant {
 }
 
 .message-wrapper.assistant .message-content::after {
-	content: '';
+	content: "";
 	position: absolute;
 	top: -5px;
 	left: 45px; /* 调整位置以适应新的logo大小 */
