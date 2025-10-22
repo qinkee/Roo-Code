@@ -4638,16 +4638,9 @@ body.code-block-scrollable,
 .code-block-scrollable,
 [data-test-id="virtuoso-scroller"] {
 	scrollbar-width: thin;
-	scrollbar-color: transparent transparent;
-	scrollbar-gutter: stable;
-	transition: scrollbar-color 0.2s;
-}
-body.scrollable:hover,
-.scrollable:hover,
-body.code-block-scrollable:hover,
-.code-block-scrollable:hover,
-[data-test-id="virtuoso-scroller"]:hover {
 	scrollbar-color: var(--vscode-scrollbarSlider-background) transparent;
+	scrollbar-gutter: stable;
+	transition: scrollbar-color 0.3s ease-in-out;
 }
 .scrollable::-webkit-scrollbar {
 	width: 6px;
@@ -4683,28 +4676,19 @@ body.code-block-scrollable:hover,
 	background-color: #0000;
 }
 .scrollable::-webkit-scrollbar-thumb {
-	background: 0 0;
+	background: var(--vscode-scrollbarSlider-background);
 	border-radius: 3px;
-	transition: background 0.2s;
+	transition: background 0.3s ease-in-out;
 }
 .code-block-scrollable::-webkit-scrollbar-thumb {
-	background: 0 0;
+	background: var(--vscode-scrollbarSlider-background);
 	border-radius: 3px;
-	transition: background 0.2s;
+	transition: background 0.3s ease-in-out;
 }
 [data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb {
-	background: 0 0;
+	background: var(--vscode-scrollbarSlider-background);
 	border-radius: 3px;
-	transition: background 0.2s;
-}
-.scrollable:hover::-webkit-scrollbar-thumb {
-	background: var(--vscode-scrollbarSlider-background);
-}
-.code-block-scrollable:hover::-webkit-scrollbar-thumb {
-	background: var(--vscode-scrollbarSlider-background);
-}
-[data-test-id="virtuoso-scroller"]:hover::-webkit-scrollbar-thumb {
-	background: var(--vscode-scrollbarSlider-background);
+	transition: background 0.3s ease-in-out;
 }
 .scrollable::-webkit-scrollbar-thumb:hover {
 	background: var(--vscode-scrollbarSlider-hoverBackground);
