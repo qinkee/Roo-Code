@@ -4638,9 +4638,17 @@ body.code-block-scrollable,
 .code-block-scrollable,
 [data-test-id="virtuoso-scroller"] {
 	scrollbar-width: thin;
-	scrollbar-color: var(--vscode-scrollbarSlider-background) transparent;
+	scrollbar-color: transparent transparent;
 	scrollbar-gutter: stable;
-	transition: scrollbar-color 0.3s ease-in-out;
+	transition: scrollbar-color 0.6s ease-in-out;
+}
+body.scrollable:hover,
+.scrollable:hover,
+body.code-block-scrollable:hover,
+.code-block-scrollable:hover,
+[data-test-id="virtuoso-scroller"]:hover {
+	scrollbar-color: var(--vscode-scrollbarSlider-background) transparent;
+	transition: scrollbar-color 0.2s ease-in-out;
 }
 .scrollable::-webkit-scrollbar {
 	width: 6px;
@@ -4677,36 +4685,57 @@ body.code-block-scrollable,
 }
 .scrollable::-webkit-scrollbar-thumb {
 	background: var(--vscode-scrollbarSlider-background);
+	opacity: 0;
 	border-radius: 3px;
-	transition: background 0.3s ease-in-out;
+	transition: opacity 0.6s ease-in-out;
 }
 .code-block-scrollable::-webkit-scrollbar-thumb {
 	background: var(--vscode-scrollbarSlider-background);
+	opacity: 0;
 	border-radius: 3px;
-	transition: background 0.3s ease-in-out;
+	transition: opacity 0.6s ease-in-out;
 }
 [data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb {
 	background: var(--vscode-scrollbarSlider-background);
+	opacity: 0;
 	border-radius: 3px;
-	transition: background 0.3s ease-in-out;
+	transition: opacity 0.6s ease-in-out;
+}
+.scrollable:hover::-webkit-scrollbar-thumb {
+	opacity: 1;
+	transition: opacity 0.2s ease-in-out;
+}
+.code-block-scrollable:hover::-webkit-scrollbar-thumb {
+	opacity: 1;
+	transition: opacity 0.2s ease-in-out;
+}
+[data-test-id="virtuoso-scroller"]:hover::-webkit-scrollbar-thumb {
+	opacity: 1;
+	transition: opacity 0.2s ease-in-out;
 }
 .scrollable::-webkit-scrollbar-thumb:hover {
 	background: var(--vscode-scrollbarSlider-hoverBackground);
+	opacity: 1;
 }
 .code-block-scrollable::-webkit-scrollbar-thumb:hover {
 	background: var(--vscode-scrollbarSlider-hoverBackground);
+	opacity: 1;
 }
 [data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb:hover {
 	background: var(--vscode-scrollbarSlider-hoverBackground);
+	opacity: 1;
 }
 .scrollable::-webkit-scrollbar-thumb:active {
 	background: var(--vscode-scrollbarSlider-activeBackground);
+	opacity: 1;
 }
 .code-block-scrollable::-webkit-scrollbar-thumb:active {
 	background: var(--vscode-scrollbarSlider-activeBackground);
+	opacity: 1;
 }
 [data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb:active {
 	background: var(--vscode-scrollbarSlider-activeBackground);
+	opacity: 1;
 }
 [data-test-id="virtuoso-scroller"] {
 	padding-right: 0 !important;

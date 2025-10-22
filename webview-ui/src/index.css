@@ -250,9 +250,19 @@ body.code-block-scrollable,
 .code-block-scrollable,
 [data-test-id="virtuoso-scroller"] {
 	scrollbar-width: thin; /* Firefox */
-	scrollbar-color: var(--vscode-scrollbarSlider-background) transparent; /* Use theme color */
+	scrollbar-color: transparent transparent; /* Hidden by default for Firefox */
 	scrollbar-gutter: stable; /* Prevent content shift */
-	transition: scrollbar-color 0.3s ease-in-out; /* Smooth fade effect */
+	transition: scrollbar-color 0.6s ease-in-out; /* Slow fade out */
+}
+
+/* Firefox: Show scrollbar on hover */
+body.scrollable:hover,
+.scrollable:hover,
+body.code-block-scrollable:hover,
+.code-block-scrollable:hover,
+[data-test-id="virtuoso-scroller"]:hover {
+	scrollbar-color: var(--vscode-scrollbarSlider-background) transparent;
+	transition: scrollbar-color 0.2s ease-in-out; /* Quick fade in */
 }
 
 /* Webkit browsers (Chrome/Safari/VSCode) */
@@ -276,27 +286,38 @@ body.code-block-scrollable,
 	background-color: transparent;
 }
 
-/* Default: scrollbar thumb uses theme color with fade effect */
+/* Default: scrollbar thumb hidden with fade effect */
 .scrollable::-webkit-scrollbar-thumb,
 .code-block-scrollable::-webkit-scrollbar-thumb,
 [data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb {
 	background: var(--vscode-scrollbarSlider-background);
 	border-radius: 3px;
-	transition: background 0.3s ease-in-out; /* Smooth fade effect */
+	opacity: 0; /* Hidden by default */
+	transition: opacity 0.6s ease-in-out; /* Smooth fade out: 0.6s transition */
 }
 
-/* Darker color when hovering over the thumb itself */
+/* Show scrollbar on container hover */
+.scrollable:hover::-webkit-scrollbar-thumb,
+.code-block-scrollable:hover::-webkit-scrollbar-thumb,
+[data-test-id="virtuoso-scroller"]:hover::-webkit-scrollbar-thumb {
+	opacity: 1; /* Fully visible on hover */
+	transition: opacity 0.2s ease-in-out; /* Quick fade in */
+}
+
+/* Even more visible when hovering over the thumb itself */
 .scrollable::-webkit-scrollbar-thumb:hover,
 .code-block-scrollable::-webkit-scrollbar-thumb:hover,
 [data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb:hover {
 	background: var(--vscode-scrollbarSlider-hoverBackground);
+	opacity: 1;
 }
 
-/* Darkest color when actively dragging the thumb */
+/* Most visible when actively dragging the thumb */
 .scrollable::-webkit-scrollbar-thumb:active,
 .code-block-scrollable::-webkit-scrollbar-thumb:active,
 [data-test-id="virtuoso-scroller"]::-webkit-scrollbar-thumb:active {
 	background: var(--vscode-scrollbarSlider-activeBackground);
+	opacity: 1;
 }
 
 /* Virtuoso scroller specific: ensure content takes full width */
