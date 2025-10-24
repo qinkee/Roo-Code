@@ -24,18 +24,23 @@ export const BatchDeleteTaskDialog = ({ taskIds, ...props }: BatchDeleteTaskDial
 	const { onOpenChange } = props
 	const [isDeleting, setIsDeleting] = useState(false)
 	const { taskHistory } = useExtensionState()
-	const initialTaskCount = useState(() => taskHistory.length)[0]
 
 	// Monitor task history changes to detect deletion completion
+	// Check if all selected tasks have been removed from taskHistory
 	useEffect(() => {
-		if (isDeleting && taskHistory.length < initialTaskCount) {
-			// Wait for UI to fully update before closing
-			setTimeout(() => {
-				setIsDeleting(false)
-				onOpenChange?.(false)
-			}, 300)
+		if (isDeleting) {
+			const taskHistoryIds = new Set(taskHistory.map((task) => task.id))
+			const allTasksDeleted = taskIds.every((id) => !taskHistoryIds.has(id))
+
+			if (allTasksDeleted) {
+				// Wait for UI to fully update before closing
+				setTimeout(() => {
+					setIsDeleting(false)
+					onOpenChange?.(false)
+				}, 300)
+			}
 		}
-	}, [taskHistory.length, isDeleting, initialTaskCount, onOpenChange])
+	}, [taskHistory, isDeleting, taskIds, onOpenChange])
 
 	const onDelete = useCallback(
 		(e: React.MouseEvent) => {
@@ -48,7 +53,7 @@ export const BatchDeleteTaskDialog = ({ taskIds, ...props }: BatchDeleteTaskDial
 				// Keep the dialog open while deleting to show loading state
 			}
 		},
-		[taskIds, isDeleting]
+		[taskIds, isDeleting],
 	)
 
 	return (
@@ -76,9 +81,7 @@ export const BatchDeleteTaskDialog = ({ taskIds, ...props }: BatchDeleteTaskDial
 						</AlertDialogHeader>
 						<AlertDialogFooter>
 							<AlertDialogCancel asChild>
-								<Button variant="secondary">
-									{t("history:cancel")}
-								</Button>
+								<Button variant="secondary">{t("history:cancel")}</Button>
 							</AlertDialogCancel>
 							<AlertDialogAction asChild>
 								<Button variant="destructive" onClick={onDelete}>

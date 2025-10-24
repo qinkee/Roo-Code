@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { MoreHorizontal, Info, Play, Edit, Trash2, Share, Upload } from "lucide-react"
+import { MoreHorizontal, Info, Play, Edit, Trash2, Upload } from "lucide-react"
 import ActionBar from "./ActionBar"
 import TaskListModal from "./TaskListModal"
 import TerminalSelectionModal from "./TerminalSelectionModal"
@@ -580,12 +580,6 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 		})
 	}, [])
 
-	const handleShareAgent = useCallback(async (agent: Agent) => {
-		// TODO: 实现分享智能体功能
-		console.log("Share/unshare agent:", agent)
-		setOpenDropdownId(null)
-	}, [])
-
 	const handleDropdownToggle = useCallback(
 		(agentId: string) => {
 			setOpenDropdownId(openDropdownId === agentId ? null : agentId)
@@ -976,13 +970,6 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 																	className="w-full px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground flex items-center gap-2">
 																	<Trash2 size={12} />
 																	删除
-																</button>
-																<button
-																	onClick={() => handleShareAgent(agent)}
-																	className="w-full px-3 py-2 text-left text-sm text-vscode-dropdown-foreground hover:bg-vscode-list-hoverBackground flex items-center gap-2">
-																	{/* TODO: 根据分享状态显示不同的图标 */}
-																	<Share size={12} />
-																	分享
 																</button>
 															</div>
 														)}
