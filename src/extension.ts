@@ -42,6 +42,7 @@ import {
 	registerCodeActions,
 	registerTerminalActions,
 	CodeActionProvider,
+	registerVoiceCommands,
 } from "./activate"
 import { initializeI18n } from "./i18n"
 import { LLMStreamService } from "./services/llm-stream-service"
@@ -635,6 +636,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	registerCommands({ context, outputChannel, provider })
+
+	// Register voice assistant commands
+	registerVoiceCommands(context)
 
 	// Set provider for VoidBridge
 	VoidBridge.setProvider(provider)

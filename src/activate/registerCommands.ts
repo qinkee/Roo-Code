@@ -634,3 +634,43 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 
 	return tabProvider
 }
+
+/**
+ * 注册语音助手相关命令
+ */
+export function registerVoiceCommands(context: vscode.ExtensionContext) {
+	const { executeToolCall, getRealtimeTools, generateRealtimeInstructions } = require("../api/voice/realtime-bridge")
+
+	// 获取Realtime配置
+	context.subscriptions.push(
+		vscode.commands.registerCommand("roo-cline.getRealtimeConfig", () => {
+			return {
+				tools: getRealtimeTools(),
+				instructions: generateRealtimeInstructions(),
+			}
+		}),
+	)
+
+	// 执行工具调用
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			"roo-cline.executeRealtimeTool",
+			async (toolName: string, args: any, callId: string) => {
+				try {
+					const result = await executeToolCall(toolName, args)
+					return {
+						success: true,
+						callId,
+						result,
+					}
+				} catch (error: any) {
+					return {
+						success: false,
+						callId,
+						error: error.message,
+					}
+				}
+			},
+		),
+	)
+}

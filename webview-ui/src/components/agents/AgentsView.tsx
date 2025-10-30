@@ -39,6 +39,8 @@ const PublishStatusBadge = ({
 	onStatusChange?: (status: "checking" | "running" | "stopped") => void
 }) => {
 	const [serverStatus, setServerStatus] = useState<"checking" | "running" | "stopped">("checking")
+	const [httpHealthy, setHttpHealthy] = useState(false)
+	const [wsHealthy, setWsHealthy] = useState(false)
 	const publishInfo = agent.publishInfo || {}
 	const isPublished = agent.isPublished || false
 
@@ -46,25 +48,60 @@ const PublishStatusBadge = ({
 		// 🎯 如果当前未发布，但有历史端口信息，直接显示为停止状态
 		if (!isPublished) {
 			setServerStatus("stopped")
+			setHttpHealthy(false)
+			setWsHealthy(false)
 			return
 		}
 
 		if (!publishInfo.serverUrl) {
 			setServerStatus("stopped")
+			setHttpHealthy(false)
+			setWsHealthy(false)
 			return
 		}
 
+		// 监听健康检查结果
+		const handleHealthCheckResult = (event: MessageEvent) => {
+			const message = event.data
+			if (
+				message.type === "action" &&
+				message.action === "checkAgentHealthResult" &&
+				message.agentId === agent.id
+			) {
+				if (message.success) {
+					// HTTP 和 WebSocket 都正常才显示运行中
+					const healthy = message.healthy || false
+					const newHttpHealthy = message.httpHealthy || false
+					const newWsHealthy = message.wsHealthy || false
+
+					setHttpHealthy(newHttpHealthy)
+					setWsHealthy(newWsHealthy)
+
+					const newStatus = healthy ? "running" : "stopped"
+					setServerStatus(newStatus)
+					onStatusChange?.(newStatus)
+				} else {
+					setServerStatus("stopped")
+					setHttpHealthy(false)
+					setWsHealthy(false)
+					onStatusChange?.("stopped")
+				}
+			}
+		}
+
+		window.addEventListener("message", handleHealthCheckResult)
+
 		const checkServerHealth = async () => {
 			try {
-				const response = await fetch(`${publishInfo.serverUrl}/health`, {
-					method: "GET",
-					signal: AbortSignal.timeout(3000), // 3秒超时
+				// 使用后端的健康检查命令，同时检测 HTTP 和 WebSocket 状态
+				vscode.postMessage({
+					type: "checkAgentHealth",
+					agentId: agent.id,
 				})
-				const newStatus = response.ok ? "running" : "stopped"
-				setServerStatus(newStatus)
-				onStatusChange?.(newStatus)
 			} catch (_error) {
 				setServerStatus("stopped")
+				setHttpHealthy(false)
+				setWsHealthy(false)
 				onStatusChange?.("stopped")
 			}
 		}
@@ -75,8 +112,11 @@ const PublishStatusBadge = ({
 		// 每10秒检查一次
 		const interval = setInterval(checkServerHealth, 10000)
 
-		return () => clearInterval(interval)
-	}, [isPublished, publishInfo.serverUrl, onStatusChange])
+		return () => {
+			clearInterval(interval)
+			window.removeEventListener("message", handleHealthCheckResult)
+		}
+	}, [isPublished, publishInfo.serverUrl, agent.id, onStatusChange])
 
 	// 🎯 UX优化：对于有历史发布信息但当前停止的智能体，也显示状态
 	if (!isPublished && !publishInfo.serverPort) {
@@ -87,24 +127,38 @@ const PublishStatusBadge = ({
 	const terminalText = publishInfo.terminalType === "cloud" ? "云端" : "本地"
 
 	const getStatusBadge = () => {
+		const getStatusTitle = () => {
+			if (serverStatus === "checking") return "正在检查智能体服务器状态..."
+			if (serverStatus === "running") {
+				return `智能体服务器运行中\n• HTTP 服务: ${httpHealthy ? "✓ 正常" : "✗ 异常"}\n• IM 连接: ${wsHealthy ? "✓ 已连接" : "✗ 未连接（不影响智能体运行）"}`
+			}
+			return `智能体服务器已停止\n• HTTP 服务: ${httpHealthy ? "✓ 正常" : "✗ 未响应"}\n• IM 连接: ${wsHealthy ? "✓ 已连接" : "✗ 未连接"}`
+		}
+
 		switch (serverStatus) {
 			case "checking":
 				return (
-					<span className="px-1.5 py-0.5 text-xs bg-yellow-500/20 text-yellow-400 rounded flex items-center gap-1">
+					<span
+						className="px-1.5 py-0.5 text-xs bg-yellow-500/20 text-yellow-400 rounded flex items-center gap-1"
+						title={getStatusTitle()}>
 						<span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></span>
 						检查中
 					</span>
 				)
 			case "running":
 				return (
-					<span className="px-1.5 py-0.5 text-xs bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+					<span
+						className="px-1.5 py-0.5 text-xs bg-green-500/20 text-green-400 rounded flex items-center gap-1"
+						title={getStatusTitle()}>
 						<span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
 						运行中
 					</span>
 				)
 			case "stopped":
 				return (
-					<span className="px-1.5 py-0.5 text-xs bg-red-500/20 text-red-400 rounded flex items-center gap-1">
+					<span
+						className="px-1.5 py-0.5 text-xs bg-red-500/20 text-red-400 rounded flex items-center gap-1"
+						title={getStatusTitle()}>
 						<span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
 						已停止
 					</span>
@@ -206,6 +260,12 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 
 			if (message.type === "action") {
 				switch (message.action) {
+					case "checkAgentHealthResult":
+						// 健康检查结果需要在 PublishStatusBadge 中处理
+						// 由于 badge 是独立组件，我们需要通过事件或状态管理来传递结果
+						// 为了简化，我们可以让 badge 直接监听这个消息
+						break
+
 					case "getApiConfigurationByIdResult":
 						if (message.success && message.config) {
 							console.log(

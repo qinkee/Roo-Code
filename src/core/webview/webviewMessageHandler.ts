@@ -2983,7 +2983,9 @@ export const webviewMessageHandler = async (
 
 						// ✅ 无条件同步：Redis始终是本地状态的镜像
 						await redisAdapter.syncAgentToRegistry(result.agent)
-						console.log(`✅ [updateAgent] Agent ${message.agentId} synced to Redis (isPublished=${result.agent.isPublished})`)
+						console.log(
+							`✅ [updateAgent] Agent ${message.agentId} synced to Redis (isPublished=${result.agent.isPublished})`,
+						)
 					} catch (error) {
 						console.error(`❌ [updateAgent] Failed to sync to Redis:`, error)
 						// 不抛出错误，不影响本地更新
@@ -3151,68 +3153,68 @@ export const webviewMessageHandler = async (
 		}
 
 		case "startAgent": {
-		try {
-			const VoidBridge = require("../../api/void-bridge").VoidBridge
-			const userId = VoidBridge.getCurrentUserId() || "default"
+			try {
+				const VoidBridge = require("../../api/void-bridge").VoidBridge
+				const userId = VoidBridge.getCurrentUserId() || "default"
 
-			// 🎯 启动智能体：使用已有的发布配置，直接启动A2A服务
-			console.log(`🚀 [startAgent] Starting agent ${message.agentId}`)
+				// 🎯 启动智能体：使用已有的发布配置，直接启动A2A服务
+				console.log(`🚀 [startAgent] Starting agent ${message.agentId}`)
 
-			// 获取智能体当前配置
-			const agentResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
-				userId,
-				agentId: message.agentId,
-			})) as any
+				// 获取智能体当前配置
+				const agentResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
+					userId,
+					agentId: message.agentId,
+				})) as any
 
-			if (!agentResult.success || !agentResult.agent) {
-				throw new Error("智能体不存在")
+				if (!agentResult.success || !agentResult.agent) {
+					throw new Error("智能体不存在")
+				}
+
+				const agent = agentResult.agent
+
+				// 检查是否已发布过
+				if (!agent.isPublished || !agent.publishInfo) {
+					throw new Error("智能体未发布，请先发布智能体")
+				}
+
+				console.log(`🎯 [startAgent] Agent ${message.agentId} found with publishInfo:`, agent.publishInfo)
+
+				// 使用历史配置启动（本地或云端）
+				const terminal = {
+					id: agent.publishInfo.terminalType === "cloud" ? "cloud-computer" : "local-computer",
+					name: agent.publishInfo.terminalType === "cloud" ? "云电脑" : "本地计算机",
+				}
+
+				// 🎯 直接启动A2A服务，使用首选端口
+				await initializeAgentOnTerminal(agent, terminal, provider, agent.publishInfo.serverPort)
+
+				// 获取更新后的智能体数据
+				const updatedResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
+					userId,
+					agentId: message.agentId,
+				})) as any
+
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "startAgentTaskResult",
+					success: true,
+					agentId: message.agentId,
+				})
+
+				vscode.window.showInformationMessage(`智能体 "${agent.name}" 已成功启动`)
+			} catch (error) {
+				provider.log(`Error starting agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "startAgentTaskResult",
+					success: false,
+					error: error instanceof Error ? error.message : String(error),
+				})
 			}
-
-			const agent = agentResult.agent
-
-			// 检查是否已发布过
-			if (!agent.isPublished || !agent.publishInfo) {
-				throw new Error("智能体未发布，请先发布智能体")
-			}
-
-			console.log(`🎯 [startAgent] Agent ${message.agentId} found with publishInfo:`, agent.publishInfo)
-
-			// 使用历史配置启动（本地或云端）
-			const terminal = {
-				id: agent.publishInfo.terminalType === "cloud" ? "cloud-computer" : "local-computer",
-				name: agent.publishInfo.terminalType === "cloud" ? "云电脑" : "本地计算机",
-			}
-
-			// 🎯 直接启动A2A服务，使用首选端口
-			await initializeAgentOnTerminal(agent, terminal, provider, agent.publishInfo.serverPort)
-
-			// 获取更新后的智能体数据
-			const updatedResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
-				userId,
-				agentId: message.agentId,
-			})) as any
-
-			await provider.postMessageToWebview({
-				type: "action",
-				action: "startAgentTaskResult",
-				success: true,
-				agentId: message.agentId,
-			})
-
-			vscode.window.showInformationMessage(`智能体 "${agent.name}" 已成功启动`)
-		} catch (error) {
-			provider.log(`Error starting agent: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`)
-			await provider.postMessageToWebview({
-				type: "action",
-				action: "startAgentTaskResult",
-				success: false,
-				error: error instanceof Error ? error.message : String(error),
-			})
+			break
 		}
-		break
-	}
 
-	case "stopAgent": {
+		case "stopAgent": {
 			try {
 				// 先显示确认对话框
 				const confirmed = await vscode.window.showWarningMessage(
@@ -3268,10 +3270,11 @@ export const webviewMessageHandler = async (
 
 					await updateAgentPublishStatus(message.agentId || "", true, updatedPublishInfo)
 
-					console.log(
-						`🎯 [stopAgent] Updated agent state:`,
-						{ isPublished: true, serviceStatus: "offline", publishInfo: updatedPublishInfo }
-					)
+					console.log(`🎯 [stopAgent] Updated agent state:`, {
+						isPublished: true,
+						serviceStatus: "offline",
+						publishInfo: updatedPublishInfo,
+					})
 
 					// 🎯 修复：停止时只更新Redis在线状态，不删除注册信息
 					console.log(`🔄 [stopAgent] Updating Redis online status to offline for agent ${message.agentId}`)
@@ -3318,6 +3321,85 @@ export const webviewMessageHandler = async (
 					action: "stopAgentResult",
 					success: false,
 					error: error instanceof Error ? error.message : String(error),
+				})
+			}
+			break
+		}
+
+		case "checkAgentHealth": {
+			try {
+				const { A2AServerManager } = require("../agent/A2AServerManager")
+				const serverManager = A2AServerManager.getInstance()
+
+				// 检查服务器健康状态（包括 HTTP 和 WebSocket）
+				const healthResult = await serverManager.checkServerHealth(message.agentId)
+
+				// 🎯 根据健康检查结果更新 serviceStatus
+				const newServiceStatus = healthResult.healthy ? "online" : "offline"
+
+				// 获取当前智能体信息
+				const VoidBridge = require("../../api/void-bridge").VoidBridge
+				const userId = VoidBridge.getCurrentUserId() || "default"
+				const agentResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
+					userId,
+					agentId: message.agentId,
+				})) as any
+
+				if (agentResult.success && agentResult.agent) {
+					const agent = agentResult.agent
+
+					// 更新 publishInfo 中的 serviceStatus 和 lastHeartbeat
+					const updatedPublishInfo = {
+						...(agent.publishInfo || {}),
+						serviceStatus: newServiceStatus,
+						lastHeartbeat: Date.now(),
+					}
+
+					// 更新智能体状态
+					await updateAgentPublishStatus(message.agentId, agent.isPublished, updatedPublishInfo)
+
+					// 重新获取更新后的智能体数据
+					const updatedAgentResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {
+						userId,
+						agentId: message.agentId,
+					})) as any
+
+					// 同步到 Redis
+					if (updatedAgentResult.success && updatedAgentResult.agent) {
+						try {
+							const { AgentRedisAdapter } = require("../agent/AgentRedisAdapter")
+							const redisAdapter = new AgentRedisAdapter()
+							await redisAdapter.syncAgentToRegistry(updatedAgentResult.agent)
+							console.log(
+								`[checkAgentHealth] ✅ Synced serviceStatus=${newServiceStatus} to Redis for agent ${message.agentId}`,
+							)
+						} catch (redisError) {
+							console.warn(`[checkAgentHealth] Failed to sync to Redis:`, redisError)
+						}
+					}
+				}
+
+				// 返回健康检查结果给前端
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "checkAgentHealthResult",
+					success: true,
+					agentId: message.agentId,
+					...healthResult,
+				})
+			} catch (error) {
+				provider.log(
+					`Error checking agent health: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+				)
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "checkAgentHealthResult",
+					success: false,
+					agentId: message.agentId,
+					error: error instanceof Error ? error.message : String(error),
+					healthy: false,
+					httpHealthy: false,
+					wsHealthy: false,
 				})
 			}
 			break

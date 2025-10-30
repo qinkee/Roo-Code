@@ -259,9 +259,15 @@ export class A2AServerManager {
 			// 等待所有启动完成
 			await Promise.allSettled(startupPromises)
 
-			logger.info(
-				`[A2AServerManager] Auto-startup completed: ${results.started}/${results.total} agents started successfully`,
+			console.log(
+				`[A2AServerManager] ✅ Auto-startup completed: ${results.started}/${results.total} agents started successfully`,
 			)
+
+			// 打印所有运行中的智能体信息
+			console.log(`[A2AServerManager] 📊 Running servers (${this.runningServers.size}):`)
+			for (const [agentId, serverInfo] of this.runningServers.entries()) {
+				console.log(`  - Agent ID: ${agentId}, URL: ${serverInfo.url}, Port: ${serverInfo.port}`)
+			}
 
 			if (results.errors.length > 0) {
 				logger.warn(
@@ -278,20 +284,77 @@ export class A2AServerManager {
 
 	/**
 	 * 检查服务器健康状态
+	 * 同时检测 HTTP 端点和 WebSocket 连接状态
 	 */
-	async checkServerHealth(agentId: string): Promise<boolean> {
+	async checkServerHealth(agentId: string): Promise<{ healthy: boolean; httpHealthy: boolean; wsHealthy: boolean }> {
 		try {
 			const serverInfo = this.runningServers.get(agentId)
 			if (!serverInfo) {
-				return false
+				console.warn(
+					`[A2AServerManager] Agent ${agentId} not found in runningServers. Current running agents: ${Array.from(this.runningServers.keys()).join(", ")}`,
+				)
+				return { healthy: false, httpHealthy: false, wsHealthy: false }
 			}
 
-			// TODO: 实现实际的健康检查逻辑
-			// 可以发送ping请求到服务器端点
-			return true
+			console.log(`[A2AServerManager] Checking health for agent ${agentId}, URL: ${serverInfo.url}`)
+
+			// 1. 检查 HTTP 健康状态
+			let httpHealthy = false
+			try {
+				const healthUrl = `${serverInfo.url}/health`
+				console.log(`[A2AServerManager] Fetching health endpoint: ${healthUrl}`)
+
+				// 使用原生 fetch API（Node.js 18+ 内置）
+				const controller = new AbortController()
+				const timeoutId = setTimeout(() => controller.abort(), 3000) // 3秒超时
+
+				const response = await fetch(healthUrl, {
+					method: "GET",
+					signal: controller.signal,
+				})
+
+				clearTimeout(timeoutId)
+				httpHealthy = response.ok
+				console.log(
+					`[A2AServerManager] HTTP health check for ${agentId}: status=${response.status}, ok=${response.ok}`,
+				)
+			} catch (error) {
+				console.warn(
+					`[A2AServerManager] HTTP health check failed for agent ${agentId} at ${serverInfo.url}/health:`,
+					error,
+				)
+			}
+
+			// 2. 检查 WebSocket 连接状态
+			let wsHealthy = false
+			try {
+				// 获取全局的 LLMStreamService 实例中的 IM 连接
+				// llmStreamService 存储在 global 对象中
+				const llmService = (global as any).llmStreamService
+				if (llmService?.imConnection) {
+					wsHealthy = llmService.imConnection.isConnected
+					console.log(
+						`[A2AServerManager] WebSocket connection status: ${wsHealthy ? "✓ connected" : "✗ disconnected"}`,
+					)
+				} else {
+					console.warn(`[A2AServerManager] LLMStreamService or IM connection not available in global`)
+				}
+			} catch (error) {
+				console.warn(`[A2AServerManager] WebSocket health check failed for agent ${agentId}:`, error)
+			}
+
+			// 3. 综合判断：智能体调用主要依靠 WebSocket 桥接
+			// HTTP 和 WebSocket 都正常才认为智能体可以正常工作
+			const healthy = httpHealthy && wsHealthy
+
+			console.log(
+				`[A2AServerManager] ✅ Health check result for agent ${agentId}: httpHealthy=${httpHealthy}, wsHealthy=${wsHealthy}, overall=${healthy}`,
+			)
+
+			return { healthy, httpHealthy, wsHealthy }
 		} catch (error) {
 			logger.error(`[A2AServerManager] Health check failed for agent ${agentId}:`, error)
-			return false
+			return { healthy: false, httpHealthy: false, wsHealthy: false }
 		}
 	}
 
