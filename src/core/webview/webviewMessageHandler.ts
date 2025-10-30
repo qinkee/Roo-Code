@@ -3328,6 +3328,10 @@ export const webviewMessageHandler = async (
 
 		case "checkAgentHealth": {
 			try {
+				if (!message.agentId) {
+					throw new Error("agentId is required for checkAgentHealth")
+				}
+
 				const { A2AServerManager } = require("../agent/A2AServerManager")
 				const serverManager = A2AServerManager.getInstance()
 

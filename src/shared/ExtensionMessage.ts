@@ -152,6 +152,7 @@ export interface ExtensionMessage {
 		| "deleteAgentResult"
 		| "publishAgentResult"
 		| "stopAgentResult"
+		| "checkAgentHealthResult"
 		| "getApiConfigurationByIdResult"
 	invoke?: "newChat" | "sendMessage" | "primaryButtonClick" | "secondaryButtonClick" | "setChatBoxMessage"
 	state?: ExtensionState
@@ -231,6 +232,10 @@ export interface ExtensionMessage {
 		serverPort: number
 		lastUpdated?: number
 	} | null // For currentA2AModeResponse
+	// Health check result properties
+	healthy?: boolean
+	httpHealthy?: boolean
+	wsHealthy?: boolean
 	contacts?: {
 		friends: Array<{
 			id: number
