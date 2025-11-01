@@ -295,14 +295,29 @@ export async function activate(context: vscode.ExtensionContext) {
 			const taskParams = await prepareAgentTask(data, provider)
 
 			// 检查是否是 say_hi 消息
+			outputChannel.appendLine(`[LLM] 🔍 Checking say_hi - taskParams.message: ${taskParams.message}`)
 			let messageObj: any
 			try {
 				messageObj = JSON.parse(taskParams.message)
+				outputChannel.appendLine(`[LLM] ✅ Parsed messageObj: ${JSON.stringify(messageObj)}`)
 			} catch (e) {
+				outputChannel.appendLine(`[LLM] ⚠️ Failed to parse message as JSON, treating as plain text`)
 				messageObj = null
 			}
 
+			outputChannel.appendLine(
+				`[LLM] 🔍 messageObj?.type: ${messageObj?.type}, isSayHi: ${messageObj?.type === "say_hi"}`,
+			)
+
+			// 处理 terminal 消息
+			if (messageObj?.type === "terminal_input") {
+				outputChannel.appendLine(`[LLM] 🖥️ Detected terminal_input message, delegating to LLMStreamService`)
+				await llmService.handleTerminalMessage(data)
+				return
+			}
+
 			if (messageObj?.type === "say_hi") {
+				outputChannel.appendLine(`[LLM] 👋 Detected say_hi message, sending welcome message`)
 				// 直接返回欢迎语
 				const welcomeMessage =
 					taskParams.agentConfig.welcomeMessage ||

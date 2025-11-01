@@ -1189,17 +1189,70 @@ export class ClineProvider
 		if (message.type === "messageUpdated" && message.clineMessage) {
 			const clineMsg = message.clineMessage
 
+			// 🔥 调试日志：记录所有收到的消息类型
+			const msgType = clineMsg.type === "say" ? clineMsg.say : clineMsg.ask
+			this.log(
+				`[forwardToIMWebSocket] 📨 Received: type=${clineMsg.type}, msgType=${msgType}, partial=${clineMsg.partial}, text=${clineMsg.text?.substring(0, 50)}...`,
+			)
+
 			// 🔥 支持流式传输：partial=true 表示流式中间状态，partial=false 表示完成
 			const isPartial = clineMsg.partial === true
 
 			// 生成消息唯一ID（用于追踪发送位置）
 			const msgKey = `${task.taskId}_${clineMsg.ts}`
 
-			if (clineMsg.type === "ask" && clineMsg.ask === "tool") {
+			if (clineMsg.type === "ask" && (clineMsg.ask === "tool" || clineMsg.ask === "command")) {
 				// tool_use - 全量发送
 				if (!isPartial) {
 					this.log(`[forwardToIMWebSocket] Sending tool_use message`)
 				}
+
+				// 🔥 调试日志
+				this.log(
+					`[forwardToIMWebSocket] DEBUG tool clineMsg:`,
+					JSON.stringify({
+						text: clineMsg.text,
+						metadata: clineMsg.metadata,
+					}),
+				)
+
+				// 🔥 解析工具信息（从 clineMsg.text 中提取工具名称和参数）
+				let toolName = "unknown"
+				let toolInput: any = null
+				let toolStatus = isPartial ? "running" : "completed"
+
+				// 🔥 根据 ask 类型推断工具名称
+				if (clineMsg.ask === "command") {
+					toolName = "execute_command"
+					// 对于 command 类型，text 就是命令本身或完整描述
+					if (clineMsg.text) {
+						// 尝试提取命令参数
+						const cmdMatch = clineMsg.text.match(/\[execute_command for '(.+?)'\]/)
+						if (cmdMatch) {
+							toolInput = { command: cmdMatch[1] }
+						} else {
+							// partial 消息，text 就是命令本身
+							toolInput = { command: clineMsg.text }
+						}
+					}
+				} else if (clineMsg.text) {
+					// 对于其他类型，尝试从 text 中提取工具名称，格式如 "[tool_name for ...]"
+					const toolMatch = clineMsg.text.match(/\[(\w+)/)
+					this.log(`[forwardToIMWebSocket] Tool match result:`, toolMatch)
+					if (toolMatch) {
+						toolName = toolMatch[1]
+						this.log(`[forwardToIMWebSocket] Extracted tool name:`, toolName)
+					}
+				}
+
+				// 🔥 从 metadata 中获取工具参数（如果有，优先级最高）
+				if (clineMsg.metadata && (clineMsg.metadata as any).tool) {
+					toolName = (clineMsg.metadata as any).tool
+				}
+				if (clineMsg.metadata && (clineMsg.metadata as any).params) {
+					toolInput = (clineMsg.metadata as any).params
+				}
+
 				llmService.imConnection.sendLLMChunk(
 					ctx.streamId,
 					JSON.stringify({
@@ -1207,7 +1260,12 @@ export class ClineProvider
 						text: clineMsg.text,
 						partial: isPartial,
 						ts: clineMsg.ts,
-						metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
+						metadata: {
+							...(clineMsg.metadata || {}), // 保留原有 metadata（包含 taskId）
+							tool: toolName,
+							status: toolStatus,
+							input: toolInput,
+						},
 					}),
 					ctx.imMetadata.recvId,
 					ctx.imMetadata.targetTerminal,

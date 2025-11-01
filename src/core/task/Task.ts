@@ -409,8 +409,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					}
 				} else {
 				}
-			} catch (error) {
-			}
+			} catch (error) {}
 		}
 
 		// Normal use-case is usually retry similar history task with new workspace.
@@ -518,12 +517,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								this.diffStrategy = new MultiFileSearchReplaceDiffStrategy(this.fuzzyMatchThreshold)
 							}
 						})
-						.catch((stateError) => {
-						})
+						.catch((stateError) => {})
 				} else {
 				}
-			} catch (getStateError) {
-			}
+			} catch (getStateError) {}
 		} else {
 		}
 		this.toolRepetitionDetector = new ToolRepetitionDetector(this.consecutiveMistakeLimit)
@@ -758,8 +755,17 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.clineMessages.push(message)
 		const provider = this.providerRef.deref()
 		// 🔥 智能体任务：跳过频繁的状态更新，减少性能开销
+		// 但是对于 command_output 等重要输出消息，需要推送到 IM
+		const shouldNotifyForAgentTask =
+			this.agentTaskContext &&
+			message.type === "say" &&
+			(message.say === "command_output" || message.say === "error" || message.say === "user_feedback")
+
 		if (!this.agentTaskContext) {
 			await provider?.postStateToWebview()
+		} else if (shouldNotifyForAgentTask) {
+			// 智能体任务的重要消息：发送 messageUpdated 到 IM
+			await provider?.postMessageToWebview({ type: "messageUpdated", clineMessage: message }, this.taskId)
 		}
 		this.emit(RooCodeEventName.Message, { action: "created", message })
 		await this.saveClineMessages()

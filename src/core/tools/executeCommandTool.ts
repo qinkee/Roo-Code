@@ -216,7 +216,11 @@ export async function executeCommand(
 				terminalOutputCharacterLimit,
 			)
 
+			console.log(
+				`[executeCommand] 🔥 onCompleted called, output length: ${result.length}, isAgent: ${!!task.agentTaskContext}`,
+			)
 			task.say("command_output", result)
+			console.log(`[executeCommand] 🔥 task.say("command_output") completed`)
 			completed = true
 		},
 		onShellExecutionStarted: (pid: number | undefined) => {
@@ -228,6 +232,15 @@ export async function executeCommand(
 			const status: CommandExecutionStatus = { executionId, status: "exited", exitCode: details.exitCode }
 			provider?.postMessageToWebview({ type: "commandExecutionStatus", text: JSON.stringify(status) })
 			exitDetails = details
+
+			// 🔥 如果 onCompleted 没有被调用，在这里发送命令输出
+			if (result && !completed) {
+				console.log(
+					`[executeCommand] 🔥 onShellExecutionComplete: sending command_output (onCompleted was not called)`,
+				)
+				task.say("command_output", result)
+				completed = true
+			}
 		},
 	}
 
