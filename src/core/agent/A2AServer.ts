@@ -395,7 +395,6 @@ export class A2AServer {
 	 */
 	private async startServerInstance(handler: any, port: number, agent?: AgentConfig): Promise<any> {
 		const http = require("http")
-		const WebSocket = require("ws")
 
 		// 获取推荐的绑定地址
 		const bindAddress = await NetworkUtils.getRecommendedBindAddress()
