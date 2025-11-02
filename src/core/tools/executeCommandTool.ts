@@ -195,6 +195,13 @@ export async function executeCommand(
 			const status: CommandExecutionStatus = { executionId, status: "output", output: compressedOutput }
 			provider?.postMessageToWebview({ type: "commandExecutionStatus", text: JSON.stringify(status) })
 
+			// 🔥 智能体任务：流式推送输出到 IM，传递累加后的完整输出（Provider 会负责增量发送）
+			if (task.agentTaskContext) {
+				await task.say("command_output", accumulatedOutput, undefined, true)
+				return // 不需要等待用户响应，直接返回继续监听
+			}
+
+			// 用户任务：需要等待用户响应
 			if (runInBackground) {
 				return
 			}
@@ -219,7 +226,14 @@ export async function executeCommand(
 			console.log(
 				`[executeCommand] 🔥 onCompleted called, output length: ${result.length}, isAgent: ${!!task.agentTaskContext}`,
 			)
-			task.say("command_output", result)
+
+			// 🔥 智能体任务：发送最终完整输出（partial=false）
+			if (task.agentTaskContext) {
+				task.say("command_output", result, undefined, false)
+			} else {
+				// 用户任务：保持原有逻辑
+				task.say("command_output", result)
+			}
 			console.log(`[executeCommand] 🔥 task.say("command_output") completed`)
 			completed = true
 		},
@@ -254,7 +268,10 @@ export async function executeCommand(
 	const terminal = await TerminalRegistry.getOrCreateTerminal(workingDir, !!customCwd, task.taskId, terminalProvider)
 
 	if (terminal instanceof Terminal) {
-		terminal.terminal.show(true)
+		// 🔥 智能体任务：后台执行，不显示终端
+		if (!task.agentTaskContext) {
+			terminal.terminal.show(true)
+		}
 
 		// Update the working directory in case the terminal we asked for has
 		// a different working directory so that the model will know where the
