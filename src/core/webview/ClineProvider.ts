@@ -134,10 +134,6 @@ export class ClineProvider
 	private lastSentPositions: Map<string, number> = new Map()
 	// 🔥 用户正在查看的智能体任务ID（null表示未查看或查看用户任务）
 	private viewingAgentTaskId: string | null = null
-	// 🔥 TaskHistory 缓存，避免频繁读取
-	private taskHistoryCache: HistoryItem[] | null = null
-	private taskHistoryCacheTime: number = 0
-	private readonly TASK_HISTORY_CACHE_TTL = 1000 // 缓存1秒
 	private codeIndexStatusSubscription?: vscode.Disposable
 	private currentWorkspaceManager?: CodeIndexManager
 	private _workspaceTracker?: WorkspaceTracker // workSpaceTracker read-only for access outside this class
@@ -518,28 +514,38 @@ export class ClineProvider
 		)
 
 		if (task) {
-			try {
-				// Abort the running task and set isAbandoned to true so
-				// all running promises will exit as well.
-				await task.abortTask(true)
-			} catch (e) {
-				this.log(
-					`[subtasks] encountered error while aborting task ${task.taskId}.${task.instanceId}: ${e.message}`,
-				)
-			}
+			// 🔥 优化：先立即处理同步部分（清除状态、移除监听器），然后异步处理耗时的 abort 操作
+			// 这样可以避免 826ms 的阻塞，提升 UI 响应速度
 
+			// 立即触发 TaskUnfocused 事件
 			task.emit(RooCodeEventName.TaskUnfocused)
 
-			// Remove event listeners before clearing the reference.
+			// 立即移除事件监听器
 			const cleanupFunctions = this.taskEventListeners.get(task)
-
 			if (cleanupFunctions) {
 				cleanupFunctions.forEach((cleanup) => cleanup())
 				this.taskEventListeners.delete(task)
 			}
 
-			// Make sure no reference kept, once promises end it will be
-			// garbage collected.
+			// 🔥 异步处理耗时的 abort 操作（不阻塞 UI）
+			const taskToAbort = task
+			setImmediate(() => {
+				const abortStart = Date.now()
+				taskToAbort
+					.abortTask(true)
+					.then(() => {
+						this.log(
+							`[removeClineFromStack] Async abort completed for task ${taskToAbort.taskId} in ${Date.now() - abortStart}ms`,
+						)
+					})
+					.catch((e) => {
+						this.log(
+							`[subtasks] encountered error while aborting task ${taskToAbort.taskId}.${taskToAbort.instanceId}: ${e.message}`,
+						)
+					})
+			})
+
+			// 清除引用（任务会在 promises 结束后被垃圾回收）
 			task = undefined
 		}
 	}
@@ -1054,45 +1060,72 @@ export class ClineProvider
 		return task
 	}
 
-	public async initClineWithHistoryItem(historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task }) {
+	public async initClineWithHistoryItem(
+		historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task },
+		options?: { asyncConfigRestore?: boolean }
+	) {
 		await this.removeClineFromStack()
 
-		// If the history item has a saved mode, restore it and its associated API configuration
-		if (historyItem.mode) {
-			// Validate that the mode still exists
-			const customModes = await this.customModesManager.getCustomModes()
-			const modeExists = getModeBySlug(historyItem.mode, customModes) !== undefined
+		// 🔥 优化：异步恢复配置，不阻塞 UI
+		// 默认异步恢复（快速打开界面），用户继续执行时配置已准备好
+		const asyncRestore = options?.asyncConfigRestore !== false
 
-			if (!modeExists) {
-				// Mode no longer exists, fall back to default mode
-				historyItem.mode = defaultModeSlug
-			}
+		// 定义配置恢复逻辑
+		const restoreConfig = async () => {
+			if (historyItem.mode) {
+				// Validate that the mode still exists
+				const customModes = await this.customModesManager.getCustomModes()
+				const modeExists = getModeBySlug(historyItem.mode, customModes) !== undefined
 
-			// 🔥 优化：先并行获取配置信息，减少串行等待
-			const [savedConfigId, listApiConfig] = await Promise.all([
-				this.providerSettingsManager.getModeConfigId(historyItem.mode),
-				this.providerSettingsManager.listConfig(),
-			])
+				if (!modeExists) {
+					// Mode no longer exists, fall back to default mode
+					historyItem.mode = defaultModeSlug
+				}
 
-			// Update mode
-			await this.updateGlobalState("mode", historyItem.mode)
+				// 🔥 优化：先并行获取配置信息，减少串行等待
+				const [savedConfigId, listApiConfig] = await Promise.all([
+					this.providerSettingsManager.getModeConfigId(historyItem.mode),
+					this.providerSettingsManager.listConfig(),
+				])
 
-			// Update listApiConfigMeta
-			await this.updateGlobalState("listApiConfigMeta", listApiConfig)
+				// Update mode
+				await this.updateGlobalState("mode", historyItem.mode)
 
-			// If this mode has a saved config, use it
-			if (savedConfigId) {
-				const profile = listApiConfig.find(({ id }) => id === savedConfigId)
+				// Update listApiConfigMeta
+				await this.updateGlobalState("listApiConfigMeta", listApiConfig)
 
-				if (profile?.name) {
-					try {
-						// 🔥 跳过状态更新，避免在任务初始化过程中发送错误的状态
-						await this.activateProviderProfile({ name: profile.name }, true)
-					} catch (error) {
-						// Silently continue with default configuration
+				// If this mode has a saved config, use it
+				if (savedConfigId) {
+					const profile = listApiConfig.find(({ id }) => id === savedConfigId)
+
+					if (profile?.name) {
+						try {
+							// 🔥 跳过状态更新，避免在任务初始化过程中发送错误的状态
+							await this.activateProviderProfile({ name: profile.name }, true)
+						} catch (error) {
+							// Silently continue with default configuration
+						}
 					}
 				}
 			}
+		}
+
+		// 🔥 异步或同步恢复配置
+		if (asyncRestore) {
+			// 异步恢复，不阻塞任务初始化
+			setImmediate(() => {
+				restoreConfig().then(() => {
+					// 配置恢复后，静默更新状态（不阻塞）
+					this.postStateToWebview().catch(err => {
+						console.error('[initClineWithHistoryItem] Failed to update state after config restore:', err)
+					})
+				}).catch(error => {
+					console.error('[initClineWithHistoryItem] Async config restoration failed:', error)
+				})
+			})
+		} else {
+			// 同步恢复（用于需要立即使用正确配置的场景）
+			await restoreConfig()
 		}
 
 		const {
@@ -2026,6 +2059,7 @@ export class ClineProvider
 	async showTaskWithId(id: string) {
 		// 🔥 获取任务历史信息，判断任务类型
 		const { historyItem } = await this.getTaskWithId(id)
+
 		const isAgentTask = historyItem.source === "agent"
 
 		// 🔥 智能体任务：标记为正在查看（无论是否还在执行）
@@ -2091,8 +2125,18 @@ export class ClineProvider
 		if (id !== this.getCurrentCline()?.taskId) {
 			// Non-current task.
 			await this.initClineWithHistoryItem(historyItem) // Clears existing task.
-			// 更新UI状态
-			await this.postStateToWebview()
+
+			// 🔥 优化：先打开聊天界面让用户看到反馈，然后异步更新状态
+			// 这样 UI 会立即响应，状态更新在后台进行
+			await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+
+			// 异步更新UI状态（不阻塞界面）
+			setImmediate(() => {
+				this.postStateToWebview().catch(error => {
+					console.error("[showTaskWithId] Failed to update state:", error)
+				})
+			})
+			return
 		}
 
 		// 打开聊天界面
@@ -2214,9 +2258,6 @@ export class ClineProvider
 		// IMPORTANT: Also update the contextProxy cache so that getState() returns the updated history
 		// This ensures postStateToWebview() sends the correct task history to the React UI
 		await this.contextProxy.setValue("taskHistory", updatedTaskHistory)
-
-		// 🔥 CRITICAL: Invalidate task history cache to ensure getCachedTaskHistory() returns fresh data
-		this.invalidateTaskHistoryCache()
 
 		await this.postStateToWebview()
 	}
@@ -2591,32 +2632,13 @@ export class ClineProvider
 	 * https://www.eliostruyf.com/devhack-code-extension-storage-options/
 	 */
 
-	// 🔥 缓存的 TaskHistory 获取方法，避免频繁读取
-	private async getCachedTaskHistory(): Promise<HistoryItem[]> {
-		const now = Date.now()
-		if (this.taskHistoryCache && now - this.taskHistoryCacheTime < this.TASK_HISTORY_CACHE_TTL) {
-			return this.taskHistoryCache
-		}
-
-		const { TaskHistoryBridge } = await import("../../api/task-history-bridge")
-		const taskHistory = await TaskHistoryBridge.getTaskHistory()
-		this.taskHistoryCache = taskHistory
-		this.taskHistoryCacheTime = now
-		return taskHistory
-	}
-
-	// 🔥 清除 TaskHistory 缓存（在更新后调用）
-	private invalidateTaskHistoryCache(): void {
-		this.taskHistoryCache = null
-		this.taskHistoryCacheTime = 0
-	}
-
 	async getState() {
 		const stateValues = this.contextProxy.getValues()
 		const customModes = await this.customModesManager.getCustomModes()
 
-		// 🔥 使用缓存的 TaskHistory，避免频繁读取
-		const taskHistory = await this.getCachedTaskHistory()
+		// 🔥 Get task history from TaskHistoryBridge (which has its own caching)
+		const { TaskHistoryBridge } = await import("../../api/task-history-bridge")
+		const taskHistory = await TaskHistoryBridge.getTaskHistory()
 
 		// Determine apiProvider with the same logic as before.
 		const apiProvider: ProviderName = stateValues.apiProvider ? stateValues.apiProvider : "anthropic"
@@ -2813,10 +2835,7 @@ export class ClineProvider
 		// This ensures postStateToWebview() sends the correct task history to the UI
 		await this.contextProxy.setValue("taskHistory", history)
 
-		// 🔥 Invalidate task history cache to ensure fresh data
-		this.invalidateTaskHistoryCache()
-
-		// Verification: read back the saved item
+		// Verification: read back the saved item (TaskHistoryBridge cache is already updated)
 		const verifyHistory = await TaskHistoryBridge.getTaskHistory()
 		const verifyItem = verifyHistory.find((h) => h.id === item.id)
 		if (verifyItem) {
