@@ -3482,7 +3482,7 @@ export const webviewMessageHandler = async (
 						enabled: true,
 						agentId: agent.id,
 						agentName: agent.name,
-						serverUrl: message.a2aServerUrl || null,
+						serverUrl: message.a2aServerUrl || "",
 						serverPort: message.a2aServerPort || 3000,
 						isDebugMode: true,
 					}

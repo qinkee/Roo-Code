@@ -304,7 +304,7 @@ export class LLMStreamService {
 
 			// 回退：查找旧的终端会话
 			const terminal = this.terminalSessions.get(streamId)
-			if (terminal && "sendText" in terminal && terminal.sendText) {
+			if (terminal && "sendText" in terminal && typeof terminal.sendText === "function") {
 				terminal.sendText("\x03")
 				this.outputChannel.appendLine(`[Terminal] Sent Ctrl+C to legacy terminal ${streamId}`)
 

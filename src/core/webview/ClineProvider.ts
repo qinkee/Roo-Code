@@ -1250,11 +1250,10 @@ export class ClineProvider
 
 				// 🔥 调试日志
 				this.log(
-					`[forwardToIMWebSocket] DEBUG tool clineMsg:`,
-					JSON.stringify({
+					`[forwardToIMWebSocket] DEBUG tool clineMsg: ${JSON.stringify({
 						text: clineMsg.text,
 						metadata: clineMsg.metadata,
-					}),
+					})}`,
 				)
 
 				// 🔥 解析工具信息（从 clineMsg.text 中提取工具名称和参数）
@@ -1279,10 +1278,10 @@ export class ClineProvider
 				} else if (clineMsg.text) {
 					// 对于其他类型，尝试从 text 中提取工具名称，格式如 "[tool_name for ...]"
 					const toolMatch = clineMsg.text.match(/\[(\w+)/)
-					this.log(`[forwardToIMWebSocket] Tool match result:`, toolMatch)
+					this.log(`[forwardToIMWebSocket] Tool match result: ${toolMatch}`)
 					if (toolMatch) {
 						toolName = toolMatch[1]
-						this.log(`[forwardToIMWebSocket] Extracted tool name:`, toolName)
+						this.log(`[forwardToIMWebSocket] Extracted tool name: ${toolName}`)
 					}
 				}
 
