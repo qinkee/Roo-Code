@@ -765,7 +765,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// 🤖 Initialize A2A Server Manager and auto-start published agents
 	try {
-		outputChannel.appendLine("[A2AServerManager] Initializing A2A Server Manager...")
 
 		// 初始化A2A服务器管理器（不传存储服务，让它自己创建）
 		const a2aServerManager = A2AServerManager.getInstance()
@@ -778,9 +777,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		a2aServerManager
 			.startAllPublishedAgents()
 			.then((result: any) => {
-				outputChannel.appendLine(
-					`[A2AServerManager] ✅ Auto-startup completed: ${result.started}/${result.total} agents started`,
-				)
 
 				// 已自动启动智能体，不显示提示消息以避免干扰用户
 				// if (result.started > 0) {
@@ -788,14 +784,12 @@ export async function activate(context: vscode.ExtensionContext) {
 				// }
 
 				if (result.errors.length > 0) {
-					outputChannel.appendLine(`[A2AServerManager] ❌ ${result.errors.length} agents failed to start:`)
 					result.errors.forEach((item: { agentId: string; error: any }) => {
 						outputChannel.appendLine(`  - ${item.agentId}: ${item.error}`)
 					})
 				}
 			})
 			.catch((error: any) => {
-				outputChannel.appendLine(`[A2AServerManager] ❌ Auto-startup failed: ${error}`)
 			})
 
 		// 添加到订阅中以便正确清理
@@ -805,9 +799,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			},
 		})
 
-		outputChannel.appendLine("[A2AServerManager] ✅ A2A Server Manager initialized successfully")
 	} catch (error) {
-		outputChannel.appendLine(`[A2AServerManager] ❌ Failed to initialize A2A Server Manager: ${error}`)
 	}
 
 	// Implements the `RooCodeAPI` interface.
