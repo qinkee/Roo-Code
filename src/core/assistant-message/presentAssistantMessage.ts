@@ -271,6 +271,16 @@ export async function presentAssistantMessage(cline: Task) {
 					provider?.log(
 						`[askApproval] ✅ Auto-approving for agent task (agentId=${cline.agentTaskContext.agentId}, type=${type})`,
 					)
+
+					// 🔥 发送工具使用通知消息（用于 IM 端显示）
+					// 创建一个 "ask" 消息，包含工具信息和描述
+					await cline.ask(
+						type,
+						type === "command" ? toolDescription() : partialMessage,
+						false, // partial
+						progressStatus,
+						isProtected || false,
+					)
 					return true
 				}
 

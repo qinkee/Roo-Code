@@ -13,6 +13,14 @@ export class TaskHistoryBridge {
 	private static extensionContext: vscode.ExtensionContext | undefined = undefined
 	private static redis = RedisSyncService.getInstance()
 
+	// 🔥 Simple cache to avoid repeated reads within short time window
+	private static cache: {
+		data: HistoryItem[]
+		timestamp: number
+		key: string // Storage key to detect user/terminal switches
+	} | null = null
+	private static CACHE_TTL = 1000 // 1 second cache TTL
+
 	/**
 	 * Get storage key with user and terminal prefix
 	 * Format: user_{userId}_terminal_{terminalNo}_{baseKey}
@@ -30,11 +38,17 @@ export class TaskHistoryBridge {
 	}
 
 	/**
+	 * Get current storage key for caching
+	 */
+	private static getCurrentStorageKey(userId?: string, terminalNo?: number): string {
+		return this.getUserTerminalKey("taskHistory", userId, terminalNo)
+	}
+
+	/**
 	 * Set current user ID
 	 */
 	static setCurrentUserId(userId: string | undefined) {
 		TaskHistoryBridge.currentUserId = userId
-		console.log(`[TaskHistoryBridge] Current user ID set to: ${userId}`)
 	}
 
 	/**
@@ -93,13 +107,21 @@ export class TaskHistoryBridge {
 			console.error("[TaskHistoryBridge] Extension context not available")
 			return []
 		}
+
 		// Try user+terminal specific key first
 		const effectiveUserId = userId || TaskHistoryBridge.currentUserId
 		const effectiveTerminalNo = terminalNo !== undefined ? terminalNo : VoidBridge.getCurrentTerminalNo()
 
-		console.log(
-			`[TaskHistoryBridge] Getting task history - userId: ${effectiveUserId}, terminalNo: ${effectiveTerminalNo}`,
-		)
+		// 🔥 Check cache first (unless forceRefresh is true)
+		const now = Date.now()
+		const currentKey = TaskHistoryBridge.getCurrentStorageKey(effectiveUserId, effectiveTerminalNo)
+
+		if (!forceRefresh &&
+			TaskHistoryBridge.cache &&
+			(now - TaskHistoryBridge.cache.timestamp < TaskHistoryBridge.CACHE_TTL) &&
+			TaskHistoryBridge.cache.key === currentKey) {
+			return TaskHistoryBridge.cache.data
+		}
 
 		if (effectiveUserId && effectiveTerminalNo !== undefined) {
 			// Try user+terminal key first
@@ -108,26 +130,32 @@ export class TaskHistoryBridge {
 				effectiveUserId,
 				effectiveTerminalNo,
 			)
-			console.log(`[TaskHistoryBridge] Trying user+terminal key: ${userTerminalKey}`)
 
 			const userTerminalHistory = ctx.globalState.get(userTerminalKey) as HistoryItem[] | undefined
 			// IMPORTANT: Return even if empty array - empty means user deleted all tasks, not "no data"
 			if (userTerminalHistory !== undefined) {
-				console.log(
-					`[TaskHistoryBridge] Retrieved ${userTerminalHistory.length} tasks for user ${effectiveUserId} terminal ${effectiveTerminalNo}`,
-				)
+				// 🔥 Update cache before returning
+				TaskHistoryBridge.cache = {
+					data: userTerminalHistory,
+					timestamp: now,
+					key: currentKey
+				}
 				return userTerminalHistory
 			}
 
 			// If no local data, try to load from Redis once
-			console.log(`[TaskHistoryBridge] No local data found, trying to load from Redis...`)
 			try {
 				const redisKey = `roo:${effectiveUserId}:${effectiveTerminalNo}:tasks`
 				const redisData = await TaskHistoryBridge.redis.get(redisKey)
 				if (redisData && Array.isArray(redisData)) {
-					console.log(`[TaskHistoryBridge] Loaded ${redisData.length} tasks from Redis`)
 					// Save to local storage
 					await ctx.globalState.update(userTerminalKey, redisData)
+					// 🔥 Update cache before returning
+					TaskHistoryBridge.cache = {
+						data: redisData,
+						timestamp: now,
+						key: currentKey
+					}
 					return redisData
 				}
 			} catch (error) {
@@ -138,24 +166,28 @@ export class TaskHistoryBridge {
 		if (effectiveUserId) {
 			// Fallback to user-only key for backward compatibility
 			const userKey = `user_${effectiveUserId}_taskHistory`
-			console.log(`[TaskHistoryBridge] Trying user-only key: ${userKey}`)
 
 			const userHistory = ctx.globalState.get(userKey) as HistoryItem[] | undefined
 			// IMPORTANT: Return even if empty array - empty means user deleted all tasks, not "no data"
 			if (userHistory !== undefined) {
-				console.log(
-					`[TaskHistoryBridge] Retrieved ${userHistory.length} tasks for user ${effectiveUserId} (no terminal)`,
-				)
+				// 🔥 Update cache before returning
+				TaskHistoryBridge.cache = {
+					data: userHistory,
+					timestamp: now,
+					key: currentKey
+				}
 				return userHistory
 			}
-
-			console.log(`[TaskHistoryBridge] No user-specific history found`)
 		}
 
 		// Fallback to general task history
-		console.log(`[TaskHistoryBridge] Falling back to general storage...`)
 		const generalHistory = (ctx.globalState.get("taskHistory") as HistoryItem[]) || []
-		console.log(`[TaskHistoryBridge] Retrieved ${generalHistory.length} tasks from general storage`)
+		// 🔥 Update cache before returning
+		TaskHistoryBridge.cache = {
+			data: generalHistory,
+			timestamp: now,
+			key: currentKey
+		}
 		return generalHistory
 	}
 
@@ -215,6 +247,14 @@ export class TaskHistoryBridge {
 		} else {
 			console.warn("[TaskHistoryBridge] No currentUserId available, only updated general history")
 		}
+
+		// 🔥 Update cache immediately after write (write-through cache strategy)
+		const currentKey = TaskHistoryBridge.getCurrentStorageKey(TaskHistoryBridge.currentUserId, terminalNo)
+		TaskHistoryBridge.cache = {
+			data: history,
+			timestamp: Date.now(),
+			key: currentKey
+		}
 	}
 
 	/**
@@ -222,9 +262,7 @@ export class TaskHistoryBridge {
 	 * Agent tasks are only visible in roo-code UI
 	 */
 	private static filterUserTasks(tasks: HistoryItem[]): HistoryItem[] {
-		const filtered = tasks.filter((task) => task.source !== "agent")
-		console.log(`[TaskHistoryBridge] Filtered tasks: ${tasks.length} total -> ${filtered.length} user tasks`)
-		return filtered
+		return tasks.filter((task) => task.source !== "agent")
 	}
 
 	/**
@@ -251,8 +289,6 @@ export class TaskHistoryBridge {
 				userId: TaskHistoryBridge.currentUserId,
 				terminalNo: VoidBridge.getCurrentTerminalNo(),
 			})
-
-			console.log(`[TaskHistoryBridge] Notified void about new task: ${historyItem.id}`)
 		} catch (error) {
 			console.debug("[TaskHistoryBridge] Could not notify void about new task:", error)
 		}
@@ -262,7 +298,6 @@ export class TaskHistoryBridge {
 	 * Register task history related commands
 	 */
 	static register(context: vscode.ExtensionContext, provider: ClineProvider) {
-		console.log("[TaskHistoryBridge] Registering task history commands...")
 
 		// Store context for static methods
 		TaskHistoryBridge.setContext(context)
@@ -275,14 +310,6 @@ export class TaskHistoryBridge {
 				terminalNo?: number
 			}): Promise<{ tasks: HistoryItem[]; activeTaskId?: string }> => {
 				try {
-					// Log the incoming request
-					console.log("[TaskHistoryBridge] getTaskHistory command called with:", {
-						requestedUserId: data?.userId,
-						requestedTerminalNo: data?.terminalNo,
-						currentUserId: TaskHistoryBridge.currentUserId,
-						currentTerminalNo: VoidBridge.getCurrentTerminalNo(),
-					})
-
 					// IMPORTANT: Directly read from the correct user-prefixed key in globalState
 					// This ensures we get the latest data without cache issues
 					const currentUserId = TaskHistoryBridge.currentUserId
@@ -291,22 +318,17 @@ export class TaskHistoryBridge {
 					if (currentUserId && provider.contextProxy) {
 						// Build the user-prefixed key the same way ContextProxy does
 						const userKey = `user_${currentUserId}_taskHistory`
-						console.log("[TaskHistoryBridge] Reading from user key:", userKey)
 
 						// Directly read from globalState to bypass any cache
 						const userHistory = context.globalState.get(userKey) as HistoryItem[] | undefined
 						if (userHistory) {
 							taskHistory = userHistory
-							console.log("[TaskHistoryBridge] Got user-specific history:", taskHistory.length, "tasks")
 						} else {
-							console.log("[TaskHistoryBridge] No user-specific history found, checking general storage")
 							// Fallback to general storage
 							const generalHistory = context.globalState.get("taskHistory") as HistoryItem[] | undefined
 							taskHistory = generalHistory || []
-							console.log("[TaskHistoryBridge] Got general history:", taskHistory.length, "tasks")
 						}
 					} else {
-						console.log("[TaskHistoryBridge] No user ID, using general storage")
 						// No user context, use general storage
 						const generalHistory = context.globalState.get("taskHistory") as HistoryItem[] | undefined
 						taskHistory = generalHistory || []
@@ -314,24 +336,11 @@ export class TaskHistoryBridge {
 
 					const currentTaskId = provider.getCurrentCline()?.taskId
 
-					console.log("[TaskHistoryBridge] Final task history result:", {
-						userId: currentUserId,
-						terminalNo: VoidBridge.getCurrentTerminalNo(),
-						totalTasks: taskHistory.length,
-						activeTaskId: currentTaskId,
-					})
-
 					// Sort by timestamp (newest first) and filter out agent tasks
 					// Only sync user tasks to void, agent tasks are only visible in roo-code UI
 					const sortedTasks = taskHistory
 						.filter((item) => item.ts && item.task && item.source !== "agent")
 						.sort((a, b) => b.ts - a.ts)
-
-					console.log("[TaskHistoryBridge] Filtered result:", {
-						totalTasks: taskHistory.length,
-						userTasks: sortedTasks.length,
-						filteredAgentTasks: taskHistory.length - sortedTasks.length,
-					})
 
 					return {
 						tasks: sortedTasks,
@@ -351,7 +360,6 @@ export class TaskHistoryBridge {
 			"roo-cline.activateTask",
 			async (taskId: string) => {
 				try {
-					console.log("[TaskHistoryBridge] Activating task:", taskId)
 					await provider.showTaskWithId(taskId)
 
 					// Notify void about the activation
@@ -373,14 +381,11 @@ export class TaskHistoryBridge {
 		// Command to delete a task
 		const deleteTaskCommand = vscode.commands.registerCommand("roo-cline.deleteTask", async (taskId: string) => {
 			try {
-				console.log("[TaskHistoryBridge] Deleting task:", taskId)
-
 				// Delete the task (this internally updates TaskHistoryBridge and contextProxy)
 				await provider.deleteTaskWithId(taskId)
 
 				// Get the updated task history AFTER deletion to ensure we have the latest state
 				const updatedHistory = await TaskHistoryBridge.getTaskHistory(context)
-				console.log("[TaskHistoryBridge] Tasks after delete:", updatedHistory.length, "tasks")
 
 				// Filter out agent tasks before sending to void
 				const userTasks = TaskHistoryBridge.filterUserTasks(updatedHistory)
@@ -407,19 +412,11 @@ export class TaskHistoryBridge {
 			"roo-cline.updateTaskUserId",
 			async (pattern: string, userId: string) => {
 				try {
-					console.log("[TaskHistoryBridge] Updating task userId:", { pattern, userId })
-
 					// Set current user ID
 					TaskHistoryBridge.setCurrentUserId(userId)
 
 					// Get all task history
 					const taskHistory = await TaskHistoryBridge.getTaskHistory(context)
-
-					// If pattern is "*", update all tasks
-					if (pattern === "*") {
-						// This is mainly for tracking purposes
-						console.log(`[TaskHistoryBridge] Set userId ${userId} for all ${taskHistory.length} tasks`)
-					}
 
 					// Filter out agent tasks before sending to void
 					const userTasks = TaskHistoryBridge.filterUserTasks(taskHistory)
@@ -475,11 +472,5 @@ export class TaskHistoryBridge {
 		provider.on(RooCodeEventName.TaskAborted, () => {
 			notifyTaskHistoryUpdate()
 		})
-
-		console.log("[TaskHistoryBridge] Task history bridge registered successfully with commands:", [
-			"roo-cline.getTaskHistory",
-			"roo-cline.activateTask",
-			"roo-cline.deleteTask",
-		])
 	}
 }

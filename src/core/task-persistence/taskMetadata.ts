@@ -106,6 +106,8 @@ export async function taskMetadata({
 		// 🔥 智能体任务标记
 		source,
 		agentId,
+		// 🔥 包含消息历史，以便智能体任务可以查看
+		clineMessages: messages,
 	}
 
 	return { historyItem, tokenUsage }

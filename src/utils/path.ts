@@ -123,8 +123,6 @@ export const getWorkspacePathForContext = (contextPath?: string): string => {
 		if (workspaceFolder) {
 			return workspaceFolder.uri.fsPath
 		}
-		// Debug logging when falling back
-		console.debug(`[CodeIndex] No workspace found for context path: ${contextPath}, falling back to default`)
 	}
 
 	// Fall back to current behavior

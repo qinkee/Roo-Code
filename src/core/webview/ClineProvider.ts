@@ -75,6 +75,7 @@ import { setPanel } from "../../activate/registerCommands"
 import { t } from "../../i18n"
 
 import { buildApiHandler } from "../../api"
+import { VoidBridge } from "../../api/void-bridge"
 import { forceFullModelDetailsLoad, hasLoadedFullDetails } from "../../api/providers/fetchers/lmstudio"
 
 import { ContextProxy } from "../config/ContextProxy"
@@ -133,10 +134,6 @@ export class ClineProvider
 	private lastSentPositions: Map<string, number> = new Map()
 	// 🔥 用户正在查看的智能体任务ID（null表示未查看或查看用户任务）
 	private viewingAgentTaskId: string | null = null
-	// 🔥 TaskHistory 缓存，避免频繁读取
-	private taskHistoryCache: HistoryItem[] | null = null
-	private taskHistoryCacheTime: number = 0
-	private readonly TASK_HISTORY_CACHE_TTL = 1000 // 缓存1秒
 	private codeIndexStatusSubscription?: vscode.Disposable
 	private currentWorkspaceManager?: CodeIndexManager
 	private _workspaceTracker?: WorkspaceTracker // workSpaceTracker read-only for access outside this class
@@ -218,7 +215,8 @@ export class ClineProvider
 
 			// 🔥 智能体任务清理：保存最终状态并从栈中移除
 			const cleanupAgentTask = async (taskId: string, reason: string) => {
-				if (!instance.agentTaskContext) {
+				const isAgentTask = !!(instance.agentTaskContext || (instance as any).isAgentTask)
+				if (!isAgentTask) {
 					return
 				}
 
@@ -232,11 +230,23 @@ export class ClineProvider
 
 				// 🔥 即使栈不存在或已清空，也要保存历史消息
 				// Save final messages to TaskHistory
-				if (instance.historyItem && instance.clineMessages.length > 0) {
+				this.outputChannel.appendLine(
+					`[cleanupAgentTask] instance.clineMessages.length: ${instance.clineMessages.length}`,
+				)
+				this.outputChannel.appendLine(
+					`[cleanupAgentTask] instance.historyItem exists: ${!!instance.historyItem}`,
+				)
+				if (instance.historyItem) {
+					this.outputChannel.appendLine(
+						`[cleanupAgentTask] instance.historyItem.clineMessages: ${instance.historyItem.clineMessages?.length || 0}`,
+					)
 					const historyItemWithMessages = {
 						...instance.historyItem,
 						clineMessages: instance.clineMessages,
 					}
+					this.outputChannel.appendLine(
+						`[cleanupAgentTask] historyItemWithMessages.clineMessages: ${historyItemWithMessages.clineMessages.length}`,
+					)
 					await this.updateTaskHistory(historyItemWithMessages)
 					this.outputChannel.appendLine(
 						`[ClineProvider] Saved ${instance.clineMessages.length} messages for task ${taskId}`,
@@ -280,10 +290,12 @@ export class ClineProvider
 			// Create named listener functions so we can remove them later.
 			const onTaskStarted = () => this.emit(RooCodeEventName.TaskStarted, instance.taskId)
 			const onTaskCompleted = async (taskId: string, tokenUsage: any, toolUsage: any) => {
+				this.log(`[taskCreationCallback] 🎯 onTaskCompleted fired for task ${taskId}, isAgentTask=${(instance as any).isAgentTask}`)
 				await cleanupAgentTask(taskId, "TaskCompleted")
 				this.emit(RooCodeEventName.TaskCompleted, taskId, tokenUsage, toolUsage)
 			}
 			const onTaskAborted = async () => {
+				this.log(`[taskCreationCallback] 🛑 onTaskAborted fired for task ${instance.taskId}, isAgentTask=${(instance as any).isAgentTask}`)
 				await cleanupAgentTask(instance.taskId, "TaskAborted")
 				this.emit(RooCodeEventName.TaskAborted, instance.taskId)
 			}
@@ -293,6 +305,7 @@ export class ClineProvider
 			const onTaskIdle = (taskId: string) => this.emit(RooCodeEventName.TaskIdle, taskId)
 
 			// Attach the listeners.
+			this.log(`[taskCreationCallback] 🔗 Attaching event listeners for task ${instance.taskId}, isAgentTask=${(instance as any).isAgentTask}`)
 			instance.on(RooCodeEventName.TaskStarted, onTaskStarted)
 			instance.on(RooCodeEventName.TaskCompleted, onTaskCompleted)
 			instance.on(RooCodeEventName.TaskAborted, onTaskAborted)
@@ -300,6 +313,7 @@ export class ClineProvider
 			instance.on(RooCodeEventName.TaskUnfocused, onTaskUnfocused)
 			instance.on(RooCodeEventName.TaskActive, onTaskActive)
 			instance.on(RooCodeEventName.TaskIdle, onTaskIdle)
+			this.log(`[taskCreationCallback] ✅ Event listeners attached successfully`)
 
 			// Store the cleanup functions for later removal.
 			this.taskEventListeners.set(instance, [
@@ -500,28 +514,38 @@ export class ClineProvider
 		)
 
 		if (task) {
-			try {
-				// Abort the running task and set isAbandoned to true so
-				// all running promises will exit as well.
-				await task.abortTask(true)
-			} catch (e) {
-				this.log(
-					`[subtasks] encountered error while aborting task ${task.taskId}.${task.instanceId}: ${e.message}`,
-				)
-			}
+			// 🔥 优化：先立即处理同步部分（清除状态、移除监听器），然后异步处理耗时的 abort 操作
+			// 这样可以避免 826ms 的阻塞，提升 UI 响应速度
 
+			// 立即触发 TaskUnfocused 事件
 			task.emit(RooCodeEventName.TaskUnfocused)
 
-			// Remove event listeners before clearing the reference.
+			// 立即移除事件监听器
 			const cleanupFunctions = this.taskEventListeners.get(task)
-
 			if (cleanupFunctions) {
 				cleanupFunctions.forEach((cleanup) => cleanup())
 				this.taskEventListeners.delete(task)
 			}
 
-			// Make sure no reference kept, once promises end it will be
-			// garbage collected.
+			// 🔥 异步处理耗时的 abort 操作（不阻塞 UI）
+			const taskToAbort = task
+			setImmediate(() => {
+				const abortStart = Date.now()
+				taskToAbort
+					.abortTask(true)
+					.then(() => {
+						this.log(
+							`[removeClineFromStack] Async abort completed for task ${taskToAbort.taskId} in ${Date.now() - abortStart}ms`,
+						)
+					})
+					.catch((e) => {
+						this.log(
+							`[subtasks] encountered error while aborting task ${taskToAbort.taskId}.${taskToAbort.instanceId}: ${e.message}`,
+						)
+					})
+			})
+
+			// 清除引用（任务会在 promises 结束后被垃圾回收）
 			task = undefined
 		}
 	}
@@ -1036,51 +1060,72 @@ export class ClineProvider
 		return task
 	}
 
-	public async initClineWithHistoryItem(historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task }) {
+	public async initClineWithHistoryItem(
+		historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task },
+		options?: { asyncConfigRestore?: boolean }
+	) {
 		await this.removeClineFromStack()
 
-		// If the history item has a saved mode, restore it and its associated API configuration
-		if (historyItem.mode) {
-			// Validate that the mode still exists
-			const customModes = await this.customModesManager.getCustomModes()
-			const modeExists = getModeBySlug(historyItem.mode, customModes) !== undefined
+		// 🔥 优化：异步恢复配置，不阻塞 UI
+		// 默认异步恢复（快速打开界面），用户继续执行时配置已准备好
+		const asyncRestore = options?.asyncConfigRestore !== false
 
-			if (!modeExists) {
-				// Mode no longer exists, fall back to default mode
-				this.log(
-					`Mode '${historyItem.mode}' from history no longer exists. Falling back to default mode '${defaultModeSlug}'.`,
-				)
-				historyItem.mode = defaultModeSlug
-			}
+		// 定义配置恢复逻辑
+		const restoreConfig = async () => {
+			if (historyItem.mode) {
+				// Validate that the mode still exists
+				const customModes = await this.customModesManager.getCustomModes()
+				const modeExists = getModeBySlug(historyItem.mode, customModes) !== undefined
 
-			await this.updateGlobalState("mode", historyItem.mode)
+				if (!modeExists) {
+					// Mode no longer exists, fall back to default mode
+					historyItem.mode = defaultModeSlug
+				}
 
-			// Load the saved API config for the restored mode if it exists
-			const savedConfigId = await this.providerSettingsManager.getModeConfigId(historyItem.mode)
-			const listApiConfig = await this.providerSettingsManager.listConfig()
+				// 🔥 优化：先并行获取配置信息，减少串行等待
+				const [savedConfigId, listApiConfig] = await Promise.all([
+					this.providerSettingsManager.getModeConfigId(historyItem.mode),
+					this.providerSettingsManager.listConfig(),
+				])
 
-			// Update listApiConfigMeta first to ensure UI has latest data
-			await this.updateGlobalState("listApiConfigMeta", listApiConfig)
+				// Update mode
+				await this.updateGlobalState("mode", historyItem.mode)
 
-			// If this mode has a saved config, use it
-			if (savedConfigId) {
-				const profile = listApiConfig.find(({ id }) => id === savedConfigId)
+				// Update listApiConfigMeta
+				await this.updateGlobalState("listApiConfigMeta", listApiConfig)
 
-				if (profile?.name) {
-					try {
-						// 🔥 跳过状态更新，避免在任务初始化过程中发送错误的状态
-						await this.activateProviderProfile({ name: profile.name }, true)
-					} catch (error) {
-						// Log the error but continue with task restoration
-						this.log(
-							`Failed to restore API configuration for mode '${historyItem.mode}': ${
-								error instanceof Error ? error.message : String(error)
-							}. Continuing with default configuration.`,
-						)
-						// The task will continue with the current/default configuration
+				// If this mode has a saved config, use it
+				if (savedConfigId) {
+					const profile = listApiConfig.find(({ id }) => id === savedConfigId)
+
+					if (profile?.name) {
+						try {
+							// 🔥 跳过状态更新，避免在任务初始化过程中发送错误的状态
+							await this.activateProviderProfile({ name: profile.name }, true)
+						} catch (error) {
+							// Silently continue with default configuration
+						}
 					}
 				}
 			}
+		}
+
+		// 🔥 异步或同步恢复配置
+		if (asyncRestore) {
+			// 异步恢复，不阻塞任务初始化
+			setImmediate(() => {
+				restoreConfig().then(() => {
+					// 配置恢复后，静默更新状态（不阻塞）
+					this.postStateToWebview().catch(err => {
+						console.error('[initClineWithHistoryItem] Failed to update state after config restore:', err)
+					})
+				}).catch(error => {
+					console.error('[initClineWithHistoryItem] Async config restoration failed:', error)
+				})
+			})
+		} else {
+			// 同步恢复（用于需要立即使用正确配置的场景）
+			await restoreConfig()
 		}
 
 		const {
@@ -1119,10 +1164,6 @@ export class ClineProvider
 		})
 
 		await this.addClineToStack(task)
-
-		this.log(
-			`[subtasks] ${task.parentTask ? "child" : "parent"} task ${task.taskId}.${task.instanceId} instantiated`,
-		)
 
 		return task
 	}
@@ -1189,17 +1230,70 @@ export class ClineProvider
 		if (message.type === "messageUpdated" && message.clineMessage) {
 			const clineMsg = message.clineMessage
 
+			// 🔥 调试日志：记录所有收到的消息类型
+			const msgType = clineMsg.type === "say" ? clineMsg.say : clineMsg.ask
+			this.log(
+				`[forwardToIMWebSocket] 📨 Received: type=${clineMsg.type}, msgType=${msgType}, partial=${clineMsg.partial}, text=${clineMsg.text?.substring(0, 50)}...`,
+			)
+
 			// 🔥 支持流式传输：partial=true 表示流式中间状态，partial=false 表示完成
 			const isPartial = clineMsg.partial === true
 
 			// 生成消息唯一ID（用于追踪发送位置）
 			const msgKey = `${task.taskId}_${clineMsg.ts}`
 
-			if (clineMsg.type === "ask" && clineMsg.ask === "tool") {
+			if (clineMsg.type === "ask" && (clineMsg.ask === "tool" || clineMsg.ask === "command")) {
 				// tool_use - 全量发送
 				if (!isPartial) {
 					this.log(`[forwardToIMWebSocket] Sending tool_use message`)
 				}
+
+				// 🔥 调试日志
+				this.log(
+					`[forwardToIMWebSocket] DEBUG tool clineMsg:`,
+					JSON.stringify({
+						text: clineMsg.text,
+						metadata: clineMsg.metadata,
+					}),
+				)
+
+				// 🔥 解析工具信息（从 clineMsg.text 中提取工具名称和参数）
+				let toolName = "unknown"
+				let toolInput: any = null
+				let toolStatus = isPartial ? "running" : "completed"
+
+				// 🔥 根据 ask 类型推断工具名称
+				if (clineMsg.ask === "command") {
+					toolName = "execute_command"
+					// 对于 command 类型，text 就是命令本身或完整描述
+					if (clineMsg.text) {
+						// 尝试提取命令参数
+						const cmdMatch = clineMsg.text.match(/\[execute_command for '(.+?)'\]/)
+						if (cmdMatch) {
+							toolInput = { command: cmdMatch[1] }
+						} else {
+							// partial 消息，text 就是命令本身
+							toolInput = { command: clineMsg.text }
+						}
+					}
+				} else if (clineMsg.text) {
+					// 对于其他类型，尝试从 text 中提取工具名称，格式如 "[tool_name for ...]"
+					const toolMatch = clineMsg.text.match(/\[(\w+)/)
+					this.log(`[forwardToIMWebSocket] Tool match result:`, toolMatch)
+					if (toolMatch) {
+						toolName = toolMatch[1]
+						this.log(`[forwardToIMWebSocket] Extracted tool name:`, toolName)
+					}
+				}
+
+				// 🔥 从 metadata 中获取工具参数（如果有，优先级最高）
+				if (clineMsg.metadata && (clineMsg.metadata as any).tool) {
+					toolName = (clineMsg.metadata as any).tool
+				}
+				if (clineMsg.metadata && (clineMsg.metadata as any).params) {
+					toolInput = (clineMsg.metadata as any).params
+				}
+
 				llmService.imConnection.sendLLMChunk(
 					ctx.streamId,
 					JSON.stringify({
@@ -1207,7 +1301,12 @@ export class ClineProvider
 						text: clineMsg.text,
 						partial: isPartial,
 						ts: clineMsg.ts,
-						metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
+						metadata: {
+							...(clineMsg.metadata || {}), // 保留原有 metadata（包含 taskId）
+							tool: toolName,
+							status: toolStatus,
+							input: toolInput,
+						},
 					}),
 					ctx.imMetadata.recvId,
 					ctx.imMetadata.targetTerminal,
@@ -1960,6 +2059,7 @@ export class ClineProvider
 	async showTaskWithId(id: string) {
 		// 🔥 获取任务历史信息，判断任务类型
 		const { historyItem } = await this.getTaskWithId(id)
+
 		const isAgentTask = historyItem.source === "agent"
 
 		// 🔥 智能体任务：标记为正在查看（无论是否还在执行）
@@ -1971,9 +2071,48 @@ export class ClineProvider
 			const runningTask = this.findAgentTask(id)
 
 			if (!runningTask) {
-				// 🔥 任务已完成，直接显示历史消息，不需要创建新Task实例
+				// 🔥 任务已完成，直接显示历史消息（只读模式）
 				// 直接设置 viewingAgentTaskId，getState 会从 historyItem 读取消息
 				this.viewingAgentTaskId = id
+
+				// 🔥 通过 agentId 恢复智能体的配置（mode、profile、model）
+				if (historyItem.agentId) {
+					try {
+						const agentStorage = this.getAgentStorageService()
+						if (agentStorage) {
+							// 🔥 获取当前用户ID (使用 VoidBridge)
+							const userId = VoidBridge.getCurrentUserId()
+							if (userId) {
+								// 🔥 通过 agentId 获取智能体配置
+								const agentConfig = await agentStorage.getAgent(userId, historyItem.agentId)
+								const profileName = agentConfig?.apiConfig?.originalName || agentConfig?.apiConfigId
+								if (agentConfig) {
+									// 恢复 mode
+									if (agentConfig.mode) {
+										const customModes = await this.customModesManager.getCustomModes()
+										const modeExists = getModeBySlug(agentConfig.mode, customModes) !== undefined
+										if (modeExists) {
+											await this.updateGlobalState("mode", agentConfig.mode)
+										}
+									}
+
+									// 🔥 恢复 API profile（使用 apiConfig.originalName）
+									if (profileName) {
+										const listApiConfig = await this.providerSettingsManager.listConfig()
+										await this.updateGlobalState("listApiConfigMeta", listApiConfig)
+
+										const profile = listApiConfig.find((p) => p.name === profileName)
+										if (profile) {
+											await this.activateProviderProfile({ name: profile.name }, true)
+										}
+									}
+								}
+							}
+						}
+					} catch (error) {
+						// Silently fail config restoration
+					}
+				}
 			}
 
 			// 更新 UI
@@ -1987,8 +2126,17 @@ export class ClineProvider
 			// Non-current task.
 			await this.initClineWithHistoryItem(historyItem) // Clears existing task.
 
-			// 更新UI状态
-			await this.postStateToWebview()
+			// 🔥 优化：先打开聊天界面让用户看到反馈，然后异步更新状态
+			// 这样 UI 会立即响应，状态更新在后台进行
+			await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+
+			// 异步更新UI状态（不阻塞界面）
+			setImmediate(() => {
+				this.postStateToWebview().catch(error => {
+					console.error("[showTaskWithId] Failed to update state:", error)
+				})
+			})
+			return
 		}
 
 		// 打开聊天界面
@@ -2110,9 +2258,6 @@ export class ClineProvider
 		// IMPORTANT: Also update the contextProxy cache so that getState() returns the updated history
 		// This ensures postStateToWebview() sends the correct task history to the React UI
 		await this.contextProxy.setValue("taskHistory", updatedTaskHistory)
-
-		// 🔥 CRITICAL: Invalidate task history cache to ensure getCachedTaskHistory() returns fresh data
-		this.invalidateTaskHistoryCache()
 
 		await this.postStateToWebview()
 	}
@@ -2343,6 +2488,7 @@ export class ClineProvider
 		// 🔥 智能体任务：显示历史消息，不显示实时消息（避免干扰任务执行）
 		// 用户任务：显示实时消息
 		let clineMessages: ClineMessage[] = []
+		let viewingCompletedAgentTask = false // 标记是否正在查看已完成的智能体任务
 		if (this.viewingAgentTaskId) {
 			// Check if viewing task is currently running (在栈池中查找)
 			const viewingTask = this.findAgentTask(this.viewingAgentTaskId)
@@ -2351,6 +2497,7 @@ export class ClineProvider
 				clineMessages = viewingTask.clineMessages || []
 			} else {
 				// Task completed, use history messages
+				viewingCompletedAgentTask = true
 				clineMessages = currentTaskItem?.clineMessages || []
 			}
 		} else {
@@ -2380,7 +2527,8 @@ export class ClineProvider
 			uriScheme: vscode.env.uriScheme,
 			currentTaskItem,
 			clineMessages,
-			viewingAgentTask: !!this.viewingAgentTaskId, // Flag to indicate viewing an agent task (read-only mode)
+			viewingAgentTask: !!this.viewingAgentTaskId, // Flag to indicate viewing an agent task
+			viewingCompletedAgentTask, // Flag to indicate viewing a completed agent task (read-only mode)
 			taskHistory: (taskHistory || [])
 				.filter((item: HistoryItem) => item.ts && item.task)
 				.sort((a: HistoryItem, b: HistoryItem) => b.ts - a.ts),
@@ -2388,7 +2536,7 @@ export class ClineProvider
 			ttsEnabled: ttsEnabled ?? false,
 			ttsSpeed: ttsSpeed ?? 1.0,
 			diffEnabled: diffEnabled ?? true,
-			enableCheckpoints: enableCheckpoints ?? true,
+			enableCheckpoints: enableCheckpoints ?? false,
 			shouldShowAnnouncement: false, // 关闭版本更新提醒
 			// telemetrySetting !== "unset" && lastShownAnnouncementId !== this.latestAnnouncementId,
 			allowedCommands: mergedAllowedCommands,
@@ -2454,7 +2602,7 @@ export class ClineProvider
 			customCondensingPrompt,
 			codebaseIndexModels: codebaseIndexModels ?? EMBEDDING_MODEL_PROFILES,
 			codebaseIndexConfig: {
-				codebaseIndexEnabled: codebaseIndexConfig?.codebaseIndexEnabled ?? true,
+				codebaseIndexEnabled: codebaseIndexConfig?.codebaseIndexEnabled ?? false,
 				codebaseIndexQdrantUrl: codebaseIndexConfig?.codebaseIndexQdrantUrl ?? "http://localhost:6333",
 				codebaseIndexEmbedderProvider: codebaseIndexConfig?.codebaseIndexEmbedderProvider ?? "openai",
 				codebaseIndexEmbedderBaseUrl: codebaseIndexConfig?.codebaseIndexEmbedderBaseUrl ?? "",
@@ -2484,32 +2632,13 @@ export class ClineProvider
 	 * https://www.eliostruyf.com/devhack-code-extension-storage-options/
 	 */
 
-	// 🔥 缓存的 TaskHistory 获取方法，避免频繁读取
-	private async getCachedTaskHistory(): Promise<HistoryItem[]> {
-		const now = Date.now()
-		if (this.taskHistoryCache && now - this.taskHistoryCacheTime < this.TASK_HISTORY_CACHE_TTL) {
-			return this.taskHistoryCache
-		}
-
-		const { TaskHistoryBridge } = await import("../../api/task-history-bridge")
-		const taskHistory = await TaskHistoryBridge.getTaskHistory()
-		this.taskHistoryCache = taskHistory
-		this.taskHistoryCacheTime = now
-		return taskHistory
-	}
-
-	// 🔥 清除 TaskHistory 缓存（在更新后调用）
-	private invalidateTaskHistoryCache(): void {
-		this.taskHistoryCache = null
-		this.taskHistoryCacheTime = 0
-	}
-
 	async getState() {
 		const stateValues = this.contextProxy.getValues()
 		const customModes = await this.customModesManager.getCustomModes()
 
-		// 🔥 使用缓存的 TaskHistory，避免频繁读取
-		const taskHistory = await this.getCachedTaskHistory()
+		// 🔥 Get task history from TaskHistoryBridge (which has its own caching)
+		const { TaskHistoryBridge } = await import("../../api/task-history-bridge")
+		const taskHistory = await TaskHistoryBridge.getTaskHistory()
 
 		// Determine apiProvider with the same logic as before.
 		const apiProvider: ProviderName = stateValues.apiProvider ? stateValues.apiProvider : "anthropic"
@@ -2596,7 +2725,7 @@ export class ClineProvider
 			ttsEnabled: stateValues.ttsEnabled ?? false,
 			ttsSpeed: stateValues.ttsSpeed ?? 1.0,
 			diffEnabled: stateValues.diffEnabled ?? true,
-			enableCheckpoints: stateValues.enableCheckpoints ?? true,
+			enableCheckpoints: stateValues.enableCheckpoints ?? false,
 			soundVolume: stateValues.soundVolume,
 			browserViewportSize: stateValues.browserViewportSize ?? "900x600",
 			screenshotQuality: stateValues.screenshotQuality ?? 75,
@@ -2656,7 +2785,7 @@ export class ClineProvider
 			customCondensingPrompt: stateValues.customCondensingPrompt,
 			codebaseIndexModels: stateValues.codebaseIndexModels ?? EMBEDDING_MODEL_PROFILES,
 			codebaseIndexConfig: {
-				codebaseIndexEnabled: stateValues.codebaseIndexConfig?.codebaseIndexEnabled ?? true,
+				codebaseIndexEnabled: stateValues.codebaseIndexConfig?.codebaseIndexEnabled ?? false,
 				codebaseIndexQdrantUrl:
 					stateValues.codebaseIndexConfig?.codebaseIndexQdrantUrl ?? "http://localhost:6333",
 				codebaseIndexEmbedderProvider:
@@ -2684,14 +2813,19 @@ export class ClineProvider
 	}
 
 	async updateTaskHistory(item: HistoryItem): Promise<HistoryItem[]> {
+		this.log(`[updateTaskHistory] 📥 Updating task: ${item.id}`)
+		this.log(`[updateTaskHistory] item.clineMessages: ${item.clineMessages?.length || 0}`)
+
 		// Get user-specific task history using TaskHistoryBridge
 		const history = (await TaskHistoryBridge.getTaskHistory()) || []
 		const existingItemIndex = history.findIndex((h) => h.id === item.id)
 
 		if (existingItemIndex !== -1) {
 			history[existingItemIndex] = item
+			this.log(`[updateTaskHistory] 🔄 Updated existing task at index ${existingItemIndex}`)
 		} else {
 			history.push(item)
+			this.log(`[updateTaskHistory] ➕ Added new task to history`)
 		}
 
 		// Update both user-specific and general history
@@ -2701,8 +2835,14 @@ export class ClineProvider
 		// This ensures postStateToWebview() sends the correct task history to the UI
 		await this.contextProxy.setValue("taskHistory", history)
 
-		// 🔥 Invalidate task history cache to ensure fresh data
-		this.invalidateTaskHistoryCache()
+		// Verification: read back the saved item (TaskHistoryBridge cache is already updated)
+		const verifyHistory = await TaskHistoryBridge.getTaskHistory()
+		const verifyItem = verifyHistory.find((h) => h.id === item.id)
+		if (verifyItem) {
+			this.log(`[updateTaskHistory] 🔍 Verify - clineMessages: ${verifyItem.clineMessages?.length || 0}`)
+		} else {
+			this.log(`[updateTaskHistory] ❌ Verify - item not found in history!`)
+		}
 
 		return history
 	}

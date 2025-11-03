@@ -22,46 +22,23 @@ export class VoidBridge {
 
 		// 启动时自动触发智能体同步（如果有当前用户）
 		if (VoidBridge.currentUserId) {
-			console.log(
-				`[VoidBridge] 🚀 Provider set, triggering initial agent sync for user ${VoidBridge.currentUserId}`,
-			)
 
 			// 延迟执行，确保 provider 和 agentManager 完全初始化
 			setTimeout(async () => {
-				console.log(`[VoidBridge] ⏰ setTimeout callback fired after 2s`)
 				try {
-					console.log(`[VoidBridge] 🔍 DEBUG: provider exists:`, !!VoidBridge.provider)
-					console.log(
-						`[VoidBridge] 🔍 DEBUG: provider.agentManager exists:`,
-						!!VoidBridge.provider?.agentManager,
-					)
 
 					const agentStorage = VoidBridge.provider?.getAgentStorageService()
-					console.log(`[VoidBridge] 🔍 DEBUG: agentStorage exists:`, !!agentStorage)
-					console.log(`[VoidBridge] 🔍 DEBUG: agentStorage type:`, typeof agentStorage)
 
 					if (agentStorage && "syncOnUserLogin" in agentStorage) {
-						console.log(
-							`[VoidBridge] 📞 Calling initial syncOnUserLogin for user ${VoidBridge.currentUserId}`,
-						)
 						await (agentStorage as any).syncOnUserLogin(VoidBridge.currentUserId)
-						console.log(`[VoidBridge] ✅ Initial agent sync completed for user ${VoidBridge.currentUserId}`)
 					} else {
-						console.log(`[VoidBridge] ⚠️ Initial sync skipped - agent storage not available`)
 						if (agentStorage) {
-							console.log(
-								`[VoidBridge] 🔍 DEBUG: agentStorage keys:`,
-								Object.keys(agentStorage).slice(0, 10),
-							)
 						}
 					}
 				} catch (error) {
-					console.error(`[VoidBridge] ❌ Failed to sync agents on startup:`, error)
-					console.error(`[VoidBridge] ❌ Error stack:`, (error as Error).stack)
 				}
 			}, 2000) // 等待2秒，确保所有服务都已初始化
 		} else {
-			console.log(`[VoidBridge] ℹ️ No current user, skipping initial agent sync`)
 		}
 	}
 
@@ -77,7 +54,6 @@ export class VoidBridge {
 	 * @returns 终端类型：0-傻蛋网页端, 1-傻蛋精灵App, 2-我的电脑(VSCode), 3-我的云电脑, 4-傻蛋浏览器插件, 5-MCP端
 	 */
 	static getCurrentTerminalNo(): number | undefined {
-		console.log(`[VoidBridge] getCurrentTerminalNo called, returning: ${VoidBridge.currentTerminalNo}`)
 		return VoidBridge.currentTerminalNo
 	}
 
@@ -92,10 +68,8 @@ export class VoidBridge {
 	 * Get the current terminal type as enum
 	 */
 	static getCurrentTerminalType(): TerminalType | undefined {
-		console.log(`[VoidBridge] getCurrentTerminalType called, currentTerminalNo: ${VoidBridge.currentTerminalNo}`)
 		const result =
 			VoidBridge.currentTerminalNo !== undefined ? (VoidBridge.currentTerminalNo as TerminalType) : undefined
-		console.log(`[VoidBridge] getCurrentTerminalType returning: ${result}`)
 		return result
 	}
 
@@ -111,50 +85,29 @@ export class VoidBridge {
 	 * Register commands for void to update globalState
 	 */
 	static register(context: vscode.ExtensionContext) {
-		console.log("[VoidBridge] ===== REGISTER STARTED =====")
 
 		// Try to restore last user ID and terminal number from globalState
 		const lastUserId = context.globalState.get<string>("lastUserId")
 		const lastTerminalNo = context.globalState.get<number>("lastTerminalNo")
 		const lastSkToken = context.globalState.get<string>("lastSkToken")
 
-		console.log("[VoidBridge] Reading from globalState:", {
-			lastUserId,
-			lastTerminalNo,
-			lastTerminalNoType: typeof lastTerminalNo,
-			hasSkToken: !!lastSkToken,
-		})
 
 		if (lastUserId) {
 			VoidBridge.currentUserId = lastUserId
 			TaskHistoryBridge.setCurrentUserId(lastUserId)
-			console.log("[VoidBridge] Restored last user ID:", lastUserId)
 		} else {
-			console.log("[VoidBridge] No lastUserId found in globalState")
 		}
 
 		if (lastTerminalNo !== undefined) {
 			VoidBridge.currentTerminalNo = lastTerminalNo
-			console.log("[VoidBridge] Restored last terminal number:", lastTerminalNo)
 		} else {
-			console.log(
-				"[VoidBridge] No lastTerminalNo found in globalState, currentTerminalNo remains:",
-				VoidBridge.currentTerminalNo,
-			)
 		}
 
 		if (lastSkToken) {
 			VoidBridge.currentSkToken = lastSkToken
-			console.log("[VoidBridge] Restored last SK token (first 10 chars):", lastSkToken.substring(0, 10) + "...")
 		} else {
-			console.log("[VoidBridge] No lastSkToken found in globalState")
 		}
 
-		console.log("[VoidBridge] Initial state after register:", {
-			currentUserId: VoidBridge.currentUserId,
-			currentTerminalNo: VoidBridge.currentTerminalNo,
-			hasSkToken: !!VoidBridge.currentSkToken,
-		})
 
 		// Command for void to notify user switch
 		const onUserSwitchCommand = vscode.commands.registerCommand(
@@ -167,24 +120,11 @@ export class VoidBridge {
 				skToken?: string
 			}) => {
 				try {
-					console.log("[VoidBridge] ===== USER SWITCH STARTED =====")
-					console.log("[VoidBridge] Received data:", JSON.stringify(data, null, 2))
 					// 第一性原理：
 					// - terminalNo: 账号隔离标识，固定为0
 					// - terminal: 实际终端类型，需要存储到currentTerminalNo中
 					const effectiveTerminalNo = data.terminal !== undefined ? data.terminal : 0
 
-					console.log("[VoidBridge] User switch detected:", {
-						newUserId: data.userId,
-						previousUserId: VoidBridge.currentUserId,
-						userName: data.userName,
-						terminalNo: data.terminalNo,
-						terminal: data.terminal,
-						effectiveTerminalNo: effectiveTerminalNo,
-						terminalNoType: typeof data.terminalNo,
-						terminalType: typeof data.terminal,
-						hasSkToken: !!data.skToken,
-					})
 
 					// === 🔥 切换前清理旧用户资源（异步，不阻塞主流程） ===
 					const previousUserId = VoidBridge.currentUserId
@@ -199,14 +139,9 @@ export class VoidBridge {
 									const runningAgents = serverManager.getRunningServers()
 
 									if (runningAgents.length > 0) {
-										console.log(
-											`[VoidBridge] 🔄 异步停止 ${runningAgents.length} 个运行中的智能体...`,
-										)
 										await serverManager.stopAllServers()
-										console.log(`[VoidBridge] ✅ 已停止所有智能体`)
 									}
 								} catch (error) {
-									console.error("[VoidBridge] ❌ 停止智能体失败:", error)
 								}
 							})(),
 
@@ -215,17 +150,13 @@ export class VoidBridge {
 								try {
 									const llmService = (global as any).llmStreamService
 									if (llmService?.imConnection?.isConnected) {
-										console.log(`[VoidBridge] 🔄 异步断开 IM WebSocket...`)
 										llmService.imConnection.disconnect(true)
 										llmService.resetConnectionState()
-										console.log(`[VoidBridge] ✅ IM WebSocket 已断开`)
 									}
 								} catch (error) {
-									console.error("[VoidBridge] ❌ 断开IM连接失败:", error)
 								}
 							})(),
 						]).catch((error) => {
-							console.error("[VoidBridge] ❌ 资源清理失败:", error)
 						})
 
 						// === 保存旧用户数据 ===
@@ -246,7 +177,6 @@ export class VoidBridge {
 						}
 
 						// Save current API keys to user-specific secrets
-						console.log(`[VoidBridge] Saving API keys for user ${previousUserId}`)
 						for (const key of SECRET_STATE_KEYS) {
 							try {
 								const value = await context.secrets.get(key)
@@ -275,23 +205,14 @@ export class VoidBridge {
 					}
 
 					// Update local tracking
-					console.log("[VoidBridge] Updating local tracking...")
-					console.log(`[VoidBridge] Setting currentUserId to: ${data.userId}`)
 					VoidBridge.currentUserId = data.userId
-					console.log(`[VoidBridge] Setting currentTerminalNo to terminal type: ${effectiveTerminalNo}`)
 					VoidBridge.currentTerminalNo = effectiveTerminalNo
 					if (data.skToken) {
-						console.log(
-							`[VoidBridge] Setting currentSkToken (first 10 chars): ${data.skToken.substring(0, 10)}...`,
-						)
 						VoidBridge.currentSkToken = data.skToken
 						await context.globalState.update("lastSkToken", data.skToken)
 					}
 					await context.globalState.update("lastUserId", data.userId)
 					await context.globalState.update("lastTerminalNo", effectiveTerminalNo)
-					console.log(
-						`[VoidBridge] Saved terminal type ${effectiveTerminalNo} to globalState as lastTerminalNo`,
-					)
 					TaskHistoryBridge.setCurrentUserId(data.userId)
 
 					// Restore new user's data
@@ -299,10 +220,8 @@ export class VoidBridge {
 					const userContacts = context.globalState.get(userContactsKey)
 					if (userContacts) {
 						await context.globalState.update("imContacts", userContacts)
-						console.log(`[VoidBridge] Restored IM contacts for user ${data.userId}`)
 					} else {
 						await context.globalState.update("imContacts", undefined)
-						console.log(`[VoidBridge] No IM contacts found for user ${data.userId}`)
 					}
 
 					// Restore task history
@@ -310,7 +229,6 @@ export class VoidBridge {
 					const userHistory = context.globalState.get(userHistoryKey) as HistoryItem[] | undefined
 					if (VoidBridge.provider) {
 						await VoidBridge.provider.contextProxy.setValue("taskHistory", userHistory || [])
-						console.log(`[VoidBridge] Restored ${userHistory?.length || 0} tasks for user ${data.userId}`)
 					}
 
 					// Clear current API keys first
@@ -323,7 +241,6 @@ export class VoidBridge {
 					}
 
 					// Restore user's API keys from user-specific secrets
-					console.log(`[VoidBridge] Restoring API keys for user ${data.userId}`)
 					let hasRestoredKeys = false
 					for (const key of SECRET_STATE_KEYS) {
 						try {
@@ -339,9 +256,7 @@ export class VoidBridge {
 					}
 
 					if (hasRestoredKeys) {
-						console.log(`[VoidBridge] Successfully restored API keys for user ${data.userId}`)
 					} else {
-						console.log(`[VoidBridge] No saved API keys found for user ${data.userId}`)
 					}
 
 					// Restore provider settings
@@ -364,16 +279,12 @@ export class VoidBridge {
 							try {
 								const agentStorage = VoidBridge.provider?.getAgentStorageService()
 								if (agentStorage && "syncOnUserLogin" in agentStorage) {
-									console.log(`[VoidBridge] 🔄 异步同步智能体数据...`)
 									await (agentStorage as any).syncOnUserLogin(data.userId)
-									console.log(`[VoidBridge] ✅ 智能体同步完成`)
 								}
 							} catch (error) {
-								console.error(`[VoidBridge] ❌ 智能体同步失败:`, error)
 							}
 						})()
 					} else {
-						console.log(`[VoidBridge] ⚠️ VoidBridge.provider is not set, skipping agent sync`)
 					}
 
 					// Clear webview cache to force reload of user-specific data
@@ -384,11 +295,9 @@ export class VoidBridge {
 						// Update CustomModesManager with new userId and sync from Redis
 						if (VoidBridge.provider.customModesManager) {
 							VoidBridge.provider.customModesManager.setUserId(data.userId)
-							console.log(`[VoidBridge] Updated CustomModesManager userId to ${data.userId}`)
 
 							// Force sync modes from Redis for the new user
 							await VoidBridge.provider.customModesManager.forceSyncFromRedis()
-							console.log(`[VoidBridge] Synced modes from Redis for user ${data.userId}`)
 						}
 
 						// Notify webview about user change
@@ -437,7 +346,6 @@ export class VoidBridge {
 						try {
 							// 1. 设置新用户的 TokenKey 并重新连接IM WebSocket
 							if (data.skToken) {
-								console.log(`[VoidBridge] 🔄 异步设置 TokenKey 和建立 IM 连接...`)
 
 								const {
 									ImPlatformTokenManager,
@@ -448,19 +356,15 @@ export class VoidBridge {
 								const llmService = (global as any).llmStreamService
 								if (llmService?.handlersRegistered) {
 									await llmService.initialize()
-									console.log(`[VoidBridge] ✅ IM WebSocket 已连接`)
 								}
 							}
 
 							// 2. 自动启动新用户的已发布智能体
 							const { A2AServerManager } = require("../core/agent/A2AServerManager")
 							const serverManager = A2AServerManager.getInstance()
-							console.log(`[VoidBridge] 🔄 异步启动已发布的智能体...`)
 
 							const result = await serverManager.startAllPublishedAgents()
-							console.log(`[VoidBridge] ✅ 智能体启动完成: ${result.started}/${result.total} 个成功`)
 						} catch (error) {
-							console.error("[VoidBridge] ❌ 新用户连接初始化失败:", error)
 						}
 					})()
 
@@ -474,7 +378,6 @@ export class VoidBridge {
 						userId: data.userId,
 					})
 
-					console.log("[VoidBridge] ✅ User switch completed - UI ready")
 
 					// 🚀 优化：异步发送Cloud PC通知
 					if (effectiveTerminalNo === 3) {
@@ -482,28 +385,16 @@ export class VoidBridge {
 							try {
 								await new Promise((resolve) => setTimeout(resolve, 3000))
 								await vscode.commands.executeCommand("roo-cline.sendCloudPCNotification")
-								console.log("[VoidBridge] ✅ Cloud PC notification sent")
 							} catch (error) {
-								console.error("[VoidBridge] ❌ Cloud PC notification failed:", error)
 							}
 						})()
 					}
 
 					// 验证最终状态
-					console.log("[VoidBridge] ===== USER SWITCH COMPLETED =====")
-					console.log("[VoidBridge] Final state verification:", {
-						currentUserId: VoidBridge.currentUserId,
-						currentTerminalNo: VoidBridge.currentTerminalNo,
-						expectedUserId: data.userId,
-						expectedTerminalNo: effectiveTerminalNo,
-					})
-					console.log("[VoidBridge] Calling getCurrentTerminalNo() for verification:")
 					const verifyTerminalNo = VoidBridge.getCurrentTerminalNo()
-					console.log("[VoidBridge] Verification result:", verifyTerminalNo)
 
 					return { success: true, message: "User switched successfully" }
 				} catch (error) {
-					console.error("[VoidBridge] Error switching user:", error)
 					throw error
 				}
 			},
@@ -512,17 +403,10 @@ export class VoidBridge {
 		context.subscriptions.push(onUserSwitchCommand)
 
 		// Command for void to notify user logout
-		console.log("[VoidBridge] Registering roo-cline.onUserLogout command")
 		const onUserLogoutCommand = vscode.commands.registerCommand(
 			"roo-cline.onUserLogout",
 			async (data: { userId?: string; isLoggedOut: boolean }) => {
 				try {
-					console.log("[VoidBridge] ===== USER LOGOUT STARTED =====")
-					console.log("[VoidBridge] User logout detected:", {
-						userId: data.userId,
-						isLoggedOut: data.isLoggedOut,
-					})
-					console.log("[VoidBridge] Current user before logout:", VoidBridge.currentUserId)
 
 					// === 🔥 用户登出前的资源清理 ===
 					const previousUserId = VoidBridge.currentUserId
@@ -547,16 +431,11 @@ export class VoidBridge {
 								}
 							}
 
-							console.log(
-								`[VoidBridge] 用户登出：发现 ${runningAgents.length} 个运行中的智能体，准备停止`,
-							)
 
 							// 停止所有运行中的智能体
 							await serverManager.stopAllServers()
-							console.log(`[VoidBridge] ✅ 已停止所有运行中的智能体`)
 						}
 					} catch (error) {
-						console.error("[VoidBridge] ❌ 停止智能体失败:", error)
 						// 错误不阻塞登出流程
 					}
 
@@ -564,33 +443,21 @@ export class VoidBridge {
 					try {
 						const { ImPlatformTokenManager } = require("../services/im-platform/ImPlatformTokenManager")
 						const tokenManager = ImPlatformTokenManager.getInstance()
-						console.log(`[VoidBridge] 清除用户 TokenKey...`)
 						await tokenManager.clearTokenKey()
-						console.log(`[VoidBridge] ✅ TokenKey 已清除`)
 					} catch (error) {
-						console.error("[VoidBridge] ❌ 清除 TokenKey 失败:", error)
 						// 错误不阻塞登出流程
 					}
 
 					// 3. 断开IM WebSocket连接（阻止自动重连）
 					try {
 						const llmService = (global as any).llmStreamService
-						console.log(`[VoidBridge] 检查 IM 服务:`, {
-							hasLlmService: !!llmService,
-							hasImConnection: !!llmService?.imConnection,
-							isConnected: llmService?.imConnection?.isConnected,
-						})
 
 						if (llmService?.imConnection) {
-							console.log(`[VoidBridge] 断开 IM WebSocket 连接（阻止重连）...`)
 							llmService.imConnection.disconnect(true) // 传入 true 阻止自动重连
 							llmService.resetConnectionState() // 重置连接状态
-							console.log(`[VoidBridge] ✅ IM WebSocket 已断开，已阻止自动重连`)
 						} else {
-							console.log(`[VoidBridge] ℹ️ IM WebSocket 未初始化或已断开`)
 						}
 					} catch (error) {
-						console.error("[VoidBridge] ❌ 断开IM连接失败:", error)
 						// 错误不阻塞登出流程
 					}
 
@@ -606,12 +473,10 @@ export class VoidBridge {
 					// Clear user data from display (but keep in user-specific storage)
 					await context.globalState.update("imContacts", undefined)
 
-					console.log("[VoidBridge] User logout - clearing display data")
 
 					// Save current user's data before logout if user exists
 					if (previousUserId && VoidBridge.provider) {
 						// Save current user's API keys before clearing
-						console.log(`[VoidBridge] Saving API keys for user ${previousUserId} before logout`)
 						for (const key of SECRET_STATE_KEYS) {
 							try {
 								const value = await context.secrets.get(key)
@@ -638,12 +503,10 @@ export class VoidBridge {
 					}
 
 					// Clear all API keys from current use
-					console.log("[VoidBridge] Clearing current API keys...")
 					for (const key of SECRET_STATE_KEYS) {
 						try {
 							await context.secrets.delete(key)
 						} catch (error) {
-							console.debug(`[VoidBridge] Could not clear secret ${key}:`, error)
 						}
 					}
 
@@ -711,7 +574,6 @@ export class VoidBridge {
 						// Refresh state to show welcome page
 						await VoidBridge.provider.postStateToWebview()
 
-						console.log("[VoidBridge] All API keys, secrets and provider state cleared")
 					}
 
 					// 通知 void 任务历史已清空
@@ -721,16 +583,12 @@ export class VoidBridge {
 							activeTaskId: undefined,
 							userId: undefined,
 						})
-						console.log("[VoidBridge] Notified void that task history is cleared")
 					} catch (error) {
 						// void might not be listening, that's ok
-						console.debug("[VoidBridge] Could not notify void about cleared task history:", error)
 					}
 
-					console.log("[VoidBridge] User logout handled, reset to default config and welcome screen")
 					return { success: true, message: "User logged out successfully" }
 				} catch (error) {
-					console.error("[VoidBridge] Error handling user logout:", error)
 					throw error
 				}
 			},
@@ -751,16 +609,8 @@ export class VoidBridge {
 						VoidBridge.currentUserId = data.userId
 						await context.globalState.update("lastUserId", data.userId)
 						TaskHistoryBridge.setCurrentUserId(data.userId)
-						console.log("[VoidBridge] Auto-switched to user:", data.userId)
 					}
 
-					console.log("[VoidBridge] Received updateImContacts command with data:", {
-						userId: userId,
-						friendsCount: data?.friends?.length || 0,
-						groupsCount: data?.groups?.length || 0,
-						sampleFriend: data?.friends?.[0],
-						sampleGroup: data?.groups?.[0],
-					})
 
 					// Update globalState with user-specific key
 					const contactsData = {
@@ -773,16 +623,13 @@ export class VoidBridge {
 					if (userId) {
 						const userKey = VoidBridge.getUserKey("imContacts", userId)
 						await context.globalState.update(userKey, contactsData)
-						console.log(`[VoidBridge] Updated IM contacts for user ${userId}`)
 					}
 
 					// Also update the general key for current display
 					await context.globalState.update("imContacts", contactsData)
 
-					console.log("[VoidBridge] Successfully updated IM contacts in globalState")
 					return { success: true, message: "Contacts updated successfully" }
 				} catch (error) {
-					console.error("[VoidBridge] Error updating IM contacts:", error)
 					throw error
 				}
 			},

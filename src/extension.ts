@@ -9,7 +9,6 @@ try {
 	dotenvx.config({ path: envPath })
 } catch (e) {
 	// Silently handle environment loading errors
-	console.warn("Failed to load environment variables:", e)
 }
 
 import { CloudService, UnifiedBridgeService } from "@roo-code/cloud"
@@ -77,7 +76,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	try {
 		telemetryService.register(new PostHogTelemetryClient())
 	} catch (error) {
-		console.warn("Failed to register PostHogTelemetryClient:", error)
+		// Failed to register PostHogTelemetryClient
 	}
 
 	// Create logger for cloud services.
@@ -295,14 +294,29 @@ export async function activate(context: vscode.ExtensionContext) {
 			const taskParams = await prepareAgentTask(data, provider)
 
 			// 检查是否是 say_hi 消息
+			outputChannel.appendLine(`[LLM] 🔍 Checking say_hi - taskParams.message: ${taskParams.message}`)
 			let messageObj: any
 			try {
 				messageObj = JSON.parse(taskParams.message)
+				outputChannel.appendLine(`[LLM] ✅ Parsed messageObj: ${JSON.stringify(messageObj)}`)
 			} catch (e) {
+				outputChannel.appendLine(`[LLM] ⚠️ Failed to parse message as JSON, treating as plain text`)
 				messageObj = null
 			}
 
+			outputChannel.appendLine(
+				`[LLM] 🔍 messageObj?.type: ${messageObj?.type}, isSayHi: ${messageObj?.type === "say_hi"}`,
+			)
+
+			// 处理 terminal 消息
+			if (messageObj?.type === "terminal_input") {
+				outputChannel.appendLine(`[LLM] 🖥️ Detected terminal_input message, delegating to LLMStreamService`)
+				await llmService.handleTerminalMessage(data)
+				return
+			}
+
 			if (messageObj?.type === "say_hi") {
+				outputChannel.appendLine(`[LLM] 👋 Detected say_hi message, sending welcome message`)
 				// 直接返回欢迎语
 				const welcomeMessage =
 					taskParams.agentConfig.welcomeMessage ||
@@ -751,7 +765,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// 🤖 Initialize A2A Server Manager and auto-start published agents
 	try {
-		outputChannel.appendLine("[A2AServerManager] Initializing A2A Server Manager...")
 
 		// 初始化A2A服务器管理器（不传存储服务，让它自己创建）
 		const a2aServerManager = A2AServerManager.getInstance()
@@ -764,9 +777,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		a2aServerManager
 			.startAllPublishedAgents()
 			.then((result: any) => {
-				outputChannel.appendLine(
-					`[A2AServerManager] ✅ Auto-startup completed: ${result.started}/${result.total} agents started`,
-				)
 
 				// 已自动启动智能体，不显示提示消息以避免干扰用户
 				// if (result.started > 0) {
@@ -774,15 +784,12 @@ export async function activate(context: vscode.ExtensionContext) {
 				// }
 
 				if (result.errors.length > 0) {
-					outputChannel.appendLine(`[A2AServerManager] ❌ ${result.errors.length} agents failed to start:`)
 					result.errors.forEach((item: { agentId: string; error: any }) => {
 						outputChannel.appendLine(`  - ${item.agentId}: ${item.error}`)
 					})
 				}
 			})
 			.catch((error: any) => {
-				outputChannel.appendLine(`[A2AServerManager] ❌ Auto-startup failed: ${error}`)
-				console.error("A2A Server auto-startup failed:", error)
 			})
 
 		// 添加到订阅中以便正确清理
@@ -792,10 +799,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			},
 		})
 
-		outputChannel.appendLine("[A2AServerManager] ✅ A2A Server Manager initialized successfully")
 	} catch (error) {
-		outputChannel.appendLine(`[A2AServerManager] ❌ Failed to initialize A2A Server Manager: ${error}`)
-		console.error("A2A Server Manager initialization failed:", error)
 	}
 
 	// Implements the `RooCodeAPI` interface.
@@ -811,10 +815,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			{ path: path.join(context.extensionPath, "node_modules/@roo-code/cloud"), pattern: "**/*" },
 		]
 
-		console.log(
-			`♻️♻️♻️ Core auto-reloading: Watching for changes in ${watchPaths.map(({ path }) => path).join(", ")}`,
-		)
-
 		// Create a debounced reload function to prevent excessive reloads
 		let reloadTimeout: NodeJS.Timeout | undefined
 		const DEBOUNCE_DELAY = 1_000
@@ -824,10 +824,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				clearTimeout(reloadTimeout)
 			}
 
-			console.log(`♻️ ${uri.fsPath} changed; scheduling reload...`)
-
 			reloadTimeout = setTimeout(() => {
-				console.log(`♻️ Reloading host after debounce delay...`)
 				vscode.commands.executeCommand("workbench.action.reloadWindow")
 			}, DEBOUNCE_DELAY)
 		}
