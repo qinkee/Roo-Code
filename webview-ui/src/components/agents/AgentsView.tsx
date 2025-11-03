@@ -547,7 +547,10 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 				a2aServerUrl: isPublished && publishInfo ? publishInfo.serverUrl : null,
 				a2aServerPort: isPublished && publishInfo ? publishInfo.serverPort : null,
 			})
-			// 关闭智能体面板，切换到聊天界面
+
+			// ✅ 修复：立即关闭智能体面板，切换到聊天界面
+			// 不等待后端响应，让用户立即看到界面切换
+			// 后端会通过postStateToWebview异步更新UI状态
 			onDone()
 		},
 		[onDone],

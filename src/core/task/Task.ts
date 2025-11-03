@@ -306,7 +306,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		provider,
 		apiConfiguration,
 		enableDiff = false,
-		enableCheckpoints = true,
+		enableCheckpoints = false,
 		enableTaskBridge = false,
 		fuzzyMatchThreshold = 1.0,
 		consecutiveMistakeLimit = DEFAULT_CONSECUTIVE_MISTAKE_LIMIT,
@@ -468,20 +468,27 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// 🔥 从历史加载：使用 historyItem.source（绝对权威，不能改变）
 			this.isAgentTask = historyItem.source === "agent"
 			this.agentTaskId = historyItem.agentId
+			// 🔥 从历史加载消息，避免显示空任务
+			if (historyItem.clineMessages && historyItem.clineMessages.length > 0) {
+				this.clineMessages = historyItem.clineMessages
+			}
 		} else {
 			// 🔥 新建任务：根据上下文判断类型
 			if (agentTaskContext) {
 				// 后台智能体任务
 				this.isAgentTask = true
 				this.agentTaskId = agentTaskContext.agentId
+				this.providerRef.deref()?.log(`[Task] 🏷️ Constructor: Backend agent task - isAgentTask=true, agentId=${this.agentTaskId}`)
 			} else if (isAgentTaskParam && agentTaskIdParam) {
 				// 调试模式智能体任务
 				this.isAgentTask = true
 				this.agentTaskId = agentTaskIdParam
+				this.providerRef.deref()?.log(`[Task] 🏷️ Constructor: Debug agent task - isAgentTask=true, agentId=${this.agentTaskId}`)
 			} else {
 				// 用户任务
 				this.isAgentTask = false
 				this.agentTaskId = undefined
+				this.providerRef.deref()?.log(`[Task] 🏷️ Constructor: User task - isAgentTask=false`)
 			}
 		}
 		// Store the task's mode when it's created.
@@ -683,7 +690,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 */
 	setAllowedTools(tools: string[]): void {
 		this.allowedTools = tools
-		console.log(`[Task] Tool whitelist set: ${tools.join(", ")}`)
 	}
 
 	/**
@@ -703,7 +709,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 */
 	setModeConfig(modeConfig: any): void {
 		this.taskModeConfig = modeConfig
-		console.log(`[Task] Mode config set: ${modeConfig.name}`)
 	}
 
 	/**
@@ -711,7 +716,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 */
 	setCustomInstructions(instructions: string): void {
 		this.customInstructions = instructions
-		console.log(`[Task] Custom instructions set: ${instructions.substring(0, 100)}...`)
 	}
 
 	// API Messages
@@ -1743,7 +1747,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}
 
 	public dispose(): void {
-		console.log(`[Task] disposing task ${this.taskId}.${this.instanceId}`)
 
 		// Stop waiting for child task completion.
 		if (this.pauseInterval) {
@@ -1814,7 +1817,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 
 		this.abort = true
+		this.providerRef.deref()?.log(`[Task] 🛑 Emitting TaskAborted event for task ${this.taskId}, isAgentTask=${this.isAgentTask}, agentTaskId=${this.agentTaskId}`)
 		this.emit(RooCodeEventName.TaskAborted)
+		this.providerRef.deref()?.log(`[Task] ✅ TaskAborted event emitted`)
 
 		try {
 			this.dispose() // Call the centralized dispose method
@@ -1890,7 +1895,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		// 🔥 触发任务完成事件（智能体任务需要）
 		if (!this.abort) {
+			this.providerRef.deref()?.log(`[Task] 🎯 Emitting TaskCompleted event for task ${this.taskId}, isAgentTask=${this.isAgentTask}, agentTaskId=${this.agentTaskId}`)
 			this.emit(RooCodeEventName.TaskCompleted, this.taskId, this.getTokenUsage(), this.toolUsage)
+			this.providerRef.deref()?.log(`[Task] ✅ TaskCompleted event emitted`)
 		}
 	}
 
@@ -2596,7 +2603,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		const {
 			browserViewportSize,
-			mode,
+			mode: providerMode,  // ← 重命名以避免混淆
 			customModes,
 			customModePrompts,
 			customInstructions,
@@ -2608,6 +2615,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			maxReadFileLine,
 			apiConfiguration,
 		} = state ?? {}
+
+		// ✅ 修复：优先使用Task自己的mode，而不是provider的全局mode
+		// 这确保智能体任务使用配置的mode，而不受用户切换mode的影响
+		const taskMode = await this.getTaskMode()  // 使用Task自己的mode
+		const effectiveMode = taskMode || providerMode || defaultModeSlug
 
 		return await (async () => {
 			const provider = this.providerRef.deref()
@@ -2623,7 +2635,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				mcpHub,
 				this.diffStrategy,
 				browserViewportSize,
-				mode,
+				effectiveMode,  // ← 使用Task的mode
 				customModePrompts,
 				customModes,
 				customInstructions,
@@ -3050,11 +3062,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 
 			// Start new stream if needed
-			provider?.log(`[Task] sendLLMChunkToIM: llmStreamId=${this.llmStreamId}, checking if new stream needed`)
 			if (!this.llmStreamId) {
 				// Send stream start with target user info and get the actual streamId
 				const taskInfo = `Task ${this.taskId} started`
-				provider?.log(`[Task] Starting new LLM stream for task ${this.taskId}`)
 				this.llmStreamId =
 					llmService.imConnection?.sendLLMRequest(
 						taskInfo,
@@ -3129,10 +3139,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					id: this.taskId,
 				}
 
-				provider?.log(`[Task] 发送流式结束标记，任务信息: ${JSON.stringify(taskInfo)}`)
-				console.log(
-					`[Task] LLM stream END sent: streamId=${this.llmStreamId}, recvId=${this.llmTargetUserId}, targetTerminal=${this.llmTargetTerminal}, chatType=${this.llmChatType}`,
-				)
 				llmService.imConnection?.sendLLMEnd(
 					this.llmStreamId,
 					this.llmTargetUserId,

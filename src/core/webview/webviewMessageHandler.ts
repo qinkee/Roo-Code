@@ -592,7 +592,7 @@ export const webviewMessageHandler = async (
 			const finalA2AMode = getGlobalState("agentA2AMode")
 			let taskOptions: any = {}
 			if (finalA2AMode && finalA2AMode.enabled) {
-				taskText = `🤖 [智能体测试] ${finalA2AMode.agentName}\n\n${taskText}`
+				taskText = `[${finalA2AMode.agentName}测试] ${taskText}`
 				// A2A调试模式：标记source为agent，但不设置agentTaskContext
 				// 这样可以标识为智能体任务，但不会进入后台运行
 				// agentTaskContext会导致任务在后台运行，这是给真正的Agent-to-Agent调用使用的
@@ -3433,71 +3433,68 @@ export const webviewMessageHandler = async (
 				if (result.success && result.agent) {
 					const agent = result.agent
 
-					// 使用智能体的配置启动新任务
-					// 1. 首先获取API配置名称
-					let apiConfigName: string | undefined
-					if (agent.apiConfigId) {
+					// 1. 批量设置智能体配置（并行执行以提高速度）
+					provider.log(`[startAgentTask] 🎯 Configuring agent: ${agent.id}`)
+
+					const configPromises: Promise<any>[] = []
+
+					// ✅ 修复：优先使用嵌入式API配置（与A2A模式保持一致）
+					if (agent.apiConfig) {
+						provider.log(
+							`[startAgentTask] Using embedded API config: ${agent.apiConfig.apiProvider} / ${agent.apiConfig.apiModelId || agent.apiConfig.openAiModelId || "N/A"}`,
+						)
+
+						// 并行设置API配置和currentApiConfigName
+						configPromises.push(provider.contextProxy.setProviderSettings(agent.apiConfig))
+						if (agent.apiConfig.originalName) {
+							configPromises.push(updateGlobalState("currentApiConfigName", agent.apiConfig.originalName))
+						}
+					} else if (agent.apiConfigId) {
+						// ⚠️ 降级逻辑：仅在没有apiConfig时才使用apiConfigId
+						provider.log(`[startAgentTask] Fallback: Using apiConfigId ${agent.apiConfigId}`)
 						const apiConfigs = provider.contextProxy.getValues().listApiConfigMeta || []
 						const targetConfig = apiConfigs.find((config) => config.id === agent.apiConfigId)
 						if (targetConfig) {
-							apiConfigName = targetConfig.name
+							configPromises.push(updateGlobalState("currentApiConfigName", targetConfig.name))
 						}
 					}
 
-					// 2. 设置API配置（通过本地updateGlobalState函数）
-					if (apiConfigName) {
-						await updateGlobalState("currentApiConfigName", apiConfigName)
-						provider.log(`[startAgentTask] Set API configuration to: ${apiConfigName}`)
-					}
-
-					// 3. 设置模式
+					// 并行设置mode
 					if (agent.mode) {
-						await updateGlobalState("mode", agent.mode)
-						provider.log(`[startAgentTask] Set mode to: ${agent.mode}`)
+						provider.log(`[startAgentTask] Setting mode: ${agent.mode}`)
+						configPromises.push(updateGlobalState("mode", agent.mode))
 					}
 
-					// 4. 设置A2A测试模式参数（如果是A2A模式）
-					if (message.executionMode === "a2a" && message.a2aServerUrl) {
-						const a2aConfig = {
-							enabled: true,
-							agentId: message.agentId || "unknown",
-							agentName: message.agentName || agent.name || "Unknown Agent",
-							serverUrl: message.a2aServerUrl,
-							serverPort: message.a2aServerPort || 3000,
-							isDebugMode: true, // 标识这是智能体调试模式
-						}
-						await updateGlobalState("agentA2AMode", a2aConfig)
-						provider.log(`[startAgentTask] ✅ Set A2A debug mode: ${JSON.stringify(a2aConfig)}`)
-					} else {
-						// 清除A2A模式
-						await updateGlobalState("agentA2AMode", null)
-						provider.log(`[startAgentTask] ❌ Set direct mode`)
-					}
+					// 等待所有配置设置完成
+					await Promise.all(configPromises)
+					provider.log(`[startAgentTask] ✅ All configurations applied`)
 
-					// 5. 同步状态到webview，确保配置更改生效
-					await provider.postStateToWebview()
-					provider.log(`[startAgentTask] State synchronized with agent configuration`)
-
-					// 6. 验证状态是否正确保存
-					const currentState = await provider.getState()
-					provider.log(
-						`[startAgentTask] 🔍 Current agentA2AMode in state: ${JSON.stringify(currentState.agentA2AMode)}`,
-					)
-
-					// 7. 等待较长时间确保状态完全同步
-					await new Promise((resolve) => setTimeout(resolve, 500))
-
-					// 8. 清空任务,准备接收用户输入
+					// 2. 清除当前任务栈（如果用户正在查看历史任务，需要先清除）
+					// 🔥 关键修复：确保UI切换到新任务，而不是停留在历史任务查看状态
+					provider.log(`[startAgentTask] Clearing current task stack before agent input`)
 					await provider.clearTask()
 
-					// 9. 设置一个标志,告诉前端不要在用户输入时创建新任务
-					// 因为我们已经配置好智能体了,只需要等待用户输入
+					// 3. 设置智能体调试模式状态
+					// 🔥 重要：不立即创建任务，等待用户输入后由 newTask 创建
+					// newTask 会检查 waitingForAgentInput 并自动拼接任务名称：
+					// 🤖 [智能体测试] ${agentName}\n\n${用户输入}
+					const a2aConfig = {
+						enabled: true,
+						agentId: agent.id,
+						agentName: agent.name,
+						serverUrl: message.a2aServerUrl || null,
+						serverPort: message.a2aServerPort || 3000,
+						isDebugMode: true,
+					}
+					await updateGlobalState("agentA2AMode", a2aConfig)
 					await updateGlobalState("waitingForAgentInput", true)
+					provider.log(`[startAgentTask] ✅ Set agent mode, waiting for user input`)
 
+					// 4. 同步状态到webview，确保UI显示正确的配置
 					await provider.postStateToWebview()
-					provider.log(`[startAgentTask] Ready and waiting for user input`)
+					provider.log(`[startAgentTask] ✅ State synchronized`)
 
-					// 发送成功响应，前端会切换到聊天界面
+					// 5. 发送成功响应，前端会切换到聊天界面
 					await provider.postMessageToWebview({
 						type: "action",
 						action: "startAgentTaskResult",
@@ -3506,7 +3503,6 @@ export const webviewMessageHandler = async (
 						agentName: agent.name,
 						text: JSON.stringify({
 							executionMode: message.executionMode || "direct",
-							a2aServerUrl: message.a2aServerUrl,
 						}),
 					})
 

@@ -9,7 +9,6 @@ try {
 	dotenvx.config({ path: envPath })
 } catch (e) {
 	// Silently handle environment loading errors
-	console.warn("Failed to load environment variables:", e)
 }
 
 import { CloudService, UnifiedBridgeService } from "@roo-code/cloud"
@@ -77,7 +76,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	try {
 		telemetryService.register(new PostHogTelemetryClient())
 	} catch (error) {
-		console.warn("Failed to register PostHogTelemetryClient:", error)
+		// Failed to register PostHogTelemetryClient
 	}
 
 	// Create logger for cloud services.
@@ -797,7 +796,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			})
 			.catch((error: any) => {
 				outputChannel.appendLine(`[A2AServerManager] ❌ Auto-startup failed: ${error}`)
-				console.error("A2A Server auto-startup failed:", error)
 			})
 
 		// 添加到订阅中以便正确清理
@@ -810,7 +808,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		outputChannel.appendLine("[A2AServerManager] ✅ A2A Server Manager initialized successfully")
 	} catch (error) {
 		outputChannel.appendLine(`[A2AServerManager] ❌ Failed to initialize A2A Server Manager: ${error}`)
-		console.error("A2A Server Manager initialization failed:", error)
 	}
 
 	// Implements the `RooCodeAPI` interface.
@@ -826,10 +823,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			{ path: path.join(context.extensionPath, "node_modules/@roo-code/cloud"), pattern: "**/*" },
 		]
 
-		console.log(
-			`♻️♻️♻️ Core auto-reloading: Watching for changes in ${watchPaths.map(({ path }) => path).join(", ")}`,
-		)
-
 		// Create a debounced reload function to prevent excessive reloads
 		let reloadTimeout: NodeJS.Timeout | undefined
 		const DEBOUNCE_DELAY = 1_000
@@ -839,10 +832,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				clearTimeout(reloadTimeout)
 			}
 
-			console.log(`♻️ ${uri.fsPath} changed; scheduling reload...`)
-
 			reloadTimeout = setTimeout(() => {
-				console.log(`♻️ Reloading host after debounce delay...`)
 				vscode.commands.executeCommand("workbench.action.reloadWindow")
 			}, DEBOUNCE_DELAY)
 		}
