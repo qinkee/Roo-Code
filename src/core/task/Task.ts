@@ -567,14 +567,27 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 */
 	private async initializeTaskMode(provider: ClineProvider): Promise<void> {
 		try {
-			const state = await provider.getState()
-			this._taskMode = state?.mode || defaultModeSlug
+			// 🔥 关键修复：优先使用agentTaskContext中的mode（智能体专属配置）
+			if (this.agentTaskContext?.mode) {
+				this._taskMode = this.agentTaskContext.mode
+				provider.log(`[Task] ✅ Using agent task mode: ${this._taskMode}`)
+			} else {
+				// 非智能体任务：使用provider的当前mode（用户任务或调试模式）
+				const state = await provider.getState()
+				this._taskMode = state?.mode || defaultModeSlug
+				provider.log(`[Task] ℹ️ Using provider mode: ${this._taskMode}`)
+			}
 		} catch (error) {
-			// If there's an error getting state, use the default mode
+			// 🔥 如果是智能体任务且获取mode失败，不能降级，必须抛出异常
+			if (this.agentTaskContext) {
+				const errorMsg = `智能体任务初始化失败：无法获取mode配置。${error instanceof Error ? error.message : String(error)}`
+				provider.log(`[Task] ❌ ${errorMsg}`)
+				throw new Error(errorMsg)
+			}
+			// 非智能体任务：降级到默认mode
 			this._taskMode = defaultModeSlug
-			// Use the provider's log method for better error visibility
-			const errorMessage = `Failed to initialize task mode: ${error instanceof Error ? error.message : String(error)}`
-			provider.log(errorMessage)
+			const errorMessage = `Failed to initialize task mode, using default: ${error instanceof Error ? error.message : String(error)}`
+			provider.log(`[Task] ⚠️ ${errorMessage}`)
 		}
 	}
 

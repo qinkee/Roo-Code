@@ -175,6 +175,48 @@ export async function activate(context: vscode.ExtensionContext) {
 	async function createAndExecuteAgentTask(taskParams: any, provider: ClineProvider) {
 		const { agentId, agentConfig, message, streamId, conversationId, imMetadata } = taskParams
 
+		// 🔥 关键修复：准备智能体专属的API配置，不修改全局provider配置
+		// ✅ 每个智能体使用独立的API配置，互不干扰，也不影响用户本地配置
+		outputChannel.appendLine(`[createAndExecuteAgentTask] 🎯 Preparing isolated API config for agent: ${agentId}`)
+
+		let agentApiConfiguration: any
+
+		if (agentConfig.apiConfig) {
+			outputChannel.appendLine(
+				`[createAndExecuteAgentTask] ✅ Using embedded API config: ${agentConfig.apiConfig.apiProvider} / ${agentConfig.apiConfig.apiModelId || agentConfig.apiConfig.openAiModelId || "N/A"}`,
+			)
+			// 直接使用智能体的嵌入式API配置（不修改全局provider配置）
+			agentApiConfiguration = { ...agentConfig.apiConfig }
+			outputChannel.appendLine(`[createAndExecuteAgentTask] ✅ Isolated API config prepared`)
+		} else if (agentConfig.apiConfigId) {
+			// 🔥 使用apiConfigId查找配置
+			outputChannel.appendLine(`[createAndExecuteAgentTask] 🔍 Looking for API config ID: ${agentConfig.apiConfigId}`)
+			const apiConfigs = provider.contextProxy.getValues().listApiConfigMeta || []
+			const targetConfig = apiConfigs.find((config: any) => config.id === agentConfig.apiConfigId)
+			if (!targetConfig) {
+				// ❌ 找不到配置，抛出异常
+				const errorMsg = `智能体配置错误：找不到API配置 (ID: ${agentConfig.apiConfigId})。请检查智能体配置或重新创建智能体。`
+				outputChannel.appendLine(`[createAndExecuteAgentTask] ❌ ${errorMsg}`)
+				throw new Error(errorMsg)
+			}
+			// 通过名称获取完整配置（不激活，不修改全局状态）
+			const profileWithName = await provider.providerSettingsManager.getProfile({ name: targetConfig.name })
+			if (!profileWithName) {
+				const errorMsg = `智能体配置错误：无法读取API配置 "${targetConfig.name}"。请检查配置文件是否完整。`
+				outputChannel.appendLine(`[createAndExecuteAgentTask] ❌ ${errorMsg}`)
+				throw new Error(errorMsg)
+			}
+			// 移除name字段，只保留ProviderSettings
+			const { name: _, ...fullConfig } = profileWithName
+			agentApiConfiguration = { ...fullConfig }
+			outputChannel.appendLine(`[createAndExecuteAgentTask] ✅ Isolated API config loaded: ${targetConfig.name}`)
+		} else {
+			// ❌ 智能体必须有API配置
+			const errorMsg = `智能体配置错误：智能体 "${agentConfig.name}" 没有配置API。请编辑智能体并添加API配置。`
+			outputChannel.appendLine(`[createAndExecuteAgentTask] ❌ ${errorMsg}`)
+			throw new Error(errorMsg)
+		}
+
 		// 初始化或加载历史对话
 		let apiHistory: any[] = []
 		if (conversationId) {
@@ -184,8 +226,41 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
-		// 创建任务
-		const task = await provider.initClineWithTask(message, [], undefined, {
+		// 🔥 关键修复：使用智能体专属的API配置创建Task
+		// 不再通过initClineWithTask（它会使用provider的全局配置）
+		// 而是直接创建Task实例，传入智能体的独立配置
+		outputChannel.appendLine(`[createAndExecuteAgentTask] 📦 Creating isolated task with agent API config`)
+
+		const state = await provider.getState()
+		const { Task } = await import("./core/task/Task")
+
+		// 配置智能体参数（在创建Task之前设置，因为某些配置需要在构造时使用）
+		let modeConfig: any = undefined
+		if (agentConfig.mode) {
+			try {
+				modeConfig = await provider.getModeConfig(agentConfig.mode)
+			} catch (error) {
+				outputChannel.appendLine(`[createAndExecuteAgentTask] ⚠️ Failed to get mode config: ${error}`)
+			}
+		}
+
+		// 恢复历史对话（在创建Task之前准备好）
+		// 注意：历史对话需要在Task启动后添加，所以这里先保存
+
+		const task = new Task({
+			provider,
+			apiConfiguration: agentApiConfiguration,  // 🔥 使用智能体专属的API配置
+			enableDiff: state.diffEnabled,
+			enableCheckpoints: state.enableCheckpoints,
+			fuzzyMatchThreshold: state.fuzzyMatchThreshold,
+			consecutiveMistakeLimit: agentApiConfiguration.consecutiveMistakeLimit,
+			task: message,
+			images: [],
+			experiments: state.experiments,
+			rootTask: undefined,  // 根任务，addClineToStack会自动设置为自己
+			parentTask: undefined,
+			taskNumber: 1,
+			enableTaskBridge: false,
 			agentTaskContext: {
 				agentId,
 				streamId,
@@ -193,35 +268,47 @@ export async function activate(context: vscode.ExtensionContext) {
 				roleDescription: agentConfig.roleDescription,
 				imMetadata,
 			},
-			startTask: true,
+			startTask: false,  // 🔥 关键：延迟启动，先添加到池并设置配置
 		})
 
-		// 配置智能体参数
+		outputChannel.appendLine(`[createAndExecuteAgentTask] ✅ Task created with isolated config`)
+
+		// 🔥 关键：添加到agentTaskPool（智能体任务池）
+		// addClineToStack会：
+		// 1. 检测agentTaskContext，添加到agentTaskPool而非clineStack
+		// 2. 设置task.rootTask = task（因为是根任务）
+		// 3. 创建新栈: agentTaskPool.set(taskId, [task])
+		// 4. 异步执行performPreparationTasks
+		outputChannel.appendLine(`[createAndExecuteAgentTask] 📦 Adding task to agentTaskPool`)
+		await provider.addClineToStack(task)
+		outputChannel.appendLine(`[createAndExecuteAgentTask] ✅ Task added to agentTaskPool`)
+
+		// 设置额外的配置参数（在启动任务之前）
 		if (agentConfig.allowedTools) {
 			task.setAllowedTools(agentConfig.allowedTools)
 		}
 
-		if (agentConfig.mode) {
-			try {
-				const modeConfig = await provider.getModeConfig(agentConfig.mode)
-				if (modeConfig) {
-					task.setModeConfig(modeConfig)
-				}
-			} catch (error) {
-				// 使用默认配置
-			}
+		if (modeConfig) {
+			task.setModeConfig(modeConfig)
 		}
 
 		if (agentConfig.roleDescription) {
 			task.setCustomInstructions(agentConfig.roleDescription)
 		}
 
-		// 恢复历史对话
+		// 恢复历史对话（在启动任务之前）
 		if (apiHistory.length > 0) {
 			for (const msg of apiHistory) {
 				await task.addToApiConversationHistory(msg)
 			}
 		}
+
+		// 🔥 手动启动任务（所有配置都设置完成后）
+		// Task.startTask是private方法，需要通过Task.create或构造时startTask: true
+		// 但我们需要在设置完配置后才启动，所以这里需要特殊处理
+		outputChannel.appendLine(`[createAndExecuteAgentTask] 🚀 Starting task execution`)
+		// 通过调用私有方法启动（使用类型断言）
+		await (task as any).startTask(message, [])
 
 		// 等待任务完成
 		await new Promise<void>((resolve) => {
