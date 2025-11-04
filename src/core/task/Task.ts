@@ -1361,6 +1361,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				// 🔥 智能体任务标记 - 使用构造函数中设置的标志
 				source: this.agentTaskContext ? "agent" : this.isAgentTask ? "agent" : "user",
 				agentId: this.agentTaskContext?.agentId || this.agentTaskId,
+				// 🔥 传入初始任务文本，用于显示正确的任务名
+				initialTaskText: task,
 			})
 
 			// Store the historyItem for later use

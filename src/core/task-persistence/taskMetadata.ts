@@ -23,6 +23,8 @@ export type TaskMetadataOptions = {
 	// 🔥 智能体任务标记
 	source?: "user" | "agent"
 	agentId?: string
+	// 🔥 初始任务文本（用于在消息为空时设置任务名）
+	initialTaskText?: string
 }
 
 export async function taskMetadata({
@@ -35,6 +37,7 @@ export async function taskMetadata({
 	terminalNo,
 	source,
 	agentId,
+	initialTaskText,
 }: TaskMetadataOptions) {
 	const taskDir = await getTaskDirectoryPath(globalStoragePath, taskId)
 
@@ -86,14 +89,25 @@ export async function taskMetadata({
 		}
 	}
 
+	// 🔥 确定任务名称
+	let taskName: string
+	if (hasMessages) {
+		// 有消息：使用第一条消息文本
+		taskName = taskMessage!.text?.trim() || t("common:tasks.incomplete", { taskNumber })
+	} else if (initialTaskText) {
+		// 无消息但有初始任务文本：使用初始任务文本
+		taskName = initialTaskText.trim()
+	} else {
+		// 无消息也无初始任务文本：使用默认占位符
+		taskName = t("common:tasks.no_messages", { taskNumber })
+	}
+
 	// Create historyItem once with pre-calculated values
 	const historyItem: HistoryItem = {
 		id: taskId,
 		number: taskNumber,
 		ts: timestamp,
-		task: hasMessages
-			? taskMessage!.text?.trim() || t("common:tasks.incomplete", { taskNumber })
-			: t("common:tasks.no_messages", { taskNumber }),
+		task: taskName,
 		tokensIn: tokenUsage.totalTokensIn,
 		tokensOut: tokenUsage.totalTokensOut,
 		cacheWrites: tokenUsage.totalCacheWrites,
