@@ -34,9 +34,31 @@ async function main() {
 	const buildDir = __dirname
 	const distDir = path.join(buildDir, "dist")
 
+	// 保护需要保留的文件
+	const filesToPreserve = ["agent-worker.js"]
+	const preservedFiles = new Map()
+
 	if (fs.existsSync(distDir)) {
+		// 备份需要保留的文件
+		for (const file of filesToPreserve) {
+			const filePath = path.join(distDir, file)
+			if (fs.existsSync(filePath)) {
+				preservedFiles.set(file, fs.readFileSync(filePath))
+			}
+		}
+
 		console.log(`[${name}] Cleaning dist directory: ${distDir}`)
 		fs.rmSync(distDir, { recursive: true, force: true })
+
+		// 重新创建 dist 目录
+		fs.mkdirSync(distDir, { recursive: true })
+
+		// 恢复被保护的文件
+		for (const [file, content] of preservedFiles) {
+			const filePath = path.join(distDir, file)
+			fs.writeFileSync(filePath, content)
+			console.log(`[${name}] Preserved file: ${file}`)
+		}
 	}
 
 	/**
