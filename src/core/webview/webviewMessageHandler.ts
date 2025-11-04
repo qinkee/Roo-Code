@@ -3359,8 +3359,12 @@ export const webviewMessageHandler = async (
 						lastHeartbeat: Date.now(),
 					}
 
+					// 🔧 修复：如果服务在线且有发布信息（serverUrl），自动设置 isPublished=true
+					// 这样即使是通过IM界面创建的智能体，只要服务在线也会被正确标记为已发布
+					const shouldBePublished = agent.isPublished || (newServiceStatus === 'online' && updatedPublishInfo.serverUrl)
+
 					// 更新智能体状态
-					await updateAgentPublishStatus(message.agentId, agent.isPublished, updatedPublishInfo)
+					await updateAgentPublishStatus(message.agentId, shouldBePublished, updatedPublishInfo)
 
 					// 重新获取更新后的智能体数据
 					const updatedAgentResult = (await vscode.commands.executeCommand("roo-cline.getAgent", {

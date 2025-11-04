@@ -954,7 +954,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 												</div>
 												<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 													{/* 运行按钮 */}
-													<StandardTooltip content="运行智能体">
+													<StandardTooltip content="调试智能体">
 														<button
 															onClick={(e) => {
 																e.stopPropagation()

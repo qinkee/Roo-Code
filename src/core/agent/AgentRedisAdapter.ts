@@ -41,13 +41,23 @@ export class AgentRedisAdapter {
 			})
 
 			// 🎯 特殊处理：发布信息字段需要从 publishInfo 提取到顶层
-			if (agent.isPublished && publishInfo) {
+			// 🔧 修复：只要有有效的在线publishInfo（serverUrl存在且serviceStatus=online），就应该同步
+			// 不仅仅依赖isPublished字段，因为某些智能体可能通过其他方式创建，未设置isPublished
+			const hasActivePublishInfo = publishInfo && publishInfo.serviceStatus === 'online' && publishInfo.serverUrl
+
+			if ((agent.isPublished || hasActivePublishInfo) && publishInfo) {
 				agentData.serviceEndpoint = publishInfo.serverUrl
 				agentData.servicePort = publishInfo.serverPort
 				agentData.serviceStatus = publishInfo.serviceStatus || "offline"
 				agentData.publishedAt = publishInfo.publishedAt
 				agentData.terminalType = publishInfo.terminalType
 				agentData.lastHeartbeat = publishInfo.lastHeartbeat
+
+				// 🔧 如果有活跃的发布信息但isPublished=false，自动修正为true
+				if (!agent.isPublished && hasActivePublishInfo) {
+					agentData.isPublished = true
+					logger.info(`[AgentRedisAdapter] Auto-correcting isPublished to true for agent ${agent.id} with active service`)
+				}
 
 				// 确保默认值
 				agentData.capabilities = agent.capabilities || {
