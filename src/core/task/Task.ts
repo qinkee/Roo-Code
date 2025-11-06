@@ -81,7 +81,6 @@ import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { RooProtectedController } from "../protect/RooProtectedController"
 import { type AssistantMessageContent, presentAssistantMessage, parseAssistantMessage } from "../assistant-message"
 import { AssistantMessageParser } from "../assistant-message/AssistantMessageParser"
-import { truncateConversationIfNeeded } from "../sliding-window"
 import { ClineProvider } from "../webview/ClineProvider"
 import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-replace"
 import { MultiFileSearchReplaceDiffStrategy } from "../diff/strategies/multi-file-search-replace"
@@ -97,12 +96,13 @@ import {
 } from "../checkpoints"
 import { processUserContentMentions } from "../mentions/processUserContentMentions"
 import { ApiMessage } from "../task-persistence/apiMessages"
-import { getMessagesSinceLastSummary, summarizeConversation } from "../condense"
 import { maybeRemoveImageBlocks } from "../../api/transform/image-cleaning"
 import { restoreTodoListForTask } from "../tools/updateTodoListTool"
 import { AutoApprovalHandler } from "./AutoApprovalHandler"
+import { ContextCompressionClient } from "../context-compression"
 
 const MAX_EXPONENTIAL_BACKOFF_SECONDS = 600 // 10 minutes
+const MAX_AUTO_RETRY_ATTEMPTS = 3 // 最大自动重试次数
 
 export type TaskOptions = {
 	provider: ClineProvider
@@ -219,6 +219,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	api: ApiHandler
 	private static lastGlobalApiRequestTime?: number
 	private autoApprovalHandler: AutoApprovalHandler
+	private compressionClient: ContextCompressionClient
 
 	/**
 	 * Reset the global API request timestamp. This should only be used for testing.
@@ -440,6 +441,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 
 		this.autoApprovalHandler = new AutoApprovalHandler()
+		this.compressionClient = new ContextCompressionClient(this.taskId)
 		this.urlContentFetcher = new UrlContentFetcher(provider.context)
 		this.browserSession = new BrowserSession(provider.context)
 		this.diffEnabled = enableDiff
@@ -1092,76 +1094,23 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}
 
 	public async condenseContext(): Promise<void> {
-		const systemPrompt = await this.getSystemPrompt()
-
-		// Get condensing configuration
-		// Using type assertion to handle the case where Phase 1 hasn't been implemented yet
-		const state = await this.providerRef.deref()?.getState()
-		const customCondensingPrompt = state ? (state as any).customCondensingPrompt : undefined
-		const condensingApiConfigId = state ? (state as any).condensingApiConfigId : undefined
-		const listApiConfigMeta = state ? (state as any).listApiConfigMeta : undefined
-
-		// Determine API handler to use
-		let condensingApiHandler: ApiHandler | undefined
-		if (condensingApiConfigId && listApiConfigMeta && Array.isArray(listApiConfigMeta)) {
-			// Using type assertion for the id property to avoid implicit any
-			const matchingConfig = listApiConfigMeta.find((config: any) => config.id === condensingApiConfigId)
-			if (matchingConfig) {
-				const profile = await this.providerRef.deref()?.providerSettingsManager.getProfile({
-					id: condensingApiConfigId,
-				})
-				// Ensure profile and apiProvider exist before trying to build handler
-				if (profile && profile.apiProvider) {
-					condensingApiHandler = buildApiHandler(profile)
-				}
-			}
-		}
-
-		const { contextTokens: prevContextTokens } = this.getTokenUsage()
-		const {
-			messages,
-			summary,
-			cost,
-			newContextTokens = 0,
-			error,
-		} = await summarizeConversation(
-			this.apiConversationHistory,
-			this.api, // Main API handler (fallback)
-			systemPrompt, // Default summarization prompt (fallback)
-			this.taskId,
-			prevContextTokens,
-			false, // manual trigger
-			customCondensingPrompt, // User's custom prompt
-			condensingApiHandler, // Specific handler for condensing
-		)
-		if (error) {
-			this.say(
-				"condense_context_error",
-				error,
-				undefined /* images */,
-				false /* partial */,
-				undefined /* checkpoint */,
-				undefined /* progressStatus */,
-				{ isNonInteractive: true } /* options */,
-			)
-			return
-		}
-		// If no summary was generated (e.g., not enough messages), silently skip
-		if (!summary) {
-			return
-		}
-		await this.overwriteApiConversationHistory(messages)
-		const contextCondense: ContextCondense = { summary, cost, newContextTokens, prevContextTokens }
+		// ⚠️ 手动压缩功能暂时禁用
+		// TODO: 实现基于 Void LLM 摘要的手动压缩
 		await this.say(
-			"condense_context",
-			undefined /* text */,
+			"condense_context_error",
+			"Manual context condensing is temporarily disabled. Automatic compression will handle context management.",
 			undefined /* images */,
 			false /* partial */,
 			undefined /* checkpoint */,
 			undefined /* progressStatus */,
 			{ isNonInteractive: true } /* options */,
-			contextCondense,
 		)
+		return
+
+		/*
+		// 原有的手动压缩代码已删除
+		// 等待 Void 端 LLM 摘要功能实现后重新集成
+		*/
 	}
 
 	async say(
@@ -2670,6 +2619,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}
 
 	public async *attemptApiRequest(retryAttempt: number = 0): ApiStream {
+		// ✅ 新增：最大重试次数检查
+		if (retryAttempt >= MAX_AUTO_RETRY_ATTEMPTS) {
+			throw new Error(
+				`Maximum retry attempts (${MAX_AUTO_RETRY_ATTEMPTS}) reached.\n` +
+					`This indicates a persistent issue (network error, API configuration, context limits, etc.).\n` +
+					`Please check your settings and try again.`,
+			)
+		}
+
 		const state = await this.providerRef.deref()?.getState()
 
 		const {
@@ -2736,63 +2694,60 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.lastUsedInstructions = systemPrompt
 		const { contextTokens } = this.getTokenUsage()
 
+		// ✅ 新增：使用 Void 压缩服务进行上下文管理
 		if (contextTokens) {
 			const modelInfo = this.api.getModel().info
-
-			const maxTokens = getModelMaxOutputTokens({
-				modelId: this.api.getModel().id,
-				model: modelInfo,
-				settings: this.apiConfiguration,
-			})
-
 			const contextWindow = modelInfo.contextWindow
+			const budget = contextWindow * 0.6 // 60% 预算（预防性压缩）
 
-			const currentProfileId =
-				state?.listApiConfigMeta.find((profile) => profile.name === state?.currentApiConfigName)?.id ??
-				"default"
-
-			const truncateResult = await truncateConversationIfNeeded({
-				messages: this.apiConversationHistory,
-				totalTokens: contextTokens,
-				maxTokens,
-				contextWindow,
-				apiHandler: this.api,
-				autoCondenseContext,
-				autoCondenseContextPercent,
-				systemPrompt,
-				taskId: this.taskId,
-				customCondensingPrompt,
-				condensingApiHandler,
-				profileThresholds,
-				currentProfileId,
-			})
-			if (truncateResult.messages !== this.apiConversationHistory) {
-				await this.overwriteApiConversationHistory(truncateResult.messages)
-			}
-			if (truncateResult.error) {
-				await this.say("condense_context_error", truncateResult.error)
-			} else if (truncateResult.summary) {
-				// A condense operation occurred; for the next GPT‑5 API call we should NOT
-				// send previous_response_id so the request reflects the fresh condensed context.
-				this.skipPrevResponseIdOnce = true
-
-				const { summary, cost, prevContextTokens, newContextTokens = 0 } = truncateResult
-				const contextCondense: ContextCondense = { summary, cost, newContextTokens, prevContextTokens }
-				await this.say(
-					"condense_context",
-					undefined /* text */,
-					undefined /* images */,
-					false /* partial */,
-					undefined /* checkpoint */,
-					undefined /* progressStatus */,
-					{ isNonInteractive: true } /* options */,
-					contextCondense,
+			try {
+				// 确保上下文在预算内
+				const compressionResult = await this.compressionClient.ensureContextWithinBudget(
+					this.apiConversationHistory,
+					budget,
+					contextWindow,
 				)
+
+				// 如果发生了压缩，更新对话历史
+				if (compressionResult.compressed) {
+					const prevContextTokens = contextTokens
+					await this.overwriteApiConversationHistory(compressionResult.messages)
+
+					// 重新计算 token
+					const newContextTokens = this.compressionClient.estimateTokens(
+						JSON.stringify(compressionResult.messages),
+					)
+
+					// GPT-5 需要重置 previous_response_id
+					this.skipPrevResponseIdOnce = true
+
+					// 发送压缩通知
+					const contextCondense: ContextCondense = {
+						summary: compressionResult.summary || "Context compressed",
+						cost: 0, // Void 压缩成本计算在服务端
+						newContextTokens,
+						prevContextTokens,
+					}
+					await this.say(
+						"condense_context",
+						undefined /* text */,
+						undefined /* images */,
+						false /* partial */,
+						undefined /* checkpoint */,
+						undefined /* progressStatus */,
+						{ isNonInteractive: true } /* options */,
+						contextCondense,
+					)
+				}
+			} catch (error: any) {
+				// 压缩失败，记录错误但继续执行
+				console.error("[Task] Context compression error:", error)
+				await this.say("condense_context_error", error.message || "Context compression failed")
 			}
 		}
 
-		const messagesSinceLastSummary = getMessagesSinceLastSummary(this.apiConversationHistory)
-		let cleanConversationHistory = maybeRemoveImageBlocks(messagesSinceLastSummary, this.api).map(
+		// 使用压缩后的对话历史
+		let cleanConversationHistory = maybeRemoveImageBlocks(this.apiConversationHistory, this.api).map(
 			({ role, content }) => ({ role, content }),
 		)
 

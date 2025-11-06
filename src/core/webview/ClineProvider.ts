@@ -291,11 +291,65 @@ export class ClineProvider
 			const onTaskStarted = () => this.emit(RooCodeEventName.TaskStarted, instance.taskId)
 			const onTaskCompleted = async (taskId: string, tokenUsage: any, toolUsage: any) => {
 				this.log(`[taskCreationCallback] 🎯 onTaskCompleted fired for task ${taskId}, isAgentTask=${(instance as any).isAgentTask}`)
+
+				// 🔥 智能体任务：发送 LLM_STREAM_END 消息
+				if (instance.agentTaskContext) {
+					const ctx = instance.agentTaskContext
+					const llmService = (global as any).llmStreamService
+					if (llmService && ctx.streamId) {
+						this.log(`[onTaskCompleted] 📤 Sending LLM_STREAM_END for task ${taskId}, streamId=${ctx.streamId}`)
+
+						// 获取任务名称
+						const taskName = (instance as any).historyItem?.task || "AI助手"
+						const taskInfo = {
+							name: taskName,
+							id: taskId,
+						}
+
+						llmService.imConnection?.sendLLMEnd(
+							ctx.streamId,
+							ctx.imMetadata.recvId,
+							ctx.imMetadata.targetTerminal,
+							ctx.imMetadata.chatType,
+							taskInfo,
+							ctx.imMetadata.sendId,
+							ctx.imMetadata.senderTerminal,
+						)
+					}
+				}
+
 				await cleanupAgentTask(taskId, "TaskCompleted")
 				this.emit(RooCodeEventName.TaskCompleted, taskId, tokenUsage, toolUsage)
 			}
 			const onTaskAborted = async () => {
 				this.log(`[taskCreationCallback] 🛑 onTaskAborted fired for task ${instance.taskId}, isAgentTask=${(instance as any).isAgentTask}`)
+
+				// 🔥 智能体任务：发送 LLM_STREAM_END 消息（即使是中止）
+				if (instance.agentTaskContext) {
+					const ctx = instance.agentTaskContext
+					const llmService = (global as any).llmStreamService
+					if (llmService && ctx.streamId) {
+						this.log(`[onTaskAborted] 📤 Sending LLM_STREAM_END for aborted task ${instance.taskId}, streamId=${ctx.streamId}`)
+
+						// 获取任务名称
+						const taskName = (instance as any).historyItem?.task || "AI助手"
+						const taskInfo = {
+							name: taskName,
+							id: instance.taskId,
+						}
+
+						llmService.imConnection?.sendLLMEnd(
+							ctx.streamId,
+							ctx.imMetadata.recvId,
+							ctx.imMetadata.targetTerminal,
+							ctx.imMetadata.chatType,
+							taskInfo,
+							ctx.imMetadata.sendId,
+							ctx.imMetadata.senderTerminal,
+						)
+					}
+				}
+
 				await cleanupAgentTask(instance.taskId, "TaskAborted")
 				this.emit(RooCodeEventName.TaskAborted, instance.taskId)
 			}
@@ -1318,13 +1372,16 @@ export class ClineProvider
 				const fullText = clineMsg.text || ""
 				const lastPos = this.lastSentPositions.get(msgKey) || 0
 
-				// 只发送新增的部分
-				if (fullText.length > lastPos) {
-					const incrementalText = fullText.substring(lastPos)
+				// 🔥 如果有新增内容 或者 section完成（需要发送结束标志）
+				const hasNewContent = fullText.length > lastPos
+				const needsCompletionSignal = !isPartial && lastPos > 0
+
+				if (hasNewContent || needsCompletionSignal) {
+					const incrementalText = hasNewContent ? fullText.substring(lastPos) : ""
 
 					if (!isPartial) {
 						this.log(
-							`[forwardToIMWebSocket] Sending thinking increment: ${incrementalText.length} chars (total: ${fullText.length})`,
+							`[forwardToIMWebSocket] Sending thinking ${hasNewContent ? "increment" : "completion"}: ${incrementalText.length} chars (total: ${fullText.length})`,
 						)
 					}
 
@@ -1332,7 +1389,7 @@ export class ClineProvider
 						ctx.streamId,
 						JSON.stringify({
 							type: "thinking",
-							content: incrementalText, // 🔥 只发送增量部分
+							content: incrementalText, // 🔥 增量部分（完成时可能为空字符串）
 							partial: isPartial,
 							ts: clineMsg.ts,
 							metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
@@ -1345,7 +1402,9 @@ export class ClineProvider
 					)
 
 					// 更新已发送位置
-					this.lastSentPositions.set(msgKey, fullText.length)
+					if (hasNewContent) {
+						this.lastSentPositions.set(msgKey, fullText.length)
+					}
 				}
 
 				// 消息完成后清理追踪
@@ -1357,23 +1416,24 @@ export class ClineProvider
 				const fullText = clineMsg.text || ""
 				const lastPos = this.lastSentPositions.get(msgKey) || 0
 
-				// this.log(
-				// 	`[forwardToIMWebSocket] 🔍 completion_result: msgKey=${msgKey}, isPartial=${isPartial}, lastPos=${lastPos}, fullText.length=${fullText.length}`,
-				// )
+				// 🔥 如果有新增内容 或者 section完成（需要发送结束标志）
+				const hasNewContent = fullText.length > lastPos
+				const needsCompletionSignal = !isPartial && lastPos > 0
 
-				// 只发送新增的部分
-				if (fullText.length > lastPos) {
-					const incrementalText = fullText.substring(lastPos)
+				if (hasNewContent || needsCompletionSignal) {
+					const incrementalText = hasNewContent ? fullText.substring(lastPos) : ""
 
-					// this.log(
-					// 	`[forwardToIMWebSocket] ✅ Sending completion increment: ${incrementalText.length} chars (total: ${fullText.length})`,
-					// )
+					if (!isPartial) {
+						this.log(
+							`[forwardToIMWebSocket] Sending completion ${hasNewContent ? "increment" : "completion"}: ${incrementalText.length} chars (total: ${fullText.length})`,
+						)
+					}
 
 					llmService.imConnection.sendLLMChunk(
 						ctx.streamId,
 						JSON.stringify({
 							type: "completion",
-							content: incrementalText, // 🔥 只发送增量部分
+							content: incrementalText, // 🔥 增量部分（完成时可能为空字符串）
 							partial: isPartial,
 							ts: clineMsg.ts,
 							metadata: clineMsg.metadata || {}, // 🔥 包含 taskId 等元数据
@@ -1386,7 +1446,9 @@ export class ClineProvider
 					)
 
 					// 更新已发送位置
-					this.lastSentPositions.set(msgKey, fullText.length)
+					if (hasNewContent) {
+						this.lastSentPositions.set(msgKey, fullText.length)
+					}
 				}
 
 				// 消息完成后清理追踪
