@@ -24,6 +24,7 @@ interface Agent {
 	type: "custom"
 	status: "active" | "inactive"
 	icon?: string
+	createdAt?: number
 }
 
 interface AgentsViewProps {
@@ -322,17 +323,22 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 							)
 
 							// 转换后端数据为前端格式
-							const transformedAgents = message.agents.map((agent: any) => ({
-								id: agent.id,
-								name: agent.name,
-								description: agent.roleDescription || "",
-								type: "custom" as const,
-								status: agent.isActive ? ("active" as const) : ("inactive" as const),
-								icon: agent.avatar,
-								// 发布状态相关字段
-								isPublished: agent.isPublished || false,
-								publishInfo: agent.publishInfo || null,
-							}))
+							const transformedAgents = message.agents
+								.map((agent: any) => ({
+									id: agent.id,
+									name: agent.name,
+									description: agent.roleDescription || "",
+									type: "custom" as const,
+									status: agent.isActive ? ("active" as const) : ("inactive" as const),
+									icon: agent.avatar,
+									// 发布状态相关字段
+									isPublished: agent.isPublished || false,
+									publishInfo: agent.publishInfo || null,
+									// 保留 createdAt 用于排序
+									createdAt: agent.createdAt,
+								}))
+								// 按照创建时间倒序排序（最新创建的在前）
+								.sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0))
 
 							console.log("🔄 [AgentsView] Transformed agents for frontend:", {
 								count: transformedAgents.length,
