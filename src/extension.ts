@@ -147,6 +147,14 @@ export async function activate(context: vscode.ExtensionContext) {
 			throw new Error(`Agent ${agentId} not found`)
 		}
 
+		// ✅ 添加详细日志：验证获取到的智能体配置
+		outputChannel.appendLine(`[prepareAgentTask] 📋 Got agent config for ${agentId}:`)
+		outputChannel.appendLine(`  - name: ${agentConfig.name}`)
+		outputChannel.appendLine(`  - mode: ${agentConfig.mode}`)
+		outputChannel.appendLine(`  - apiConfigId: ${agentConfig.apiConfigId}`)
+		outputChannel.appendLine(`  - hasApiConfig: ${!!agentConfig.apiConfig}`)
+		outputChannel.appendLine(`  - updatedAt: ${agentConfig.updatedAt ? new Date(agentConfig.updatedAt).toISOString() : 'N/A'}`)
+
 		// 响应时交换发送者/接收者
 		const responseSendId = recvId
 		const responseRecvId = sendId
@@ -227,6 +235,9 @@ export async function activate(context: vscode.ExtensionContext) {
 				// Ignore mode config errors
 			}
 		}
+
+		// ✅ 添加日志：验证Task创建时使用的mode
+		outputChannel.appendLine(`[createAndExecuteAgentTask] 🎯 Creating Task with mode: ${agentConfig.mode || "code"}`)
 
 		const task = new Task({
 			provider,

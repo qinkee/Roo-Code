@@ -3454,12 +3454,21 @@ export const webviewMessageHandler = async (
 							configPromises.push(updateGlobalState("currentApiConfigName", agent.apiConfig.originalName))
 						}
 					} else if (agent.apiConfigId) {
-						// ⚠️ 降级逻辑：仅在没有apiConfig时才使用apiConfigId
-						provider.log(`[startAgentTask] Fallback: Using apiConfigId ${agent.apiConfigId}`)
-						const apiConfigs = provider.contextProxy.getValues().listApiConfigMeta || []
-						const targetConfig = apiConfigs.find((config) => config.id === agent.apiConfigId)
-						if (targetConfig) {
-							configPromises.push(updateGlobalState("currentApiConfigName", targetConfig.name))
+						// ⚠️ 降级逻辑：智能体没有完整apiConfig，这不应该发生
+						provider.log(`[startAgentTask] ⚠️ WARNING: Agent missing apiConfig, falling back to apiConfigId ${agent.apiConfigId}`)
+						provider.log(`[startAgentTask] This indicates the agent was not properly configured during creation`)
+
+						// 尝试加载完整配置
+						try {
+							const fullConfig = await provider.getProviderProfileById(agent.apiConfigId)
+							if (fullConfig) {
+								provider.log(`[startAgentTask] Loaded fallback config: ${fullConfig.apiProvider}`)
+								configPromises.push(provider.contextProxy.setProviderSettings(fullConfig))
+							} else {
+								provider.log(`[startAgentTask] ❌ ERROR: Cannot load config for ${agent.apiConfigId}`)
+							}
+						} catch (error) {
+							provider.log(`[startAgentTask] ❌ ERROR loading API profile: ${error}`)
 						}
 					}
 

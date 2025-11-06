@@ -2,7 +2,16 @@ import React, { useState, useCallback, useMemo, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { ArrowLeft, Settings, Check, Sparkles, Grid3X3, ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react"
 import { cn } from "@src/lib/utils"
-import { StandardTooltip } from "@src/components/ui"
+import {
+	StandardTooltip,
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@src/components/ui"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { getAllModes } from "@roo/modes"
 import { vscode } from "@src/utils/vscode"
@@ -24,6 +33,9 @@ interface CreateAgentViewProps {
 	onUpdate?: (agentData: any) => void // 新增：更新回调
 	modifiedApiConfig?: any // 新增：从API配置页面返回的修改后配置
 	onApiConfigUsed?: () => void // 新增：通知已使用修改后的配置
+	// ✅ 新增：草稿数据保存和恢复
+	draftData?: any // 草稿数据（用于从API配置页面返回时恢复状态）
+	onDraftDataChange?: (data: any) => void // 通知父组件保存草稿数据
 }
 
 const CreateAgentView: React.FC<CreateAgentViewProps> = ({
@@ -39,37 +51,49 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 	onUpdate,
 	modifiedApiConfig,
 	onApiConfigUsed,
+	draftData,
+	onDraftDataChange,
 }) => {
 	const { t } = useTranslation()
 	const { customModes, customModePrompts, listApiConfigMeta, currentApiConfigName } = useExtensionState()
+
+	// ✅ 状态初始化：优先级 draftData > editData > templateData > 默认值
 	const [agentName, setAgentName] = useState(() => {
+		if (draftData?.agentName !== undefined) return draftData.agentName
 		if (editMode && editData) return editData.name || ""
 		return ""
 	})
 	const [selectedMode, setSelectedMode] = useState(() => {
+		if (draftData?.selectedMode) return draftData.selectedMode
 		if (editMode && editData) return editData.mode || "architect"
 		return templateData?.mode || "architect"
 	})
 	const [selectedTools, setSelectedTools] = useState<string[]>(() => {
+		if (draftData?.selectedTools) return draftData.selectedTools
 		if (editMode && editData) {
 			return editData.tools?.map((tool: any) => tool.toolId) || ["internal"]
 		}
 		return templateData?.tools || ["internal"]
 	})
 	const [agentAvatar, setAgentAvatar] = useState<string>(() => {
+		if (draftData?.agentAvatar !== undefined) return draftData.agentAvatar
 		if (editMode && editData) return editData.avatar || ""
 		return ""
 	})
 	const [showAvatarModal, setShowAvatarModal] = useState(false)
+	const [showApiConfigAlert, setShowApiConfigAlert] = useState(false)
 	const [roleDescription, setRoleDescription] = useState(() => {
+		if (draftData?.roleDescription !== undefined) return draftData.roleDescription
 		if (editMode && editData) return editData.roleDescription || ""
 		return ""
 	})
 	const [welcomeMessage, setWelcomeMessage] = useState(() => {
+		if (draftData?.welcomeMessage !== undefined) return draftData.welcomeMessage
 		if (editMode && editData) return editData.welcomeMessage || ""
 		return ""
 	})
 	const [todos, setTodos] = useState<Array<{ id: string; content: string; completed: boolean }>>(() => {
+		if (draftData?.todos) return draftData.todos
 		if (editMode && editData && editData.todos) {
 			return editData.todos.map((todo: any, index: number) => ({
 				id: String(index + 1),
@@ -81,18 +105,22 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 	})
 	const [displayMode, setDisplayMode] = useState<"stack" | "switch">("stack")
 	const [currentSectionIndex, setCurrentSectionIndex] = useState(0)
+
 	// 为每个profile维护独立的完整配置状态（智能体专用，不影响全局）
-	// 注意：这里只存储用户在当前编辑会话中修改过的配置，不包括从数据库加载的原始配置
 	const [profileConfigs, setProfileConfigs] = useState<Record<string, any>>(() => {
-		// 初始化时不预加载任何配置，只在用户实际修改时才添加
+		if (draftData?.profileConfigs) return draftData.profileConfigs
 		return {}
 	})
+
 	// 记住当前正在编辑的profile ID
-	const [editingProfileId, setEditingProfileId] = useState<string>("")
+	const [editingProfileId, setEditingProfileId] = useState<string>(() => {
+		if (draftData?.editingProfileId) return draftData.editingProfileId
+		return ""
+	})
 
 	// 智能体最终的API配置（编辑模式或新创建）
 	const [agentApiConfig, setAgentApiConfig] = useState<AgentApiConfig | undefined>(() => {
-		// 编辑模式下使用现有的内嵌API配置
+		if (draftData?.agentApiConfig) return draftData.agentApiConfig
 		if (editMode && editData && editData.apiConfig) {
 			return editData.apiConfig
 		}
@@ -101,6 +129,7 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 
 	// Get the current API config ID or default to the first available
 	const [selectedApiConfig, setSelectedApiConfig] = useState(() => {
+		if (draftData?.selectedApiConfig) return draftData.selectedApiConfig
 		// 编辑模式下优先使用嵌入的API配置，然后才是apiConfigId
 		if (editMode && editData) {
 			// 如果有嵌入的API配置，优先使用originalId（对应的profile ID）
@@ -374,23 +403,15 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 					selectedApiConfigDetails,
 				)
 			}
-			// 4. 如果选择了不同的profile或新创建模式
+			// 4. 如果选择了不同的profile或新创建模式，但用户还没有编辑确认
 			else {
-				const originalConfig = listApiConfigMeta?.find((config) => config.id === selectedApiConfig)
-				if (originalConfig) {
-					// 注意：这里只有metadata，没有完整配置。在实际项目中需要获取完整配置
-					console.log("[CreateAgentView] Save - Creating new config from profile:", selectedApiConfig)
-					selectedApiConfigDetails = {
-						...originalConfig,
-						// 保留原有字段
-						apiProvider: originalConfig.apiProvider,
-						apiModelId: originalConfig.modelId,
-						originalId: originalConfig.id,
-						originalName: originalConfig.name,
-						createdAt: Date.now(),
-					} as AgentApiConfig
-					console.log("[CreateAgentView] Save - Using original config as base:", selectedApiConfigDetails)
-				}
+				// ✅ KISS原则：必须先编辑确认API配置
+				console.error("[CreateAgentView] Save blocked - No full config available for profile:", selectedApiConfig)
+
+				// ✅ 使用统一的 AlertDialog 提示
+				setShowApiConfigAlert(true)
+
+				return // 阻止保存
 			}
 
 			console.log("[CreateAgentView] Save - selectedApiConfig:", selectedApiConfig)
@@ -583,6 +604,45 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 		}
 	}, [modifiedApiConfig, onApiConfigUsed, editingProfileId, onAgentApiConfigSave, handleAgentApiConfigSave])
 
+	// ✅ 新增：实时保存草稿数据到父组件
+	useEffect(() => {
+		if (!onDraftDataChange) return
+
+		const draftState = {
+			agentName,
+			selectedMode,
+			selectedTools,
+			agentAvatar,
+			roleDescription,
+			welcomeMessage,
+			todos,
+			profileConfigs,
+			editingProfileId,
+			agentApiConfig,
+			selectedApiConfig,
+		}
+
+		// 使用节流避免频繁更新
+		const timeoutId = setTimeout(() => {
+			onDraftDataChange(draftState)
+		}, 300)
+
+		return () => clearTimeout(timeoutId)
+	}, [
+		agentName,
+		selectedMode,
+		selectedTools,
+		agentAvatar,
+		roleDescription,
+		welcomeMessage,
+		todos,
+		profileConfigs,
+		editingProfileId,
+		agentApiConfig,
+		selectedApiConfig,
+		onDraftDataChange,
+	])
+
 	const handleModeSettings = useCallback(() => {
 		// Show modes configuration page within agents view
 		onShowModeConfig()
@@ -712,11 +772,16 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 									key={config.id}
 									onClick={() => {
 										console.log("[CreateAgentView] API Config selected:", config.id, config)
-										console.log("[CreateAgentView] Current profileConfigs:", profileConfigs)
 
-										// Simply switch to the selected profile
+										// 选择 profile
 										setSelectedApiConfig(config.id)
-										console.log("[CreateAgentView] Set selectedApiConfig to:", config.id)
+
+										// ✅ KISS原则：直接打开API配置编辑，强制用户确认
+										console.log("[CreateAgentView] Opening API config editor for confirmation")
+										setEditingProfileId(config.id)
+
+										const configToPass = profileConfigs[config.id] || listApiConfigMeta?.find((c) => c.id === config.id)
+										onShowApiConfig(config.id, configToPass, true)
 									}}
 									className={cn(
 										"w-full flex items-center justify-between p-3 rounded-md border transition-colors",
@@ -1250,6 +1315,21 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 				agentName={agentName}
 				onNameChange={handleNameChange}
 			/>
+
+			{/* ✅ API配置提示对话框 */}
+			<AlertDialog open={showApiConfigAlert} onOpenChange={setShowApiConfigAlert}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>需要确认 API 配置</AlertDialogTitle>
+						<AlertDialogDescription>
+							请先点击选中的 API 配置进行查看和确认，然后再保存智能体。
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogAction onClick={() => setShowApiConfigAlert(false)}>知道了</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	)
 }

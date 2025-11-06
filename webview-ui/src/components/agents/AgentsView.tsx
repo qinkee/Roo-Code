@@ -243,6 +243,9 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 	const [isAgentMode, setIsAgentMode] = useState(false) // 标识是否为智能体模式
 	const [agentConfigSaveCallback, setAgentConfigSaveCallback] = useState<((config: any) => void) | null>(null)
 
+	// ✅ 新增：保存 CreateAgentView 的临时状态，防止跳转页面时数据丢失
+	const [createAgentDraftData, setCreateAgentDraftData] = useState<any>(null)
+
 	// 加载智能体列表
 	const loadAgents = useCallback(() => {
 		console.log("📤 [AgentsView] Loading agents list...")
@@ -695,6 +698,8 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 			setEditMode(false)
 			setEditAgentData(null)
 		}
+		// ✅ 清空临时草稿数据
+		setCreateAgentDraftData(null)
 	}, [editMode])
 
 	const handleCreateAgentCancel = useCallback(() => {
@@ -704,6 +709,8 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 			setEditMode(false)
 			setEditAgentData(null)
 		}
+		// ✅ 清空临时草稿数据
+		setCreateAgentDraftData(null)
 	}, [editMode])
 
 	const handleTerminalSelect = useCallback(
@@ -859,6 +866,9 @@ const AgentsView: React.FC<AgentsViewProps> = ({ onDone }) => {
 				onUpdate={handleAgentUpdate}
 				modifiedApiConfig={modifiedApiConfig}
 				onApiConfigUsed={() => setModifiedApiConfig(null)}
+				// ✅ 新增：状态保存和恢复
+				draftData={createAgentDraftData}
+				onDraftDataChange={setCreateAgentDraftData}
 			/>
 		)
 	}
