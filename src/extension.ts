@@ -536,8 +536,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		}),
 	)
 
-	// 🔥 注册智能体诊断命令
-	AgentDiagnostics.registerCommands(context, provider)
 
 	// Register test command for LLM streaming
 	context.subscriptions.push(
@@ -708,6 +706,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy, mdmService)
 	TelemetryService.instance.setProvider(provider)
+
+	// 🔥 注册智能体诊断命令
+	AgentDiagnostics.registerCommands(context, provider)
 
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(ClineProvider.sideBarId, provider, {
