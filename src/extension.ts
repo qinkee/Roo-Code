@@ -28,6 +28,7 @@ import { CodeIndexManager } from "./services/code-index/manager"
 import { MdmService } from "./services/mdm/MdmService"
 import { migrateSettings } from "./utils/migrateSettings"
 import { A2AServerManager } from "./core/agent/A2AServerManager"
+import { AgentDiagnostics } from "./core/agent/diagnostics/AgentDiagnostics"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { isRemoteControlEnabled } from "./utils/remoteControl"
 import { API } from "./extension/api"
@@ -267,8 +268,17 @@ export async function activate(context: vscode.ExtensionContext) {
 		await provider.addClineToStack(task)
 
 		// 设置额外的配置参数（在启动任务之前）
-		if (agentConfig.allowedTools) {
-			task.setAllowedTools(agentConfig.allowedTools)
+		// 🔥 修复attempt_completion未触发问题：确保必需工具被允许
+		if (agentConfig.allowedTools && agentConfig.allowedTools.length > 0) {
+			// 🔥 修复：如果限制了工具，确保必需工具始终被包含
+			const requiredTools = ["attempt_completion", "str_replace_editor", "execute_command", "read_file", "list_files", "search_files"]
+			const finalAllowedTools = [...new Set([...agentConfig.allowedTools, ...requiredTools])]
+
+			task.setAllowedTools(finalAllowedTools)
+			outputChannel.appendLine(`[createAndExecuteAgentTask] 🔧 Allowed tools (enhanced): ${JSON.stringify(finalAllowedTools)}`)
+		} else {
+			// 如果allowedTools为空，允许所有工具
+			outputChannel.appendLine(`[createAndExecuteAgentTask] ✅ All tools allowed (no restrictions)`)
 		}
 
 		if (modeConfig) {
@@ -525,6 +535,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			vscode.window.showInformationMessage("IM Connection diagnostic complete. Check output panel.")
 		}),
 	)
+
+	// 🔥 注册智能体诊断命令
+	AgentDiagnostics.registerCommands(context, provider)
 
 	// Register test command for LLM streaming
 	context.subscriptions.push(

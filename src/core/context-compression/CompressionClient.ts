@@ -99,9 +99,31 @@ export class ContextCompressionClient {
 
 		try {
 			// 构建分层上下文
+			// 🔥 修复：使用类型安全的转换方法
+			const messagesAsLLMMessages: LLMMessage[] = messages.map(msg => {
+				// 安全提取内容
+				let simplifiedContent = ''
+
+				if (typeof msg.content === 'string') {
+					simplifiedContent = msg.content
+				} else if (Array.isArray(msg.content)) {
+					// 安全遍历，处理不同类型
+					for (const block of msg.content as any[]) {
+						if (block && block.type === 'text' && block.text) {
+							simplifiedContent += block.text + '\n'
+						}
+					}
+				}
+				// 所有消息都有role，直接转换
+				return {
+					role: msg.role as any,  // Anthropic.MessageParam['role'] should include 'system'
+					content: simplifiedContent
+				}
+			})
+
 			const context: LayeredContext = {
-				core: messages.filter((m) => m.role === "system") as LLMMessage[],
-				recent: messages.filter((m) => m.role !== "system") as LLMMessage[],
+				core: messagesAsLLMMessages.filter((m) => m.role === "system"),
+				recent: messagesAsLLMMessages.filter((m) => m.role !== "system"),
 			}
 
 			// 请求 Void 压缩
@@ -155,8 +177,36 @@ export class ContextCompressionClient {
 	fallbackTruncate(messages: Anthropic.MessageParam[]): Anthropic.MessageParam[] {
 		console.warn("[ContextCompression] Using fallback truncation (keep last 10 messages)")
 
-		const systemMessages = messages.filter((m) => m.role === "system")
-		const otherMessages = messages.filter((m) => m.role !== "system")
+		// 🔥 修复：使用类型安全的过滤方法
+		const messagePairs = messages.map(msg => {
+			// 验证消息结构完整性
+			let textContent = ''
+			if (typeof msg.content === 'string') {
+				textContent = msg.content
+			} else if (Array.isArray(msg.content)) {
+				textContent = msg.content
+					.map(block => (block.type === 'text' ? block.text : ''))
+					.filter(text => text.length > 0)
+					.join('\n')
+			}
+			return {
+				original: msg,
+				role: msg.role,
+				contentText: textContent
+			}
+		})
+
+		const systemMessages: Anthropic.MessageParam[] = []
+		const otherMessages: Anthropic.MessageParam[] = []
+
+		// 🔥 使用安全的角色比较 - union类型需要反射
+		for (const combined of messagePairs) {
+			if ((combined.original as any).role === "system") {
+				systemMessages.push(combined.original)
+			} else {
+				otherMessages.push(combined.original)
+			}
+		}
 
 		// 保留最近 10 条
 		const retained = otherMessages.slice(-10)
