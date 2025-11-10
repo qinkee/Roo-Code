@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { providerSettingsSchema } from "./provider-settings.js"
+import { modeConfigSchema } from "./mode.js"
 
 /**
  * 智能体工具配置
@@ -115,6 +116,7 @@ export const agentConfigSchema = z.object({
 	apiConfigId: z.string(), // 保留向后兼容
 	apiConfig: agentApiConfigSchema.optional(), // 新增：嵌入式API配置
 	mode: z.string(),
+	modeConfig: modeConfigSchema.optional(), // 🔥 新增：自定义模式的完整定义（如果使用自定义模式）
 	tools: z.array(agentToolConfigSchema),
 	todos: z.array(agentTodoSchema),
 

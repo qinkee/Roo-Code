@@ -292,6 +292,14 @@ export class ClineProvider
 			const onTaskCompleted = async (taskId: string, tokenUsage: any, toolUsage: any) => {
 				this.log(`[taskCreationCallback] 🎯 onTaskCompleted fired for task ${taskId}, isAgentTask=${(instance as any).isAgentTask}`)
 
+				// 🔥 智能体后台任务：保存最终历史记录（关键修复）
+				// 因为后台智能体任务在执行过程中不实时更新历史（性能优化），
+				// 所以必须在任务完成时更新一次，否则从历史列表查看时会看不到消息
+				if (instance.agentTaskContext && instance.historyItem) {
+					this.log(`[onTaskCompleted] 💾 Saving final history for agent task ${taskId}`)
+					await this.updateTaskHistory(instance.historyItem)
+				}
+
 				// 🔥 智能体任务：发送 LLM_STREAM_END 消息
 				if (instance.agentTaskContext) {
 					const ctx = instance.agentTaskContext
@@ -475,8 +483,31 @@ export class ClineProvider
 	// Adds a new Task instance to clineStack, marking the start of a new task.
 	// The instance is pushed to the top of the stack (LIFO order).
 	// When the task is completed, the top instance is removed, reactivating the previous task.
+	/**
+	 * ========================================
+	 * 🔥 任务路由核心逻辑 - 区分前台/后台执行
+	 * ========================================
+	 * 此函数根据 task.agentTaskContext 决定任务执行模式：
+	 *
+	 * 1. 后台智能体任务（有 agentTaskContext）：
+	 *    - 进入 agentTaskPool（后台池）
+	 *    - 后台静默执行，不切换 UI
+	 *    - 用于 IM 调用的智能体（extension.ts）
+	 *
+	 * 2. 前台任务（无 agentTaskContext）：
+	 *    - 进入 clineStack（用户任务栈）
+	 *    - emit TaskFocused 事件，触发 UI 切换
+	 *    - 用于用户任务和智能体本地调试（webviewMessageHandler.ts）
+	 *
+	 * ⚠️ 关键判断：task.agentTaskContext 是否存在
+	 * - 存在 → 后台执行
+	 * - 不存在 → 前台执行，UI 切换
+	 * ========================================
+	 */
 	async addClineToStack(task: Task) {
-		// 🔥 智能体任务：添加到独立任务池（每个根任务一个栈，支持并行执行和子任务嵌套）
+		// ========================================
+		// 分支1：后台智能体任务（有 agentTaskContext）
+		// ========================================
 		if (task.agentTaskContext) {
 			// 🔥 调试：记录任务层级信息
 			this.outputChannel.appendLine(
@@ -512,13 +543,16 @@ export class ClineProvider
 			this.performPreparationTasks(task).catch((err) => {
 				this.log(`Agent task ${task.taskId} preparation failed: ${err}`)
 			})
-			return // Don't add to user task stack
+			return // ⚠️ 关键：直接返回，不进入用户任务栈
 		}
 
-		// User task: maintain original stack logic
+		// ========================================
+		// 分支2：前台任务（无 agentTaskContext）
+		// ========================================
+		// 包括：用户任务 + 智能体本地调试任务
 		this.viewingAgentTaskId = null // Switch to user task, clear viewing state
 		this.clineStack.push(task)
-		task.emit(RooCodeEventName.TaskFocused)
+		task.emit(RooCodeEventName.TaskFocused)  // ✅ 触发 UI 切换
 
 		// Perform special setup provider specific tasks.
 		await this.performPreparationTasks(task)
@@ -1104,6 +1138,15 @@ export class ClineProvider
 			enableTaskBridge: isRemoteControlEnabled(cloudUserInfo, remoteControlEnabled),
 			...options,
 		})
+
+		// 🔥 配置隔离验证日志
+		const agentOptions = options as any
+		if (agentOptions.apiConfiguration) {
+			this.log(`[initClineWithTask] ✅ Agent-specific configuration applied (${agentOptions.apiConfiguration.apiProvider})`)
+		}
+		if (options.agentTaskContext) {
+			this.log(`[initClineWithTask] ✅ Agent-specific mode applied (${options.agentTaskContext.mode})`)
+		}
 
 		await this.addClineToStack(task)
 

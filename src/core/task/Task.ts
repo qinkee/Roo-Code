@@ -133,6 +133,7 @@ export type AgentTaskContext = {
 	agentId: string
 	streamId: string
 	mode: string
+	modeConfig?: any  // 🔥 新增：自定义模式的完整定义（ModeConfig类型）
 	roleDescription?: string
 	imMetadata: {
 		sendId: number
@@ -429,6 +430,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			console.error("Failed to initialize RooIgnoreController:", error)
 		})
 
+		// 🔥 关键修复：提前初始化 providerRef，避免后续代码使用时出现 undefined
+		this.providerRef = new WeakRef(provider)
+
 		this.apiConfiguration = apiConfiguration
 
 		// 防御性检查：确保buildApiHandler可用
@@ -447,7 +451,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.diffEnabled = enableDiff
 		this.fuzzyMatchThreshold = fuzzyMatchThreshold
 		this.consecutiveMistakeLimit = consecutiveMistakeLimit ?? DEFAULT_CONSECUTIVE_MISTAKE_LIMIT
-		this.providerRef = new WeakRef(provider)
 		this.globalStoragePath = provider.context.globalStorageUri.fsPath
 		this.diffViewProvider = new DiffViewProvider(this.cwd, this)
 		// 🔥 保存智能体任务上下文
@@ -572,24 +575,24 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// 🔥 关键修复：优先使用agentTaskContext中的mode（智能体专属配置）
 			if (this.agentTaskContext?.mode) {
 				this._taskMode = this.agentTaskContext.mode
-				provider.log(`[Task] ✅ Using agent task mode: ${this._taskMode}`)
+				provider.log(`[Task.initializeTaskMode] ✅ Agent task mode set to: ${this._taskMode}`)
 			} else {
 				// 非智能体任务：使用provider的当前mode（用户任务或调试模式）
 				const state = await provider.getState()
 				this._taskMode = state?.mode || defaultModeSlug
-				provider.log(`[Task] ℹ️ Using provider mode: ${this._taskMode}`)
+				provider.log(`[Task.initializeTaskMode] ℹ️ User task mode set to: ${this._taskMode}`)
 			}
 		} catch (error) {
 			// 🔥 如果是智能体任务且获取mode失败，不能降级，必须抛出异常
 			if (this.agentTaskContext) {
 				const errorMsg = `智能体任务初始化失败：无法获取mode配置。${error instanceof Error ? error.message : String(error)}`
-				provider.log(`[Task] ❌ ${errorMsg}`)
+				provider.log(`[Task.initializeTaskMode] ❌ ${errorMsg}`)
 				throw new Error(errorMsg)
 			}
 			// 非智能体任务：降级到默认mode
 			this._taskMode = defaultModeSlug
 			const errorMessage = `Failed to initialize task mode, using default: ${error instanceof Error ? error.message : String(error)}`
-			provider.log(`[Task] ⚠️ ${errorMessage}`)
+			provider.log(`[Task.initializeTaskMode] ⚠️ ${errorMessage}`)
 		}
 	}
 
@@ -2565,25 +2568,45 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		const state = await this.providerRef.deref()?.getState()
 
-		const {
-			browserViewportSize,
-			mode: providerMode,  // ← 重命名以避免混淆
-			customModes,
-			customModePrompts,
-			customInstructions,
-			experiments,
-			enableMcpServerCreation,
-			browserToolEnabled,
-			language,
-			maxConcurrentFileReads,
-			maxReadFileLine,
-			apiConfiguration,
-		} = state ?? {}
+	const {
+		browserViewportSize,
+		mode: providerMode,  // ← 重命名以避免混淆
+		customModes: providerCustomModes,  // ← 重命名以避免混淆
+		customModePrompts: providerCustomModePrompts,  // ← 重命名以避免混淆
+		customInstructions,
+		experiments,
+		enableMcpServerCreation,
+		browserToolEnabled,
+		language,
+		maxConcurrentFileReads,
+		maxReadFileLine,
+		apiConfiguration: providerApiConfiguration,
+	} = state ?? {}
 
-		// ✅ 修复：优先使用Task自己的mode，而不是provider的全局mode
-		// 这确保智能体任务使用配置的mode，而不受用户切换mode的影响
-		const taskMode = await this.getTaskMode()  // 使用Task自己的mode
+		// Use Task's own mode instead of provider's global mode.
+		// This ensures agent tasks use their configured mode, unaffected by user's mode switching.
+		const taskMode = await this.getTaskMode()
 		const effectiveMode = taskMode || providerMode || defaultModeSlug
+
+		// Agent tasks use their own API configuration instead of the provider's global configuration.
+		// This ensures agent tasks use their own model, profile, etc., without being affected by global settings.
+		const effectiveApiConfiguration = this.apiConfiguration || providerApiConfiguration
+
+		// Agent tasks use their own mode configuration.
+		// Priority order: taskModeConfig (set via setModeConfig) > agentTaskContext.modeConfig (constructor) > providerCustomModes (global)
+		let effectiveCustomModes = providerCustomModes
+		let effectiveCustomModePrompts = providerCustomModePrompts
+		const provider = this.providerRef.deref()
+
+		// First priority: taskModeConfig (set via setModeConfig method)
+		if (this.taskModeConfig) {
+			effectiveCustomModes = [this.taskModeConfig]
+			effectiveCustomModePrompts = undefined
+		} else if (this.agentTaskContext?.modeConfig) {
+			// Second priority: agentTaskContext.modeConfig (passed through constructor)
+			effectiveCustomModes = [this.agentTaskContext.modeConfig]
+			effectiveCustomModePrompts = undefined
+		}
 
 		return await (async () => {
 			const provider = this.providerRef.deref()
@@ -2592,34 +2615,36 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				throw new Error("Provider not available")
 			}
 
-			return SYSTEM_PROMPT(
-				provider.context,
-				this.cwd,
-				(this.api.getModel().info.supportsComputerUse ?? false) && (browserToolEnabled ?? true),
-				mcpHub,
-				this.diffStrategy,
-				browserViewportSize,
-				effectiveMode,  // ← 使用Task的mode
-				customModePrompts,
-				customModes,
-				customInstructions,
-				this.diffEnabled,
-				experiments,
-				enableMcpServerCreation,
-				language,
-				rooIgnoreInstructions,
-				maxReadFileLine !== -1,
-				{
-					maxConcurrentFileReads: maxConcurrentFileReads ?? 5,
-					todoListEnabled: apiConfiguration?.todoListEnabled ?? true,
-					useAgentRules: vscode.workspace.getConfiguration("roo-cline").get<boolean>("useAgentRules") ?? true,
-				},
-			)
+		const systemPrompt = await SYSTEM_PROMPT(
+			provider.context,
+			this.cwd,
+			(this.api.getModel().info.supportsComputerUse ?? false) && (browserToolEnabled ?? true),
+			mcpHub,
+			this.diffStrategy,
+			browserViewportSize,
+			effectiveMode,  // ← 使用Task的mode
+			effectiveCustomModePrompts,  // 🔥 使用智能体的模式prompts（如果有）
+			effectiveCustomModes,  // 🔥 使用智能体的模式定义（如果有）
+			customInstructions,
+			this.diffEnabled,
+			experiments,
+			enableMcpServerCreation,
+			language,
+			rooIgnoreInstructions,
+			maxReadFileLine !== -1,
+			{
+				maxConcurrentFileReads: maxConcurrentFileReads ?? 5,
+				todoListEnabled: effectiveApiConfiguration?.todoListEnabled ?? true,
+				useAgentRules: vscode.workspace.getConfiguration("roo-cline").get<boolean>("useAgentRules") ?? true,
+			},
+		)
+
+		return systemPrompt
 		})()
 	}
 
 	public async *attemptApiRequest(retryAttempt: number = 0): ApiStream {
-		// ✅ 新增：最大重试次数检查
+		// Check maximum retry attempts to prevent infinite retry loops
 		if (retryAttempt >= MAX_AUTO_RETRY_ATTEMPTS) {
 			throw new Error(
 				`Maximum retry attempts (${MAX_AUTO_RETRY_ATTEMPTS}) reached.\n` +
@@ -2631,7 +2656,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const state = await this.providerRef.deref()?.getState()
 
 		const {
-			apiConfiguration,
+			apiConfiguration: providerApiConfiguration,
 			autoApprovalEnabled,
 			alwaysApproveResubmit,
 			requestDelaySeconds,
@@ -2640,6 +2665,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			autoCondenseContextPercent = 100,
 			profileThresholds = {},
 		} = state ?? {}
+
+		// Use Task's own apiConfiguration if available (for agent tasks), otherwise use provider's global configuration
+		const effectiveApiConfiguration = this.apiConfiguration || providerApiConfiguration
 
 		// Get condensing configuration for automatic triggers.
 		const customCondensingPrompt = state?.customCondensingPrompt
@@ -2672,7 +2700,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		if (Task.lastGlobalApiRequestTime) {
 			const now = Date.now()
 			const timeSinceLastRequest = now - Task.lastGlobalApiRequestTime
-			const rateLimit = apiConfiguration?.rateLimitSeconds || 0
+			const rateLimit = effectiveApiConfiguration?.rateLimitSeconds || 0
 			rateLimitDelay = Math.ceil(Math.max(0, rateLimit * 1000 - timeSinceLastRequest) / 1000)
 		}
 
@@ -2788,7 +2816,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 
 		const metadata: ApiHandlerCreateMessageMetadata = {
-			mode: mode,
+			mode: await this.getTaskMode(),  // ← 使用Task的mode
 			taskId: this.taskId,
 			...(previousResponseId ? { previousResponseId } : {}),
 			// If a condense just occurred, explicitly suppress continuity fallback for the next call

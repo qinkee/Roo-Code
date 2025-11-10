@@ -18,6 +18,7 @@ import { TelemetryService } from "@roo-code/telemetry"
 import { type ApiMessage } from "../task-persistence/apiMessages"
 
 import { ClineProvider } from "./ClineProvider"
+import { AgentTaskContext } from "../task/Task"
 import { changeLanguage, t } from "../../i18n"
 import { Package } from "../../shared/package"
 import { RouterName, toRouterName, ModelRecord } from "../../shared/api"
@@ -588,22 +589,36 @@ export const webviewMessageHandler = async (
 				// 不是JSON格式，直接使用原始文本
 			}
 
-			// 如果是智能体任务，添加智能体标识和source标记
-			const finalA2AMode = getGlobalState("agentA2AMode")
+			// ========================================
+			// 🔥 关键区分：智能体本地调试模式 vs 后台调用模式
+			// ========================================
+			// 本地调试模式（此处）：
+			//   - 不设置 agentTaskContext
+			//   - 只设置 isAgentTask + agentTaskId
+			//   - 任务进入 clineStack（前台执行）
+			//   - UI 切换到任务执行视图
+			//   - 用户可以看到执行过程并与之交互
+			//
+			// 后台调用模式（extension.ts:274-281）：
+			//   - 设置 agentTaskContext（包含 agentId, streamId, mode, modeConfig 等）
+			//   - 任务进入 agentTaskPool（后台执行）
+			//   - UI 不切换，后台静默执行
+			//   - 通过 IM 返回结果
+			//
+			// ⚠️ 警告：不要在此处添加任何配置隔离逻辑（如 apiConfiguration, mode 等）！
+			// 配置隔离只在后台调用模式中处理（extension.ts），调试模式使用用户全局配置。
+			// ========================================
+			const finalA2AMode = getGlobalState("agentA2AMode") as any
 			let taskOptions: any = {}
 			if (finalA2AMode && finalA2AMode.enabled) {
 				taskText = `[${finalA2AMode.agentName}测试] ${taskText}`
-				// A2A调试模式：标记source为agent，但不设置agentTaskContext
-				// 这样可以标识为智能体任务，但不会进入后台运行
-				// agentTaskContext会导致任务在后台运行，这是给真正的Agent-to-Agent调用使用的
-				// 调试模式下用户需要看到执行过程，所以不能后台运行
 				taskOptions = {
-					// 不设置 agentTaskContext，避免后台运行
-					// 但传递智能体信息，确保正确标记任务类型
+					// ⚠️ 关键：绝对不要设置 agentTaskContext！
+					// 一旦设置 agentTaskContext，任务会进入后台池，UI 不会切换
 					isAgentTask: true,
 					agentTaskId: finalA2AMode.agentId,
 				}
-				provider.log(`[newTask] 🏷️ Added agent label and metadata for debug mode (foreground task)`)
+				provider.log(`[newTask] 🏷️ Agent debug mode: foreground execution, UI will switch`)
 			}
 
 			// Initializing new instance of Cline will make sure that any

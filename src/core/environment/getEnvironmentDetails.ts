@@ -208,7 +208,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 
 	// Add current mode and any mode-specific warnings.
 	const {
-		mode,
+		mode: providerMode,
 		customModes,
 		customModePrompts,
 		experiments = {} as Record<ExperimentId, boolean>,
@@ -216,7 +216,10 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 		language,
 	} = state ?? {}
 
-	const currentMode = mode ?? defaultModeSlug
+	// Use Task's own mode instead of provider's global mode.
+	// This ensures agent tasks display their correct mode information.
+	const taskMode = await cline.getTaskMode()
+	const currentMode = taskMode || providerMode || defaultModeSlug
 
 	const modeDetails = await getFullModeDetails(currentMode, customModes, customModePrompts, {
 		cwd: cline.cwd,

@@ -181,11 +181,31 @@ export async function activate(context: vscode.ExtensionContext) {
 	/**
 	 * 创建并执行智能体任务
 	 */
+	/**
+	 * ========================================
+	 * 🔥 智能体后台调用模式 - 配置隔离核心逻辑
+	 * ========================================
+	 * 此函数处理通过 IM 调用的智能体任务（后台执行）。
+	 *
+	 * 关键特征：
+	 * 1. 配置隔离：使用智能体专属的 apiConfiguration 和 mode
+	 * 2. 后台执行：设置 agentTaskContext，任务进入 agentTaskPool
+	 * 3. 不影响用户：智能体配置与用户全局配置完全独立
+	 *
+	 * 对比本地调试模式（webviewMessageHandler.ts:592-622）：
+	 * - 本地调试：不设置 agentTaskContext，前台执行，UI切换
+	 * - 后台调用（此处）：设置 agentTaskContext，后台执行，不切换UI
+	 *
+	 * ⚠️ 警告：修改此函数会影响所有智能体的配置隔离！
+	 * ========================================
+	 */
 	async function createAndExecuteAgentTask(taskParams: any, provider: ClineProvider) {
 		const { agentId, agentConfig, message, streamId, conversationId, imMetadata } = taskParams
 
-		// 🔥 准备智能体专属的API配置，不修改全局provider配置
-		// ✅ 每个智能体使用独立的API配置，互不干扰，也不影响用户本地配置
+		// ========================================
+		// Step 1: 准备智能体专属的 API 配置
+		// ========================================
+		// 每个智能体使用独立的 API 配置，互不干扰，也不影响用户本地配置
 		let agentApiConfiguration: any
 
 		if (agentConfig.apiConfig) {
@@ -227,22 +247,50 @@ export async function activate(context: vscode.ExtensionContext) {
 		const state = await provider.getState()
 		const { Task } = await import("./core/task/Task")
 
-		// 配置智能体参数
+		// ========================================
+		// Step 2: 准备智能体专属的 Mode 配置
+		// ========================================
 		let modeConfig: any = undefined
 		if (agentConfig.mode) {
-			try {
-				modeConfig = await provider.getModeConfig(agentConfig.mode)
-			} catch (error) {
-				// Ignore mode config errors
+			// 优先级1：使用智能体保存的模式定义（自定义模式）
+			if (agentConfig.modeConfig) {
+				modeConfig = agentConfig.modeConfig
+				outputChannel.appendLine(`[createAndExecuteAgentTask] Using agent's embedded modeConfig: ${agentConfig.modeConfig.name}`)
+			} else {
+				// 优先级2：从 provider 获取（内置模式）
+				try {
+					modeConfig = await provider.getModeConfig(agentConfig.mode)
+					outputChannel.appendLine(`[createAndExecuteAgentTask] Using provider modeConfig: ${agentConfig.mode}`)
+				} catch (error) {
+					outputChannel.appendLine(`[createAndExecuteAgentTask] ⚠️ Failed to get modeConfig for: ${agentConfig.mode}`)
+				}
 			}
 		}
 
-		// ✅ 添加日志：验证Task创建时使用的mode
-		outputChannel.appendLine(`[createAndExecuteAgentTask] 🎯 Creating Task with mode: ${agentConfig.mode || "code"}`)
+		// ✅ 添加日志：验证Task创建时使用的配置
+		outputChannel.appendLine(`[createAndExecuteAgentTask] 🎯 Creating Task with agent-specific configuration:`)
+		outputChannel.appendLine(`  - mode: ${agentConfig.mode || "code"}`)
+		outputChannel.appendLine(`  - hasModeConfig: ${!!agentConfig.modeConfig}`)
+		if (agentConfig.modeConfig) {
+			outputChannel.appendLine(`  - modeConfig.name: ${agentConfig.modeConfig.name}`)
+			outputChannel.appendLine(`  - modeConfig.slug: ${agentConfig.modeConfig.slug}`)
+		}
+		outputChannel.appendLine(`  - apiProvider: ${agentApiConfiguration?.apiProvider}`)
+		outputChannel.appendLine(`  - model: ${agentApiConfiguration?.openAiModelId || agentApiConfiguration?.apiModelId || "N/A"}`)
+		outputChannel.appendLine(`  - agentId: ${agentId}`)
 
+		// ========================================
+		// Step 3: 创建 Task 实例（配置隔离的关键）
+		// ========================================
+		// ⚠️ 关键点：
+		// 1. apiConfiguration：智能体专属配置（不是用户全局配置）
+		// 2. agentTaskContext：必须设置，标记为后台任务
+		//    - 包含 agentId, streamId, mode, modeConfig 等
+		//    - 导致任务进入 agentTaskPool（后台执行）
+		//    - 区别于本地调试模式（不设置此字段）
 		const task = new Task({
 			provider,
-			apiConfiguration: agentApiConfiguration,  // 🔥 使用智能体专属的API配置
+			apiConfiguration: agentApiConfiguration,  // ✅ 智能体专属 API 配置
 			enableDiff: state.diffEnabled,
 			enableCheckpoints: state.enableCheckpoints,
 			fuzzyMatchThreshold: state.fuzzyMatchThreshold,
@@ -254,14 +302,16 @@ export async function activate(context: vscode.ExtensionContext) {
 			parentTask: undefined,
 			taskNumber: 1,
 			enableTaskBridge: false,
+			// ⚠️ 关键：设置 agentTaskContext 使任务后台执行
 			agentTaskContext: {
 				agentId,
 				streamId,
-				mode: agentConfig.mode || "code",
+				mode: agentConfig.mode || "code",           // ✅ 智能体模式
+				modeConfig: agentConfig.modeConfig,          // ✅ 智能体模式定义
 				roleDescription: agentConfig.roleDescription,
 				imMetadata,
 			},
-			startTask: false,  // 🔥 延迟启动，先添加到池并设置配置
+			startTask: false,  // 延迟启动，先添加到池并设置配置
 		})
 
 		// 🔥 添加到agentTaskPool（智能体任务池）

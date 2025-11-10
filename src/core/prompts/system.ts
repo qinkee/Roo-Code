@@ -71,6 +71,7 @@ async function generatePrompt(
 
 	// Get the full mode config to ensure we have the role definition (used for groups, etc.)
 	const modeConfig = getModeBySlug(mode, customModeConfigs) || modes.find((m) => m.slug === mode) || modes[0]
+
 	const { roleDefinition, baseInstructions } = getModeSelection(mode, promptComponent, customModeConfigs)
 
 	// Check if MCP functionality should be included
@@ -78,8 +79,13 @@ async function generatePrompt(
 	const hasMcpServers = mcpHub && mcpHub.getServers().length > 0
 	const shouldIncludeMcp = hasMcpGroup && hasMcpServers
 
+	// Agent tasks should not include modesSection to avoid confusion with other available modes.
+	// If customModeConfigs has exactly one element matching the current mode, this is an agent-specific configuration.
+	const isAgentTask = customModeConfigs && customModeConfigs.length === 1 &&
+		customModeConfigs[0].slug === mode
+
 	const [modesSection, mcpServersSection] = await Promise.all([
-		getModesSection(context),
+		isAgentTask ? Promise.resolve("") : getModesSection(context),
 		shouldIncludeMcp
 			? getMcpServersSection(mcpHub, effectiveDiffStrategy, enableMcpServerCreation)
 			: Promise.resolve(""),

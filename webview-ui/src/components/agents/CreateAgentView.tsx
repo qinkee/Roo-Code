@@ -435,36 +435,47 @@ const CreateAgentView: React.FC<CreateAgentViewProps> = ({
 			console.log("  - selectedApiConfig value:", selectedApiConfig)
 			console.log("  - listApiConfigMeta:", listApiConfigMeta)
 
-			// 构建智能体配置，符合AgentConfig接口
-			const agentConfig = {
-				...(editMode && editData ? { id: editData.id } : {}), // 编辑模式下保留原有ID
-				name: agentName.trim(),
-				avatar: agentAvatar,
-				roleDescription: roleDescription,
-				welcomeMessage: welcomeMessage.trim() || undefined,
-				apiConfigId: selectedApiConfig,
-				// 嵌入完整的ProviderSettings副本
-				apiConfig: selectedApiConfigDetails || undefined,
-				mode: selectedMode,
-				tools: selectedTools.map((toolId) => ({
-					toolId,
-					enabled: true,
-					config: {},
+		// 🔥 获取模式的完整配置（如果是自定义模式）
+		const allModes = getAllModes(customModes)
+		const selectedModeConfig = allModes.find((m) => m.slug === selectedMode)
+		const isCustomMode = selectedModeConfig && !["architect", "code", "ask", "debug", "orchestrator"].includes(selectedMode)
+		
+		console.log("[CreateAgentView] Save - selectedMode:", selectedMode)
+		console.log("[CreateAgentView] Save - selectedModeConfig:", selectedModeConfig)
+		console.log("[CreateAgentView] Save - isCustomMode:", isCustomMode)
+		
+		// 构建智能体配置，符合AgentConfig接口
+		const agentConfig = {
+			...(editMode && editData ? { id: editData.id } : {}), // 编辑模式下保留原有ID
+			name: agentName.trim(),
+			avatar: agentAvatar,
+			roleDescription: roleDescription,
+			welcomeMessage: welcomeMessage.trim() || undefined,
+			apiConfigId: selectedApiConfig,
+			// 嵌入完整的ProviderSettings副本
+			apiConfig: selectedApiConfigDetails || undefined,
+			mode: selectedMode,
+			// 🔥 关键修复：如果使用自定义模式，保存完整的模式配置
+			modeConfig: isCustomMode ? selectedModeConfig : undefined,
+			tools: selectedTools.map((toolId) => ({
+				toolId,
+				enabled: true,
+				config: {},
+			})),
+			todos: todos
+				.filter((todo) => todo.content.trim() !== "")
+				.map((todo, index) => ({
+					id: `todo_${Date.now()}_${index}`,
+					content: todo.content.trim(),
+					status: "pending" as const,
+					priority: "medium" as const,
+					createdAt: Date.now(),
+					updatedAt: Date.now(),
 				})),
-				todos: todos
-					.filter((todo) => todo.content.trim() !== "")
-					.map((todo, index) => ({
-						id: `todo_${Date.now()}_${index}`,
-						content: todo.content.trim(),
-						status: "pending" as const,
-						priority: "medium" as const,
-						createdAt: Date.now(),
-						updatedAt: Date.now(),
-					})),
-				templateSource: templateData?.templateSource,
-				isActive: true,
-				version: editMode && editData ? (editData.version || 1) + 1 : 1, // 编辑模式下递增版本号
-			}
+			templateSource: templateData?.templateSource,
+			isActive: true,
+			version: editMode && editData ? (editData.version || 1) + 1 : 1, // 编辑模式下递增版本号
+		}
 
 			console.log("[CreateAgentView] Save - Final agentConfig being sent:", agentConfig)
 			console.log("[CreateAgentView] Save - apiConfig field:", agentConfig.apiConfig)

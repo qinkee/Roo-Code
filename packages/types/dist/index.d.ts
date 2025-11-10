@@ -1271,6 +1271,55 @@ declare const agentConfigSchema: z.ZodObject<{
         originalName?: string | undefined;
     }>>;
     mode: z.ZodString;
+    modeConfig: z.ZodOptional<z.ZodObject<{
+        slug: z.ZodString;
+        name: z.ZodString;
+        roleDefinition: z.ZodString;
+        whenToUse: z.ZodOptional<z.ZodString>;
+        description: z.ZodOptional<z.ZodString>;
+        customInstructions: z.ZodOptional<z.ZodString>;
+        groups: z.ZodEffects<z.ZodArray<z.ZodUnion<[z.ZodEnum<["read", "edit", "browser", "command", "mcp", "modes"]>, z.ZodTuple<[z.ZodEnum<["read", "edit", "browser", "command", "mcp", "modes"]>, z.ZodObject<{
+            fileRegex: z.ZodEffects<z.ZodOptional<z.ZodString>, string | undefined, string | undefined>;
+            description: z.ZodOptional<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            description?: string | undefined;
+            fileRegex?: string | undefined;
+        }, {
+            description?: string | undefined;
+            fileRegex?: string | undefined;
+        }>], null>]>, "many">, ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+            description?: string | undefined;
+            fileRegex?: string | undefined;
+        }])[], ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+            description?: string | undefined;
+            fileRegex?: string | undefined;
+        }])[]>;
+        source: z.ZodOptional<z.ZodEnum<["global", "project"]>>;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+            description?: string | undefined;
+            fileRegex?: string | undefined;
+        }])[];
+        description?: string | undefined;
+        whenToUse?: string | undefined;
+        customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
+    }, {
+        name: string;
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+            description?: string | undefined;
+            fileRegex?: string | undefined;
+        }])[];
+        description?: string | undefined;
+        whenToUse?: string | undefined;
+        customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
+    }>>;
     tools: z.ZodArray<z.ZodObject<{
         toolId: z.ZodString;
         enabled: z.ZodBoolean;
@@ -1669,7 +1718,20 @@ declare const agentConfigSchema: z.ZodObject<{
         originalId?: string | undefined;
         originalName?: string | undefined;
     } | undefined;
-    shareScope?: "friends" | "groups" | "public" | undefined;
+    modeConfig?: {
+        name: string;
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+            description?: string | undefined;
+            fileRegex?: string | undefined;
+        }])[];
+        description?: string | undefined;
+        whenToUse?: string | undefined;
+        customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
+    } | undefined;
+    shareScope?: "groups" | "friends" | "public" | undefined;
     shareLevel?: number | undefined;
     a2aAgentCard?: {
         description: string;
@@ -1898,8 +1960,21 @@ declare const agentConfigSchema: z.ZodObject<{
         originalId?: string | undefined;
         originalName?: string | undefined;
     } | undefined;
+    modeConfig?: {
+        name: string;
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+            description?: string | undefined;
+            fileRegex?: string | undefined;
+        }])[];
+        description?: string | undefined;
+        whenToUse?: string | undefined;
+        customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
+    } | undefined;
     isPrivate?: boolean | undefined;
-    shareScope?: "friends" | "groups" | "public" | undefined;
+    shareScope?: "groups" | "friends" | "public" | undefined;
     shareLevel?: number | undefined;
     a2aAgentCard?: {
         description: string;
@@ -2519,6 +2594,55 @@ declare const agentExportDataSchema: z.ZodObject<{
             originalName?: string | undefined;
         }>>;
         mode: z.ZodString;
+        modeConfig: z.ZodOptional<z.ZodObject<{
+            slug: z.ZodString;
+            name: z.ZodString;
+            roleDefinition: z.ZodString;
+            whenToUse: z.ZodOptional<z.ZodString>;
+            description: z.ZodOptional<z.ZodString>;
+            customInstructions: z.ZodOptional<z.ZodString>;
+            groups: z.ZodEffects<z.ZodArray<z.ZodUnion<[z.ZodEnum<["read", "edit", "browser", "command", "mcp", "modes"]>, z.ZodTuple<[z.ZodEnum<["read", "edit", "browser", "command", "mcp", "modes"]>, z.ZodObject<{
+                fileRegex: z.ZodEffects<z.ZodOptional<z.ZodString>, string | undefined, string | undefined>;
+                description: z.ZodOptional<z.ZodString>;
+            }, "strip", z.ZodTypeAny, {
+                description?: string | undefined;
+                fileRegex?: string | undefined;
+            }, {
+                description?: string | undefined;
+                fileRegex?: string | undefined;
+            }>], null>]>, "many">, ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+                description?: string | undefined;
+                fileRegex?: string | undefined;
+            }])[], ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+                description?: string | undefined;
+                fileRegex?: string | undefined;
+            }])[]>;
+            source: z.ZodOptional<z.ZodEnum<["global", "project"]>>;
+        }, "strip", z.ZodTypeAny, {
+            name: string;
+            slug: string;
+            roleDefinition: string;
+            groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+                description?: string | undefined;
+                fileRegex?: string | undefined;
+            }])[];
+            description?: string | undefined;
+            whenToUse?: string | undefined;
+            customInstructions?: string | undefined;
+            source?: "global" | "project" | undefined;
+        }, {
+            name: string;
+            slug: string;
+            roleDefinition: string;
+            groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+                description?: string | undefined;
+                fileRegex?: string | undefined;
+            }])[];
+            description?: string | undefined;
+            whenToUse?: string | undefined;
+            customInstructions?: string | undefined;
+            source?: "global" | "project" | undefined;
+        }>>;
         tools: z.ZodArray<z.ZodObject<{
             toolId: z.ZodString;
             enabled: z.ZodBoolean;
@@ -2917,7 +3041,20 @@ declare const agentExportDataSchema: z.ZodObject<{
             originalId?: string | undefined;
             originalName?: string | undefined;
         } | undefined;
-        shareScope?: "friends" | "groups" | "public" | undefined;
+        modeConfig?: {
+            name: string;
+            slug: string;
+            roleDefinition: string;
+            groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+                description?: string | undefined;
+                fileRegex?: string | undefined;
+            }])[];
+            description?: string | undefined;
+            whenToUse?: string | undefined;
+            customInstructions?: string | undefined;
+            source?: "global" | "project" | undefined;
+        } | undefined;
+        shareScope?: "groups" | "friends" | "public" | undefined;
         shareLevel?: number | undefined;
         a2aAgentCard?: {
             description: string;
@@ -3146,8 +3283,21 @@ declare const agentExportDataSchema: z.ZodObject<{
             originalId?: string | undefined;
             originalName?: string | undefined;
         } | undefined;
+        modeConfig?: {
+            name: string;
+            slug: string;
+            roleDefinition: string;
+            groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+                description?: string | undefined;
+                fileRegex?: string | undefined;
+            }])[];
+            description?: string | undefined;
+            whenToUse?: string | undefined;
+            customInstructions?: string | undefined;
+            source?: "global" | "project" | undefined;
+        } | undefined;
         isPrivate?: boolean | undefined;
-        shareScope?: "friends" | "groups" | "public" | undefined;
+        shareScope?: "groups" | "friends" | "public" | undefined;
         shareLevel?: number | undefined;
         a2aAgentCard?: {
             description: string;
@@ -3394,7 +3544,20 @@ declare const agentExportDataSchema: z.ZodObject<{
             originalId?: string | undefined;
             originalName?: string | undefined;
         } | undefined;
-        shareScope?: "friends" | "groups" | "public" | undefined;
+        modeConfig?: {
+            name: string;
+            slug: string;
+            roleDefinition: string;
+            groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+                description?: string | undefined;
+                fileRegex?: string | undefined;
+            }])[];
+            description?: string | undefined;
+            whenToUse?: string | undefined;
+            customInstructions?: string | undefined;
+            source?: "global" | "project" | undefined;
+        } | undefined;
+        shareScope?: "groups" | "friends" | "public" | undefined;
         shareLevel?: number | undefined;
         a2aAgentCard?: {
             description: string;
@@ -3630,8 +3793,21 @@ declare const agentExportDataSchema: z.ZodObject<{
             originalId?: string | undefined;
             originalName?: string | undefined;
         } | undefined;
+        modeConfig?: {
+            name: string;
+            slug: string;
+            roleDefinition: string;
+            groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
+                description?: string | undefined;
+                fileRegex?: string | undefined;
+            }])[];
+            description?: string | undefined;
+            whenToUse?: string | undefined;
+            customInstructions?: string | undefined;
+            source?: "global" | "project" | undefined;
+        } | undefined;
         isPrivate?: boolean | undefined;
-        shareScope?: "friends" | "groups" | "public" | undefined;
+        shareScope?: "groups" | "friends" | "public" | undefined;
         shareLevel?: number | undefined;
         a2aAgentCard?: {
             description: string;
@@ -4297,7 +4473,7 @@ declare const agentDiscoveryQuerySchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     userId: string;
     capabilities?: string[] | undefined;
-    shareScope?: "friends" | "groups" | "public" | undefined;
+    shareScope?: "groups" | "friends" | "public" | undefined;
     shareLevel?: number | undefined;
     sortBy?: "relevance" | "performance" | "popularity" | "rating" | undefined;
     sortOrder?: "asc" | "desc" | undefined;
@@ -4309,11 +4485,11 @@ declare const agentDiscoveryQuerySchema: z.ZodObject<{
     regions?: string[] | undefined;
     keywords?: string | undefined;
     onlyOnline?: boolean | undefined;
-    visibility?: "friends" | "groups" | "public" | "private" | "all" | undefined;
+    visibility?: "groups" | "friends" | "public" | "private" | "all" | undefined;
 }, {
     userId: string;
     capabilities?: string[] | undefined;
-    shareScope?: "friends" | "groups" | "public" | undefined;
+    shareScope?: "groups" | "friends" | "public" | undefined;
     shareLevel?: number | undefined;
     sortBy?: "relevance" | "performance" | "popularity" | "rating" | undefined;
     sortOrder?: "asc" | "desc" | undefined;
@@ -4325,7 +4501,7 @@ declare const agentDiscoveryQuerySchema: z.ZodObject<{
     regions?: string[] | undefined;
     keywords?: string | undefined;
     onlyOnline?: boolean | undefined;
-    visibility?: "friends" | "groups" | "public" | "private" | "all" | undefined;
+    visibility?: "groups" | "friends" | "public" | "private" | "all" | undefined;
 }>;
 type AgentDiscoveryQuery = z.infer<typeof agentDiscoveryQuerySchema>;
 /**
@@ -4475,7 +4651,7 @@ declare const unifiedAgentRegistrySchema: z.ZodObject<{
         deniedUsers: z.ZodArray<z.ZodString, "many">;
     }, "strip", z.ZodTypeAny, {
         isPrivate: boolean;
-        shareScope: "none" | "friends" | "groups" | "public";
+        shareScope: "groups" | "none" | "friends" | "public";
         shareLevel: number;
         permissions: ("read" | "execute" | "modify")[];
         allowedUsers: string[];
@@ -4483,7 +4659,7 @@ declare const unifiedAgentRegistrySchema: z.ZodObject<{
         deniedUsers: string[];
     }, {
         isPrivate: boolean;
-        shareScope: "none" | "friends" | "groups" | "public";
+        shareScope: "groups" | "none" | "friends" | "public";
         shareLevel: number;
         permissions: ("read" | "execute" | "modify")[];
         allowedUsers: string[];
@@ -4539,7 +4715,7 @@ declare const unifiedAgentRegistrySchema: z.ZodObject<{
     agentId: string;
     sharing: {
         isPrivate: boolean;
-        shareScope: "none" | "friends" | "groups" | "public";
+        shareScope: "groups" | "none" | "friends" | "public";
         shareLevel: number;
         permissions: ("read" | "execute" | "modify")[];
         allowedUsers: string[];
@@ -4579,7 +4755,7 @@ declare const unifiedAgentRegistrySchema: z.ZodObject<{
     agentId: string;
     sharing: {
         isPrivate: boolean;
-        shareScope: "none" | "friends" | "groups" | "public";
+        shareScope: "groups" | "none" | "friends" | "public";
         shareLevel: number;
         permissions: ("read" | "execute" | "modify")[];
         allowedUsers: string[];
@@ -4740,6 +4916,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -4749,8 +4926,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -4771,6 +4947,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -4780,8 +4957,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -4804,6 +4980,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -4813,8 +4990,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -4839,6 +5015,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -4848,8 +5025,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -4904,7 +5080,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
         contextTokens: number;
         totalCacheWrites?: number | undefined;
         totalCacheReads?: number | undefined;
-    }, Partial<Record<"browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
+    }, Partial<Record<"execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
         attempts: number;
         failures: number;
     }>>, {
@@ -4924,6 +5100,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -4933,8 +5110,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -4964,7 +5140,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
         totalCacheWrites?: number | undefined;
         totalCacheReads?: number | undefined;
     }];
-    taskToolFailed: [string, "browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
+    taskToolFailed: [string, "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
 }, {
     taskCreated: [string];
     taskStarted: [string];
@@ -4975,7 +5151,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
         contextTokens: number;
         totalCacheWrites?: number | undefined;
         totalCacheReads?: number | undefined;
-    }, Partial<Record<"browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
+    }, Partial<Record<"execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
         attempts: number;
         failures: number;
     }>>, {
@@ -4995,6 +5171,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -5004,8 +5181,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -5035,7 +5211,7 @@ declare const rooCodeEventsSchema: z.ZodObject<{
         totalCacheWrites?: number | undefined;
         totalCacheReads?: number | undefined;
     }];
-    taskToolFailed: [string, "browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
+    taskToolFailed: [string, "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
 }>;
 type RooCodeEvents = z.infer<typeof rooCodeEventsSchema>;
 /**
@@ -5114,7 +5290,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
         contextTokens: number;
         totalCacheWrites?: number | undefined;
         totalCacheReads?: number | undefined;
-    }, Partial<Record<"browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
+    }, Partial<Record<"execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
         attempts: number;
         failures: number;
     }>>, {
@@ -5130,7 +5306,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
         contextTokens: number;
         totalCacheWrites?: number | undefined;
         totalCacheReads?: number | undefined;
-    }, Partial<Record<"browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
+    }, Partial<Record<"execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
         attempts: number;
         failures: number;
     }>>, {
@@ -5312,6 +5488,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -5321,8 +5498,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -5343,6 +5519,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -5352,8 +5529,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -5376,6 +5552,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -5385,8 +5562,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -5411,6 +5587,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -5420,8 +5597,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -5450,6 +5626,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -5459,8 +5636,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -5489,6 +5665,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -5498,8 +5675,7 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -5550,11 +5726,11 @@ declare const taskEventSchema: z.ZodDiscriminatedUnion<"eventName", [z.ZodObject
     taskId: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     eventName: RooCodeEventName.TaskToolFailed;
-    payload: [string, "browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
+    payload: [string, "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
     taskId?: number | undefined;
 }, {
     eventName: RooCodeEventName.TaskToolFailed;
-    payload: [string, "browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
+    payload: [string, "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
     taskId?: number | undefined;
 }>, z.ZodObject<{
     eventName: z.ZodLiteral<RooCodeEventName.TaskTokenUsageUpdated>;
@@ -10633,6 +10809,7 @@ declare const globalSettingsSchema: z.ZodObject<{
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -10642,8 +10819,7 @@ declare const globalSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -10664,6 +10840,7 @@ declare const globalSettingsSchema: z.ZodObject<{
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -10673,8 +10850,7 @@ declare const globalSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -10699,6 +10875,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        source?: "agent" | "user" | undefined;
         mode?: string | undefined;
         agentId?: string | undefined;
         cacheWrites?: number | undefined;
@@ -10706,12 +10883,12 @@ declare const globalSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
-        source?: "agent" | "user" | undefined;
         clineMessages?: {
             type: "ask" | "say";
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -10721,8 +10898,7 @@ declare const globalSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -10747,6 +10923,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        source?: "agent" | "user" | undefined;
         mode?: string | undefined;
         agentId?: string | undefined;
         cacheWrites?: number | undefined;
@@ -10754,12 +10931,12 @@ declare const globalSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
-        source?: "agent" | "user" | undefined;
         clineMessages?: {
             type: "ask" | "say";
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -10769,8 +10946,7 @@ declare const globalSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -11001,38 +11177,38 @@ declare const globalSettingsSchema: z.ZodObject<{
         }, {
             description?: string | undefined;
             fileRegex?: string | undefined;
-        }>], null>]>, "many">, ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        }>], null>]>, "many">, ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
-        }])[], ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        }])[], ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[]>;
         source: z.ZodOptional<z.ZodEnum<["global", "project"]>>;
     }, "strip", z.ZodTypeAny, {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }, {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }>, "many">>;
     customModePrompts: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodOptional<z.ZodObject<{
         roleDefinition: z.ZodOptional<z.ZodString>;
@@ -11132,15 +11308,6 @@ declare const globalSettingsSchema: z.ZodObject<{
         }>, "many">>;
         lastUpdated: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
-        friends?: {
-            id: number;
-            online: boolean;
-            nickName: string;
-            headImage: string;
-            deleted: boolean;
-            onlineWeb: boolean;
-            onlineApp: boolean;
-        }[] | undefined;
         groups?: {
             id: number;
             name: string;
@@ -11156,18 +11323,18 @@ declare const globalSettingsSchema: z.ZodObject<{
             quit: boolean;
             isBanned: boolean;
             reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            online: boolean;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
         }[] | undefined;
         lastUpdated?: number | undefined;
     }, {
-        friends?: {
-            id: number;
-            online: boolean;
-            nickName: string;
-            headImage: string;
-            deleted: boolean;
-            onlineWeb: boolean;
-            onlineApp: boolean;
-        }[] | undefined;
         groups?: {
             id: number;
             name: string;
@@ -11183,6 +11350,15 @@ declare const globalSettingsSchema: z.ZodObject<{
             quit: boolean;
             isBanned: boolean;
             reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            online: boolean;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
         }[] | undefined;
         lastUpdated?: number | undefined;
     }>>;
@@ -11193,6 +11369,520 @@ declare const globalSettingsSchema: z.ZodObject<{
         serverUrl: z.ZodString;
         serverPort: z.ZodNumber;
         isDebugMode: z.ZodOptional<z.ZodBoolean>;
+        agentApiConfiguration: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+            codeIndexOpenAiKey: z.ZodOptional<z.ZodString>;
+            codeIndexQdrantApiKey: z.ZodOptional<z.ZodString>;
+            codebaseIndexOpenAiCompatibleBaseUrl: z.ZodOptional<z.ZodString>;
+            codebaseIndexOpenAiCompatibleApiKey: z.ZodOptional<z.ZodString>;
+            codebaseIndexOpenAiCompatibleModelDimension: z.ZodOptional<z.ZodNumber>;
+            codebaseIndexGeminiApiKey: z.ZodOptional<z.ZodString>;
+            codebaseIndexMistralApiKey: z.ZodOptional<z.ZodString>;
+            includeMaxTokens: z.ZodOptional<z.ZodBoolean>;
+            diffEnabled: z.ZodOptional<z.ZodBoolean>;
+            todoListEnabled: z.ZodOptional<z.ZodBoolean>;
+            fuzzyMatchThreshold: z.ZodOptional<z.ZodNumber>;
+            modelTemperature: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            rateLimitSeconds: z.ZodOptional<z.ZodNumber>;
+            consecutiveMistakeLimit: z.ZodOptional<z.ZodNumber>;
+            enableReasoningEffort: z.ZodOptional<z.ZodBoolean>;
+            reasoningEffort: z.ZodOptional<z.ZodUnion<[z.ZodEnum<["low", "medium", "high"]>, z.ZodLiteral<"minimal">]>>;
+            modelMaxTokens: z.ZodOptional<z.ZodNumber>;
+            modelMaxThinkingTokens: z.ZodOptional<z.ZodNumber>;
+            verbosity: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+            apiModelId: z.ZodOptional<z.ZodString>;
+            ioIntelligenceModelId: z.ZodOptional<z.ZodString>;
+            ioIntelligenceApiKey: z.ZodOptional<z.ZodString>;
+            fireworksApiKey: z.ZodOptional<z.ZodString>;
+            zaiApiKey: z.ZodOptional<z.ZodString>;
+            zaiApiLine: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"china">, z.ZodLiteral<"international">]>>;
+            sambaNovaApiKey: z.ZodOptional<z.ZodString>;
+            cerebrasApiKey: z.ZodOptional<z.ZodString>;
+            litellmBaseUrl: z.ZodOptional<z.ZodString>;
+            litellmApiKey: z.ZodOptional<z.ZodString>;
+            litellmModelId: z.ZodOptional<z.ZodString>;
+            litellmUsePromptCache: z.ZodOptional<z.ZodBoolean>;
+            chutesApiKey: z.ZodOptional<z.ZodString>;
+            huggingFaceApiKey: z.ZodOptional<z.ZodString>;
+            huggingFaceModelId: z.ZodOptional<z.ZodString>;
+            huggingFaceInferenceProvider: z.ZodOptional<z.ZodString>;
+            groqApiKey: z.ZodOptional<z.ZodString>;
+            xaiApiKey: z.ZodOptional<z.ZodString>;
+            fakeAi: z.ZodOptional<z.ZodUnknown>;
+            requestyBaseUrl: z.ZodOptional<z.ZodString>;
+            requestyApiKey: z.ZodOptional<z.ZodString>;
+            requestyModelId: z.ZodOptional<z.ZodString>;
+            unboundApiKey: z.ZodOptional<z.ZodString>;
+            unboundModelId: z.ZodOptional<z.ZodString>;
+            moonshotBaseUrl: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"https://api.moonshot.ai/v1">, z.ZodLiteral<"https://api.moonshot.cn/v1">]>>;
+            moonshotApiKey: z.ZodOptional<z.ZodString>;
+            doubaoBaseUrl: z.ZodOptional<z.ZodString>;
+            doubaoApiKey: z.ZodOptional<z.ZodString>;
+            deepSeekBaseUrl: z.ZodOptional<z.ZodString>;
+            deepSeekApiKey: z.ZodOptional<z.ZodString>;
+            mistralApiKey: z.ZodOptional<z.ZodString>;
+            mistralCodestralUrl: z.ZodOptional<z.ZodString>;
+            openAiNativeApiKey: z.ZodOptional<z.ZodString>;
+            openAiNativeBaseUrl: z.ZodOptional<z.ZodString>;
+            geminiCliOAuthPath: z.ZodOptional<z.ZodString>;
+            geminiCliProjectId: z.ZodOptional<z.ZodString>;
+            geminiApiKey: z.ZodOptional<z.ZodString>;
+            googleGeminiBaseUrl: z.ZodOptional<z.ZodString>;
+            enableUrlContext: z.ZodOptional<z.ZodBoolean>;
+            enableGrounding: z.ZodOptional<z.ZodBoolean>;
+            lmStudioModelId: z.ZodOptional<z.ZodString>;
+            lmStudioBaseUrl: z.ZodOptional<z.ZodString>;
+            lmStudioDraftModelId: z.ZodOptional<z.ZodString>;
+            lmStudioSpeculativeDecodingEnabled: z.ZodOptional<z.ZodBoolean>;
+            vsCodeLmModelSelector: z.ZodOptional<z.ZodObject<{
+                vendor: z.ZodOptional<z.ZodString>;
+                family: z.ZodOptional<z.ZodString>;
+                version: z.ZodOptional<z.ZodString>;
+                id: z.ZodOptional<z.ZodString>;
+            }, "strip", z.ZodTypeAny, {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            }, {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            }>>;
+            ollamaModelId: z.ZodOptional<z.ZodString>;
+            ollamaBaseUrl: z.ZodOptional<z.ZodString>;
+            openAiBaseUrl: z.ZodOptional<z.ZodString>;
+            openAiApiKey: z.ZodOptional<z.ZodString>;
+            openAiLegacyFormat: z.ZodOptional<z.ZodBoolean>;
+            openAiR1FormatEnabled: z.ZodOptional<z.ZodBoolean>;
+            openAiModelId: z.ZodOptional<z.ZodString>;
+            openAiCustomModelInfo: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                maxTokens: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+                maxThinkingTokens: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+                contextWindow: z.ZodNumber;
+                supportsImages: z.ZodOptional<z.ZodBoolean>;
+                supportsComputerUse: z.ZodOptional<z.ZodBoolean>;
+                supportsPromptCache: z.ZodBoolean;
+                supportsVerbosity: z.ZodOptional<z.ZodBoolean>;
+                supportsReasoningBudget: z.ZodOptional<z.ZodBoolean>;
+                requiredReasoningBudget: z.ZodOptional<z.ZodBoolean>;
+                supportsReasoningEffort: z.ZodOptional<z.ZodBoolean>;
+                supportedParameters: z.ZodOptional<z.ZodArray<z.ZodEnum<["max_tokens", "temperature", "reasoning", "include_reasoning"]>, "many">>;
+                inputPrice: z.ZodOptional<z.ZodNumber>;
+                outputPrice: z.ZodOptional<z.ZodNumber>;
+                cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
+                cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
+                description: z.ZodOptional<z.ZodString>;
+                modelType: z.ZodOptional<z.ZodString>;
+                reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+                minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
+                maxCachePoints: z.ZodOptional<z.ZodNumber>;
+                cachableFields: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+                tiers: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                    contextWindow: z.ZodNumber;
+                    inputPrice: z.ZodOptional<z.ZodNumber>;
+                    outputPrice: z.ZodOptional<z.ZodNumber>;
+                    cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
+                    cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
+                }, "strip", z.ZodTypeAny, {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }, {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }>, "many">>;
+            }, "strip", z.ZodTypeAny, {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            }, {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            }>>>;
+            openAiUseAzure: z.ZodOptional<z.ZodBoolean>;
+            azureApiVersion: z.ZodOptional<z.ZodString>;
+            openAiStreamingEnabled: z.ZodOptional<z.ZodBoolean>;
+            openAiHostHeader: z.ZodOptional<z.ZodString>;
+            openAiHeaders: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+            vertexKeyFile: z.ZodOptional<z.ZodString>;
+            vertexJsonCredentials: z.ZodOptional<z.ZodString>;
+            vertexProjectId: z.ZodOptional<z.ZodString>;
+            vertexRegion: z.ZodOptional<z.ZodString>;
+            awsAccessKey: z.ZodOptional<z.ZodString>;
+            awsSecretKey: z.ZodOptional<z.ZodString>;
+            awsSessionToken: z.ZodOptional<z.ZodString>;
+            awsRegion: z.ZodOptional<z.ZodString>;
+            awsUseCrossRegionInference: z.ZodOptional<z.ZodBoolean>;
+            awsUsePromptCache: z.ZodOptional<z.ZodBoolean>;
+            awsProfile: z.ZodOptional<z.ZodString>;
+            awsUseProfile: z.ZodOptional<z.ZodBoolean>;
+            awsApiKey: z.ZodOptional<z.ZodString>;
+            awsUseApiKey: z.ZodOptional<z.ZodBoolean>;
+            awsCustomArn: z.ZodOptional<z.ZodString>;
+            awsModelContextWindow: z.ZodOptional<z.ZodNumber>;
+            awsBedrockEndpointEnabled: z.ZodOptional<z.ZodBoolean>;
+            awsBedrockEndpoint: z.ZodOptional<z.ZodString>;
+            openRouterApiKey: z.ZodOptional<z.ZodString>;
+            openRouterModelId: z.ZodOptional<z.ZodString>;
+            openRouterBaseUrl: z.ZodOptional<z.ZodString>;
+            openRouterSpecificProvider: z.ZodOptional<z.ZodString>;
+            openRouterUseMiddleOutTransform: z.ZodOptional<z.ZodBoolean>;
+            glamaModelId: z.ZodOptional<z.ZodString>;
+            glamaApiKey: z.ZodOptional<z.ZodString>;
+            claudeCodePath: z.ZodOptional<z.ZodString>;
+            claudeCodeMaxOutputTokens: z.ZodOptional<z.ZodNumber>;
+            apiKey: z.ZodOptional<z.ZodString>;
+            anthropicBaseUrl: z.ZodOptional<z.ZodString>;
+            anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>;
+            anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>;
+            apiProvider: z.ZodOptional<z.ZodEnum<["anthropic", "claude-code", "glama", "openrouter", "bedrock", "vertex", "openai", "ollama", "vscode-lm", "lmstudio", "gemini", "gemini-cli", "openai-native", "mistral", "moonshot", "deepseek", "doubao", "unbound", "requesty", "human-relay", "fake-ai", "xai", "groq", "chutes", "litellm", "huggingface", "cerebras", "sambanova", "zai", "fireworks", "io-intelligence"]>>;
+        }, "strip", z.ZodTypeAny, {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        }, {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        }>>>;
+        agentMode: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         enabled: boolean;
         serverPort: number;
@@ -11200,6 +11890,152 @@ declare const globalSettingsSchema: z.ZodObject<{
         agentId: string;
         agentName: string;
         isDebugMode?: boolean | undefined;
+        agentApiConfiguration?: {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        } | null | undefined;
+        agentMode?: string | undefined;
     }, {
         enabled: boolean;
         serverPort: number;
@@ -11207,28 +12043,174 @@ declare const globalSettingsSchema: z.ZodObject<{
         agentId: string;
         agentName: string;
         isDebugMode?: boolean | undefined;
+        agentApiConfiguration?: {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        } | null | undefined;
+        agentMode?: string | undefined;
     }>>>;
     waitingForAgentInput: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     diffEnabled?: boolean | undefined;
     fuzzyMatchThreshold?: number | undefined;
     rateLimitSeconds?: number | undefined;
-    mode?: string | undefined;
-    language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     customInstructions?: string | undefined;
     customModes?: {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }[] | undefined;
+    mode?: string | undefined;
+    language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     currentApiConfigName?: string | undefined;
     listApiConfigMeta?: {
         id: string;
@@ -11246,6 +12228,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        source?: "agent" | "user" | undefined;
         mode?: string | undefined;
         agentId?: string | undefined;
         cacheWrites?: number | undefined;
@@ -11253,12 +12236,12 @@ declare const globalSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
-        source?: "agent" | "user" | undefined;
         clineMessages?: {
             type: "ask" | "say";
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -11268,8 +12251,7 @@ declare const globalSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -11402,15 +12384,6 @@ declare const globalSettingsSchema: z.ZodObject<{
     lastModeExportPath?: string | undefined;
     lastModeImportPath?: string | undefined;
     imContacts?: {
-        friends?: {
-            id: number;
-            online: boolean;
-            nickName: string;
-            headImage: string;
-            deleted: boolean;
-            onlineWeb: boolean;
-            onlineApp: boolean;
-        }[] | undefined;
         groups?: {
             id: number;
             name: string;
@@ -11427,6 +12400,15 @@ declare const globalSettingsSchema: z.ZodObject<{
             isBanned: boolean;
             reason: string;
         }[] | undefined;
+        friends?: {
+            id: number;
+            online: boolean;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
         lastUpdated?: number | undefined;
     } | undefined;
     agentA2AMode?: {
@@ -11436,28 +12418,174 @@ declare const globalSettingsSchema: z.ZodObject<{
         agentId: string;
         agentName: string;
         isDebugMode?: boolean | undefined;
+        agentApiConfiguration?: {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        } | null | undefined;
+        agentMode?: string | undefined;
     } | null | undefined;
     waitingForAgentInput?: boolean | undefined;
 }, {
     diffEnabled?: boolean | undefined;
     fuzzyMatchThreshold?: number | undefined;
     rateLimitSeconds?: number | undefined;
-    mode?: string | undefined;
-    language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     customInstructions?: string | undefined;
     customModes?: {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }[] | undefined;
+    mode?: string | undefined;
+    language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     currentApiConfigName?: string | undefined;
     listApiConfigMeta?: {
         id: string;
@@ -11475,6 +12603,7 @@ declare const globalSettingsSchema: z.ZodObject<{
         totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        source?: "agent" | "user" | undefined;
         mode?: string | undefined;
         agentId?: string | undefined;
         cacheWrites?: number | undefined;
@@ -11482,12 +12611,12 @@ declare const globalSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
-        source?: "agent" | "user" | undefined;
         clineMessages?: {
             type: "ask" | "say";
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -11497,8 +12626,7 @@ declare const globalSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -11631,15 +12759,6 @@ declare const globalSettingsSchema: z.ZodObject<{
     lastModeExportPath?: string | undefined;
     lastModeImportPath?: string | undefined;
     imContacts?: {
-        friends?: {
-            id: number;
-            online: boolean;
-            nickName: string;
-            headImage: string;
-            deleted: boolean;
-            onlineWeb: boolean;
-            onlineApp: boolean;
-        }[] | undefined;
         groups?: {
             id: number;
             name: string;
@@ -11656,6 +12775,15 @@ declare const globalSettingsSchema: z.ZodObject<{
             isBanned: boolean;
             reason: string;
         }[] | undefined;
+        friends?: {
+            id: number;
+            online: boolean;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
         lastUpdated?: number | undefined;
     } | undefined;
     agentA2AMode?: {
@@ -11665,11 +12793,157 @@ declare const globalSettingsSchema: z.ZodObject<{
         agentId: string;
         agentName: string;
         isDebugMode?: boolean | undefined;
+        agentApiConfiguration?: {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        } | null | undefined;
+        agentMode?: string | undefined;
     } | null | undefined;
     waitingForAgentInput?: boolean | undefined;
 }>;
 type GlobalSettings = z.infer<typeof globalSettingsSchema>;
-declare const GLOBAL_SETTINGS_KEYS: ["diffEnabled", "fuzzyMatchThreshold", "rateLimitSeconds", "mode", "language", "customInstructions", "customModes", "currentApiConfigName", "listApiConfigMeta", "pinnedApiConfigs", "lastShownAnnouncementId", "taskHistory", "condensingApiConfigId", "customCondensingPrompt", "autoApprovalEnabled", "alwaysAllowReadOnly", "alwaysAllowReadOnlyOutsideWorkspace", "alwaysAllowWrite", "alwaysAllowWriteOutsideWorkspace", "alwaysAllowWriteProtected", "writeDelayMs", "alwaysAllowBrowser", "alwaysApproveResubmit", "requestDelaySeconds", "alwaysAllowMcp", "alwaysAllowModeSwitch", "alwaysAllowSubtasks", "alwaysAllowExecute", "alwaysAllowFollowupQuestions", "followupAutoApproveTimeoutMs", "alwaysAllowUpdateTodoList", "allowedCommands", "deniedCommands", "commandExecutionTimeout", "commandTimeoutAllowlist", "preventCompletionWithOpenTodos", "allowedMaxRequests", "allowedMaxCost", "autoCondenseContext", "autoCondenseContextPercent", "maxConcurrentFileReads", "includeDiagnosticMessages", "maxDiagnosticMessages", "browserToolEnabled", "browserViewportSize", "screenshotQuality", "remoteBrowserEnabled", "remoteBrowserHost", "cachedChromeHostUrl", "enableCheckpoints", "ttsEnabled", "ttsSpeed", "soundEnabled", "soundVolume", "maxOpenTabsContext", "maxWorkspaceFiles", "showRooIgnoredFiles", "maxReadFileLine", "maxImageFileSize", "maxTotalImageSize", "terminalOutputLineLimit", "terminalOutputCharacterLimit", "terminalShellIntegrationTimeout", "terminalShellIntegrationDisabled", "terminalCommandDelay", "terminalPowershellCounter", "terminalZshClearEolMark", "terminalZshOhMy", "terminalZshP10k", "terminalZdotdir", "terminalCompressProgressBar", "diagnosticsEnabled", "experiments", "codebaseIndexModels", "codebaseIndexConfig", "telemetrySetting", "mcpEnabled", "enableMcpServerCreation", "remoteControlEnabled", "modeApiConfigs", "customModePrompts", "customSupportPrompts", "enhancementApiConfigId", "includeTaskHistoryInEnhance", "historyPreviewCollapsed", "profileThresholds", "hasOpenedModeSelector", "lastModeExportPath", "lastModeImportPath", "imContacts", "agentA2AMode", "waitingForAgentInput"];
+declare const GLOBAL_SETTINGS_KEYS: ["diffEnabled", "fuzzyMatchThreshold", "rateLimitSeconds", "customInstructions", "customModes", "mode", "language", "currentApiConfigName", "listApiConfigMeta", "pinnedApiConfigs", "lastShownAnnouncementId", "taskHistory", "condensingApiConfigId", "customCondensingPrompt", "autoApprovalEnabled", "alwaysAllowReadOnly", "alwaysAllowReadOnlyOutsideWorkspace", "alwaysAllowWrite", "alwaysAllowWriteOutsideWorkspace", "alwaysAllowWriteProtected", "writeDelayMs", "alwaysAllowBrowser", "alwaysApproveResubmit", "requestDelaySeconds", "alwaysAllowMcp", "alwaysAllowModeSwitch", "alwaysAllowSubtasks", "alwaysAllowExecute", "alwaysAllowFollowupQuestions", "followupAutoApproveTimeoutMs", "alwaysAllowUpdateTodoList", "allowedCommands", "deniedCommands", "commandExecutionTimeout", "commandTimeoutAllowlist", "preventCompletionWithOpenTodos", "allowedMaxRequests", "allowedMaxCost", "autoCondenseContext", "autoCondenseContextPercent", "maxConcurrentFileReads", "includeDiagnosticMessages", "maxDiagnosticMessages", "browserToolEnabled", "browserViewportSize", "screenshotQuality", "remoteBrowserEnabled", "remoteBrowserHost", "cachedChromeHostUrl", "enableCheckpoints", "ttsEnabled", "ttsSpeed", "soundEnabled", "soundVolume", "maxOpenTabsContext", "maxWorkspaceFiles", "showRooIgnoredFiles", "maxReadFileLine", "maxImageFileSize", "maxTotalImageSize", "terminalOutputLineLimit", "terminalOutputCharacterLimit", "terminalShellIntegrationTimeout", "terminalShellIntegrationDisabled", "terminalCommandDelay", "terminalPowershellCounter", "terminalZshClearEolMark", "terminalZshOhMy", "terminalZshP10k", "terminalZdotdir", "terminalCompressProgressBar", "diagnosticsEnabled", "experiments", "codebaseIndexModels", "codebaseIndexConfig", "telemetrySetting", "mcpEnabled", "enableMcpServerCreation", "remoteControlEnabled", "modeApiConfigs", "customModePrompts", "customSupportPrompts", "enhancementApiConfigId", "includeTaskHistoryInEnhance", "historyPreviewCollapsed", "profileThresholds", "hasOpenedModeSelector", "lastModeExportPath", "lastModeImportPath", "imContacts", "agentA2AMode", "waitingForAgentInput"];
 /**
  * RooCodeSettings
  */
@@ -12005,6 +13279,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -12014,8 +13289,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -12036,6 +13310,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -12045,8 +13320,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -12071,6 +13345,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        source?: "agent" | "user" | undefined;
         mode?: string | undefined;
         agentId?: string | undefined;
         cacheWrites?: number | undefined;
@@ -12078,12 +13353,12 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
-        source?: "agent" | "user" | undefined;
         clineMessages?: {
             type: "ask" | "say";
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -12093,8 +13368,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -12119,6 +13393,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        source?: "agent" | "user" | undefined;
         mode?: string | undefined;
         agentId?: string | undefined;
         cacheWrites?: number | undefined;
@@ -12126,12 +13401,12 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
-        source?: "agent" | "user" | undefined;
         clineMessages?: {
             type: "ask" | "say";
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -12141,8 +13416,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -12365,38 +13639,38 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         }, {
             description?: string | undefined;
             fileRegex?: string | undefined;
-        }>], null>]>, "many">, ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        }>], null>]>, "many">, ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
-        }])[], ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        }])[], ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[]>;
         source: z.ZodOptional<z.ZodEnum<["global", "project"]>>;
     }, "strip", z.ZodTypeAny, {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }, {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }>, "many">>;
     customModePrompts: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodOptional<z.ZodObject<{
         roleDefinition: z.ZodOptional<z.ZodString>;
@@ -12496,15 +13770,6 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         }>, "many">>;
         lastUpdated: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
-        friends?: {
-            id: number;
-            online: boolean;
-            nickName: string;
-            headImage: string;
-            deleted: boolean;
-            onlineWeb: boolean;
-            onlineApp: boolean;
-        }[] | undefined;
         groups?: {
             id: number;
             name: string;
@@ -12520,18 +13785,18 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
             quit: boolean;
             isBanned: boolean;
             reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            online: boolean;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
         }[] | undefined;
         lastUpdated?: number | undefined;
     }, {
-        friends?: {
-            id: number;
-            online: boolean;
-            nickName: string;
-            headImage: string;
-            deleted: boolean;
-            onlineWeb: boolean;
-            onlineApp: boolean;
-        }[] | undefined;
         groups?: {
             id: number;
             name: string;
@@ -12547,6 +13812,15 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
             quit: boolean;
             isBanned: boolean;
             reason: string;
+        }[] | undefined;
+        friends?: {
+            id: number;
+            online: boolean;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
         }[] | undefined;
         lastUpdated?: number | undefined;
     }>>;
@@ -12557,6 +13831,520 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         serverUrl: z.ZodString;
         serverPort: z.ZodNumber;
         isDebugMode: z.ZodOptional<z.ZodBoolean>;
+        agentApiConfiguration: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+            codeIndexOpenAiKey: z.ZodOptional<z.ZodString>;
+            codeIndexQdrantApiKey: z.ZodOptional<z.ZodString>;
+            codebaseIndexOpenAiCompatibleBaseUrl: z.ZodOptional<z.ZodString>;
+            codebaseIndexOpenAiCompatibleApiKey: z.ZodOptional<z.ZodString>;
+            codebaseIndexOpenAiCompatibleModelDimension: z.ZodOptional<z.ZodNumber>;
+            codebaseIndexGeminiApiKey: z.ZodOptional<z.ZodString>;
+            codebaseIndexMistralApiKey: z.ZodOptional<z.ZodString>;
+            includeMaxTokens: z.ZodOptional<z.ZodBoolean>;
+            diffEnabled: z.ZodOptional<z.ZodBoolean>;
+            todoListEnabled: z.ZodOptional<z.ZodBoolean>;
+            fuzzyMatchThreshold: z.ZodOptional<z.ZodNumber>;
+            modelTemperature: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+            rateLimitSeconds: z.ZodOptional<z.ZodNumber>;
+            consecutiveMistakeLimit: z.ZodOptional<z.ZodNumber>;
+            enableReasoningEffort: z.ZodOptional<z.ZodBoolean>;
+            reasoningEffort: z.ZodOptional<z.ZodUnion<[z.ZodEnum<["low", "medium", "high"]>, z.ZodLiteral<"minimal">]>>;
+            modelMaxTokens: z.ZodOptional<z.ZodNumber>;
+            modelMaxThinkingTokens: z.ZodOptional<z.ZodNumber>;
+            verbosity: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+            apiModelId: z.ZodOptional<z.ZodString>;
+            ioIntelligenceModelId: z.ZodOptional<z.ZodString>;
+            ioIntelligenceApiKey: z.ZodOptional<z.ZodString>;
+            fireworksApiKey: z.ZodOptional<z.ZodString>;
+            zaiApiKey: z.ZodOptional<z.ZodString>;
+            zaiApiLine: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"china">, z.ZodLiteral<"international">]>>;
+            sambaNovaApiKey: z.ZodOptional<z.ZodString>;
+            cerebrasApiKey: z.ZodOptional<z.ZodString>;
+            litellmBaseUrl: z.ZodOptional<z.ZodString>;
+            litellmApiKey: z.ZodOptional<z.ZodString>;
+            litellmModelId: z.ZodOptional<z.ZodString>;
+            litellmUsePromptCache: z.ZodOptional<z.ZodBoolean>;
+            chutesApiKey: z.ZodOptional<z.ZodString>;
+            huggingFaceApiKey: z.ZodOptional<z.ZodString>;
+            huggingFaceModelId: z.ZodOptional<z.ZodString>;
+            huggingFaceInferenceProvider: z.ZodOptional<z.ZodString>;
+            groqApiKey: z.ZodOptional<z.ZodString>;
+            xaiApiKey: z.ZodOptional<z.ZodString>;
+            fakeAi: z.ZodOptional<z.ZodUnknown>;
+            requestyBaseUrl: z.ZodOptional<z.ZodString>;
+            requestyApiKey: z.ZodOptional<z.ZodString>;
+            requestyModelId: z.ZodOptional<z.ZodString>;
+            unboundApiKey: z.ZodOptional<z.ZodString>;
+            unboundModelId: z.ZodOptional<z.ZodString>;
+            moonshotBaseUrl: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"https://api.moonshot.ai/v1">, z.ZodLiteral<"https://api.moonshot.cn/v1">]>>;
+            moonshotApiKey: z.ZodOptional<z.ZodString>;
+            doubaoBaseUrl: z.ZodOptional<z.ZodString>;
+            doubaoApiKey: z.ZodOptional<z.ZodString>;
+            deepSeekBaseUrl: z.ZodOptional<z.ZodString>;
+            deepSeekApiKey: z.ZodOptional<z.ZodString>;
+            mistralApiKey: z.ZodOptional<z.ZodString>;
+            mistralCodestralUrl: z.ZodOptional<z.ZodString>;
+            openAiNativeApiKey: z.ZodOptional<z.ZodString>;
+            openAiNativeBaseUrl: z.ZodOptional<z.ZodString>;
+            geminiCliOAuthPath: z.ZodOptional<z.ZodString>;
+            geminiCliProjectId: z.ZodOptional<z.ZodString>;
+            geminiApiKey: z.ZodOptional<z.ZodString>;
+            googleGeminiBaseUrl: z.ZodOptional<z.ZodString>;
+            enableUrlContext: z.ZodOptional<z.ZodBoolean>;
+            enableGrounding: z.ZodOptional<z.ZodBoolean>;
+            lmStudioModelId: z.ZodOptional<z.ZodString>;
+            lmStudioBaseUrl: z.ZodOptional<z.ZodString>;
+            lmStudioDraftModelId: z.ZodOptional<z.ZodString>;
+            lmStudioSpeculativeDecodingEnabled: z.ZodOptional<z.ZodBoolean>;
+            vsCodeLmModelSelector: z.ZodOptional<z.ZodObject<{
+                vendor: z.ZodOptional<z.ZodString>;
+                family: z.ZodOptional<z.ZodString>;
+                version: z.ZodOptional<z.ZodString>;
+                id: z.ZodOptional<z.ZodString>;
+            }, "strip", z.ZodTypeAny, {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            }, {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            }>>;
+            ollamaModelId: z.ZodOptional<z.ZodString>;
+            ollamaBaseUrl: z.ZodOptional<z.ZodString>;
+            openAiBaseUrl: z.ZodOptional<z.ZodString>;
+            openAiApiKey: z.ZodOptional<z.ZodString>;
+            openAiLegacyFormat: z.ZodOptional<z.ZodBoolean>;
+            openAiR1FormatEnabled: z.ZodOptional<z.ZodBoolean>;
+            openAiModelId: z.ZodOptional<z.ZodString>;
+            openAiCustomModelInfo: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                maxTokens: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+                maxThinkingTokens: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+                contextWindow: z.ZodNumber;
+                supportsImages: z.ZodOptional<z.ZodBoolean>;
+                supportsComputerUse: z.ZodOptional<z.ZodBoolean>;
+                supportsPromptCache: z.ZodBoolean;
+                supportsVerbosity: z.ZodOptional<z.ZodBoolean>;
+                supportsReasoningBudget: z.ZodOptional<z.ZodBoolean>;
+                requiredReasoningBudget: z.ZodOptional<z.ZodBoolean>;
+                supportsReasoningEffort: z.ZodOptional<z.ZodBoolean>;
+                supportedParameters: z.ZodOptional<z.ZodArray<z.ZodEnum<["max_tokens", "temperature", "reasoning", "include_reasoning"]>, "many">>;
+                inputPrice: z.ZodOptional<z.ZodNumber>;
+                outputPrice: z.ZodOptional<z.ZodNumber>;
+                cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
+                cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
+                description: z.ZodOptional<z.ZodString>;
+                modelType: z.ZodOptional<z.ZodString>;
+                reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+                minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
+                maxCachePoints: z.ZodOptional<z.ZodNumber>;
+                cachableFields: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+                tiers: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                    contextWindow: z.ZodNumber;
+                    inputPrice: z.ZodOptional<z.ZodNumber>;
+                    outputPrice: z.ZodOptional<z.ZodNumber>;
+                    cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
+                    cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
+                }, "strip", z.ZodTypeAny, {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }, {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }>, "many">>;
+            }, "strip", z.ZodTypeAny, {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            }, {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            }>>>;
+            openAiUseAzure: z.ZodOptional<z.ZodBoolean>;
+            azureApiVersion: z.ZodOptional<z.ZodString>;
+            openAiStreamingEnabled: z.ZodOptional<z.ZodBoolean>;
+            openAiHostHeader: z.ZodOptional<z.ZodString>;
+            openAiHeaders: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+            vertexKeyFile: z.ZodOptional<z.ZodString>;
+            vertexJsonCredentials: z.ZodOptional<z.ZodString>;
+            vertexProjectId: z.ZodOptional<z.ZodString>;
+            vertexRegion: z.ZodOptional<z.ZodString>;
+            awsAccessKey: z.ZodOptional<z.ZodString>;
+            awsSecretKey: z.ZodOptional<z.ZodString>;
+            awsSessionToken: z.ZodOptional<z.ZodString>;
+            awsRegion: z.ZodOptional<z.ZodString>;
+            awsUseCrossRegionInference: z.ZodOptional<z.ZodBoolean>;
+            awsUsePromptCache: z.ZodOptional<z.ZodBoolean>;
+            awsProfile: z.ZodOptional<z.ZodString>;
+            awsUseProfile: z.ZodOptional<z.ZodBoolean>;
+            awsApiKey: z.ZodOptional<z.ZodString>;
+            awsUseApiKey: z.ZodOptional<z.ZodBoolean>;
+            awsCustomArn: z.ZodOptional<z.ZodString>;
+            awsModelContextWindow: z.ZodOptional<z.ZodNumber>;
+            awsBedrockEndpointEnabled: z.ZodOptional<z.ZodBoolean>;
+            awsBedrockEndpoint: z.ZodOptional<z.ZodString>;
+            openRouterApiKey: z.ZodOptional<z.ZodString>;
+            openRouterModelId: z.ZodOptional<z.ZodString>;
+            openRouterBaseUrl: z.ZodOptional<z.ZodString>;
+            openRouterSpecificProvider: z.ZodOptional<z.ZodString>;
+            openRouterUseMiddleOutTransform: z.ZodOptional<z.ZodBoolean>;
+            glamaModelId: z.ZodOptional<z.ZodString>;
+            glamaApiKey: z.ZodOptional<z.ZodString>;
+            claudeCodePath: z.ZodOptional<z.ZodString>;
+            claudeCodeMaxOutputTokens: z.ZodOptional<z.ZodNumber>;
+            apiKey: z.ZodOptional<z.ZodString>;
+            anthropicBaseUrl: z.ZodOptional<z.ZodString>;
+            anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>;
+            anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>;
+            apiProvider: z.ZodOptional<z.ZodEnum<["anthropic", "claude-code", "glama", "openrouter", "bedrock", "vertex", "openai", "ollama", "vscode-lm", "lmstudio", "gemini", "gemini-cli", "openai-native", "mistral", "moonshot", "deepseek", "doubao", "unbound", "requesty", "human-relay", "fake-ai", "xai", "groq", "chutes", "litellm", "huggingface", "cerebras", "sambanova", "zai", "fireworks", "io-intelligence"]>>;
+        }, "strip", z.ZodTypeAny, {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        }, {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        }>>>;
+        agentMode: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         enabled: boolean;
         serverPort: number;
@@ -12564,6 +14352,152 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         agentId: string;
         agentName: string;
         isDebugMode?: boolean | undefined;
+        agentApiConfiguration?: {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        } | null | undefined;
+        agentMode?: string | undefined;
     }, {
         enabled: boolean;
         serverPort: number;
@@ -12571,6 +14505,152 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         agentId: string;
         agentName: string;
         isDebugMode?: boolean | undefined;
+        agentApiConfiguration?: {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        } | null | undefined;
+        agentMode?: string | undefined;
     }>>>;
     waitingForAgentInput: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
@@ -12717,22 +14797,22 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     fireworksApiKey?: string | undefined;
     ioIntelligenceModelId?: string | undefined;
     ioIntelligenceApiKey?: string | undefined;
-    mode?: string | undefined;
-    language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     customInstructions?: string | undefined;
     customModes?: {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }[] | undefined;
+    mode?: string | undefined;
+    language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     currentApiConfigName?: string | undefined;
     listApiConfigMeta?: {
         id: string;
@@ -12750,6 +14830,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        source?: "agent" | "user" | undefined;
         mode?: string | undefined;
         agentId?: string | undefined;
         cacheWrites?: number | undefined;
@@ -12757,12 +14838,12 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
-        source?: "agent" | "user" | undefined;
         clineMessages?: {
             type: "ask" | "say";
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -12772,8 +14853,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -12906,15 +14986,6 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     lastModeExportPath?: string | undefined;
     lastModeImportPath?: string | undefined;
     imContacts?: {
-        friends?: {
-            id: number;
-            online: boolean;
-            nickName: string;
-            headImage: string;
-            deleted: boolean;
-            onlineWeb: boolean;
-            onlineApp: boolean;
-        }[] | undefined;
         groups?: {
             id: number;
             name: string;
@@ -12931,6 +15002,15 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
             isBanned: boolean;
             reason: string;
         }[] | undefined;
+        friends?: {
+            id: number;
+            online: boolean;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
         lastUpdated?: number | undefined;
     } | undefined;
     agentA2AMode?: {
@@ -12940,6 +15020,152 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         agentId: string;
         agentName: string;
         isDebugMode?: boolean | undefined;
+        agentApiConfiguration?: {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        } | null | undefined;
+        agentMode?: string | undefined;
     } | null | undefined;
     waitingForAgentInput?: boolean | undefined;
 }, {
@@ -13086,22 +15312,22 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     fireworksApiKey?: string | undefined;
     ioIntelligenceModelId?: string | undefined;
     ioIntelligenceApiKey?: string | undefined;
-    mode?: string | undefined;
-    language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     customInstructions?: string | undefined;
     customModes?: {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }[] | undefined;
+    mode?: string | undefined;
+    language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
     currentApiConfigName?: string | undefined;
     listApiConfigMeta?: {
         id: string;
@@ -13119,6 +15345,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         totalCost: number;
         tokensIn: number;
         tokensOut: number;
+        source?: "agent" | "user" | undefined;
         mode?: string | undefined;
         agentId?: string | undefined;
         cacheWrites?: number | undefined;
@@ -13126,12 +15353,12 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         size?: number | undefined;
         workspace?: string | undefined;
         terminalNo?: number | undefined;
-        source?: "agent" | "user" | undefined;
         clineMessages?: {
             type: "ask" | "say";
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -13141,8 +15368,7 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -13275,15 +15501,6 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
     lastModeExportPath?: string | undefined;
     lastModeImportPath?: string | undefined;
     imContacts?: {
-        friends?: {
-            id: number;
-            online: boolean;
-            nickName: string;
-            headImage: string;
-            deleted: boolean;
-            onlineWeb: boolean;
-            onlineApp: boolean;
-        }[] | undefined;
         groups?: {
             id: number;
             name: string;
@@ -13300,6 +15517,15 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
             isBanned: boolean;
             reason: string;
         }[] | undefined;
+        friends?: {
+            id: number;
+            online: boolean;
+            nickName: string;
+            headImage: string;
+            deleted: boolean;
+            onlineWeb: boolean;
+            onlineApp: boolean;
+        }[] | undefined;
         lastUpdated?: number | undefined;
     } | undefined;
     agentA2AMode?: {
@@ -13309,6 +15535,152 @@ declare const rooCodeSettingsSchema: z.ZodObject<{
         agentId: string;
         agentName: string;
         isDebugMode?: boolean | undefined;
+        agentApiConfiguration?: {
+            reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+            codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+            codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+            codeIndexOpenAiKey?: string | undefined;
+            codeIndexQdrantApiKey?: string | undefined;
+            codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+            codebaseIndexGeminiApiKey?: string | undefined;
+            codebaseIndexMistralApiKey?: string | undefined;
+            apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+            includeMaxTokens?: boolean | undefined;
+            diffEnabled?: boolean | undefined;
+            todoListEnabled?: boolean | undefined;
+            fuzzyMatchThreshold?: number | undefined;
+            modelTemperature?: number | null | undefined;
+            rateLimitSeconds?: number | undefined;
+            consecutiveMistakeLimit?: number | undefined;
+            enableReasoningEffort?: boolean | undefined;
+            modelMaxTokens?: number | undefined;
+            modelMaxThinkingTokens?: number | undefined;
+            verbosity?: "low" | "medium" | "high" | undefined;
+            apiModelId?: string | undefined;
+            apiKey?: string | undefined;
+            anthropicBaseUrl?: string | undefined;
+            anthropicUseAuthToken?: boolean | undefined;
+            anthropicBeta1MContext?: boolean | undefined;
+            claudeCodePath?: string | undefined;
+            claudeCodeMaxOutputTokens?: number | undefined;
+            glamaModelId?: string | undefined;
+            glamaApiKey?: string | undefined;
+            openRouterApiKey?: string | undefined;
+            openRouterModelId?: string | undefined;
+            openRouterBaseUrl?: string | undefined;
+            openRouterSpecificProvider?: string | undefined;
+            openRouterUseMiddleOutTransform?: boolean | undefined;
+            awsAccessKey?: string | undefined;
+            awsSecretKey?: string | undefined;
+            awsSessionToken?: string | undefined;
+            awsRegion?: string | undefined;
+            awsUseCrossRegionInference?: boolean | undefined;
+            awsUsePromptCache?: boolean | undefined;
+            awsProfile?: string | undefined;
+            awsUseProfile?: boolean | undefined;
+            awsApiKey?: string | undefined;
+            awsUseApiKey?: boolean | undefined;
+            awsCustomArn?: string | undefined;
+            awsModelContextWindow?: number | undefined;
+            awsBedrockEndpointEnabled?: boolean | undefined;
+            awsBedrockEndpoint?: string | undefined;
+            vertexKeyFile?: string | undefined;
+            vertexJsonCredentials?: string | undefined;
+            vertexProjectId?: string | undefined;
+            vertexRegion?: string | undefined;
+            openAiBaseUrl?: string | undefined;
+            openAiApiKey?: string | undefined;
+            openAiLegacyFormat?: boolean | undefined;
+            openAiR1FormatEnabled?: boolean | undefined;
+            openAiModelId?: string | undefined;
+            openAiCustomModelInfo?: {
+                contextWindow: number;
+                supportsPromptCache: boolean;
+                maxTokens?: number | null | undefined;
+                maxThinkingTokens?: number | null | undefined;
+                supportsImages?: boolean | undefined;
+                supportsComputerUse?: boolean | undefined;
+                supportsVerbosity?: boolean | undefined;
+                supportsReasoningBudget?: boolean | undefined;
+                requiredReasoningBudget?: boolean | undefined;
+                supportsReasoningEffort?: boolean | undefined;
+                supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                inputPrice?: number | undefined;
+                outputPrice?: number | undefined;
+                cacheWritesPrice?: number | undefined;
+                cacheReadsPrice?: number | undefined;
+                description?: string | undefined;
+                modelType?: string | undefined;
+                reasoningEffort?: "low" | "medium" | "high" | undefined;
+                minTokensPerCachePoint?: number | undefined;
+                maxCachePoints?: number | undefined;
+                cachableFields?: string[] | undefined;
+                tiers?: {
+                    contextWindow: number;
+                    inputPrice?: number | undefined;
+                    outputPrice?: number | undefined;
+                    cacheWritesPrice?: number | undefined;
+                    cacheReadsPrice?: number | undefined;
+                }[] | undefined;
+            } | null | undefined;
+            openAiUseAzure?: boolean | undefined;
+            azureApiVersion?: string | undefined;
+            openAiStreamingEnabled?: boolean | undefined;
+            openAiHostHeader?: string | undefined;
+            openAiHeaders?: Record<string, string> | undefined;
+            ollamaModelId?: string | undefined;
+            ollamaBaseUrl?: string | undefined;
+            vsCodeLmModelSelector?: {
+                id?: string | undefined;
+                vendor?: string | undefined;
+                family?: string | undefined;
+                version?: string | undefined;
+            } | undefined;
+            lmStudioModelId?: string | undefined;
+            lmStudioBaseUrl?: string | undefined;
+            lmStudioDraftModelId?: string | undefined;
+            lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+            geminiApiKey?: string | undefined;
+            googleGeminiBaseUrl?: string | undefined;
+            enableUrlContext?: boolean | undefined;
+            enableGrounding?: boolean | undefined;
+            geminiCliOAuthPath?: string | undefined;
+            geminiCliProjectId?: string | undefined;
+            openAiNativeApiKey?: string | undefined;
+            openAiNativeBaseUrl?: string | undefined;
+            mistralApiKey?: string | undefined;
+            mistralCodestralUrl?: string | undefined;
+            deepSeekBaseUrl?: string | undefined;
+            deepSeekApiKey?: string | undefined;
+            doubaoBaseUrl?: string | undefined;
+            doubaoApiKey?: string | undefined;
+            moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+            moonshotApiKey?: string | undefined;
+            unboundApiKey?: string | undefined;
+            unboundModelId?: string | undefined;
+            requestyBaseUrl?: string | undefined;
+            requestyApiKey?: string | undefined;
+            requestyModelId?: string | undefined;
+            fakeAi?: unknown;
+            xaiApiKey?: string | undefined;
+            groqApiKey?: string | undefined;
+            huggingFaceApiKey?: string | undefined;
+            huggingFaceModelId?: string | undefined;
+            huggingFaceInferenceProvider?: string | undefined;
+            chutesApiKey?: string | undefined;
+            litellmBaseUrl?: string | undefined;
+            litellmApiKey?: string | undefined;
+            litellmModelId?: string | undefined;
+            litellmUsePromptCache?: boolean | undefined;
+            cerebrasApiKey?: string | undefined;
+            sambaNovaApiKey?: string | undefined;
+            zaiApiKey?: string | undefined;
+            zaiApiLine?: "china" | "international" | undefined;
+            fireworksApiKey?: string | undefined;
+            ioIntelligenceModelId?: string | undefined;
+            ioIntelligenceApiKey?: string | undefined;
+        } | null | undefined;
+        agentMode?: string | undefined;
     } | null | undefined;
     waitingForAgentInput?: boolean | undefined;
 }>;
@@ -13711,6 +16083,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                     ts: number;
                     reasoning?: string | undefined;
                     partial?: boolean | undefined;
+                    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                     metadata?: {
                         taskId?: string | undefined;
                         gpt5?: {
@@ -13720,8 +16093,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                         } | undefined;
                     } | undefined;
                     text?: string | undefined;
-                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                     images?: string[] | undefined;
                     conversationHistoryIndex?: number | undefined;
                     checkpoint?: Record<string, unknown> | undefined;
@@ -13742,6 +16114,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                     ts: number;
                     reasoning?: string | undefined;
                     partial?: boolean | undefined;
+                    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                     metadata?: {
                         taskId?: string | undefined;
                         gpt5?: {
@@ -13751,8 +16124,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                         } | undefined;
                     } | undefined;
                     text?: string | undefined;
-                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                     images?: string[] | undefined;
                     conversationHistoryIndex?: number | undefined;
                     checkpoint?: Record<string, unknown> | undefined;
@@ -13777,6 +16149,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                source?: "agent" | "user" | undefined;
                 mode?: string | undefined;
                 agentId?: string | undefined;
                 cacheWrites?: number | undefined;
@@ -13784,12 +16157,12 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
-                source?: "agent" | "user" | undefined;
                 clineMessages?: {
                     type: "ask" | "say";
                     ts: number;
                     reasoning?: string | undefined;
                     partial?: boolean | undefined;
+                    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                     metadata?: {
                         taskId?: string | undefined;
                         gpt5?: {
@@ -13799,8 +16172,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                         } | undefined;
                     } | undefined;
                     text?: string | undefined;
-                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                     images?: string[] | undefined;
                     conversationHistoryIndex?: number | undefined;
                     checkpoint?: Record<string, unknown> | undefined;
@@ -13825,6 +16197,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                source?: "agent" | "user" | undefined;
                 mode?: string | undefined;
                 agentId?: string | undefined;
                 cacheWrites?: number | undefined;
@@ -13832,12 +16205,12 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
-                source?: "agent" | "user" | undefined;
                 clineMessages?: {
                     type: "ask" | "say";
                     ts: number;
                     reasoning?: string | undefined;
                     partial?: boolean | undefined;
+                    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                     metadata?: {
                         taskId?: string | undefined;
                         gpt5?: {
@@ -13847,8 +16220,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                         } | undefined;
                     } | undefined;
                     text?: string | undefined;
-                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                     images?: string[] | undefined;
                     conversationHistoryIndex?: number | undefined;
                     checkpoint?: Record<string, unknown> | undefined;
@@ -14071,38 +16443,38 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 }, {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
-                }>], null>]>, "many">, ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                }>], null>]>, "many">, ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
-                }])[], ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                }])[], ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
                 }])[]>;
                 source: z.ZodOptional<z.ZodEnum<["global", "project"]>>;
             }, "strip", z.ZodTypeAny, {
                 name: string;
-                groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                slug: string;
+                roleDefinition: string;
+                groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
                 }])[];
-                slug: string;
-                roleDefinition: string;
                 description?: string | undefined;
-                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
+                source?: "global" | "project" | undefined;
             }, {
                 name: string;
-                groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                slug: string;
+                roleDefinition: string;
+                groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
                 }])[];
-                slug: string;
-                roleDefinition: string;
                 description?: string | undefined;
-                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
+                source?: "global" | "project" | undefined;
             }>, "many">>;
             customModePrompts: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodOptional<z.ZodObject<{
                 roleDefinition: z.ZodOptional<z.ZodString>;
@@ -14202,15 +16574,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 }>, "many">>;
                 lastUpdated: z.ZodOptional<z.ZodNumber>;
             }, "strip", z.ZodTypeAny, {
-                friends?: {
-                    id: number;
-                    online: boolean;
-                    nickName: string;
-                    headImage: string;
-                    deleted: boolean;
-                    onlineWeb: boolean;
-                    onlineApp: boolean;
-                }[] | undefined;
                 groups?: {
                     id: number;
                     name: string;
@@ -14226,18 +16589,18 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                     quit: boolean;
                     isBanned: boolean;
                     reason: string;
+                }[] | undefined;
+                friends?: {
+                    id: number;
+                    online: boolean;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
                 }[] | undefined;
                 lastUpdated?: number | undefined;
             }, {
-                friends?: {
-                    id: number;
-                    online: boolean;
-                    nickName: string;
-                    headImage: string;
-                    deleted: boolean;
-                    onlineWeb: boolean;
-                    onlineApp: boolean;
-                }[] | undefined;
                 groups?: {
                     id: number;
                     name: string;
@@ -14253,6 +16616,15 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                     quit: boolean;
                     isBanned: boolean;
                     reason: string;
+                }[] | undefined;
+                friends?: {
+                    id: number;
+                    online: boolean;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
                 }[] | undefined;
                 lastUpdated?: number | undefined;
             }>>;
@@ -14263,6 +16635,520 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 serverUrl: z.ZodString;
                 serverPort: z.ZodNumber;
                 isDebugMode: z.ZodOptional<z.ZodBoolean>;
+                agentApiConfiguration: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                    codeIndexOpenAiKey: z.ZodOptional<z.ZodString>;
+                    codeIndexQdrantApiKey: z.ZodOptional<z.ZodString>;
+                    codebaseIndexOpenAiCompatibleBaseUrl: z.ZodOptional<z.ZodString>;
+                    codebaseIndexOpenAiCompatibleApiKey: z.ZodOptional<z.ZodString>;
+                    codebaseIndexOpenAiCompatibleModelDimension: z.ZodOptional<z.ZodNumber>;
+                    codebaseIndexGeminiApiKey: z.ZodOptional<z.ZodString>;
+                    codebaseIndexMistralApiKey: z.ZodOptional<z.ZodString>;
+                    includeMaxTokens: z.ZodOptional<z.ZodBoolean>;
+                    diffEnabled: z.ZodOptional<z.ZodBoolean>;
+                    todoListEnabled: z.ZodOptional<z.ZodBoolean>;
+                    fuzzyMatchThreshold: z.ZodOptional<z.ZodNumber>;
+                    modelTemperature: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+                    rateLimitSeconds: z.ZodOptional<z.ZodNumber>;
+                    consecutiveMistakeLimit: z.ZodOptional<z.ZodNumber>;
+                    enableReasoningEffort: z.ZodOptional<z.ZodBoolean>;
+                    reasoningEffort: z.ZodOptional<z.ZodUnion<[z.ZodEnum<["low", "medium", "high"]>, z.ZodLiteral<"minimal">]>>;
+                    modelMaxTokens: z.ZodOptional<z.ZodNumber>;
+                    modelMaxThinkingTokens: z.ZodOptional<z.ZodNumber>;
+                    verbosity: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+                    apiModelId: z.ZodOptional<z.ZodString>;
+                    ioIntelligenceModelId: z.ZodOptional<z.ZodString>;
+                    ioIntelligenceApiKey: z.ZodOptional<z.ZodString>;
+                    fireworksApiKey: z.ZodOptional<z.ZodString>;
+                    zaiApiKey: z.ZodOptional<z.ZodString>;
+                    zaiApiLine: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"china">, z.ZodLiteral<"international">]>>;
+                    sambaNovaApiKey: z.ZodOptional<z.ZodString>;
+                    cerebrasApiKey: z.ZodOptional<z.ZodString>;
+                    litellmBaseUrl: z.ZodOptional<z.ZodString>;
+                    litellmApiKey: z.ZodOptional<z.ZodString>;
+                    litellmModelId: z.ZodOptional<z.ZodString>;
+                    litellmUsePromptCache: z.ZodOptional<z.ZodBoolean>;
+                    chutesApiKey: z.ZodOptional<z.ZodString>;
+                    huggingFaceApiKey: z.ZodOptional<z.ZodString>;
+                    huggingFaceModelId: z.ZodOptional<z.ZodString>;
+                    huggingFaceInferenceProvider: z.ZodOptional<z.ZodString>;
+                    groqApiKey: z.ZodOptional<z.ZodString>;
+                    xaiApiKey: z.ZodOptional<z.ZodString>;
+                    fakeAi: z.ZodOptional<z.ZodUnknown>;
+                    requestyBaseUrl: z.ZodOptional<z.ZodString>;
+                    requestyApiKey: z.ZodOptional<z.ZodString>;
+                    requestyModelId: z.ZodOptional<z.ZodString>;
+                    unboundApiKey: z.ZodOptional<z.ZodString>;
+                    unboundModelId: z.ZodOptional<z.ZodString>;
+                    moonshotBaseUrl: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"https://api.moonshot.ai/v1">, z.ZodLiteral<"https://api.moonshot.cn/v1">]>>;
+                    moonshotApiKey: z.ZodOptional<z.ZodString>;
+                    doubaoBaseUrl: z.ZodOptional<z.ZodString>;
+                    doubaoApiKey: z.ZodOptional<z.ZodString>;
+                    deepSeekBaseUrl: z.ZodOptional<z.ZodString>;
+                    deepSeekApiKey: z.ZodOptional<z.ZodString>;
+                    mistralApiKey: z.ZodOptional<z.ZodString>;
+                    mistralCodestralUrl: z.ZodOptional<z.ZodString>;
+                    openAiNativeApiKey: z.ZodOptional<z.ZodString>;
+                    openAiNativeBaseUrl: z.ZodOptional<z.ZodString>;
+                    geminiCliOAuthPath: z.ZodOptional<z.ZodString>;
+                    geminiCliProjectId: z.ZodOptional<z.ZodString>;
+                    geminiApiKey: z.ZodOptional<z.ZodString>;
+                    googleGeminiBaseUrl: z.ZodOptional<z.ZodString>;
+                    enableUrlContext: z.ZodOptional<z.ZodBoolean>;
+                    enableGrounding: z.ZodOptional<z.ZodBoolean>;
+                    lmStudioModelId: z.ZodOptional<z.ZodString>;
+                    lmStudioBaseUrl: z.ZodOptional<z.ZodString>;
+                    lmStudioDraftModelId: z.ZodOptional<z.ZodString>;
+                    lmStudioSpeculativeDecodingEnabled: z.ZodOptional<z.ZodBoolean>;
+                    vsCodeLmModelSelector: z.ZodOptional<z.ZodObject<{
+                        vendor: z.ZodOptional<z.ZodString>;
+                        family: z.ZodOptional<z.ZodString>;
+                        version: z.ZodOptional<z.ZodString>;
+                        id: z.ZodOptional<z.ZodString>;
+                    }, "strip", z.ZodTypeAny, {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    }, {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    }>>;
+                    ollamaModelId: z.ZodOptional<z.ZodString>;
+                    ollamaBaseUrl: z.ZodOptional<z.ZodString>;
+                    openAiBaseUrl: z.ZodOptional<z.ZodString>;
+                    openAiApiKey: z.ZodOptional<z.ZodString>;
+                    openAiLegacyFormat: z.ZodOptional<z.ZodBoolean>;
+                    openAiR1FormatEnabled: z.ZodOptional<z.ZodBoolean>;
+                    openAiModelId: z.ZodOptional<z.ZodString>;
+                    openAiCustomModelInfo: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                        maxTokens: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+                        maxThinkingTokens: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+                        contextWindow: z.ZodNumber;
+                        supportsImages: z.ZodOptional<z.ZodBoolean>;
+                        supportsComputerUse: z.ZodOptional<z.ZodBoolean>;
+                        supportsPromptCache: z.ZodBoolean;
+                        supportsVerbosity: z.ZodOptional<z.ZodBoolean>;
+                        supportsReasoningBudget: z.ZodOptional<z.ZodBoolean>;
+                        requiredReasoningBudget: z.ZodOptional<z.ZodBoolean>;
+                        supportsReasoningEffort: z.ZodOptional<z.ZodBoolean>;
+                        supportedParameters: z.ZodOptional<z.ZodArray<z.ZodEnum<["max_tokens", "temperature", "reasoning", "include_reasoning"]>, "many">>;
+                        inputPrice: z.ZodOptional<z.ZodNumber>;
+                        outputPrice: z.ZodOptional<z.ZodNumber>;
+                        cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
+                        cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
+                        description: z.ZodOptional<z.ZodString>;
+                        modelType: z.ZodOptional<z.ZodString>;
+                        reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+                        minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
+                        maxCachePoints: z.ZodOptional<z.ZodNumber>;
+                        cachableFields: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+                        tiers: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                            contextWindow: z.ZodNumber;
+                            inputPrice: z.ZodOptional<z.ZodNumber>;
+                            outputPrice: z.ZodOptional<z.ZodNumber>;
+                            cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
+                            cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
+                        }, "strip", z.ZodTypeAny, {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }, {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }>, "many">>;
+                    }, "strip", z.ZodTypeAny, {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    }, {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    }>>>;
+                    openAiUseAzure: z.ZodOptional<z.ZodBoolean>;
+                    azureApiVersion: z.ZodOptional<z.ZodString>;
+                    openAiStreamingEnabled: z.ZodOptional<z.ZodBoolean>;
+                    openAiHostHeader: z.ZodOptional<z.ZodString>;
+                    openAiHeaders: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+                    vertexKeyFile: z.ZodOptional<z.ZodString>;
+                    vertexJsonCredentials: z.ZodOptional<z.ZodString>;
+                    vertexProjectId: z.ZodOptional<z.ZodString>;
+                    vertexRegion: z.ZodOptional<z.ZodString>;
+                    awsAccessKey: z.ZodOptional<z.ZodString>;
+                    awsSecretKey: z.ZodOptional<z.ZodString>;
+                    awsSessionToken: z.ZodOptional<z.ZodString>;
+                    awsRegion: z.ZodOptional<z.ZodString>;
+                    awsUseCrossRegionInference: z.ZodOptional<z.ZodBoolean>;
+                    awsUsePromptCache: z.ZodOptional<z.ZodBoolean>;
+                    awsProfile: z.ZodOptional<z.ZodString>;
+                    awsUseProfile: z.ZodOptional<z.ZodBoolean>;
+                    awsApiKey: z.ZodOptional<z.ZodString>;
+                    awsUseApiKey: z.ZodOptional<z.ZodBoolean>;
+                    awsCustomArn: z.ZodOptional<z.ZodString>;
+                    awsModelContextWindow: z.ZodOptional<z.ZodNumber>;
+                    awsBedrockEndpointEnabled: z.ZodOptional<z.ZodBoolean>;
+                    awsBedrockEndpoint: z.ZodOptional<z.ZodString>;
+                    openRouterApiKey: z.ZodOptional<z.ZodString>;
+                    openRouterModelId: z.ZodOptional<z.ZodString>;
+                    openRouterBaseUrl: z.ZodOptional<z.ZodString>;
+                    openRouterSpecificProvider: z.ZodOptional<z.ZodString>;
+                    openRouterUseMiddleOutTransform: z.ZodOptional<z.ZodBoolean>;
+                    glamaModelId: z.ZodOptional<z.ZodString>;
+                    glamaApiKey: z.ZodOptional<z.ZodString>;
+                    claudeCodePath: z.ZodOptional<z.ZodString>;
+                    claudeCodeMaxOutputTokens: z.ZodOptional<z.ZodNumber>;
+                    apiKey: z.ZodOptional<z.ZodString>;
+                    anthropicBaseUrl: z.ZodOptional<z.ZodString>;
+                    anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>;
+                    anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>;
+                    apiProvider: z.ZodOptional<z.ZodEnum<["anthropic", "claude-code", "glama", "openrouter", "bedrock", "vertex", "openai", "ollama", "vscode-lm", "lmstudio", "gemini", "gemini-cli", "openai-native", "mistral", "moonshot", "deepseek", "doubao", "unbound", "requesty", "human-relay", "fake-ai", "xai", "groq", "chutes", "litellm", "huggingface", "cerebras", "sambanova", "zai", "fireworks", "io-intelligence"]>>;
+                }, "strip", z.ZodTypeAny, {
+                    reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                    codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                    codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                    codeIndexOpenAiKey?: string | undefined;
+                    codeIndexQdrantApiKey?: string | undefined;
+                    codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                    codebaseIndexGeminiApiKey?: string | undefined;
+                    codebaseIndexMistralApiKey?: string | undefined;
+                    apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                    includeMaxTokens?: boolean | undefined;
+                    diffEnabled?: boolean | undefined;
+                    todoListEnabled?: boolean | undefined;
+                    fuzzyMatchThreshold?: number | undefined;
+                    modelTemperature?: number | null | undefined;
+                    rateLimitSeconds?: number | undefined;
+                    consecutiveMistakeLimit?: number | undefined;
+                    enableReasoningEffort?: boolean | undefined;
+                    modelMaxTokens?: number | undefined;
+                    modelMaxThinkingTokens?: number | undefined;
+                    verbosity?: "low" | "medium" | "high" | undefined;
+                    apiModelId?: string | undefined;
+                    apiKey?: string | undefined;
+                    anthropicBaseUrl?: string | undefined;
+                    anthropicUseAuthToken?: boolean | undefined;
+                    anthropicBeta1MContext?: boolean | undefined;
+                    claudeCodePath?: string | undefined;
+                    claudeCodeMaxOutputTokens?: number | undefined;
+                    glamaModelId?: string | undefined;
+                    glamaApiKey?: string | undefined;
+                    openRouterApiKey?: string | undefined;
+                    openRouterModelId?: string | undefined;
+                    openRouterBaseUrl?: string | undefined;
+                    openRouterSpecificProvider?: string | undefined;
+                    openRouterUseMiddleOutTransform?: boolean | undefined;
+                    awsAccessKey?: string | undefined;
+                    awsSecretKey?: string | undefined;
+                    awsSessionToken?: string | undefined;
+                    awsRegion?: string | undefined;
+                    awsUseCrossRegionInference?: boolean | undefined;
+                    awsUsePromptCache?: boolean | undefined;
+                    awsProfile?: string | undefined;
+                    awsUseProfile?: boolean | undefined;
+                    awsApiKey?: string | undefined;
+                    awsUseApiKey?: boolean | undefined;
+                    awsCustomArn?: string | undefined;
+                    awsModelContextWindow?: number | undefined;
+                    awsBedrockEndpointEnabled?: boolean | undefined;
+                    awsBedrockEndpoint?: string | undefined;
+                    vertexKeyFile?: string | undefined;
+                    vertexJsonCredentials?: string | undefined;
+                    vertexProjectId?: string | undefined;
+                    vertexRegion?: string | undefined;
+                    openAiBaseUrl?: string | undefined;
+                    openAiApiKey?: string | undefined;
+                    openAiLegacyFormat?: boolean | undefined;
+                    openAiR1FormatEnabled?: boolean | undefined;
+                    openAiModelId?: string | undefined;
+                    openAiCustomModelInfo?: {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    } | null | undefined;
+                    openAiUseAzure?: boolean | undefined;
+                    azureApiVersion?: string | undefined;
+                    openAiStreamingEnabled?: boolean | undefined;
+                    openAiHostHeader?: string | undefined;
+                    openAiHeaders?: Record<string, string> | undefined;
+                    ollamaModelId?: string | undefined;
+                    ollamaBaseUrl?: string | undefined;
+                    vsCodeLmModelSelector?: {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    } | undefined;
+                    lmStudioModelId?: string | undefined;
+                    lmStudioBaseUrl?: string | undefined;
+                    lmStudioDraftModelId?: string | undefined;
+                    lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                    geminiApiKey?: string | undefined;
+                    googleGeminiBaseUrl?: string | undefined;
+                    enableUrlContext?: boolean | undefined;
+                    enableGrounding?: boolean | undefined;
+                    geminiCliOAuthPath?: string | undefined;
+                    geminiCliProjectId?: string | undefined;
+                    openAiNativeApiKey?: string | undefined;
+                    openAiNativeBaseUrl?: string | undefined;
+                    mistralApiKey?: string | undefined;
+                    mistralCodestralUrl?: string | undefined;
+                    deepSeekBaseUrl?: string | undefined;
+                    deepSeekApiKey?: string | undefined;
+                    doubaoBaseUrl?: string | undefined;
+                    doubaoApiKey?: string | undefined;
+                    moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                    moonshotApiKey?: string | undefined;
+                    unboundApiKey?: string | undefined;
+                    unboundModelId?: string | undefined;
+                    requestyBaseUrl?: string | undefined;
+                    requestyApiKey?: string | undefined;
+                    requestyModelId?: string | undefined;
+                    fakeAi?: unknown;
+                    xaiApiKey?: string | undefined;
+                    groqApiKey?: string | undefined;
+                    huggingFaceApiKey?: string | undefined;
+                    huggingFaceModelId?: string | undefined;
+                    huggingFaceInferenceProvider?: string | undefined;
+                    chutesApiKey?: string | undefined;
+                    litellmBaseUrl?: string | undefined;
+                    litellmApiKey?: string | undefined;
+                    litellmModelId?: string | undefined;
+                    litellmUsePromptCache?: boolean | undefined;
+                    cerebrasApiKey?: string | undefined;
+                    sambaNovaApiKey?: string | undefined;
+                    zaiApiKey?: string | undefined;
+                    zaiApiLine?: "china" | "international" | undefined;
+                    fireworksApiKey?: string | undefined;
+                    ioIntelligenceModelId?: string | undefined;
+                    ioIntelligenceApiKey?: string | undefined;
+                }, {
+                    reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                    codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                    codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                    codeIndexOpenAiKey?: string | undefined;
+                    codeIndexQdrantApiKey?: string | undefined;
+                    codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                    codebaseIndexGeminiApiKey?: string | undefined;
+                    codebaseIndexMistralApiKey?: string | undefined;
+                    apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                    includeMaxTokens?: boolean | undefined;
+                    diffEnabled?: boolean | undefined;
+                    todoListEnabled?: boolean | undefined;
+                    fuzzyMatchThreshold?: number | undefined;
+                    modelTemperature?: number | null | undefined;
+                    rateLimitSeconds?: number | undefined;
+                    consecutiveMistakeLimit?: number | undefined;
+                    enableReasoningEffort?: boolean | undefined;
+                    modelMaxTokens?: number | undefined;
+                    modelMaxThinkingTokens?: number | undefined;
+                    verbosity?: "low" | "medium" | "high" | undefined;
+                    apiModelId?: string | undefined;
+                    apiKey?: string | undefined;
+                    anthropicBaseUrl?: string | undefined;
+                    anthropicUseAuthToken?: boolean | undefined;
+                    anthropicBeta1MContext?: boolean | undefined;
+                    claudeCodePath?: string | undefined;
+                    claudeCodeMaxOutputTokens?: number | undefined;
+                    glamaModelId?: string | undefined;
+                    glamaApiKey?: string | undefined;
+                    openRouterApiKey?: string | undefined;
+                    openRouterModelId?: string | undefined;
+                    openRouterBaseUrl?: string | undefined;
+                    openRouterSpecificProvider?: string | undefined;
+                    openRouterUseMiddleOutTransform?: boolean | undefined;
+                    awsAccessKey?: string | undefined;
+                    awsSecretKey?: string | undefined;
+                    awsSessionToken?: string | undefined;
+                    awsRegion?: string | undefined;
+                    awsUseCrossRegionInference?: boolean | undefined;
+                    awsUsePromptCache?: boolean | undefined;
+                    awsProfile?: string | undefined;
+                    awsUseProfile?: boolean | undefined;
+                    awsApiKey?: string | undefined;
+                    awsUseApiKey?: boolean | undefined;
+                    awsCustomArn?: string | undefined;
+                    awsModelContextWindow?: number | undefined;
+                    awsBedrockEndpointEnabled?: boolean | undefined;
+                    awsBedrockEndpoint?: string | undefined;
+                    vertexKeyFile?: string | undefined;
+                    vertexJsonCredentials?: string | undefined;
+                    vertexProjectId?: string | undefined;
+                    vertexRegion?: string | undefined;
+                    openAiBaseUrl?: string | undefined;
+                    openAiApiKey?: string | undefined;
+                    openAiLegacyFormat?: boolean | undefined;
+                    openAiR1FormatEnabled?: boolean | undefined;
+                    openAiModelId?: string | undefined;
+                    openAiCustomModelInfo?: {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    } | null | undefined;
+                    openAiUseAzure?: boolean | undefined;
+                    azureApiVersion?: string | undefined;
+                    openAiStreamingEnabled?: boolean | undefined;
+                    openAiHostHeader?: string | undefined;
+                    openAiHeaders?: Record<string, string> | undefined;
+                    ollamaModelId?: string | undefined;
+                    ollamaBaseUrl?: string | undefined;
+                    vsCodeLmModelSelector?: {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    } | undefined;
+                    lmStudioModelId?: string | undefined;
+                    lmStudioBaseUrl?: string | undefined;
+                    lmStudioDraftModelId?: string | undefined;
+                    lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                    geminiApiKey?: string | undefined;
+                    googleGeminiBaseUrl?: string | undefined;
+                    enableUrlContext?: boolean | undefined;
+                    enableGrounding?: boolean | undefined;
+                    geminiCliOAuthPath?: string | undefined;
+                    geminiCliProjectId?: string | undefined;
+                    openAiNativeApiKey?: string | undefined;
+                    openAiNativeBaseUrl?: string | undefined;
+                    mistralApiKey?: string | undefined;
+                    mistralCodestralUrl?: string | undefined;
+                    deepSeekBaseUrl?: string | undefined;
+                    deepSeekApiKey?: string | undefined;
+                    doubaoBaseUrl?: string | undefined;
+                    doubaoApiKey?: string | undefined;
+                    moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                    moonshotApiKey?: string | undefined;
+                    unboundApiKey?: string | undefined;
+                    unboundModelId?: string | undefined;
+                    requestyBaseUrl?: string | undefined;
+                    requestyApiKey?: string | undefined;
+                    requestyModelId?: string | undefined;
+                    fakeAi?: unknown;
+                    xaiApiKey?: string | undefined;
+                    groqApiKey?: string | undefined;
+                    huggingFaceApiKey?: string | undefined;
+                    huggingFaceModelId?: string | undefined;
+                    huggingFaceInferenceProvider?: string | undefined;
+                    chutesApiKey?: string | undefined;
+                    litellmBaseUrl?: string | undefined;
+                    litellmApiKey?: string | undefined;
+                    litellmModelId?: string | undefined;
+                    litellmUsePromptCache?: boolean | undefined;
+                    cerebrasApiKey?: string | undefined;
+                    sambaNovaApiKey?: string | undefined;
+                    zaiApiKey?: string | undefined;
+                    zaiApiLine?: "china" | "international" | undefined;
+                    fireworksApiKey?: string | undefined;
+                    ioIntelligenceModelId?: string | undefined;
+                    ioIntelligenceApiKey?: string | undefined;
+                }>>>;
+                agentMode: z.ZodOptional<z.ZodString>;
             }, "strip", z.ZodTypeAny, {
                 enabled: boolean;
                 serverPort: number;
@@ -14270,6 +17156,152 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentId: string;
                 agentName: string;
                 isDebugMode?: boolean | undefined;
+                agentApiConfiguration?: {
+                    reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                    codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                    codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                    codeIndexOpenAiKey?: string | undefined;
+                    codeIndexQdrantApiKey?: string | undefined;
+                    codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                    codebaseIndexGeminiApiKey?: string | undefined;
+                    codebaseIndexMistralApiKey?: string | undefined;
+                    apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                    includeMaxTokens?: boolean | undefined;
+                    diffEnabled?: boolean | undefined;
+                    todoListEnabled?: boolean | undefined;
+                    fuzzyMatchThreshold?: number | undefined;
+                    modelTemperature?: number | null | undefined;
+                    rateLimitSeconds?: number | undefined;
+                    consecutiveMistakeLimit?: number | undefined;
+                    enableReasoningEffort?: boolean | undefined;
+                    modelMaxTokens?: number | undefined;
+                    modelMaxThinkingTokens?: number | undefined;
+                    verbosity?: "low" | "medium" | "high" | undefined;
+                    apiModelId?: string | undefined;
+                    apiKey?: string | undefined;
+                    anthropicBaseUrl?: string | undefined;
+                    anthropicUseAuthToken?: boolean | undefined;
+                    anthropicBeta1MContext?: boolean | undefined;
+                    claudeCodePath?: string | undefined;
+                    claudeCodeMaxOutputTokens?: number | undefined;
+                    glamaModelId?: string | undefined;
+                    glamaApiKey?: string | undefined;
+                    openRouterApiKey?: string | undefined;
+                    openRouterModelId?: string | undefined;
+                    openRouterBaseUrl?: string | undefined;
+                    openRouterSpecificProvider?: string | undefined;
+                    openRouterUseMiddleOutTransform?: boolean | undefined;
+                    awsAccessKey?: string | undefined;
+                    awsSecretKey?: string | undefined;
+                    awsSessionToken?: string | undefined;
+                    awsRegion?: string | undefined;
+                    awsUseCrossRegionInference?: boolean | undefined;
+                    awsUsePromptCache?: boolean | undefined;
+                    awsProfile?: string | undefined;
+                    awsUseProfile?: boolean | undefined;
+                    awsApiKey?: string | undefined;
+                    awsUseApiKey?: boolean | undefined;
+                    awsCustomArn?: string | undefined;
+                    awsModelContextWindow?: number | undefined;
+                    awsBedrockEndpointEnabled?: boolean | undefined;
+                    awsBedrockEndpoint?: string | undefined;
+                    vertexKeyFile?: string | undefined;
+                    vertexJsonCredentials?: string | undefined;
+                    vertexProjectId?: string | undefined;
+                    vertexRegion?: string | undefined;
+                    openAiBaseUrl?: string | undefined;
+                    openAiApiKey?: string | undefined;
+                    openAiLegacyFormat?: boolean | undefined;
+                    openAiR1FormatEnabled?: boolean | undefined;
+                    openAiModelId?: string | undefined;
+                    openAiCustomModelInfo?: {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    } | null | undefined;
+                    openAiUseAzure?: boolean | undefined;
+                    azureApiVersion?: string | undefined;
+                    openAiStreamingEnabled?: boolean | undefined;
+                    openAiHostHeader?: string | undefined;
+                    openAiHeaders?: Record<string, string> | undefined;
+                    ollamaModelId?: string | undefined;
+                    ollamaBaseUrl?: string | undefined;
+                    vsCodeLmModelSelector?: {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    } | undefined;
+                    lmStudioModelId?: string | undefined;
+                    lmStudioBaseUrl?: string | undefined;
+                    lmStudioDraftModelId?: string | undefined;
+                    lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                    geminiApiKey?: string | undefined;
+                    googleGeminiBaseUrl?: string | undefined;
+                    enableUrlContext?: boolean | undefined;
+                    enableGrounding?: boolean | undefined;
+                    geminiCliOAuthPath?: string | undefined;
+                    geminiCliProjectId?: string | undefined;
+                    openAiNativeApiKey?: string | undefined;
+                    openAiNativeBaseUrl?: string | undefined;
+                    mistralApiKey?: string | undefined;
+                    mistralCodestralUrl?: string | undefined;
+                    deepSeekBaseUrl?: string | undefined;
+                    deepSeekApiKey?: string | undefined;
+                    doubaoBaseUrl?: string | undefined;
+                    doubaoApiKey?: string | undefined;
+                    moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                    moonshotApiKey?: string | undefined;
+                    unboundApiKey?: string | undefined;
+                    unboundModelId?: string | undefined;
+                    requestyBaseUrl?: string | undefined;
+                    requestyApiKey?: string | undefined;
+                    requestyModelId?: string | undefined;
+                    fakeAi?: unknown;
+                    xaiApiKey?: string | undefined;
+                    groqApiKey?: string | undefined;
+                    huggingFaceApiKey?: string | undefined;
+                    huggingFaceModelId?: string | undefined;
+                    huggingFaceInferenceProvider?: string | undefined;
+                    chutesApiKey?: string | undefined;
+                    litellmBaseUrl?: string | undefined;
+                    litellmApiKey?: string | undefined;
+                    litellmModelId?: string | undefined;
+                    litellmUsePromptCache?: boolean | undefined;
+                    cerebrasApiKey?: string | undefined;
+                    sambaNovaApiKey?: string | undefined;
+                    zaiApiKey?: string | undefined;
+                    zaiApiLine?: "china" | "international" | undefined;
+                    fireworksApiKey?: string | undefined;
+                    ioIntelligenceModelId?: string | undefined;
+                    ioIntelligenceApiKey?: string | undefined;
+                } | null | undefined;
+                agentMode?: string | undefined;
             }, {
                 enabled: boolean;
                 serverPort: number;
@@ -14277,6 +17309,152 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentId: string;
                 agentName: string;
                 isDebugMode?: boolean | undefined;
+                agentApiConfiguration?: {
+                    reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                    codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                    codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                    codeIndexOpenAiKey?: string | undefined;
+                    codeIndexQdrantApiKey?: string | undefined;
+                    codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                    codebaseIndexGeminiApiKey?: string | undefined;
+                    codebaseIndexMistralApiKey?: string | undefined;
+                    apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                    includeMaxTokens?: boolean | undefined;
+                    diffEnabled?: boolean | undefined;
+                    todoListEnabled?: boolean | undefined;
+                    fuzzyMatchThreshold?: number | undefined;
+                    modelTemperature?: number | null | undefined;
+                    rateLimitSeconds?: number | undefined;
+                    consecutiveMistakeLimit?: number | undefined;
+                    enableReasoningEffort?: boolean | undefined;
+                    modelMaxTokens?: number | undefined;
+                    modelMaxThinkingTokens?: number | undefined;
+                    verbosity?: "low" | "medium" | "high" | undefined;
+                    apiModelId?: string | undefined;
+                    apiKey?: string | undefined;
+                    anthropicBaseUrl?: string | undefined;
+                    anthropicUseAuthToken?: boolean | undefined;
+                    anthropicBeta1MContext?: boolean | undefined;
+                    claudeCodePath?: string | undefined;
+                    claudeCodeMaxOutputTokens?: number | undefined;
+                    glamaModelId?: string | undefined;
+                    glamaApiKey?: string | undefined;
+                    openRouterApiKey?: string | undefined;
+                    openRouterModelId?: string | undefined;
+                    openRouterBaseUrl?: string | undefined;
+                    openRouterSpecificProvider?: string | undefined;
+                    openRouterUseMiddleOutTransform?: boolean | undefined;
+                    awsAccessKey?: string | undefined;
+                    awsSecretKey?: string | undefined;
+                    awsSessionToken?: string | undefined;
+                    awsRegion?: string | undefined;
+                    awsUseCrossRegionInference?: boolean | undefined;
+                    awsUsePromptCache?: boolean | undefined;
+                    awsProfile?: string | undefined;
+                    awsUseProfile?: boolean | undefined;
+                    awsApiKey?: string | undefined;
+                    awsUseApiKey?: boolean | undefined;
+                    awsCustomArn?: string | undefined;
+                    awsModelContextWindow?: number | undefined;
+                    awsBedrockEndpointEnabled?: boolean | undefined;
+                    awsBedrockEndpoint?: string | undefined;
+                    vertexKeyFile?: string | undefined;
+                    vertexJsonCredentials?: string | undefined;
+                    vertexProjectId?: string | undefined;
+                    vertexRegion?: string | undefined;
+                    openAiBaseUrl?: string | undefined;
+                    openAiApiKey?: string | undefined;
+                    openAiLegacyFormat?: boolean | undefined;
+                    openAiR1FormatEnabled?: boolean | undefined;
+                    openAiModelId?: string | undefined;
+                    openAiCustomModelInfo?: {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    } | null | undefined;
+                    openAiUseAzure?: boolean | undefined;
+                    azureApiVersion?: string | undefined;
+                    openAiStreamingEnabled?: boolean | undefined;
+                    openAiHostHeader?: string | undefined;
+                    openAiHeaders?: Record<string, string> | undefined;
+                    ollamaModelId?: string | undefined;
+                    ollamaBaseUrl?: string | undefined;
+                    vsCodeLmModelSelector?: {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    } | undefined;
+                    lmStudioModelId?: string | undefined;
+                    lmStudioBaseUrl?: string | undefined;
+                    lmStudioDraftModelId?: string | undefined;
+                    lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                    geminiApiKey?: string | undefined;
+                    googleGeminiBaseUrl?: string | undefined;
+                    enableUrlContext?: boolean | undefined;
+                    enableGrounding?: boolean | undefined;
+                    geminiCliOAuthPath?: string | undefined;
+                    geminiCliProjectId?: string | undefined;
+                    openAiNativeApiKey?: string | undefined;
+                    openAiNativeBaseUrl?: string | undefined;
+                    mistralApiKey?: string | undefined;
+                    mistralCodestralUrl?: string | undefined;
+                    deepSeekBaseUrl?: string | undefined;
+                    deepSeekApiKey?: string | undefined;
+                    doubaoBaseUrl?: string | undefined;
+                    doubaoApiKey?: string | undefined;
+                    moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                    moonshotApiKey?: string | undefined;
+                    unboundApiKey?: string | undefined;
+                    unboundModelId?: string | undefined;
+                    requestyBaseUrl?: string | undefined;
+                    requestyApiKey?: string | undefined;
+                    requestyModelId?: string | undefined;
+                    fakeAi?: unknown;
+                    xaiApiKey?: string | undefined;
+                    groqApiKey?: string | undefined;
+                    huggingFaceApiKey?: string | undefined;
+                    huggingFaceModelId?: string | undefined;
+                    huggingFaceInferenceProvider?: string | undefined;
+                    chutesApiKey?: string | undefined;
+                    litellmBaseUrl?: string | undefined;
+                    litellmApiKey?: string | undefined;
+                    litellmModelId?: string | undefined;
+                    litellmUsePromptCache?: boolean | undefined;
+                    cerebrasApiKey?: string | undefined;
+                    sambaNovaApiKey?: string | undefined;
+                    zaiApiKey?: string | undefined;
+                    zaiApiLine?: "china" | "international" | undefined;
+                    fireworksApiKey?: string | undefined;
+                    ioIntelligenceModelId?: string | undefined;
+                    ioIntelligenceApiKey?: string | undefined;
+                } | null | undefined;
+                agentMode?: string | undefined;
             }>>>;
             waitingForAgentInput: z.ZodOptional<z.ZodBoolean>;
         }, "strip", z.ZodTypeAny, {
@@ -14423,22 +17601,22 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
-            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
                 name: string;
-                groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                slug: string;
+                roleDefinition: string;
+                groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
                 }])[];
-                slug: string;
-                roleDefinition: string;
                 description?: string | undefined;
-                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
+                source?: "global" | "project" | undefined;
             }[] | undefined;
+            mode?: string | undefined;
+            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
                 id: string;
@@ -14456,6 +17634,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                source?: "agent" | "user" | undefined;
                 mode?: string | undefined;
                 agentId?: string | undefined;
                 cacheWrites?: number | undefined;
@@ -14463,12 +17642,12 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
-                source?: "agent" | "user" | undefined;
                 clineMessages?: {
                     type: "ask" | "say";
                     ts: number;
                     reasoning?: string | undefined;
                     partial?: boolean | undefined;
+                    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                     metadata?: {
                         taskId?: string | undefined;
                         gpt5?: {
@@ -14478,8 +17657,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                         } | undefined;
                     } | undefined;
                     text?: string | undefined;
-                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                     images?: string[] | undefined;
                     conversationHistoryIndex?: number | undefined;
                     checkpoint?: Record<string, unknown> | undefined;
@@ -14612,15 +17790,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
             imContacts?: {
-                friends?: {
-                    id: number;
-                    online: boolean;
-                    nickName: string;
-                    headImage: string;
-                    deleted: boolean;
-                    onlineWeb: boolean;
-                    onlineApp: boolean;
-                }[] | undefined;
                 groups?: {
                     id: number;
                     name: string;
@@ -14637,6 +17806,15 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                     isBanned: boolean;
                     reason: string;
                 }[] | undefined;
+                friends?: {
+                    id: number;
+                    online: boolean;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
                 lastUpdated?: number | undefined;
             } | undefined;
             agentA2AMode?: {
@@ -14646,6 +17824,152 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentId: string;
                 agentName: string;
                 isDebugMode?: boolean | undefined;
+                agentApiConfiguration?: {
+                    reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                    codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                    codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                    codeIndexOpenAiKey?: string | undefined;
+                    codeIndexQdrantApiKey?: string | undefined;
+                    codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                    codebaseIndexGeminiApiKey?: string | undefined;
+                    codebaseIndexMistralApiKey?: string | undefined;
+                    apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                    includeMaxTokens?: boolean | undefined;
+                    diffEnabled?: boolean | undefined;
+                    todoListEnabled?: boolean | undefined;
+                    fuzzyMatchThreshold?: number | undefined;
+                    modelTemperature?: number | null | undefined;
+                    rateLimitSeconds?: number | undefined;
+                    consecutiveMistakeLimit?: number | undefined;
+                    enableReasoningEffort?: boolean | undefined;
+                    modelMaxTokens?: number | undefined;
+                    modelMaxThinkingTokens?: number | undefined;
+                    verbosity?: "low" | "medium" | "high" | undefined;
+                    apiModelId?: string | undefined;
+                    apiKey?: string | undefined;
+                    anthropicBaseUrl?: string | undefined;
+                    anthropicUseAuthToken?: boolean | undefined;
+                    anthropicBeta1MContext?: boolean | undefined;
+                    claudeCodePath?: string | undefined;
+                    claudeCodeMaxOutputTokens?: number | undefined;
+                    glamaModelId?: string | undefined;
+                    glamaApiKey?: string | undefined;
+                    openRouterApiKey?: string | undefined;
+                    openRouterModelId?: string | undefined;
+                    openRouterBaseUrl?: string | undefined;
+                    openRouterSpecificProvider?: string | undefined;
+                    openRouterUseMiddleOutTransform?: boolean | undefined;
+                    awsAccessKey?: string | undefined;
+                    awsSecretKey?: string | undefined;
+                    awsSessionToken?: string | undefined;
+                    awsRegion?: string | undefined;
+                    awsUseCrossRegionInference?: boolean | undefined;
+                    awsUsePromptCache?: boolean | undefined;
+                    awsProfile?: string | undefined;
+                    awsUseProfile?: boolean | undefined;
+                    awsApiKey?: string | undefined;
+                    awsUseApiKey?: boolean | undefined;
+                    awsCustomArn?: string | undefined;
+                    awsModelContextWindow?: number | undefined;
+                    awsBedrockEndpointEnabled?: boolean | undefined;
+                    awsBedrockEndpoint?: string | undefined;
+                    vertexKeyFile?: string | undefined;
+                    vertexJsonCredentials?: string | undefined;
+                    vertexProjectId?: string | undefined;
+                    vertexRegion?: string | undefined;
+                    openAiBaseUrl?: string | undefined;
+                    openAiApiKey?: string | undefined;
+                    openAiLegacyFormat?: boolean | undefined;
+                    openAiR1FormatEnabled?: boolean | undefined;
+                    openAiModelId?: string | undefined;
+                    openAiCustomModelInfo?: {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    } | null | undefined;
+                    openAiUseAzure?: boolean | undefined;
+                    azureApiVersion?: string | undefined;
+                    openAiStreamingEnabled?: boolean | undefined;
+                    openAiHostHeader?: string | undefined;
+                    openAiHeaders?: Record<string, string> | undefined;
+                    ollamaModelId?: string | undefined;
+                    ollamaBaseUrl?: string | undefined;
+                    vsCodeLmModelSelector?: {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    } | undefined;
+                    lmStudioModelId?: string | undefined;
+                    lmStudioBaseUrl?: string | undefined;
+                    lmStudioDraftModelId?: string | undefined;
+                    lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                    geminiApiKey?: string | undefined;
+                    googleGeminiBaseUrl?: string | undefined;
+                    enableUrlContext?: boolean | undefined;
+                    enableGrounding?: boolean | undefined;
+                    geminiCliOAuthPath?: string | undefined;
+                    geminiCliProjectId?: string | undefined;
+                    openAiNativeApiKey?: string | undefined;
+                    openAiNativeBaseUrl?: string | undefined;
+                    mistralApiKey?: string | undefined;
+                    mistralCodestralUrl?: string | undefined;
+                    deepSeekBaseUrl?: string | undefined;
+                    deepSeekApiKey?: string | undefined;
+                    doubaoBaseUrl?: string | undefined;
+                    doubaoApiKey?: string | undefined;
+                    moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                    moonshotApiKey?: string | undefined;
+                    unboundApiKey?: string | undefined;
+                    unboundModelId?: string | undefined;
+                    requestyBaseUrl?: string | undefined;
+                    requestyApiKey?: string | undefined;
+                    requestyModelId?: string | undefined;
+                    fakeAi?: unknown;
+                    xaiApiKey?: string | undefined;
+                    groqApiKey?: string | undefined;
+                    huggingFaceApiKey?: string | undefined;
+                    huggingFaceModelId?: string | undefined;
+                    huggingFaceInferenceProvider?: string | undefined;
+                    chutesApiKey?: string | undefined;
+                    litellmBaseUrl?: string | undefined;
+                    litellmApiKey?: string | undefined;
+                    litellmModelId?: string | undefined;
+                    litellmUsePromptCache?: boolean | undefined;
+                    cerebrasApiKey?: string | undefined;
+                    sambaNovaApiKey?: string | undefined;
+                    zaiApiKey?: string | undefined;
+                    zaiApiLine?: "china" | "international" | undefined;
+                    fireworksApiKey?: string | undefined;
+                    ioIntelligenceModelId?: string | undefined;
+                    ioIntelligenceApiKey?: string | undefined;
+                } | null | undefined;
+                agentMode?: string | undefined;
             } | null | undefined;
             waitingForAgentInput?: boolean | undefined;
         }, {
@@ -14792,22 +18116,22 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
-            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
                 name: string;
-                groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                slug: string;
+                roleDefinition: string;
+                groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
                 }])[];
-                slug: string;
-                roleDefinition: string;
                 description?: string | undefined;
-                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
+                source?: "global" | "project" | undefined;
             }[] | undefined;
+            mode?: string | undefined;
+            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
                 id: string;
@@ -14825,6 +18149,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                source?: "agent" | "user" | undefined;
                 mode?: string | undefined;
                 agentId?: string | undefined;
                 cacheWrites?: number | undefined;
@@ -14832,12 +18157,12 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
-                source?: "agent" | "user" | undefined;
                 clineMessages?: {
                     type: "ask" | "say";
                     ts: number;
                     reasoning?: string | undefined;
                     partial?: boolean | undefined;
+                    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                     metadata?: {
                         taskId?: string | undefined;
                         gpt5?: {
@@ -14847,8 +18172,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                         } | undefined;
                     } | undefined;
                     text?: string | undefined;
-                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                     images?: string[] | undefined;
                     conversationHistoryIndex?: number | undefined;
                     checkpoint?: Record<string, unknown> | undefined;
@@ -14981,15 +18305,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
             imContacts?: {
-                friends?: {
-                    id: number;
-                    online: boolean;
-                    nickName: string;
-                    headImage: string;
-                    deleted: boolean;
-                    onlineWeb: boolean;
-                    onlineApp: boolean;
-                }[] | undefined;
                 groups?: {
                     id: number;
                     name: string;
@@ -15006,6 +18321,15 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                     isBanned: boolean;
                     reason: string;
                 }[] | undefined;
+                friends?: {
+                    id: number;
+                    online: boolean;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
                 lastUpdated?: number | undefined;
             } | undefined;
             agentA2AMode?: {
@@ -15015,6 +18339,152 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentId: string;
                 agentName: string;
                 isDebugMode?: boolean | undefined;
+                agentApiConfiguration?: {
+                    reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                    codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                    codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                    codeIndexOpenAiKey?: string | undefined;
+                    codeIndexQdrantApiKey?: string | undefined;
+                    codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                    codebaseIndexGeminiApiKey?: string | undefined;
+                    codebaseIndexMistralApiKey?: string | undefined;
+                    apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                    includeMaxTokens?: boolean | undefined;
+                    diffEnabled?: boolean | undefined;
+                    todoListEnabled?: boolean | undefined;
+                    fuzzyMatchThreshold?: number | undefined;
+                    modelTemperature?: number | null | undefined;
+                    rateLimitSeconds?: number | undefined;
+                    consecutiveMistakeLimit?: number | undefined;
+                    enableReasoningEffort?: boolean | undefined;
+                    modelMaxTokens?: number | undefined;
+                    modelMaxThinkingTokens?: number | undefined;
+                    verbosity?: "low" | "medium" | "high" | undefined;
+                    apiModelId?: string | undefined;
+                    apiKey?: string | undefined;
+                    anthropicBaseUrl?: string | undefined;
+                    anthropicUseAuthToken?: boolean | undefined;
+                    anthropicBeta1MContext?: boolean | undefined;
+                    claudeCodePath?: string | undefined;
+                    claudeCodeMaxOutputTokens?: number | undefined;
+                    glamaModelId?: string | undefined;
+                    glamaApiKey?: string | undefined;
+                    openRouterApiKey?: string | undefined;
+                    openRouterModelId?: string | undefined;
+                    openRouterBaseUrl?: string | undefined;
+                    openRouterSpecificProvider?: string | undefined;
+                    openRouterUseMiddleOutTransform?: boolean | undefined;
+                    awsAccessKey?: string | undefined;
+                    awsSecretKey?: string | undefined;
+                    awsSessionToken?: string | undefined;
+                    awsRegion?: string | undefined;
+                    awsUseCrossRegionInference?: boolean | undefined;
+                    awsUsePromptCache?: boolean | undefined;
+                    awsProfile?: string | undefined;
+                    awsUseProfile?: boolean | undefined;
+                    awsApiKey?: string | undefined;
+                    awsUseApiKey?: boolean | undefined;
+                    awsCustomArn?: string | undefined;
+                    awsModelContextWindow?: number | undefined;
+                    awsBedrockEndpointEnabled?: boolean | undefined;
+                    awsBedrockEndpoint?: string | undefined;
+                    vertexKeyFile?: string | undefined;
+                    vertexJsonCredentials?: string | undefined;
+                    vertexProjectId?: string | undefined;
+                    vertexRegion?: string | undefined;
+                    openAiBaseUrl?: string | undefined;
+                    openAiApiKey?: string | undefined;
+                    openAiLegacyFormat?: boolean | undefined;
+                    openAiR1FormatEnabled?: boolean | undefined;
+                    openAiModelId?: string | undefined;
+                    openAiCustomModelInfo?: {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    } | null | undefined;
+                    openAiUseAzure?: boolean | undefined;
+                    azureApiVersion?: string | undefined;
+                    openAiStreamingEnabled?: boolean | undefined;
+                    openAiHostHeader?: string | undefined;
+                    openAiHeaders?: Record<string, string> | undefined;
+                    ollamaModelId?: string | undefined;
+                    ollamaBaseUrl?: string | undefined;
+                    vsCodeLmModelSelector?: {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    } | undefined;
+                    lmStudioModelId?: string | undefined;
+                    lmStudioBaseUrl?: string | undefined;
+                    lmStudioDraftModelId?: string | undefined;
+                    lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                    geminiApiKey?: string | undefined;
+                    googleGeminiBaseUrl?: string | undefined;
+                    enableUrlContext?: boolean | undefined;
+                    enableGrounding?: boolean | undefined;
+                    geminiCliOAuthPath?: string | undefined;
+                    geminiCliProjectId?: string | undefined;
+                    openAiNativeApiKey?: string | undefined;
+                    openAiNativeBaseUrl?: string | undefined;
+                    mistralApiKey?: string | undefined;
+                    mistralCodestralUrl?: string | undefined;
+                    deepSeekBaseUrl?: string | undefined;
+                    deepSeekApiKey?: string | undefined;
+                    doubaoBaseUrl?: string | undefined;
+                    doubaoApiKey?: string | undefined;
+                    moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                    moonshotApiKey?: string | undefined;
+                    unboundApiKey?: string | undefined;
+                    unboundModelId?: string | undefined;
+                    requestyBaseUrl?: string | undefined;
+                    requestyApiKey?: string | undefined;
+                    requestyModelId?: string | undefined;
+                    fakeAi?: unknown;
+                    xaiApiKey?: string | undefined;
+                    groqApiKey?: string | undefined;
+                    huggingFaceApiKey?: string | undefined;
+                    huggingFaceModelId?: string | undefined;
+                    huggingFaceInferenceProvider?: string | undefined;
+                    chutesApiKey?: string | undefined;
+                    litellmBaseUrl?: string | undefined;
+                    litellmApiKey?: string | undefined;
+                    litellmModelId?: string | undefined;
+                    litellmUsePromptCache?: boolean | undefined;
+                    cerebrasApiKey?: string | undefined;
+                    sambaNovaApiKey?: string | undefined;
+                    zaiApiKey?: string | undefined;
+                    zaiApiLine?: "china" | "international" | undefined;
+                    fireworksApiKey?: string | undefined;
+                    ioIntelligenceModelId?: string | undefined;
+                    ioIntelligenceApiKey?: string | undefined;
+                } | null | undefined;
+                agentMode?: string | undefined;
             } | null | undefined;
             waitingForAgentInput?: boolean | undefined;
         }>;
@@ -15167,22 +18637,22 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
-            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
                 name: string;
-                groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                slug: string;
+                roleDefinition: string;
+                groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
                 }])[];
-                slug: string;
-                roleDefinition: string;
                 description?: string | undefined;
-                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
+                source?: "global" | "project" | undefined;
             }[] | undefined;
+            mode?: string | undefined;
+            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
                 id: string;
@@ -15200,6 +18670,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                source?: "agent" | "user" | undefined;
                 mode?: string | undefined;
                 agentId?: string | undefined;
                 cacheWrites?: number | undefined;
@@ -15207,12 +18678,12 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
-                source?: "agent" | "user" | undefined;
                 clineMessages?: {
                     type: "ask" | "say";
                     ts: number;
                     reasoning?: string | undefined;
                     partial?: boolean | undefined;
+                    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                     metadata?: {
                         taskId?: string | undefined;
                         gpt5?: {
@@ -15222,8 +18693,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                         } | undefined;
                     } | undefined;
                     text?: string | undefined;
-                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                     images?: string[] | undefined;
                     conversationHistoryIndex?: number | undefined;
                     checkpoint?: Record<string, unknown> | undefined;
@@ -15356,15 +18826,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
             imContacts?: {
-                friends?: {
-                    id: number;
-                    online: boolean;
-                    nickName: string;
-                    headImage: string;
-                    deleted: boolean;
-                    onlineWeb: boolean;
-                    onlineApp: boolean;
-                }[] | undefined;
                 groups?: {
                     id: number;
                     name: string;
@@ -15381,6 +18842,15 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                     isBanned: boolean;
                     reason: string;
                 }[] | undefined;
+                friends?: {
+                    id: number;
+                    online: boolean;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
                 lastUpdated?: number | undefined;
             } | undefined;
             agentA2AMode?: {
@@ -15390,6 +18860,152 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentId: string;
                 agentName: string;
                 isDebugMode?: boolean | undefined;
+                agentApiConfiguration?: {
+                    reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                    codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                    codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                    codeIndexOpenAiKey?: string | undefined;
+                    codeIndexQdrantApiKey?: string | undefined;
+                    codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                    codebaseIndexGeminiApiKey?: string | undefined;
+                    codebaseIndexMistralApiKey?: string | undefined;
+                    apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                    includeMaxTokens?: boolean | undefined;
+                    diffEnabled?: boolean | undefined;
+                    todoListEnabled?: boolean | undefined;
+                    fuzzyMatchThreshold?: number | undefined;
+                    modelTemperature?: number | null | undefined;
+                    rateLimitSeconds?: number | undefined;
+                    consecutiveMistakeLimit?: number | undefined;
+                    enableReasoningEffort?: boolean | undefined;
+                    modelMaxTokens?: number | undefined;
+                    modelMaxThinkingTokens?: number | undefined;
+                    verbosity?: "low" | "medium" | "high" | undefined;
+                    apiModelId?: string | undefined;
+                    apiKey?: string | undefined;
+                    anthropicBaseUrl?: string | undefined;
+                    anthropicUseAuthToken?: boolean | undefined;
+                    anthropicBeta1MContext?: boolean | undefined;
+                    claudeCodePath?: string | undefined;
+                    claudeCodeMaxOutputTokens?: number | undefined;
+                    glamaModelId?: string | undefined;
+                    glamaApiKey?: string | undefined;
+                    openRouterApiKey?: string | undefined;
+                    openRouterModelId?: string | undefined;
+                    openRouterBaseUrl?: string | undefined;
+                    openRouterSpecificProvider?: string | undefined;
+                    openRouterUseMiddleOutTransform?: boolean | undefined;
+                    awsAccessKey?: string | undefined;
+                    awsSecretKey?: string | undefined;
+                    awsSessionToken?: string | undefined;
+                    awsRegion?: string | undefined;
+                    awsUseCrossRegionInference?: boolean | undefined;
+                    awsUsePromptCache?: boolean | undefined;
+                    awsProfile?: string | undefined;
+                    awsUseProfile?: boolean | undefined;
+                    awsApiKey?: string | undefined;
+                    awsUseApiKey?: boolean | undefined;
+                    awsCustomArn?: string | undefined;
+                    awsModelContextWindow?: number | undefined;
+                    awsBedrockEndpointEnabled?: boolean | undefined;
+                    awsBedrockEndpoint?: string | undefined;
+                    vertexKeyFile?: string | undefined;
+                    vertexJsonCredentials?: string | undefined;
+                    vertexProjectId?: string | undefined;
+                    vertexRegion?: string | undefined;
+                    openAiBaseUrl?: string | undefined;
+                    openAiApiKey?: string | undefined;
+                    openAiLegacyFormat?: boolean | undefined;
+                    openAiR1FormatEnabled?: boolean | undefined;
+                    openAiModelId?: string | undefined;
+                    openAiCustomModelInfo?: {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    } | null | undefined;
+                    openAiUseAzure?: boolean | undefined;
+                    azureApiVersion?: string | undefined;
+                    openAiStreamingEnabled?: boolean | undefined;
+                    openAiHostHeader?: string | undefined;
+                    openAiHeaders?: Record<string, string> | undefined;
+                    ollamaModelId?: string | undefined;
+                    ollamaBaseUrl?: string | undefined;
+                    vsCodeLmModelSelector?: {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    } | undefined;
+                    lmStudioModelId?: string | undefined;
+                    lmStudioBaseUrl?: string | undefined;
+                    lmStudioDraftModelId?: string | undefined;
+                    lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                    geminiApiKey?: string | undefined;
+                    googleGeminiBaseUrl?: string | undefined;
+                    enableUrlContext?: boolean | undefined;
+                    enableGrounding?: boolean | undefined;
+                    geminiCliOAuthPath?: string | undefined;
+                    geminiCliProjectId?: string | undefined;
+                    openAiNativeApiKey?: string | undefined;
+                    openAiNativeBaseUrl?: string | undefined;
+                    mistralApiKey?: string | undefined;
+                    mistralCodestralUrl?: string | undefined;
+                    deepSeekBaseUrl?: string | undefined;
+                    deepSeekApiKey?: string | undefined;
+                    doubaoBaseUrl?: string | undefined;
+                    doubaoApiKey?: string | undefined;
+                    moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                    moonshotApiKey?: string | undefined;
+                    unboundApiKey?: string | undefined;
+                    unboundModelId?: string | undefined;
+                    requestyBaseUrl?: string | undefined;
+                    requestyApiKey?: string | undefined;
+                    requestyModelId?: string | undefined;
+                    fakeAi?: unknown;
+                    xaiApiKey?: string | undefined;
+                    groqApiKey?: string | undefined;
+                    huggingFaceApiKey?: string | undefined;
+                    huggingFaceModelId?: string | undefined;
+                    huggingFaceInferenceProvider?: string | undefined;
+                    chutesApiKey?: string | undefined;
+                    litellmBaseUrl?: string | undefined;
+                    litellmApiKey?: string | undefined;
+                    litellmModelId?: string | undefined;
+                    litellmUsePromptCache?: boolean | undefined;
+                    cerebrasApiKey?: string | undefined;
+                    sambaNovaApiKey?: string | undefined;
+                    zaiApiKey?: string | undefined;
+                    zaiApiLine?: "china" | "international" | undefined;
+                    fireworksApiKey?: string | undefined;
+                    ioIntelligenceModelId?: string | undefined;
+                    ioIntelligenceApiKey?: string | undefined;
+                } | null | undefined;
+                agentMode?: string | undefined;
             } | null | undefined;
             waitingForAgentInput?: boolean | undefined;
         };
@@ -15541,22 +19157,22 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
-            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
                 name: string;
-                groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                slug: string;
+                roleDefinition: string;
+                groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
                 }])[];
-                slug: string;
-                roleDefinition: string;
                 description?: string | undefined;
-                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
+                source?: "global" | "project" | undefined;
             }[] | undefined;
+            mode?: string | undefined;
+            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
                 id: string;
@@ -15574,6 +19190,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                source?: "agent" | "user" | undefined;
                 mode?: string | undefined;
                 agentId?: string | undefined;
                 cacheWrites?: number | undefined;
@@ -15581,12 +19198,12 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
-                source?: "agent" | "user" | undefined;
                 clineMessages?: {
                     type: "ask" | "say";
                     ts: number;
                     reasoning?: string | undefined;
                     partial?: boolean | undefined;
+                    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                     metadata?: {
                         taskId?: string | undefined;
                         gpt5?: {
@@ -15596,8 +19213,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                         } | undefined;
                     } | undefined;
                     text?: string | undefined;
-                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                     images?: string[] | undefined;
                     conversationHistoryIndex?: number | undefined;
                     checkpoint?: Record<string, unknown> | undefined;
@@ -15730,15 +19346,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
             imContacts?: {
-                friends?: {
-                    id: number;
-                    online: boolean;
-                    nickName: string;
-                    headImage: string;
-                    deleted: boolean;
-                    onlineWeb: boolean;
-                    onlineApp: boolean;
-                }[] | undefined;
                 groups?: {
                     id: number;
                     name: string;
@@ -15755,6 +19362,15 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                     isBanned: boolean;
                     reason: string;
                 }[] | undefined;
+                friends?: {
+                    id: number;
+                    online: boolean;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
                 lastUpdated?: number | undefined;
             } | undefined;
             agentA2AMode?: {
@@ -15764,6 +19380,152 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentId: string;
                 agentName: string;
                 isDebugMode?: boolean | undefined;
+                agentApiConfiguration?: {
+                    reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                    codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                    codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                    codeIndexOpenAiKey?: string | undefined;
+                    codeIndexQdrantApiKey?: string | undefined;
+                    codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                    codebaseIndexGeminiApiKey?: string | undefined;
+                    codebaseIndexMistralApiKey?: string | undefined;
+                    apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                    includeMaxTokens?: boolean | undefined;
+                    diffEnabled?: boolean | undefined;
+                    todoListEnabled?: boolean | undefined;
+                    fuzzyMatchThreshold?: number | undefined;
+                    modelTemperature?: number | null | undefined;
+                    rateLimitSeconds?: number | undefined;
+                    consecutiveMistakeLimit?: number | undefined;
+                    enableReasoningEffort?: boolean | undefined;
+                    modelMaxTokens?: number | undefined;
+                    modelMaxThinkingTokens?: number | undefined;
+                    verbosity?: "low" | "medium" | "high" | undefined;
+                    apiModelId?: string | undefined;
+                    apiKey?: string | undefined;
+                    anthropicBaseUrl?: string | undefined;
+                    anthropicUseAuthToken?: boolean | undefined;
+                    anthropicBeta1MContext?: boolean | undefined;
+                    claudeCodePath?: string | undefined;
+                    claudeCodeMaxOutputTokens?: number | undefined;
+                    glamaModelId?: string | undefined;
+                    glamaApiKey?: string | undefined;
+                    openRouterApiKey?: string | undefined;
+                    openRouterModelId?: string | undefined;
+                    openRouterBaseUrl?: string | undefined;
+                    openRouterSpecificProvider?: string | undefined;
+                    openRouterUseMiddleOutTransform?: boolean | undefined;
+                    awsAccessKey?: string | undefined;
+                    awsSecretKey?: string | undefined;
+                    awsSessionToken?: string | undefined;
+                    awsRegion?: string | undefined;
+                    awsUseCrossRegionInference?: boolean | undefined;
+                    awsUsePromptCache?: boolean | undefined;
+                    awsProfile?: string | undefined;
+                    awsUseProfile?: boolean | undefined;
+                    awsApiKey?: string | undefined;
+                    awsUseApiKey?: boolean | undefined;
+                    awsCustomArn?: string | undefined;
+                    awsModelContextWindow?: number | undefined;
+                    awsBedrockEndpointEnabled?: boolean | undefined;
+                    awsBedrockEndpoint?: string | undefined;
+                    vertexKeyFile?: string | undefined;
+                    vertexJsonCredentials?: string | undefined;
+                    vertexProjectId?: string | undefined;
+                    vertexRegion?: string | undefined;
+                    openAiBaseUrl?: string | undefined;
+                    openAiApiKey?: string | undefined;
+                    openAiLegacyFormat?: boolean | undefined;
+                    openAiR1FormatEnabled?: boolean | undefined;
+                    openAiModelId?: string | undefined;
+                    openAiCustomModelInfo?: {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    } | null | undefined;
+                    openAiUseAzure?: boolean | undefined;
+                    azureApiVersion?: string | undefined;
+                    openAiStreamingEnabled?: boolean | undefined;
+                    openAiHostHeader?: string | undefined;
+                    openAiHeaders?: Record<string, string> | undefined;
+                    ollamaModelId?: string | undefined;
+                    ollamaBaseUrl?: string | undefined;
+                    vsCodeLmModelSelector?: {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    } | undefined;
+                    lmStudioModelId?: string | undefined;
+                    lmStudioBaseUrl?: string | undefined;
+                    lmStudioDraftModelId?: string | undefined;
+                    lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                    geminiApiKey?: string | undefined;
+                    googleGeminiBaseUrl?: string | undefined;
+                    enableUrlContext?: boolean | undefined;
+                    enableGrounding?: boolean | undefined;
+                    geminiCliOAuthPath?: string | undefined;
+                    geminiCliProjectId?: string | undefined;
+                    openAiNativeApiKey?: string | undefined;
+                    openAiNativeBaseUrl?: string | undefined;
+                    mistralApiKey?: string | undefined;
+                    mistralCodestralUrl?: string | undefined;
+                    deepSeekBaseUrl?: string | undefined;
+                    deepSeekApiKey?: string | undefined;
+                    doubaoBaseUrl?: string | undefined;
+                    doubaoApiKey?: string | undefined;
+                    moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                    moonshotApiKey?: string | undefined;
+                    unboundApiKey?: string | undefined;
+                    unboundModelId?: string | undefined;
+                    requestyBaseUrl?: string | undefined;
+                    requestyApiKey?: string | undefined;
+                    requestyModelId?: string | undefined;
+                    fakeAi?: unknown;
+                    xaiApiKey?: string | undefined;
+                    groqApiKey?: string | undefined;
+                    huggingFaceApiKey?: string | undefined;
+                    huggingFaceModelId?: string | undefined;
+                    huggingFaceInferenceProvider?: string | undefined;
+                    chutesApiKey?: string | undefined;
+                    litellmBaseUrl?: string | undefined;
+                    litellmApiKey?: string | undefined;
+                    litellmModelId?: string | undefined;
+                    litellmUsePromptCache?: boolean | undefined;
+                    cerebrasApiKey?: string | undefined;
+                    sambaNovaApiKey?: string | undefined;
+                    zaiApiKey?: string | undefined;
+                    zaiApiLine?: "china" | "international" | undefined;
+                    fireworksApiKey?: string | undefined;
+                    ioIntelligenceModelId?: string | undefined;
+                    ioIntelligenceApiKey?: string | undefined;
+                } | null | undefined;
+                agentMode?: string | undefined;
             } | null | undefined;
             waitingForAgentInput?: boolean | undefined;
         };
@@ -15917,22 +19679,22 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
-            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
                 name: string;
-                groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                slug: string;
+                roleDefinition: string;
+                groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
                 }])[];
-                slug: string;
-                roleDefinition: string;
                 description?: string | undefined;
-                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
+                source?: "global" | "project" | undefined;
             }[] | undefined;
+            mode?: string | undefined;
+            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
                 id: string;
@@ -15950,6 +19712,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                source?: "agent" | "user" | undefined;
                 mode?: string | undefined;
                 agentId?: string | undefined;
                 cacheWrites?: number | undefined;
@@ -15957,12 +19720,12 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
-                source?: "agent" | "user" | undefined;
                 clineMessages?: {
                     type: "ask" | "say";
                     ts: number;
                     reasoning?: string | undefined;
                     partial?: boolean | undefined;
+                    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                     metadata?: {
                         taskId?: string | undefined;
                         gpt5?: {
@@ -15972,8 +19735,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                         } | undefined;
                     } | undefined;
                     text?: string | undefined;
-                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                     images?: string[] | undefined;
                     conversationHistoryIndex?: number | undefined;
                     checkpoint?: Record<string, unknown> | undefined;
@@ -16106,15 +19868,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
             imContacts?: {
-                friends?: {
-                    id: number;
-                    online: boolean;
-                    nickName: string;
-                    headImage: string;
-                    deleted: boolean;
-                    onlineWeb: boolean;
-                    onlineApp: boolean;
-                }[] | undefined;
                 groups?: {
                     id: number;
                     name: string;
@@ -16131,6 +19884,15 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                     isBanned: boolean;
                     reason: string;
                 }[] | undefined;
+                friends?: {
+                    id: number;
+                    online: boolean;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
                 lastUpdated?: number | undefined;
             } | undefined;
             agentA2AMode?: {
@@ -16140,6 +19902,152 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentId: string;
                 agentName: string;
                 isDebugMode?: boolean | undefined;
+                agentApiConfiguration?: {
+                    reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                    codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                    codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                    codeIndexOpenAiKey?: string | undefined;
+                    codeIndexQdrantApiKey?: string | undefined;
+                    codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                    codebaseIndexGeminiApiKey?: string | undefined;
+                    codebaseIndexMistralApiKey?: string | undefined;
+                    apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                    includeMaxTokens?: boolean | undefined;
+                    diffEnabled?: boolean | undefined;
+                    todoListEnabled?: boolean | undefined;
+                    fuzzyMatchThreshold?: number | undefined;
+                    modelTemperature?: number | null | undefined;
+                    rateLimitSeconds?: number | undefined;
+                    consecutiveMistakeLimit?: number | undefined;
+                    enableReasoningEffort?: boolean | undefined;
+                    modelMaxTokens?: number | undefined;
+                    modelMaxThinkingTokens?: number | undefined;
+                    verbosity?: "low" | "medium" | "high" | undefined;
+                    apiModelId?: string | undefined;
+                    apiKey?: string | undefined;
+                    anthropicBaseUrl?: string | undefined;
+                    anthropicUseAuthToken?: boolean | undefined;
+                    anthropicBeta1MContext?: boolean | undefined;
+                    claudeCodePath?: string | undefined;
+                    claudeCodeMaxOutputTokens?: number | undefined;
+                    glamaModelId?: string | undefined;
+                    glamaApiKey?: string | undefined;
+                    openRouterApiKey?: string | undefined;
+                    openRouterModelId?: string | undefined;
+                    openRouterBaseUrl?: string | undefined;
+                    openRouterSpecificProvider?: string | undefined;
+                    openRouterUseMiddleOutTransform?: boolean | undefined;
+                    awsAccessKey?: string | undefined;
+                    awsSecretKey?: string | undefined;
+                    awsSessionToken?: string | undefined;
+                    awsRegion?: string | undefined;
+                    awsUseCrossRegionInference?: boolean | undefined;
+                    awsUsePromptCache?: boolean | undefined;
+                    awsProfile?: string | undefined;
+                    awsUseProfile?: boolean | undefined;
+                    awsApiKey?: string | undefined;
+                    awsUseApiKey?: boolean | undefined;
+                    awsCustomArn?: string | undefined;
+                    awsModelContextWindow?: number | undefined;
+                    awsBedrockEndpointEnabled?: boolean | undefined;
+                    awsBedrockEndpoint?: string | undefined;
+                    vertexKeyFile?: string | undefined;
+                    vertexJsonCredentials?: string | undefined;
+                    vertexProjectId?: string | undefined;
+                    vertexRegion?: string | undefined;
+                    openAiBaseUrl?: string | undefined;
+                    openAiApiKey?: string | undefined;
+                    openAiLegacyFormat?: boolean | undefined;
+                    openAiR1FormatEnabled?: boolean | undefined;
+                    openAiModelId?: string | undefined;
+                    openAiCustomModelInfo?: {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    } | null | undefined;
+                    openAiUseAzure?: boolean | undefined;
+                    azureApiVersion?: string | undefined;
+                    openAiStreamingEnabled?: boolean | undefined;
+                    openAiHostHeader?: string | undefined;
+                    openAiHeaders?: Record<string, string> | undefined;
+                    ollamaModelId?: string | undefined;
+                    ollamaBaseUrl?: string | undefined;
+                    vsCodeLmModelSelector?: {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    } | undefined;
+                    lmStudioModelId?: string | undefined;
+                    lmStudioBaseUrl?: string | undefined;
+                    lmStudioDraftModelId?: string | undefined;
+                    lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                    geminiApiKey?: string | undefined;
+                    googleGeminiBaseUrl?: string | undefined;
+                    enableUrlContext?: boolean | undefined;
+                    enableGrounding?: boolean | undefined;
+                    geminiCliOAuthPath?: string | undefined;
+                    geminiCliProjectId?: string | undefined;
+                    openAiNativeApiKey?: string | undefined;
+                    openAiNativeBaseUrl?: string | undefined;
+                    mistralApiKey?: string | undefined;
+                    mistralCodestralUrl?: string | undefined;
+                    deepSeekBaseUrl?: string | undefined;
+                    deepSeekApiKey?: string | undefined;
+                    doubaoBaseUrl?: string | undefined;
+                    doubaoApiKey?: string | undefined;
+                    moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                    moonshotApiKey?: string | undefined;
+                    unboundApiKey?: string | undefined;
+                    unboundModelId?: string | undefined;
+                    requestyBaseUrl?: string | undefined;
+                    requestyApiKey?: string | undefined;
+                    requestyModelId?: string | undefined;
+                    fakeAi?: unknown;
+                    xaiApiKey?: string | undefined;
+                    groqApiKey?: string | undefined;
+                    huggingFaceApiKey?: string | undefined;
+                    huggingFaceModelId?: string | undefined;
+                    huggingFaceInferenceProvider?: string | undefined;
+                    chutesApiKey?: string | undefined;
+                    litellmBaseUrl?: string | undefined;
+                    litellmApiKey?: string | undefined;
+                    litellmModelId?: string | undefined;
+                    litellmUsePromptCache?: boolean | undefined;
+                    cerebrasApiKey?: string | undefined;
+                    sambaNovaApiKey?: string | undefined;
+                    zaiApiKey?: string | undefined;
+                    zaiApiLine?: "china" | "international" | undefined;
+                    fireworksApiKey?: string | undefined;
+                    ioIntelligenceModelId?: string | undefined;
+                    ioIntelligenceApiKey?: string | undefined;
+                } | null | undefined;
+                agentMode?: string | undefined;
             } | null | undefined;
             waitingForAgentInput?: boolean | undefined;
         };
@@ -16294,22 +20202,22 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             fireworksApiKey?: string | undefined;
             ioIntelligenceModelId?: string | undefined;
             ioIntelligenceApiKey?: string | undefined;
-            mode?: string | undefined;
-            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             customInstructions?: string | undefined;
             customModes?: {
                 name: string;
-                groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                slug: string;
+                roleDefinition: string;
+                groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                     description?: string | undefined;
                     fileRegex?: string | undefined;
                 }])[];
-                slug: string;
-                roleDefinition: string;
                 description?: string | undefined;
-                source?: "global" | "project" | undefined;
                 whenToUse?: string | undefined;
                 customInstructions?: string | undefined;
+                source?: "global" | "project" | undefined;
             }[] | undefined;
+            mode?: string | undefined;
+            language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
             currentApiConfigName?: string | undefined;
             listApiConfigMeta?: {
                 id: string;
@@ -16327,6 +20235,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 totalCost: number;
                 tokensIn: number;
                 tokensOut: number;
+                source?: "agent" | "user" | undefined;
                 mode?: string | undefined;
                 agentId?: string | undefined;
                 cacheWrites?: number | undefined;
@@ -16334,12 +20243,12 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 size?: number | undefined;
                 workspace?: string | undefined;
                 terminalNo?: number | undefined;
-                source?: "agent" | "user" | undefined;
                 clineMessages?: {
                     type: "ask" | "say";
                     ts: number;
                     reasoning?: string | undefined;
                     partial?: boolean | undefined;
+                    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                     metadata?: {
                         taskId?: string | undefined;
                         gpt5?: {
@@ -16349,8 +20258,7 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                         } | undefined;
                     } | undefined;
                     text?: string | undefined;
-                    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                     images?: string[] | undefined;
                     conversationHistoryIndex?: number | undefined;
                     checkpoint?: Record<string, unknown> | undefined;
@@ -16483,15 +20391,6 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
             lastModeExportPath?: string | undefined;
             lastModeImportPath?: string | undefined;
             imContacts?: {
-                friends?: {
-                    id: number;
-                    online: boolean;
-                    nickName: string;
-                    headImage: string;
-                    deleted: boolean;
-                    onlineWeb: boolean;
-                    onlineApp: boolean;
-                }[] | undefined;
                 groups?: {
                     id: number;
                     name: string;
@@ -16508,6 +20407,15 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                     isBanned: boolean;
                     reason: string;
                 }[] | undefined;
+                friends?: {
+                    id: number;
+                    online: boolean;
+                    nickName: string;
+                    headImage: string;
+                    deleted: boolean;
+                    onlineWeb: boolean;
+                    onlineApp: boolean;
+                }[] | undefined;
                 lastUpdated?: number | undefined;
             } | undefined;
             agentA2AMode?: {
@@ -16517,6 +20425,152 @@ declare const taskCommandSchema: z.ZodDiscriminatedUnion<"commandName", [z.ZodOb
                 agentId: string;
                 agentName: string;
                 isDebugMode?: boolean | undefined;
+                agentApiConfiguration?: {
+                    reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                    codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                    codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                    codeIndexOpenAiKey?: string | undefined;
+                    codeIndexQdrantApiKey?: string | undefined;
+                    codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                    codebaseIndexGeminiApiKey?: string | undefined;
+                    codebaseIndexMistralApiKey?: string | undefined;
+                    apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                    includeMaxTokens?: boolean | undefined;
+                    diffEnabled?: boolean | undefined;
+                    todoListEnabled?: boolean | undefined;
+                    fuzzyMatchThreshold?: number | undefined;
+                    modelTemperature?: number | null | undefined;
+                    rateLimitSeconds?: number | undefined;
+                    consecutiveMistakeLimit?: number | undefined;
+                    enableReasoningEffort?: boolean | undefined;
+                    modelMaxTokens?: number | undefined;
+                    modelMaxThinkingTokens?: number | undefined;
+                    verbosity?: "low" | "medium" | "high" | undefined;
+                    apiModelId?: string | undefined;
+                    apiKey?: string | undefined;
+                    anthropicBaseUrl?: string | undefined;
+                    anthropicUseAuthToken?: boolean | undefined;
+                    anthropicBeta1MContext?: boolean | undefined;
+                    claudeCodePath?: string | undefined;
+                    claudeCodeMaxOutputTokens?: number | undefined;
+                    glamaModelId?: string | undefined;
+                    glamaApiKey?: string | undefined;
+                    openRouterApiKey?: string | undefined;
+                    openRouterModelId?: string | undefined;
+                    openRouterBaseUrl?: string | undefined;
+                    openRouterSpecificProvider?: string | undefined;
+                    openRouterUseMiddleOutTransform?: boolean | undefined;
+                    awsAccessKey?: string | undefined;
+                    awsSecretKey?: string | undefined;
+                    awsSessionToken?: string | undefined;
+                    awsRegion?: string | undefined;
+                    awsUseCrossRegionInference?: boolean | undefined;
+                    awsUsePromptCache?: boolean | undefined;
+                    awsProfile?: string | undefined;
+                    awsUseProfile?: boolean | undefined;
+                    awsApiKey?: string | undefined;
+                    awsUseApiKey?: boolean | undefined;
+                    awsCustomArn?: string | undefined;
+                    awsModelContextWindow?: number | undefined;
+                    awsBedrockEndpointEnabled?: boolean | undefined;
+                    awsBedrockEndpoint?: string | undefined;
+                    vertexKeyFile?: string | undefined;
+                    vertexJsonCredentials?: string | undefined;
+                    vertexProjectId?: string | undefined;
+                    vertexRegion?: string | undefined;
+                    openAiBaseUrl?: string | undefined;
+                    openAiApiKey?: string | undefined;
+                    openAiLegacyFormat?: boolean | undefined;
+                    openAiR1FormatEnabled?: boolean | undefined;
+                    openAiModelId?: string | undefined;
+                    openAiCustomModelInfo?: {
+                        contextWindow: number;
+                        supportsPromptCache: boolean;
+                        maxTokens?: number | null | undefined;
+                        maxThinkingTokens?: number | null | undefined;
+                        supportsImages?: boolean | undefined;
+                        supportsComputerUse?: boolean | undefined;
+                        supportsVerbosity?: boolean | undefined;
+                        supportsReasoningBudget?: boolean | undefined;
+                        requiredReasoningBudget?: boolean | undefined;
+                        supportsReasoningEffort?: boolean | undefined;
+                        supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                        inputPrice?: number | undefined;
+                        outputPrice?: number | undefined;
+                        cacheWritesPrice?: number | undefined;
+                        cacheReadsPrice?: number | undefined;
+                        description?: string | undefined;
+                        modelType?: string | undefined;
+                        reasoningEffort?: "low" | "medium" | "high" | undefined;
+                        minTokensPerCachePoint?: number | undefined;
+                        maxCachePoints?: number | undefined;
+                        cachableFields?: string[] | undefined;
+                        tiers?: {
+                            contextWindow: number;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                        }[] | undefined;
+                    } | null | undefined;
+                    openAiUseAzure?: boolean | undefined;
+                    azureApiVersion?: string | undefined;
+                    openAiStreamingEnabled?: boolean | undefined;
+                    openAiHostHeader?: string | undefined;
+                    openAiHeaders?: Record<string, string> | undefined;
+                    ollamaModelId?: string | undefined;
+                    ollamaBaseUrl?: string | undefined;
+                    vsCodeLmModelSelector?: {
+                        id?: string | undefined;
+                        vendor?: string | undefined;
+                        family?: string | undefined;
+                        version?: string | undefined;
+                    } | undefined;
+                    lmStudioModelId?: string | undefined;
+                    lmStudioBaseUrl?: string | undefined;
+                    lmStudioDraftModelId?: string | undefined;
+                    lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                    geminiApiKey?: string | undefined;
+                    googleGeminiBaseUrl?: string | undefined;
+                    enableUrlContext?: boolean | undefined;
+                    enableGrounding?: boolean | undefined;
+                    geminiCliOAuthPath?: string | undefined;
+                    geminiCliProjectId?: string | undefined;
+                    openAiNativeApiKey?: string | undefined;
+                    openAiNativeBaseUrl?: string | undefined;
+                    mistralApiKey?: string | undefined;
+                    mistralCodestralUrl?: string | undefined;
+                    deepSeekBaseUrl?: string | undefined;
+                    deepSeekApiKey?: string | undefined;
+                    doubaoBaseUrl?: string | undefined;
+                    doubaoApiKey?: string | undefined;
+                    moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                    moonshotApiKey?: string | undefined;
+                    unboundApiKey?: string | undefined;
+                    unboundModelId?: string | undefined;
+                    requestyBaseUrl?: string | undefined;
+                    requestyApiKey?: string | undefined;
+                    requestyModelId?: string | undefined;
+                    fakeAi?: unknown;
+                    xaiApiKey?: string | undefined;
+                    groqApiKey?: string | undefined;
+                    huggingFaceApiKey?: string | undefined;
+                    huggingFaceModelId?: string | undefined;
+                    huggingFaceInferenceProvider?: string | undefined;
+                    chutesApiKey?: string | undefined;
+                    litellmBaseUrl?: string | undefined;
+                    litellmApiKey?: string | undefined;
+                    litellmModelId?: string | undefined;
+                    litellmUsePromptCache?: boolean | undefined;
+                    cerebrasApiKey?: string | undefined;
+                    sambaNovaApiKey?: string | undefined;
+                    zaiApiKey?: string | undefined;
+                    zaiApiLine?: "china" | "international" | undefined;
+                    fireworksApiKey?: string | undefined;
+                    ioIntelligenceModelId?: string | undefined;
+                    ioIntelligenceApiKey?: string | undefined;
+                } | null | undefined;
+                agentMode?: string | undefined;
             } | null | undefined;
             waitingForAgentInput?: boolean | undefined;
         };
@@ -16918,6 +20972,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -16927,8 +20982,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -16949,6 +21003,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -16958,8 +21013,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -16984,6 +21038,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    source?: "agent" | "user" | undefined;
                     mode?: string | undefined;
                     agentId?: string | undefined;
                     cacheWrites?: number | undefined;
@@ -16991,12 +21046,12 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
-                    source?: "agent" | "user" | undefined;
                     clineMessages?: {
                         type: "ask" | "say";
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -17006,8 +21061,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -17032,6 +21086,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    source?: "agent" | "user" | undefined;
                     mode?: string | undefined;
                     agentId?: string | undefined;
                     cacheWrites?: number | undefined;
@@ -17039,12 +21094,12 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
-                    source?: "agent" | "user" | undefined;
                     clineMessages?: {
                         type: "ask" | "say";
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -17054,8 +21109,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -17278,38 +21332,38 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     }, {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
-                    }>], null>]>, "many">, ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    }>], null>]>, "many">, ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
-                    }])[], ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    }])[], ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[]>;
                     source: z.ZodOptional<z.ZodEnum<["global", "project"]>>;
                 }, "strip", z.ZodTypeAny, {
                     name: string;
-                    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    slug: string;
+                    roleDefinition: string;
+                    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[];
-                    slug: string;
-                    roleDefinition: string;
                     description?: string | undefined;
-                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
+                    source?: "global" | "project" | undefined;
                 }, {
                     name: string;
-                    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    slug: string;
+                    roleDefinition: string;
+                    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[];
-                    slug: string;
-                    roleDefinition: string;
                     description?: string | undefined;
-                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
+                    source?: "global" | "project" | undefined;
                 }>, "many">>;
                 customModePrompts: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodOptional<z.ZodObject<{
                     roleDefinition: z.ZodOptional<z.ZodString>;
@@ -17409,15 +21463,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     }>, "many">>;
                     lastUpdated: z.ZodOptional<z.ZodNumber>;
                 }, "strip", z.ZodTypeAny, {
-                    friends?: {
-                        id: number;
-                        online: boolean;
-                        nickName: string;
-                        headImage: string;
-                        deleted: boolean;
-                        onlineWeb: boolean;
-                        onlineApp: boolean;
-                    }[] | undefined;
                     groups?: {
                         id: number;
                         name: string;
@@ -17433,18 +21478,18 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         quit: boolean;
                         isBanned: boolean;
                         reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        online: boolean;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
                     }[] | undefined;
                     lastUpdated?: number | undefined;
                 }, {
-                    friends?: {
-                        id: number;
-                        online: boolean;
-                        nickName: string;
-                        headImage: string;
-                        deleted: boolean;
-                        onlineWeb: boolean;
-                        onlineApp: boolean;
-                    }[] | undefined;
                     groups?: {
                         id: number;
                         name: string;
@@ -17460,6 +21505,15 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         quit: boolean;
                         isBanned: boolean;
                         reason: string;
+                    }[] | undefined;
+                    friends?: {
+                        id: number;
+                        online: boolean;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
                     }[] | undefined;
                     lastUpdated?: number | undefined;
                 }>>;
@@ -17470,6 +21524,520 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     serverUrl: z.ZodString;
                     serverPort: z.ZodNumber;
                     isDebugMode: z.ZodOptional<z.ZodBoolean>;
+                    agentApiConfiguration: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                        codeIndexOpenAiKey: z.ZodOptional<z.ZodString>;
+                        codeIndexQdrantApiKey: z.ZodOptional<z.ZodString>;
+                        codebaseIndexOpenAiCompatibleBaseUrl: z.ZodOptional<z.ZodString>;
+                        codebaseIndexOpenAiCompatibleApiKey: z.ZodOptional<z.ZodString>;
+                        codebaseIndexOpenAiCompatibleModelDimension: z.ZodOptional<z.ZodNumber>;
+                        codebaseIndexGeminiApiKey: z.ZodOptional<z.ZodString>;
+                        codebaseIndexMistralApiKey: z.ZodOptional<z.ZodString>;
+                        includeMaxTokens: z.ZodOptional<z.ZodBoolean>;
+                        diffEnabled: z.ZodOptional<z.ZodBoolean>;
+                        todoListEnabled: z.ZodOptional<z.ZodBoolean>;
+                        fuzzyMatchThreshold: z.ZodOptional<z.ZodNumber>;
+                        modelTemperature: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+                        rateLimitSeconds: z.ZodOptional<z.ZodNumber>;
+                        consecutiveMistakeLimit: z.ZodOptional<z.ZodNumber>;
+                        enableReasoningEffort: z.ZodOptional<z.ZodBoolean>;
+                        reasoningEffort: z.ZodOptional<z.ZodUnion<[z.ZodEnum<["low", "medium", "high"]>, z.ZodLiteral<"minimal">]>>;
+                        modelMaxTokens: z.ZodOptional<z.ZodNumber>;
+                        modelMaxThinkingTokens: z.ZodOptional<z.ZodNumber>;
+                        verbosity: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+                        apiModelId: z.ZodOptional<z.ZodString>;
+                        ioIntelligenceModelId: z.ZodOptional<z.ZodString>;
+                        ioIntelligenceApiKey: z.ZodOptional<z.ZodString>;
+                        fireworksApiKey: z.ZodOptional<z.ZodString>;
+                        zaiApiKey: z.ZodOptional<z.ZodString>;
+                        zaiApiLine: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"china">, z.ZodLiteral<"international">]>>;
+                        sambaNovaApiKey: z.ZodOptional<z.ZodString>;
+                        cerebrasApiKey: z.ZodOptional<z.ZodString>;
+                        litellmBaseUrl: z.ZodOptional<z.ZodString>;
+                        litellmApiKey: z.ZodOptional<z.ZodString>;
+                        litellmModelId: z.ZodOptional<z.ZodString>;
+                        litellmUsePromptCache: z.ZodOptional<z.ZodBoolean>;
+                        chutesApiKey: z.ZodOptional<z.ZodString>;
+                        huggingFaceApiKey: z.ZodOptional<z.ZodString>;
+                        huggingFaceModelId: z.ZodOptional<z.ZodString>;
+                        huggingFaceInferenceProvider: z.ZodOptional<z.ZodString>;
+                        groqApiKey: z.ZodOptional<z.ZodString>;
+                        xaiApiKey: z.ZodOptional<z.ZodString>;
+                        fakeAi: z.ZodOptional<z.ZodUnknown>;
+                        requestyBaseUrl: z.ZodOptional<z.ZodString>;
+                        requestyApiKey: z.ZodOptional<z.ZodString>;
+                        requestyModelId: z.ZodOptional<z.ZodString>;
+                        unboundApiKey: z.ZodOptional<z.ZodString>;
+                        unboundModelId: z.ZodOptional<z.ZodString>;
+                        moonshotBaseUrl: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<"https://api.moonshot.ai/v1">, z.ZodLiteral<"https://api.moonshot.cn/v1">]>>;
+                        moonshotApiKey: z.ZodOptional<z.ZodString>;
+                        doubaoBaseUrl: z.ZodOptional<z.ZodString>;
+                        doubaoApiKey: z.ZodOptional<z.ZodString>;
+                        deepSeekBaseUrl: z.ZodOptional<z.ZodString>;
+                        deepSeekApiKey: z.ZodOptional<z.ZodString>;
+                        mistralApiKey: z.ZodOptional<z.ZodString>;
+                        mistralCodestralUrl: z.ZodOptional<z.ZodString>;
+                        openAiNativeApiKey: z.ZodOptional<z.ZodString>;
+                        openAiNativeBaseUrl: z.ZodOptional<z.ZodString>;
+                        geminiCliOAuthPath: z.ZodOptional<z.ZodString>;
+                        geminiCliProjectId: z.ZodOptional<z.ZodString>;
+                        geminiApiKey: z.ZodOptional<z.ZodString>;
+                        googleGeminiBaseUrl: z.ZodOptional<z.ZodString>;
+                        enableUrlContext: z.ZodOptional<z.ZodBoolean>;
+                        enableGrounding: z.ZodOptional<z.ZodBoolean>;
+                        lmStudioModelId: z.ZodOptional<z.ZodString>;
+                        lmStudioBaseUrl: z.ZodOptional<z.ZodString>;
+                        lmStudioDraftModelId: z.ZodOptional<z.ZodString>;
+                        lmStudioSpeculativeDecodingEnabled: z.ZodOptional<z.ZodBoolean>;
+                        vsCodeLmModelSelector: z.ZodOptional<z.ZodObject<{
+                            vendor: z.ZodOptional<z.ZodString>;
+                            family: z.ZodOptional<z.ZodString>;
+                            version: z.ZodOptional<z.ZodString>;
+                            id: z.ZodOptional<z.ZodString>;
+                        }, "strip", z.ZodTypeAny, {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        }, {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        }>>;
+                        ollamaModelId: z.ZodOptional<z.ZodString>;
+                        ollamaBaseUrl: z.ZodOptional<z.ZodString>;
+                        openAiBaseUrl: z.ZodOptional<z.ZodString>;
+                        openAiApiKey: z.ZodOptional<z.ZodString>;
+                        openAiLegacyFormat: z.ZodOptional<z.ZodBoolean>;
+                        openAiR1FormatEnabled: z.ZodOptional<z.ZodBoolean>;
+                        openAiModelId: z.ZodOptional<z.ZodString>;
+                        openAiCustomModelInfo: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                            maxTokens: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+                            maxThinkingTokens: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+                            contextWindow: z.ZodNumber;
+                            supportsImages: z.ZodOptional<z.ZodBoolean>;
+                            supportsComputerUse: z.ZodOptional<z.ZodBoolean>;
+                            supportsPromptCache: z.ZodBoolean;
+                            supportsVerbosity: z.ZodOptional<z.ZodBoolean>;
+                            supportsReasoningBudget: z.ZodOptional<z.ZodBoolean>;
+                            requiredReasoningBudget: z.ZodOptional<z.ZodBoolean>;
+                            supportsReasoningEffort: z.ZodOptional<z.ZodBoolean>;
+                            supportedParameters: z.ZodOptional<z.ZodArray<z.ZodEnum<["max_tokens", "temperature", "reasoning", "include_reasoning"]>, "many">>;
+                            inputPrice: z.ZodOptional<z.ZodNumber>;
+                            outputPrice: z.ZodOptional<z.ZodNumber>;
+                            cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
+                            cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
+                            description: z.ZodOptional<z.ZodString>;
+                            modelType: z.ZodOptional<z.ZodString>;
+                            reasoningEffort: z.ZodOptional<z.ZodEnum<["low", "medium", "high"]>>;
+                            minTokensPerCachePoint: z.ZodOptional<z.ZodNumber>;
+                            maxCachePoints: z.ZodOptional<z.ZodNumber>;
+                            cachableFields: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+                            tiers: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                                contextWindow: z.ZodNumber;
+                                inputPrice: z.ZodOptional<z.ZodNumber>;
+                                outputPrice: z.ZodOptional<z.ZodNumber>;
+                                cacheWritesPrice: z.ZodOptional<z.ZodNumber>;
+                                cacheReadsPrice: z.ZodOptional<z.ZodNumber>;
+                            }, "strip", z.ZodTypeAny, {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }, {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }>, "many">>;
+                        }, "strip", z.ZodTypeAny, {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        }, {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        }>>>;
+                        openAiUseAzure: z.ZodOptional<z.ZodBoolean>;
+                        azureApiVersion: z.ZodOptional<z.ZodString>;
+                        openAiStreamingEnabled: z.ZodOptional<z.ZodBoolean>;
+                        openAiHostHeader: z.ZodOptional<z.ZodString>;
+                        openAiHeaders: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+                        vertexKeyFile: z.ZodOptional<z.ZodString>;
+                        vertexJsonCredentials: z.ZodOptional<z.ZodString>;
+                        vertexProjectId: z.ZodOptional<z.ZodString>;
+                        vertexRegion: z.ZodOptional<z.ZodString>;
+                        awsAccessKey: z.ZodOptional<z.ZodString>;
+                        awsSecretKey: z.ZodOptional<z.ZodString>;
+                        awsSessionToken: z.ZodOptional<z.ZodString>;
+                        awsRegion: z.ZodOptional<z.ZodString>;
+                        awsUseCrossRegionInference: z.ZodOptional<z.ZodBoolean>;
+                        awsUsePromptCache: z.ZodOptional<z.ZodBoolean>;
+                        awsProfile: z.ZodOptional<z.ZodString>;
+                        awsUseProfile: z.ZodOptional<z.ZodBoolean>;
+                        awsApiKey: z.ZodOptional<z.ZodString>;
+                        awsUseApiKey: z.ZodOptional<z.ZodBoolean>;
+                        awsCustomArn: z.ZodOptional<z.ZodString>;
+                        awsModelContextWindow: z.ZodOptional<z.ZodNumber>;
+                        awsBedrockEndpointEnabled: z.ZodOptional<z.ZodBoolean>;
+                        awsBedrockEndpoint: z.ZodOptional<z.ZodString>;
+                        openRouterApiKey: z.ZodOptional<z.ZodString>;
+                        openRouterModelId: z.ZodOptional<z.ZodString>;
+                        openRouterBaseUrl: z.ZodOptional<z.ZodString>;
+                        openRouterSpecificProvider: z.ZodOptional<z.ZodString>;
+                        openRouterUseMiddleOutTransform: z.ZodOptional<z.ZodBoolean>;
+                        glamaModelId: z.ZodOptional<z.ZodString>;
+                        glamaApiKey: z.ZodOptional<z.ZodString>;
+                        claudeCodePath: z.ZodOptional<z.ZodString>;
+                        claudeCodeMaxOutputTokens: z.ZodOptional<z.ZodNumber>;
+                        apiKey: z.ZodOptional<z.ZodString>;
+                        anthropicBaseUrl: z.ZodOptional<z.ZodString>;
+                        anthropicUseAuthToken: z.ZodOptional<z.ZodBoolean>;
+                        anthropicBeta1MContext: z.ZodOptional<z.ZodBoolean>;
+                        apiProvider: z.ZodOptional<z.ZodEnum<["anthropic", "claude-code", "glama", "openrouter", "bedrock", "vertex", "openai", "ollama", "vscode-lm", "lmstudio", "gemini", "gemini-cli", "openai-native", "mistral", "moonshot", "deepseek", "doubao", "unbound", "requesty", "human-relay", "fake-ai", "xai", "groq", "chutes", "litellm", "huggingface", "cerebras", "sambanova", "zai", "fireworks", "io-intelligence"]>>;
+                    }, "strip", z.ZodTypeAny, {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    }, {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    }>>>;
+                    agentMode: z.ZodOptional<z.ZodString>;
                 }, "strip", z.ZodTypeAny, {
                     enabled: boolean;
                     serverPort: number;
@@ -17477,6 +22045,152 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentId: string;
                     agentName: string;
                     isDebugMode?: boolean | undefined;
+                    agentApiConfiguration?: {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    } | null | undefined;
+                    agentMode?: string | undefined;
                 }, {
                     enabled: boolean;
                     serverPort: number;
@@ -17484,6 +22198,152 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentId: string;
                     agentName: string;
                     isDebugMode?: boolean | undefined;
+                    agentApiConfiguration?: {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    } | null | undefined;
+                    agentMode?: string | undefined;
                 }>>>;
                 waitingForAgentInput: z.ZodOptional<z.ZodBoolean>;
             }, "strip", z.ZodTypeAny, {
@@ -17630,22 +22490,22 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
-                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
                     name: string;
-                    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    slug: string;
+                    roleDefinition: string;
+                    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[];
-                    slug: string;
-                    roleDefinition: string;
                     description?: string | undefined;
-                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
+                    source?: "global" | "project" | undefined;
                 }[] | undefined;
+                mode?: string | undefined;
+                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
                     id: string;
@@ -17663,6 +22523,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    source?: "agent" | "user" | undefined;
                     mode?: string | undefined;
                     agentId?: string | undefined;
                     cacheWrites?: number | undefined;
@@ -17670,12 +22531,12 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
-                    source?: "agent" | "user" | undefined;
                     clineMessages?: {
                         type: "ask" | "say";
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -17685,8 +22546,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -17819,15 +22679,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
                 imContacts?: {
-                    friends?: {
-                        id: number;
-                        online: boolean;
-                        nickName: string;
-                        headImage: string;
-                        deleted: boolean;
-                        onlineWeb: boolean;
-                        onlineApp: boolean;
-                    }[] | undefined;
                     groups?: {
                         id: number;
                         name: string;
@@ -17844,6 +22695,15 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         isBanned: boolean;
                         reason: string;
                     }[] | undefined;
+                    friends?: {
+                        id: number;
+                        online: boolean;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
                     lastUpdated?: number | undefined;
                 } | undefined;
                 agentA2AMode?: {
@@ -17853,6 +22713,152 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentId: string;
                     agentName: string;
                     isDebugMode?: boolean | undefined;
+                    agentApiConfiguration?: {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    } | null | undefined;
+                    agentMode?: string | undefined;
                 } | null | undefined;
                 waitingForAgentInput?: boolean | undefined;
             }, {
@@ -17999,22 +23005,22 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
-                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
                     name: string;
-                    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    slug: string;
+                    roleDefinition: string;
+                    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[];
-                    slug: string;
-                    roleDefinition: string;
                     description?: string | undefined;
-                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
+                    source?: "global" | "project" | undefined;
                 }[] | undefined;
+                mode?: string | undefined;
+                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
                     id: string;
@@ -18032,6 +23038,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    source?: "agent" | "user" | undefined;
                     mode?: string | undefined;
                     agentId?: string | undefined;
                     cacheWrites?: number | undefined;
@@ -18039,12 +23046,12 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
-                    source?: "agent" | "user" | undefined;
                     clineMessages?: {
                         type: "ask" | "say";
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -18054,8 +23061,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -18188,15 +23194,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
                 imContacts?: {
-                    friends?: {
-                        id: number;
-                        online: boolean;
-                        nickName: string;
-                        headImage: string;
-                        deleted: boolean;
-                        onlineWeb: boolean;
-                        onlineApp: boolean;
-                    }[] | undefined;
                     groups?: {
                         id: number;
                         name: string;
@@ -18213,6 +23210,15 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         isBanned: boolean;
                         reason: string;
                     }[] | undefined;
+                    friends?: {
+                        id: number;
+                        online: boolean;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
                     lastUpdated?: number | undefined;
                 } | undefined;
                 agentA2AMode?: {
@@ -18222,6 +23228,152 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentId: string;
                     agentName: string;
                     isDebugMode?: boolean | undefined;
+                    agentApiConfiguration?: {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    } | null | undefined;
+                    agentMode?: string | undefined;
                 } | null | undefined;
                 waitingForAgentInput?: boolean | undefined;
             }>;
@@ -18374,22 +23526,22 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
-                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
                     name: string;
-                    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    slug: string;
+                    roleDefinition: string;
+                    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[];
-                    slug: string;
-                    roleDefinition: string;
                     description?: string | undefined;
-                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
+                    source?: "global" | "project" | undefined;
                 }[] | undefined;
+                mode?: string | undefined;
+                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
                     id: string;
@@ -18407,6 +23559,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    source?: "agent" | "user" | undefined;
                     mode?: string | undefined;
                     agentId?: string | undefined;
                     cacheWrites?: number | undefined;
@@ -18414,12 +23567,12 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
-                    source?: "agent" | "user" | undefined;
                     clineMessages?: {
                         type: "ask" | "say";
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -18429,8 +23582,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -18563,15 +23715,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
                 imContacts?: {
-                    friends?: {
-                        id: number;
-                        online: boolean;
-                        nickName: string;
-                        headImage: string;
-                        deleted: boolean;
-                        onlineWeb: boolean;
-                        onlineApp: boolean;
-                    }[] | undefined;
                     groups?: {
                         id: number;
                         name: string;
@@ -18588,6 +23731,15 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         isBanned: boolean;
                         reason: string;
                     }[] | undefined;
+                    friends?: {
+                        id: number;
+                        online: boolean;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
                     lastUpdated?: number | undefined;
                 } | undefined;
                 agentA2AMode?: {
@@ -18597,6 +23749,152 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentId: string;
                     agentName: string;
                     isDebugMode?: boolean | undefined;
+                    agentApiConfiguration?: {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    } | null | undefined;
+                    agentMode?: string | undefined;
                 } | null | undefined;
                 waitingForAgentInput?: boolean | undefined;
             };
@@ -18748,22 +24046,22 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
-                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
                     name: string;
-                    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    slug: string;
+                    roleDefinition: string;
+                    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[];
-                    slug: string;
-                    roleDefinition: string;
                     description?: string | undefined;
-                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
+                    source?: "global" | "project" | undefined;
                 }[] | undefined;
+                mode?: string | undefined;
+                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
                     id: string;
@@ -18781,6 +24079,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    source?: "agent" | "user" | undefined;
                     mode?: string | undefined;
                     agentId?: string | undefined;
                     cacheWrites?: number | undefined;
@@ -18788,12 +24087,12 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
-                    source?: "agent" | "user" | undefined;
                     clineMessages?: {
                         type: "ask" | "say";
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -18803,8 +24102,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -18937,15 +24235,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
                 imContacts?: {
-                    friends?: {
-                        id: number;
-                        online: boolean;
-                        nickName: string;
-                        headImage: string;
-                        deleted: boolean;
-                        onlineWeb: boolean;
-                        onlineApp: boolean;
-                    }[] | undefined;
                     groups?: {
                         id: number;
                         name: string;
@@ -18962,6 +24251,15 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         isBanned: boolean;
                         reason: string;
                     }[] | undefined;
+                    friends?: {
+                        id: number;
+                        online: boolean;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
                     lastUpdated?: number | undefined;
                 } | undefined;
                 agentA2AMode?: {
@@ -18971,6 +24269,152 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentId: string;
                     agentName: string;
                     isDebugMode?: boolean | undefined;
+                    agentApiConfiguration?: {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    } | null | undefined;
+                    agentMode?: string | undefined;
                 } | null | undefined;
                 waitingForAgentInput?: boolean | undefined;
             };
@@ -19124,22 +24568,22 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
-                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
                     name: string;
-                    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    slug: string;
+                    roleDefinition: string;
+                    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[];
-                    slug: string;
-                    roleDefinition: string;
                     description?: string | undefined;
-                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
+                    source?: "global" | "project" | undefined;
                 }[] | undefined;
+                mode?: string | undefined;
+                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
                     id: string;
@@ -19157,6 +24601,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    source?: "agent" | "user" | undefined;
                     mode?: string | undefined;
                     agentId?: string | undefined;
                     cacheWrites?: number | undefined;
@@ -19164,12 +24609,12 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
-                    source?: "agent" | "user" | undefined;
                     clineMessages?: {
                         type: "ask" | "say";
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -19179,8 +24624,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -19313,15 +24757,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
                 imContacts?: {
-                    friends?: {
-                        id: number;
-                        online: boolean;
-                        nickName: string;
-                        headImage: string;
-                        deleted: boolean;
-                        onlineWeb: boolean;
-                        onlineApp: boolean;
-                    }[] | undefined;
                     groups?: {
                         id: number;
                         name: string;
@@ -19338,6 +24773,15 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         isBanned: boolean;
                         reason: string;
                     }[] | undefined;
+                    friends?: {
+                        id: number;
+                        online: boolean;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
                     lastUpdated?: number | undefined;
                 } | undefined;
                 agentA2AMode?: {
@@ -19347,6 +24791,152 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentId: string;
                     agentName: string;
                     isDebugMode?: boolean | undefined;
+                    agentApiConfiguration?: {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    } | null | undefined;
+                    agentMode?: string | undefined;
                 } | null | undefined;
                 waitingForAgentInput?: boolean | undefined;
             };
@@ -19501,22 +25091,22 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
-                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
                     name: string;
-                    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    slug: string;
+                    roleDefinition: string;
+                    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[];
-                    slug: string;
-                    roleDefinition: string;
                     description?: string | undefined;
-                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
+                    source?: "global" | "project" | undefined;
                 }[] | undefined;
+                mode?: string | undefined;
+                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
                     id: string;
@@ -19534,6 +25124,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    source?: "agent" | "user" | undefined;
                     mode?: string | undefined;
                     agentId?: string | undefined;
                     cacheWrites?: number | undefined;
@@ -19541,12 +25132,12 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
-                    source?: "agent" | "user" | undefined;
                     clineMessages?: {
                         type: "ask" | "say";
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -19556,8 +25147,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -19690,15 +25280,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
                 imContacts?: {
-                    friends?: {
-                        id: number;
-                        online: boolean;
-                        nickName: string;
-                        headImage: string;
-                        deleted: boolean;
-                        onlineWeb: boolean;
-                        onlineApp: boolean;
-                    }[] | undefined;
                     groups?: {
                         id: number;
                         name: string;
@@ -19715,6 +25296,15 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         isBanned: boolean;
                         reason: string;
                     }[] | undefined;
+                    friends?: {
+                        id: number;
+                        online: boolean;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
                     lastUpdated?: number | undefined;
                 } | undefined;
                 agentA2AMode?: {
@@ -19724,6 +25314,152 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentId: string;
                     agentName: string;
                     isDebugMode?: boolean | undefined;
+                    agentApiConfiguration?: {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    } | null | undefined;
+                    agentMode?: string | undefined;
                 } | null | undefined;
                 waitingForAgentInput?: boolean | undefined;
             };
@@ -19899,22 +25635,22 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
-                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
                     name: string;
-                    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    slug: string;
+                    roleDefinition: string;
+                    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[];
-                    slug: string;
-                    roleDefinition: string;
                     description?: string | undefined;
-                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
+                    source?: "global" | "project" | undefined;
                 }[] | undefined;
+                mode?: string | undefined;
+                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
                     id: string;
@@ -19932,6 +25668,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    source?: "agent" | "user" | undefined;
                     mode?: string | undefined;
                     agentId?: string | undefined;
                     cacheWrites?: number | undefined;
@@ -19939,12 +25676,12 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
-                    source?: "agent" | "user" | undefined;
                     clineMessages?: {
                         type: "ask" | "say";
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -19954,8 +25691,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -20088,15 +25824,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
                 imContacts?: {
-                    friends?: {
-                        id: number;
-                        online: boolean;
-                        nickName: string;
-                        headImage: string;
-                        deleted: boolean;
-                        onlineWeb: boolean;
-                        onlineApp: boolean;
-                    }[] | undefined;
                     groups?: {
                         id: number;
                         name: string;
@@ -20113,6 +25840,15 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         isBanned: boolean;
                         reason: string;
                     }[] | undefined;
+                    friends?: {
+                        id: number;
+                        online: boolean;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
                     lastUpdated?: number | undefined;
                 } | undefined;
                 agentA2AMode?: {
@@ -20122,6 +25858,152 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentId: string;
                     agentName: string;
                     isDebugMode?: boolean | undefined;
+                    agentApiConfiguration?: {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    } | null | undefined;
+                    agentMode?: string | undefined;
                 } | null | undefined;
                 waitingForAgentInput?: boolean | undefined;
             };
@@ -20287,22 +26169,22 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 fireworksApiKey?: string | undefined;
                 ioIntelligenceModelId?: string | undefined;
                 ioIntelligenceApiKey?: string | undefined;
-                mode?: string | undefined;
-                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 customInstructions?: string | undefined;
                 customModes?: {
                     name: string;
-                    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+                    slug: string;
+                    roleDefinition: string;
+                    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
                         description?: string | undefined;
                         fileRegex?: string | undefined;
                     }])[];
-                    slug: string;
-                    roleDefinition: string;
                     description?: string | undefined;
-                    source?: "global" | "project" | undefined;
                     whenToUse?: string | undefined;
                     customInstructions?: string | undefined;
+                    source?: "global" | "project" | undefined;
                 }[] | undefined;
+                mode?: string | undefined;
+                language?: "id" | "ca" | "de" | "en" | "es" | "fr" | "hi" | "it" | "ja" | "ko" | "nl" | "pl" | "pt-BR" | "ru" | "tr" | "vi" | "zh-CN" | "zh-TW" | undefined;
                 currentApiConfigName?: string | undefined;
                 listApiConfigMeta?: {
                     id: string;
@@ -20320,6 +26202,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     totalCost: number;
                     tokensIn: number;
                     tokensOut: number;
+                    source?: "agent" | "user" | undefined;
                     mode?: string | undefined;
                     agentId?: string | undefined;
                     cacheWrites?: number | undefined;
@@ -20327,12 +26210,12 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     size?: number | undefined;
                     workspace?: string | undefined;
                     terminalNo?: number | undefined;
-                    source?: "agent" | "user" | undefined;
                     clineMessages?: {
                         type: "ask" | "say";
                         ts: number;
                         reasoning?: string | undefined;
                         partial?: boolean | undefined;
+                        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                         metadata?: {
                             taskId?: string | undefined;
                             gpt5?: {
@@ -20342,8 +26225,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                             } | undefined;
                         } | undefined;
                         text?: string | undefined;
-                        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                         images?: string[] | undefined;
                         conversationHistoryIndex?: number | undefined;
                         checkpoint?: Record<string, unknown> | undefined;
@@ -20476,15 +26358,6 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 lastModeExportPath?: string | undefined;
                 lastModeImportPath?: string | undefined;
                 imContacts?: {
-                    friends?: {
-                        id: number;
-                        online: boolean;
-                        nickName: string;
-                        headImage: string;
-                        deleted: boolean;
-                        onlineWeb: boolean;
-                        onlineApp: boolean;
-                    }[] | undefined;
                     groups?: {
                         id: number;
                         name: string;
@@ -20501,6 +26374,15 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                         isBanned: boolean;
                         reason: string;
                     }[] | undefined;
+                    friends?: {
+                        id: number;
+                        online: boolean;
+                        nickName: string;
+                        headImage: string;
+                        deleted: boolean;
+                        onlineWeb: boolean;
+                        onlineApp: boolean;
+                    }[] | undefined;
                     lastUpdated?: number | undefined;
                 } | undefined;
                 agentA2AMode?: {
@@ -20510,6 +26392,152 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     agentId: string;
                     agentName: string;
                     isDebugMode?: boolean | undefined;
+                    agentApiConfiguration?: {
+                        reasoningEffort?: "low" | "medium" | "high" | "minimal" | undefined;
+                        codebaseIndexOpenAiCompatibleBaseUrl?: string | undefined;
+                        codebaseIndexOpenAiCompatibleModelDimension?: number | undefined;
+                        codeIndexOpenAiKey?: string | undefined;
+                        codeIndexQdrantApiKey?: string | undefined;
+                        codebaseIndexOpenAiCompatibleApiKey?: string | undefined;
+                        codebaseIndexGeminiApiKey?: string | undefined;
+                        codebaseIndexMistralApiKey?: string | undefined;
+                        apiProvider?: "openai" | "ollama" | "gemini" | "mistral" | "anthropic" | "claude-code" | "glama" | "openrouter" | "bedrock" | "vertex" | "vscode-lm" | "lmstudio" | "gemini-cli" | "openai-native" | "moonshot" | "deepseek" | "doubao" | "unbound" | "requesty" | "human-relay" | "fake-ai" | "xai" | "groq" | "chutes" | "litellm" | "huggingface" | "cerebras" | "sambanova" | "zai" | "fireworks" | "io-intelligence" | undefined;
+                        includeMaxTokens?: boolean | undefined;
+                        diffEnabled?: boolean | undefined;
+                        todoListEnabled?: boolean | undefined;
+                        fuzzyMatchThreshold?: number | undefined;
+                        modelTemperature?: number | null | undefined;
+                        rateLimitSeconds?: number | undefined;
+                        consecutiveMistakeLimit?: number | undefined;
+                        enableReasoningEffort?: boolean | undefined;
+                        modelMaxTokens?: number | undefined;
+                        modelMaxThinkingTokens?: number | undefined;
+                        verbosity?: "low" | "medium" | "high" | undefined;
+                        apiModelId?: string | undefined;
+                        apiKey?: string | undefined;
+                        anthropicBaseUrl?: string | undefined;
+                        anthropicUseAuthToken?: boolean | undefined;
+                        anthropicBeta1MContext?: boolean | undefined;
+                        claudeCodePath?: string | undefined;
+                        claudeCodeMaxOutputTokens?: number | undefined;
+                        glamaModelId?: string | undefined;
+                        glamaApiKey?: string | undefined;
+                        openRouterApiKey?: string | undefined;
+                        openRouterModelId?: string | undefined;
+                        openRouterBaseUrl?: string | undefined;
+                        openRouterSpecificProvider?: string | undefined;
+                        openRouterUseMiddleOutTransform?: boolean | undefined;
+                        awsAccessKey?: string | undefined;
+                        awsSecretKey?: string | undefined;
+                        awsSessionToken?: string | undefined;
+                        awsRegion?: string | undefined;
+                        awsUseCrossRegionInference?: boolean | undefined;
+                        awsUsePromptCache?: boolean | undefined;
+                        awsProfile?: string | undefined;
+                        awsUseProfile?: boolean | undefined;
+                        awsApiKey?: string | undefined;
+                        awsUseApiKey?: boolean | undefined;
+                        awsCustomArn?: string | undefined;
+                        awsModelContextWindow?: number | undefined;
+                        awsBedrockEndpointEnabled?: boolean | undefined;
+                        awsBedrockEndpoint?: string | undefined;
+                        vertexKeyFile?: string | undefined;
+                        vertexJsonCredentials?: string | undefined;
+                        vertexProjectId?: string | undefined;
+                        vertexRegion?: string | undefined;
+                        openAiBaseUrl?: string | undefined;
+                        openAiApiKey?: string | undefined;
+                        openAiLegacyFormat?: boolean | undefined;
+                        openAiR1FormatEnabled?: boolean | undefined;
+                        openAiModelId?: string | undefined;
+                        openAiCustomModelInfo?: {
+                            contextWindow: number;
+                            supportsPromptCache: boolean;
+                            maxTokens?: number | null | undefined;
+                            maxThinkingTokens?: number | null | undefined;
+                            supportsImages?: boolean | undefined;
+                            supportsComputerUse?: boolean | undefined;
+                            supportsVerbosity?: boolean | undefined;
+                            supportsReasoningBudget?: boolean | undefined;
+                            requiredReasoningBudget?: boolean | undefined;
+                            supportsReasoningEffort?: boolean | undefined;
+                            supportedParameters?: ("max_tokens" | "temperature" | "reasoning" | "include_reasoning")[] | undefined;
+                            inputPrice?: number | undefined;
+                            outputPrice?: number | undefined;
+                            cacheWritesPrice?: number | undefined;
+                            cacheReadsPrice?: number | undefined;
+                            description?: string | undefined;
+                            modelType?: string | undefined;
+                            reasoningEffort?: "low" | "medium" | "high" | undefined;
+                            minTokensPerCachePoint?: number | undefined;
+                            maxCachePoints?: number | undefined;
+                            cachableFields?: string[] | undefined;
+                            tiers?: {
+                                contextWindow: number;
+                                inputPrice?: number | undefined;
+                                outputPrice?: number | undefined;
+                                cacheWritesPrice?: number | undefined;
+                                cacheReadsPrice?: number | undefined;
+                            }[] | undefined;
+                        } | null | undefined;
+                        openAiUseAzure?: boolean | undefined;
+                        azureApiVersion?: string | undefined;
+                        openAiStreamingEnabled?: boolean | undefined;
+                        openAiHostHeader?: string | undefined;
+                        openAiHeaders?: Record<string, string> | undefined;
+                        ollamaModelId?: string | undefined;
+                        ollamaBaseUrl?: string | undefined;
+                        vsCodeLmModelSelector?: {
+                            id?: string | undefined;
+                            vendor?: string | undefined;
+                            family?: string | undefined;
+                            version?: string | undefined;
+                        } | undefined;
+                        lmStudioModelId?: string | undefined;
+                        lmStudioBaseUrl?: string | undefined;
+                        lmStudioDraftModelId?: string | undefined;
+                        lmStudioSpeculativeDecodingEnabled?: boolean | undefined;
+                        geminiApiKey?: string | undefined;
+                        googleGeminiBaseUrl?: string | undefined;
+                        enableUrlContext?: boolean | undefined;
+                        enableGrounding?: boolean | undefined;
+                        geminiCliOAuthPath?: string | undefined;
+                        geminiCliProjectId?: string | undefined;
+                        openAiNativeApiKey?: string | undefined;
+                        openAiNativeBaseUrl?: string | undefined;
+                        mistralApiKey?: string | undefined;
+                        mistralCodestralUrl?: string | undefined;
+                        deepSeekBaseUrl?: string | undefined;
+                        deepSeekApiKey?: string | undefined;
+                        doubaoBaseUrl?: string | undefined;
+                        doubaoApiKey?: string | undefined;
+                        moonshotBaseUrl?: "https://api.moonshot.ai/v1" | "https://api.moonshot.cn/v1" | undefined;
+                        moonshotApiKey?: string | undefined;
+                        unboundApiKey?: string | undefined;
+                        unboundModelId?: string | undefined;
+                        requestyBaseUrl?: string | undefined;
+                        requestyApiKey?: string | undefined;
+                        requestyModelId?: string | undefined;
+                        fakeAi?: unknown;
+                        xaiApiKey?: string | undefined;
+                        groqApiKey?: string | undefined;
+                        huggingFaceApiKey?: string | undefined;
+                        huggingFaceModelId?: string | undefined;
+                        huggingFaceInferenceProvider?: string | undefined;
+                        chutesApiKey?: string | undefined;
+                        litellmBaseUrl?: string | undefined;
+                        litellmApiKey?: string | undefined;
+                        litellmModelId?: string | undefined;
+                        litellmUsePromptCache?: boolean | undefined;
+                        cerebrasApiKey?: string | undefined;
+                        sambaNovaApiKey?: string | undefined;
+                        zaiApiKey?: string | undefined;
+                        zaiApiLine?: "china" | "international" | undefined;
+                        fireworksApiKey?: string | undefined;
+                        ioIntelligenceModelId?: string | undefined;
+                        ioIntelligenceApiKey?: string | undefined;
+                    } | null | undefined;
+                    agentMode?: string | undefined;
                 } | null | undefined;
                 waitingForAgentInput?: boolean | undefined;
             };
@@ -20603,7 +26631,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             contextTokens: number;
             totalCacheWrites?: number | undefined;
             totalCacheReads?: number | undefined;
-        }, Partial<Record<"browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
+        }, Partial<Record<"execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
             attempts: number;
             failures: number;
         }>>, {
@@ -20619,7 +26647,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             contextTokens: number;
             totalCacheWrites?: number | undefined;
             totalCacheReads?: number | undefined;
-        }, Partial<Record<"browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
+        }, Partial<Record<"execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
             attempts: number;
             failures: number;
         }>>, {
@@ -20801,6 +26829,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ts: number;
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
+                ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                 metadata?: {
                     taskId?: string | undefined;
                     gpt5?: {
@@ -20810,8 +26839,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     } | undefined;
                 } | undefined;
                 text?: string | undefined;
-                ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                 images?: string[] | undefined;
                 conversationHistoryIndex?: number | undefined;
                 checkpoint?: Record<string, unknown> | undefined;
@@ -20832,6 +26860,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ts: number;
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
+                ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                 metadata?: {
                     taskId?: string | undefined;
                     gpt5?: {
@@ -20841,8 +26870,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     } | undefined;
                 } | undefined;
                 text?: string | undefined;
-                ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                 images?: string[] | undefined;
                 conversationHistoryIndex?: number | undefined;
                 checkpoint?: Record<string, unknown> | undefined;
@@ -20865,6 +26893,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ts: number;
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
+                ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                 metadata?: {
                     taskId?: string | undefined;
                     gpt5?: {
@@ -20874,8 +26903,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     } | undefined;
                 } | undefined;
                 text?: string | undefined;
-                ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                 images?: string[] | undefined;
                 conversationHistoryIndex?: number | undefined;
                 checkpoint?: Record<string, unknown> | undefined;
@@ -20900,6 +26928,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ts: number;
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
+                ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                 metadata?: {
                     taskId?: string | undefined;
                     gpt5?: {
@@ -20909,8 +26938,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     } | undefined;
                 } | undefined;
                 text?: string | undefined;
-                ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                 images?: string[] | undefined;
                 conversationHistoryIndex?: number | undefined;
                 checkpoint?: Record<string, unknown> | undefined;
@@ -20939,6 +26967,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ts: number;
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
+                ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                 metadata?: {
                     taskId?: string | undefined;
                     gpt5?: {
@@ -20948,8 +26977,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     } | undefined;
                 } | undefined;
                 text?: string | undefined;
-                ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                 images?: string[] | undefined;
                 conversationHistoryIndex?: number | undefined;
                 checkpoint?: Record<string, unknown> | undefined;
@@ -20978,6 +27006,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ts: number;
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
+                ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                 metadata?: {
                     taskId?: string | undefined;
                     gpt5?: {
@@ -20987,8 +27016,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     } | undefined;
                 } | undefined;
                 text?: string | undefined;
-                ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                 images?: string[] | undefined;
                 conversationHistoryIndex?: number | undefined;
                 checkpoint?: Record<string, unknown> | undefined;
@@ -21039,11 +27067,11 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         taskId: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         eventName: RooCodeEventName.TaskToolFailed;
-        payload: [string, "browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
+        payload: [string, "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
         taskId?: number | undefined;
     }, {
         eventName: RooCodeEventName.TaskToolFailed;
-        payload: [string, "browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
+        payload: [string, "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
         taskId?: number | undefined;
     }>, z.ZodObject<{
         eventName: z.ZodLiteral<RooCodeEventName.TaskTokenUsageUpdated>;
@@ -21136,7 +27164,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             contextTokens: number;
             totalCacheWrites?: number | undefined;
             totalCacheReads?: number | undefined;
-        }, Partial<Record<"browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
+        }, Partial<Record<"execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
             attempts: number;
             failures: number;
         }>>, {
@@ -21183,6 +27211,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ts: number;
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
+                ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                 metadata?: {
                     taskId?: string | undefined;
                     gpt5?: {
@@ -21192,8 +27221,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     } | undefined;
                 } | undefined;
                 text?: string | undefined;
-                ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                 images?: string[] | undefined;
                 conversationHistoryIndex?: number | undefined;
                 checkpoint?: Record<string, unknown> | undefined;
@@ -21224,7 +27252,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         taskId?: number | undefined;
     } | {
         eventName: RooCodeEventName.TaskToolFailed;
-        payload: [string, "browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
+        payload: [string, "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
         taskId?: number | undefined;
     } | {
         eventName: RooCodeEventName.TaskTokenUsageUpdated;
@@ -21267,7 +27295,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             contextTokens: number;
             totalCacheWrites?: number | undefined;
             totalCacheReads?: number | undefined;
-        }, Partial<Record<"browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
+        }, Partial<Record<"execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", {
             attempts: number;
             failures: number;
         }>>, {
@@ -21314,6 +27342,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 ts: number;
                 reasoning?: string | undefined;
                 partial?: boolean | undefined;
+                ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
                 metadata?: {
                     taskId?: string | undefined;
                     gpt5?: {
@@ -21323,8 +27352,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     } | undefined;
                 } | undefined;
                 text?: string | undefined;
-                ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-                say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+                say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
                 images?: string[] | undefined;
                 conversationHistoryIndex?: number | undefined;
                 checkpoint?: Record<string, unknown> | undefined;
@@ -21355,7 +27383,7 @@ declare const ipcMessageSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         taskId?: number | undefined;
     } | {
         eventName: RooCodeEventName.TaskToolFailed;
-        payload: [string, "browser_action" | "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
+        payload: [string, "execute_command" | "read_file" | "write_to_file" | "apply_diff" | "insert_content" | "search_and_replace" | "search_files" | "list_files" | "list_code_definition_names" | "browser_action" | "use_mcp_tool" | "access_mcp_resource" | "ask_followup_question" | "attempt_completion" | "switch_mode" | "new_task" | "fetch_instructions" | "codebase_search" | "update_todo_list", string];
         taskId?: number | undefined;
     } | {
         eventName: RooCodeEventName.TaskTokenUsageUpdated;
@@ -25410,6 +31438,7 @@ declare const historyItemSchema: z.ZodObject<{
         ts: number;
         reasoning?: string | undefined;
         partial?: boolean | undefined;
+        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
         metadata?: {
             taskId?: string | undefined;
             gpt5?: {
@@ -25419,8 +31448,7 @@ declare const historyItemSchema: z.ZodObject<{
             } | undefined;
         } | undefined;
         text?: string | undefined;
-        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
         images?: string[] | undefined;
         conversationHistoryIndex?: number | undefined;
         checkpoint?: Record<string, unknown> | undefined;
@@ -25441,6 +31469,7 @@ declare const historyItemSchema: z.ZodObject<{
         ts: number;
         reasoning?: string | undefined;
         partial?: boolean | undefined;
+        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
         metadata?: {
             taskId?: string | undefined;
             gpt5?: {
@@ -25450,8 +31479,7 @@ declare const historyItemSchema: z.ZodObject<{
             } | undefined;
         } | undefined;
         text?: string | undefined;
-        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
         images?: string[] | undefined;
         conversationHistoryIndex?: number | undefined;
         checkpoint?: Record<string, unknown> | undefined;
@@ -25476,6 +31504,7 @@ declare const historyItemSchema: z.ZodObject<{
     totalCost: number;
     tokensIn: number;
     tokensOut: number;
+    source?: "agent" | "user" | undefined;
     mode?: string | undefined;
     agentId?: string | undefined;
     cacheWrites?: number | undefined;
@@ -25483,12 +31512,12 @@ declare const historyItemSchema: z.ZodObject<{
     size?: number | undefined;
     workspace?: string | undefined;
     terminalNo?: number | undefined;
-    source?: "agent" | "user" | undefined;
     clineMessages?: {
         type: "ask" | "say";
         ts: number;
         reasoning?: string | undefined;
         partial?: boolean | undefined;
+        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
         metadata?: {
             taskId?: string | undefined;
             gpt5?: {
@@ -25498,8 +31527,7 @@ declare const historyItemSchema: z.ZodObject<{
             } | undefined;
         } | undefined;
         text?: string | undefined;
-        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
         images?: string[] | undefined;
         conversationHistoryIndex?: number | undefined;
         checkpoint?: Record<string, unknown> | undefined;
@@ -25524,6 +31552,7 @@ declare const historyItemSchema: z.ZodObject<{
     totalCost: number;
     tokensIn: number;
     tokensOut: number;
+    source?: "agent" | "user" | undefined;
     mode?: string | undefined;
     agentId?: string | undefined;
     cacheWrites?: number | undefined;
@@ -25531,12 +31560,12 @@ declare const historyItemSchema: z.ZodObject<{
     size?: number | undefined;
     workspace?: string | undefined;
     terminalNo?: number | undefined;
-    source?: "agent" | "user" | undefined;
     clineMessages?: {
         type: "ask" | "say";
         ts: number;
         reasoning?: string | undefined;
         partial?: boolean | undefined;
+        ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
         metadata?: {
             taskId?: string | undefined;
             gpt5?: {
@@ -25546,8 +31575,7 @@ declare const historyItemSchema: z.ZodObject<{
             } | undefined;
         } | undefined;
         text?: string | undefined;
-        ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-        say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+        say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
         images?: string[] | undefined;
         conversationHistoryIndex?: number | undefined;
         checkpoint?: Record<string, unknown> | undefined;
@@ -26206,6 +32234,7 @@ declare const clineMessageSchema: z.ZodObject<{
     ts: number;
     reasoning?: string | undefined;
     partial?: boolean | undefined;
+    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
     metadata?: {
         taskId?: string | undefined;
         gpt5?: {
@@ -26215,8 +32244,7 @@ declare const clineMessageSchema: z.ZodObject<{
         } | undefined;
     } | undefined;
     text?: string | undefined;
-    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
     images?: string[] | undefined;
     conversationHistoryIndex?: number | undefined;
     checkpoint?: Record<string, unknown> | undefined;
@@ -26237,6 +32265,7 @@ declare const clineMessageSchema: z.ZodObject<{
     ts: number;
     reasoning?: string | undefined;
     partial?: boolean | undefined;
+    ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
     metadata?: {
         taskId?: string | undefined;
         gpt5?: {
@@ -26246,8 +32275,7 @@ declare const clineMessageSchema: z.ZodObject<{
         } | undefined;
     } | undefined;
     text?: string | undefined;
-    ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-    say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+    say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
     images?: string[] | undefined;
     conversationHistoryIndex?: number | undefined;
     checkpoint?: Record<string, unknown> | undefined;
@@ -26350,38 +32378,38 @@ declare const modeConfigSchema: z.ZodObject<{
     }, {
         description?: string | undefined;
         fileRegex?: string | undefined;
-    }>], null>]>, "many">, ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+    }>], null>]>, "many">, ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
         description?: string | undefined;
         fileRegex?: string | undefined;
-    }])[], ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+    }])[], ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
         description?: string | undefined;
         fileRegex?: string | undefined;
     }])[]>;
     source: z.ZodOptional<z.ZodEnum<["global", "project"]>>;
 }, "strip", z.ZodTypeAny, {
     name: string;
-    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+    slug: string;
+    roleDefinition: string;
+    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
         description?: string | undefined;
         fileRegex?: string | undefined;
     }])[];
-    slug: string;
-    roleDefinition: string;
     description?: string | undefined;
-    source?: "global" | "project" | undefined;
     whenToUse?: string | undefined;
     customInstructions?: string | undefined;
+    source?: "global" | "project" | undefined;
 }, {
     name: string;
-    groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+    slug: string;
+    roleDefinition: string;
+    groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
         description?: string | undefined;
         fileRegex?: string | undefined;
     }])[];
-    slug: string;
-    roleDefinition: string;
     description?: string | undefined;
-    source?: "global" | "project" | undefined;
     whenToUse?: string | undefined;
     customInstructions?: string | undefined;
+    source?: "global" | "project" | undefined;
 }>;
 type ModeConfig = z.infer<typeof modeConfigSchema>;
 /**
@@ -26404,90 +32432,90 @@ declare const customModesSettingsSchema: z.ZodObject<{
         }, {
             description?: string | undefined;
             fileRegex?: string | undefined;
-        }>], null>]>, "many">, ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        }>], null>]>, "many">, ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
-        }])[], ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        }])[], ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[]>;
         source: z.ZodOptional<z.ZodEnum<["global", "project"]>>;
     }, "strip", z.ZodTypeAny, {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }, {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }>, "many">, {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }[], {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }[]>;
 }, "strip", z.ZodTypeAny, {
     customModes: {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }[];
 }, {
     customModes: {
         name: string;
-        groups: ("read" | "command" | "edit" | "browser" | "mcp" | "modes" | ["read" | "command" | "edit" | "browser" | "mcp" | "modes", {
+        slug: string;
+        roleDefinition: string;
+        groups: ("read" | "edit" | "browser" | "command" | "mcp" | "modes" | ["read" | "edit" | "browser" | "command" | "mcp" | "modes", {
             description?: string | undefined;
             fileRegex?: string | undefined;
         }])[];
-        slug: string;
-        roleDefinition: string;
         description?: string | undefined;
-        source?: "global" | "project" | undefined;
         whenToUse?: string | undefined;
         customInstructions?: string | undefined;
+        source?: "global" | "project" | undefined;
     }[];
 }>;
 type CustomModesSettings = z.infer<typeof customModesSettingsSchema>;
@@ -27236,6 +33264,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -27245,8 +33274,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -27267,6 +33295,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -27276,8 +33305,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -27331,6 +33359,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -27340,8 +33369,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -27386,6 +33414,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -27395,8 +33424,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -27444,6 +33472,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -27453,8 +33482,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;
@@ -27502,6 +33530,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
             ts: number;
             reasoning?: string | undefined;
             partial?: boolean | undefined;
+            ask?: "command" | "followup" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
             metadata?: {
                 taskId?: string | undefined;
                 gpt5?: {
@@ -27511,8 +33540,7 @@ declare const rooCodeTelemetryEventSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
                 } | undefined;
             } | undefined;
             text?: string | undefined;
-            ask?: "followup" | "command" | "command_output" | "completion_result" | "tool" | "api_req_failed" | "resume_task" | "resume_completed_task" | "mistake_limit_reached" | "browser_action_launch" | "use_mcp_server" | "auto_approval_max_req_reached" | undefined;
-            say?: "reasoning" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
+            say?: "reasoning" | "browser_action" | "error" | "command_output" | "completion_result" | "api_req_started" | "api_req_finished" | "api_req_retried" | "api_req_retry_delayed" | "api_req_deleted" | "text" | "user_feedback" | "user_feedback_diff" | "shell_integration_warning" | "browser_action_result" | "mcp_server_request_started" | "mcp_server_response" | "subtask_result" | "checkpoint_saved" | "rooignore_error" | "diff_error" | "condense_context" | "condense_context_error" | "codebase_search_result" | "user_edit_todos" | undefined;
             images?: string[] | undefined;
             conversationHistoryIndex?: number | undefined;
             checkpoint?: Record<string, unknown> | undefined;

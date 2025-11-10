@@ -205,6 +205,9 @@ export const globalSettingsSchema = z.object({
 			serverUrl: z.string(),
 			serverPort: z.number(),
 			isDebugMode: z.boolean().optional(), // 标识是否为调试模式
+			// 🔥 关键新增：智能体专属配置，实现与用户global配置完全隔离
+			agentApiConfiguration: providerSettingsSchema.nullable().optional(),
+			agentMode: z.string().optional(),
 		})
 		.nullable()
 		.optional(),

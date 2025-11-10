@@ -1,5 +1,5 @@
 // src/agent.ts
-import { z as z4 } from "zod";
+import { z as z6 } from "zod";
 
 // src/provider-settings.ts
 import { z as z3 } from "zod";
@@ -415,709 +415,13 @@ var getApiProtocol = (provider, modelId) => {
   return "openai";
 };
 
-// src/agent.ts
-var agentToolConfigSchema = z4.object({
-  toolId: z4.string(),
-  enabled: z4.boolean(),
-  config: z4.record(z4.string(), z4.any()).optional()
-});
-var agentTodoSchema = z4.object({
-  id: z4.string(),
-  content: z4.string(),
-  status: z4.enum(["pending", "in_progress", "completed"]),
-  createdAt: z4.number(),
-  updatedAt: z4.number(),
-  priority: z4.enum(["low", "medium", "high"]).optional()
-});
-var agentTemplateSourceSchema = z4.object({
-  type: z4.enum(["manual", "task"]),
-  taskId: z4.string().optional(),
-  taskDescription: z4.string().optional(),
-  timestamp: z4.number()
-});
-var a2aAgentCardSchema = z4.object({
-  name: z4.string(),
-  description: z4.string(),
-  skills: z4.array(z4.string()),
-  url: z4.string().optional(),
-  // 公网可访问的 A2A 端点
-  capabilities: z4.object({
-    messageTypes: z4.array(z4.string()),
-    // 支持的消息类型
-    taskTypes: z4.array(z4.string()),
-    // 支持的任务类型
-    dataFormats: z4.array(z4.string()),
-    // 支持的数据格式
-    maxConcurrency: z4.number().optional()
-    // 最大并发数
-  }),
-  // 部署信息
-  deployment: z4.object({
-    type: z4.enum(["pc", "cloud", "docker"]),
-    platform: z4.string(),
-    region: z4.string().optional(),
-    networkReachable: z4.boolean().optional()
-    // 网络是否可达
-  }).optional(),
-  auth: z4.object({
-    apiKey: z4.string().optional(),
-    authType: z4.enum(["none", "apikey", "oauth"])
-  }).optional()
-});
-var agentPermissionSchema = z4.object({
-  action: z4.enum(["read", "execute", "modify", "admin"]),
-  resource: z4.string(),
-  // 资源路径或标识
-  conditions: z4.object({
-    timeRange: z4.tuple([z4.number(), z4.number()]).optional(),
-    // 时间范围限制
-    ipRange: z4.array(z4.string()).optional(),
-    // IP范围限制
-    userAgent: z4.string().optional(),
-    // User-Agent限制
-    maxUsage: z4.number().optional(),
-    // 最大使用次数限制
-    rateLimit: z4.number().optional()
-    // 速率限制（每分钟）
-  }).optional(),
-  description: z4.string().optional()
-  // 权限描述
-});
-var agentApiConfigSchema = providerSettingsSchema.extend({
-  originalId: z4.string().optional(),
-  // 原始配置ID（用于追踪来源）
-  originalName: z4.string().optional(),
-  // 原始配置名称
-  createdAt: z4.number().optional()
-  // 副本创建时间
-});
-var agentConfigSchema = z4.object({
-  id: z4.string(),
-  userId: z4.string(),
-  name: z4.string(),
-  avatar: z4.string(),
-  roleDescription: z4.string(),
-  welcomeMessage: z4.string().optional(),
-  // 欢迎语
-  apiConfigId: z4.string(),
-  // 保留向后兼容
-  apiConfig: agentApiConfigSchema.optional(),
-  // 新增：嵌入式API配置
-  mode: z4.string(),
-  tools: z4.array(agentToolConfigSchema),
-  todos: z4.array(agentTodoSchema),
-  // 新增：A2A 和共享配置
-  isPrivate: z4.boolean().optional().default(true),
-  // 私有/共享标识，默认true
-  shareScope: z4.enum(["friends", "groups", "public"]).optional(),
-  // 共享范围：好友、群组、公开
-  shareLevel: z4.number().optional(),
-  // 共享级别：0=私有，1=好友，2=群组，3=公开
-  a2aAgentCard: a2aAgentCardSchema.optional(),
-  // A2A 协议智能体卡片
-  a2aEndpoint: z4.string().optional(),
-  // A2A 服务端点URL
-  permissions: z4.array(agentPermissionSchema).optional(),
-  // 访问权限列表
-  allowedUsers: z4.array(z4.string()).optional(),
-  // 好友级别：白名单用户ID
-  allowedGroups: z4.array(z4.string()).optional(),
-  // 群组级别：白名单群组ID
-  deniedUsers: z4.array(z4.string()).optional(),
-  // 用户黑名单
-  // 发布状态相关字段
-  isPublished: z4.boolean().optional().default(false),
-  // 是否已发布
-  publishInfo: z4.object({
-    // 发布信息
-    terminalType: z4.enum(["local", "cloud"]).optional(),
-    // 发布终端类型
-    serverPort: z4.number().optional(),
-    // A2A服务器端口
-    serverUrl: z4.string().optional(),
-    // A2A服务器URL
-    publishedAt: z4.string().optional(),
-    // 发布时间
-    serviceStatus: z4.enum(["online", "offline", "error"]).optional(),
-    // 服务状态
-    lastHeartbeat: z4.number().optional()
-    // 最后心跳时间
-  }).optional(),
-  templateSource: agentTemplateSourceSchema.optional(),
-  createdAt: z4.number(),
-  updatedAt: z4.number(),
-  lastUsedAt: z4.number().optional(),
-  isActive: z4.boolean(),
-  version: z4.number()
-});
-var agentListOptionsSchema = z4.object({
-  sortBy: z4.enum(["name", "createdAt", "updatedAt", "lastUsedAt"]).optional(),
-  sortOrder: z4.enum(["asc", "desc"]).optional(),
-  filterByMode: z4.string().optional(),
-  onlyActive: z4.boolean().optional(),
-  limit: z4.number().optional(),
-  offset: z4.number().optional()
-});
-var agentExportDataSchema = z4.object({
-  agent: agentConfigSchema,
-  metadata: z4.object({
-    exportedAt: z4.number(),
-    exportedBy: z4.string(),
-    version: z4.string()
-  })
-});
-var agentTemplateDataSchema = z4.object({
-  apiConfigId: z4.string().optional(),
-  mode: z4.string().optional(),
-  tools: z4.array(z4.string()).optional(),
-  templateSource: agentTemplateSourceSchema
-});
-var resourceQuotaSchema = z4.object({
-  maxMemory: z4.number(),
-  // 最大内存使用 (MB)
-  maxCpuTime: z4.number(),
-  // 最大CPU时间 (ms)
-  maxFileOperations: z4.number(),
-  // 最大文件操作次数
-  maxNetworkRequests: z4.number(),
-  // 最大网络请求次数
-  maxExecutionTime: z4.number(),
-  // 最大执行时间 (ms)
-  workspaceAccess: z4.object({
-    readOnly: z4.boolean(),
-    allowedPaths: z4.array(z4.string()),
-    deniedPaths: z4.array(z4.string()),
-    tempDirectory: z4.string()
-  })
-});
-var resourceUsageSchema = z4.object({
-  memory: z4.number(),
-  // 当前内存使用 (MB)
-  cpuTime: z4.number(),
-  // 当前CPU时间 (ms)
-  fileOperations: z4.number(),
-  // 当前文件操作次数
-  networkRequests: z4.number(),
-  // 当前网络请求次数
-  startTime: z4.number(),
-  // 启动时间戳
-  lastUpdate: z4.number()
-  // 最后更新时间戳
-});
-var agentInstanceSchema = z4.object({
-  agentId: z4.string(),
-  // 关联的智能体定义ID
-  instanceId: z4.string(),
-  // 实例唯一标识
-  userId: z4.string(),
-  // 实例所属用户
-  // 部署信息
-  deployment: z4.object({
-    type: z4.enum(["pc", "cloud", "docker", "k8s"]),
-    platform: z4.string(),
-    // 'vscode' | 'docker' | 'k8s'
-    location: z4.string().optional(),
-    // 部署位置描述
-    version: z4.string(),
-    // void版本
-    region: z4.string().optional()
-    // 地理区域
-  }),
-  // 网络端点
-  endpoint: z4.object({
-    type: z4.enum(["local_only", "network_reachable", "hybrid"]),
-    // 直连信息
-    direct: z4.object({
-      url: z4.string(),
-      // HTTP服务端点
-      protocol: z4.enum(["http", "https"]),
-      port: z4.number().optional(),
-      apiKey: z4.string().optional(),
-      // API密钥
-      healthCheckPath: z4.string()
-      // 健康检查路径
-    }).optional(),
-    // IM桥接信息
-    imBridge: z4.object({
-      proxyId: z4.string(),
-      // 代理标识
-      channelId: z4.string().optional(),
-      // 通道标识
-      priority: z4.number()
-      // 路由优先级
-    }),
-    networkReachable: z4.boolean().optional(),
-    // 是否网络可达
-    lastProbeTime: z4.number().optional()
-    // 最后探测时间
-  }),
-  // 实例状态
-  status: z4.object({
-    state: z4.enum(["starting", "online", "offline", "error", "maintenance"]),
-    startTime: z4.number(),
-    lastSeen: z4.number(),
-    currentLoad: z4.number(),
-    // 当前负载 0-1
-    errorCount: z4.number(),
-    // 错误计数
-    errorRate: z4.number(),
-    // 错误率 0-1
-    uptime: z4.number()
-    // 运行时间
-  }),
-  // 性能指标
-  metrics: z4.object({
-    avgResponseTime: z4.number(),
-    // 平均响应时间 (ms)
-    successRate: z4.number(),
-    // 成功率 0-1
-    throughput: z4.number(),
-    // 吞吐量 (req/s)
-    memoryUsage: z4.number().optional(),
-    // 内存使用率 0-1
-    cpuUsage: z4.number().optional(),
-    // CPU使用率 0-1
-    lastUpdate: z4.number()
-    // 最后更新时间
-  }),
-  // 资源配额
-  resourceQuota: resourceQuotaSchema.optional(),
-  // 元数据
-  metadata: z4.object({
-    createdAt: z4.number(),
-    updatedAt: z4.number(),
-    version: z4.number(),
-    tags: z4.array(z4.string()).optional()
-  })
-});
-var agentRequestSchema = z4.object({
-  method: z4.string(),
-  params: z4.any(),
-  timeout: z4.number().optional(),
-  priority: z4.enum(["low", "normal", "high"]).optional(),
-  retries: z4.number().optional(),
-  sourceAgentId: z4.string().optional(),
-  sourceUserId: z4.string().optional()
-});
-var agentResponseSchema = z4.object({
-  success: z4.boolean(),
-  data: z4.any().optional(),
-  error: z4.string().optional(),
-  agentId: z4.string(),
-  route: z4.enum(["direct", "im_bridge", "hybrid"]).optional(),
-  timestamp: z4.number(),
-  duration: z4.number().optional()
-});
-var agentEndpointSchema = z4.object({
-  agentId: z4.string(),
-  userId: z4.string(),
-  type: z4.enum(["local_only", "network_reachable", "hybrid"]),
-  directUrl: z4.string().optional(),
-  // 直连URL
-  apiKey: z4.string().optional(),
-  // API密钥
-  imProxyId: z4.string(),
-  // IM代理标识
-  networkReachable: z4.boolean().optional(),
-  // 网络可达性
-  lastProbeTime: z4.number().optional(),
-  // 最后探测时间
-  status: z4.object({
-    state: z4.enum(["online", "offline", "busy", "error"]),
-    lastSeen: z4.number(),
-    currentLoad: z4.number(),
-    errorRate: z4.number(),
-    avgResponseTime: z4.number()
-  }),
-  deploymentType: z4.enum(["pc", "cloud", "docker", "serverless"])
-});
-var agentDiscoveryQuerySchema = z4.object({
-  userId: z4.string(),
-  capabilities: z4.array(z4.string()).optional(),
-  categories: z4.array(z4.string()).optional(),
-  tags: z4.array(z4.string()).optional(),
-  deploymentTypes: z4.array(z4.string()).optional(),
-  regions: z4.array(z4.string()).optional(),
-  keywords: z4.string().optional(),
-  onlyOnline: z4.boolean().optional(),
-  visibility: z4.enum(["private", "friends", "groups", "public", "all"]).optional(),
-  shareScope: z4.enum(["friends", "groups", "public"]).optional(),
-  shareLevel: z4.number().optional(),
-  sortBy: z4.enum(["relevance", "performance", "popularity", "rating"]).optional(),
-  sortOrder: z4.enum(["asc", "desc"]).optional(),
-  offset: z4.number().optional(),
-  limit: z4.number().optional()
-});
-var agentDiscoveryResultSchema = z4.object({
-  agentId: z4.string(),
-  userId: z4.string(),
-  name: z4.string(),
-  description: z4.string(),
-  avatar: z4.string(),
-  // 匹配信息
-  matchedCapabilities: z4.array(z4.string()),
-  relevanceScore: z4.number(),
-  // 部署信息
-  deploymentType: z4.enum(["pc", "cloud", "docker", "serverless"]),
-  region: z4.string().optional(),
-  endpointType: z4.enum(["local_only", "network_reachable", "hybrid"]),
-  // 性能指标
-  currentLoad: z4.number(),
-  avgResponseTime: z4.number(),
-  errorRate: z4.number(),
-  availability: z4.number(),
-  // 使用统计
-  totalCalls: z4.number(),
-  successRate: z4.number(),
-  rating: z4.number().optional(),
-  // 权限信息
-  isPrivate: z4.boolean(),
-  hasAccess: z4.boolean(),
-  // 元数据
-  category: z4.string().optional(),
-  tags: z4.array(z4.string()),
-  createdAt: z4.number(),
-  lastUsed: z4.number().optional()
-});
-var unifiedAgentRegistrySchema = z4.object({
-  agentId: z4.string(),
-  userId: z4.string(),
-  name: z4.string(),
-  avatar: z4.string(),
-  description: z4.string(),
-  // 能力信息
-  capabilities: z4.object({
-    tools: z4.array(z4.string()),
-    skills: z4.array(z4.string()),
-    categories: z4.array(z4.string())
-  }),
-  // 部署信息
-  deployment: z4.object({
-    type: z4.enum(["pc", "cloud", "docker", "serverless"]),
-    region: z4.string().optional(),
-    endpointType: z4.enum(["local_only", "network_reachable", "hybrid"]),
-    directUrl: z4.string().optional(),
-    imProxyId: z4.string().optional()
-  }),
-  // 状态信息
-  status: z4.object({
-    state: z4.enum(["online", "offline", "busy", "maintenance"]),
-    lastSeen: z4.number(),
-    currentLoad: z4.number(),
-    errorRate: z4.number(),
-    avgResponseTime: z4.number()
-  }),
-  // 共享配置
-  sharing: z4.object({
-    isPrivate: z4.boolean(),
-    shareScope: z4.enum(["none", "friends", "groups", "public"]),
-    shareLevel: z4.number().min(0).max(3),
-    permissions: z4.array(z4.enum(["read", "execute", "modify"])),
-    allowedUsers: z4.array(z4.string()),
-    allowedGroups: z4.array(z4.string()),
-    deniedUsers: z4.array(z4.string())
-  }),
-  // 元数据
-  metadata: z4.object({
-    createdAt: z4.number(),
-    updatedAt: z4.number(),
-    version: z4.string(),
-    tags: z4.array(z4.string())
-  })
-});
-
-// src/cloud.ts
-import { z as z14 } from "zod";
-
-// src/global-settings.ts
-import { z as z12 } from "zod";
-
-// src/history.ts
-import { z as z6 } from "zod";
-
-// src/message.ts
-import { z as z5 } from "zod";
-var clineAsks = [
-  "followup",
-  "command",
-  "command_output",
-  "completion_result",
-  "tool",
-  "api_req_failed",
-  "resume_task",
-  "resume_completed_task",
-  "mistake_limit_reached",
-  "browser_action_launch",
-  "use_mcp_server",
-  "auto_approval_max_req_reached"
-];
-var clineAskSchema = z5.enum(clineAsks);
-var blockingAsks = [
-  "api_req_failed",
-  "mistake_limit_reached",
-  "completion_result",
-  "resume_task",
-  "resume_completed_task",
-  "command_output",
-  "auto_approval_max_req_reached"
-];
-function isBlockingAsk(ask) {
-  return blockingAsks.includes(ask);
-}
-var clineSays = [
-  "error",
-  "api_req_started",
-  "api_req_finished",
-  "api_req_retried",
-  "api_req_retry_delayed",
-  "api_req_deleted",
-  "text",
-  "reasoning",
-  "completion_result",
-  "user_feedback",
-  "user_feedback_diff",
-  "command_output",
-  "shell_integration_warning",
-  "browser_action",
-  "browser_action_result",
-  "mcp_server_request_started",
-  "mcp_server_response",
-  "subtask_result",
-  "checkpoint_saved",
-  "rooignore_error",
-  "diff_error",
-  "condense_context",
-  "condense_context_error",
-  "codebase_search_result",
-  "user_edit_todos"
-];
-var clineSaySchema = z5.enum(clineSays);
-var toolProgressStatusSchema = z5.object({
-  icon: z5.string().optional(),
-  text: z5.string().optional()
-});
-var contextCondenseSchema = z5.object({
-  cost: z5.number(),
-  prevContextTokens: z5.number(),
-  newContextTokens: z5.number(),
-  summary: z5.string()
-});
-var clineMessageSchema = z5.object({
-  ts: z5.number(),
-  type: z5.union([z5.literal("ask"), z5.literal("say")]),
-  ask: clineAskSchema.optional(),
-  say: clineSaySchema.optional(),
-  text: z5.string().optional(),
-  images: z5.array(z5.string()).optional(),
-  partial: z5.boolean().optional(),
-  reasoning: z5.string().optional(),
-  conversationHistoryIndex: z5.number().optional(),
-  checkpoint: z5.record(z5.string(), z5.unknown()).optional(),
-  progressStatus: toolProgressStatusSchema.optional(),
-  contextCondense: contextCondenseSchema.optional(),
-  isProtected: z5.boolean().optional(),
-  apiProtocol: z5.union([z5.literal("openai"), z5.literal("anthropic")]).optional(),
-  metadata: z5.object({
-    gpt5: z5.object({
-      previous_response_id: z5.string().optional(),
-      instructions: z5.string().optional(),
-      reasoning_summary: z5.string().optional()
-    }).optional(),
-    taskId: z5.string().optional()
-  }).optional()
-});
-var tokenUsageSchema = z5.object({
-  totalTokensIn: z5.number(),
-  totalTokensOut: z5.number(),
-  totalCacheWrites: z5.number().optional(),
-  totalCacheReads: z5.number().optional(),
-  totalCost: z5.number(),
-  contextTokens: z5.number()
-});
-
-// src/history.ts
-var historyItemSchema = z6.object({
-  id: z6.string(),
-  number: z6.number(),
-  ts: z6.number(),
-  task: z6.string(),
-  tokensIn: z6.number(),
-  tokensOut: z6.number(),
-  cacheWrites: z6.number().optional(),
-  cacheReads: z6.number().optional(),
-  totalCost: z6.number(),
-  size: z6.number().optional(),
-  workspace: z6.string().optional(),
-  mode: z6.string().optional(),
-  terminalNo: z6.number().optional(),
-  // 🔥 智能体任务标记
-  source: z6.enum(["user", "agent"]).optional(),
-  // 任务来源：用户或智能体
-  agentId: z6.string().optional(),
-  // 智能体ID（仅当 source === "agent" 时存在）
-  // 🔥 消息历史（用于查看已完成的智能体任务）
-  clineMessages: z6.array(clineMessageSchema).optional()
-});
-
-// src/experiment.ts
-import { z as z7 } from "zod";
-var experimentIds = ["powerSteering", "multiFileApplyDiff", "preventFocusDisruption", "assistantMessageParser"];
-var experimentIdsSchema = z7.enum(experimentIds);
-var experimentsSchema = z7.object({
-  powerSteering: z7.boolean().optional(),
-  multiFileApplyDiff: z7.boolean().optional(),
-  preventFocusDisruption: z7.boolean().optional(),
-  assistantMessageParser: z7.boolean().optional()
-});
-
-// src/telemetry.ts
-import { z as z8 } from "zod";
-var telemetrySettings = ["unset", "enabled", "disabled"];
-var telemetrySettingsSchema = z8.enum(telemetrySettings);
-var TelemetryEventName = /* @__PURE__ */ ((TelemetryEventName2) => {
-  TelemetryEventName2["TASK_CREATED"] = "Task Created";
-  TelemetryEventName2["TASK_RESTARTED"] = "Task Reopened";
-  TelemetryEventName2["TASK_COMPLETED"] = "Task Completed";
-  TelemetryEventName2["TASK_MESSAGE"] = "Task Message";
-  TelemetryEventName2["TASK_CONVERSATION_MESSAGE"] = "Conversation Message";
-  TelemetryEventName2["LLM_COMPLETION"] = "LLM Completion";
-  TelemetryEventName2["MODE_SWITCH"] = "Mode Switched";
-  TelemetryEventName2["MODE_SELECTOR_OPENED"] = "Mode Selector Opened";
-  TelemetryEventName2["TOOL_USED"] = "Tool Used";
-  TelemetryEventName2["CHECKPOINT_CREATED"] = "Checkpoint Created";
-  TelemetryEventName2["CHECKPOINT_RESTORED"] = "Checkpoint Restored";
-  TelemetryEventName2["CHECKPOINT_DIFFED"] = "Checkpoint Diffed";
-  TelemetryEventName2["TAB_SHOWN"] = "Tab Shown";
-  TelemetryEventName2["MODE_SETTINGS_CHANGED"] = "Mode Setting Changed";
-  TelemetryEventName2["CUSTOM_MODE_CREATED"] = "Custom Mode Created";
-  TelemetryEventName2["CONTEXT_CONDENSED"] = "Context Condensed";
-  TelemetryEventName2["SLIDING_WINDOW_TRUNCATION"] = "Sliding Window Truncation";
-  TelemetryEventName2["CODE_ACTION_USED"] = "Code Action Used";
-  TelemetryEventName2["PROMPT_ENHANCED"] = "Prompt Enhanced";
-  TelemetryEventName2["TITLE_BUTTON_CLICKED"] = "Title Button Clicked";
-  TelemetryEventName2["AUTHENTICATION_INITIATED"] = "Authentication Initiated";
-  TelemetryEventName2["MARKETPLACE_ITEM_INSTALLED"] = "Marketplace Item Installed";
-  TelemetryEventName2["MARKETPLACE_ITEM_REMOVED"] = "Marketplace Item Removed";
-  TelemetryEventName2["MARKETPLACE_TAB_VIEWED"] = "Marketplace Tab Viewed";
-  TelemetryEventName2["MARKETPLACE_INSTALL_BUTTON_CLICKED"] = "Marketplace Install Button Clicked";
-  TelemetryEventName2["SHARE_BUTTON_CLICKED"] = "Share Button Clicked";
-  TelemetryEventName2["SHARE_ORGANIZATION_CLICKED"] = "Share Organization Clicked";
-  TelemetryEventName2["SHARE_PUBLIC_CLICKED"] = "Share Public Clicked";
-  TelemetryEventName2["SHARE_CONNECT_TO_CLOUD_CLICKED"] = "Share Connect To Cloud Clicked";
-  TelemetryEventName2["ACCOUNT_CONNECT_CLICKED"] = "Account Connect Clicked";
-  TelemetryEventName2["ACCOUNT_CONNECT_SUCCESS"] = "Account Connect Success";
-  TelemetryEventName2["ACCOUNT_LOGOUT_CLICKED"] = "Account Logout Clicked";
-  TelemetryEventName2["ACCOUNT_LOGOUT_SUCCESS"] = "Account Logout Success";
-  TelemetryEventName2["SCHEMA_VALIDATION_ERROR"] = "Schema Validation Error";
-  TelemetryEventName2["DIFF_APPLICATION_ERROR"] = "Diff Application Error";
-  TelemetryEventName2["SHELL_INTEGRATION_ERROR"] = "Shell Integration Error";
-  TelemetryEventName2["CONSECUTIVE_MISTAKE_ERROR"] = "Consecutive Mistake Error";
-  TelemetryEventName2["CODE_INDEX_ERROR"] = "Code Index Error";
-  return TelemetryEventName2;
-})(TelemetryEventName || {});
-var appPropertiesSchema = z8.object({
-  appName: z8.string(),
-  appVersion: z8.string(),
-  vscodeVersion: z8.string(),
-  platform: z8.string(),
-  editorName: z8.string(),
-  language: z8.string(),
-  mode: z8.string(),
-  cloudIsAuthenticated: z8.boolean().optional()
-});
-var taskPropertiesSchema = z8.object({
-  taskId: z8.string().optional(),
-  apiProvider: z8.enum(providerNames).optional(),
-  modelId: z8.string().optional(),
-  diffStrategy: z8.string().optional(),
-  isSubtask: z8.boolean().optional(),
-  todos: z8.object({
-    total: z8.number(),
-    completed: z8.number(),
-    inProgress: z8.number(),
-    pending: z8.number()
-  }).optional()
-});
-var gitPropertiesSchema = z8.object({
-  repositoryUrl: z8.string().optional(),
-  repositoryName: z8.string().optional(),
-  defaultBranch: z8.string().optional()
-});
-var telemetryPropertiesSchema = z8.object({
-  ...appPropertiesSchema.shape,
-  ...taskPropertiesSchema.shape,
-  ...gitPropertiesSchema.shape
-});
-var rooCodeTelemetryEventSchema = z8.discriminatedUnion("type", [
-  z8.object({
-    type: z8.enum([
-      "Task Created" /* TASK_CREATED */,
-      "Task Reopened" /* TASK_RESTARTED */,
-      "Task Completed" /* TASK_COMPLETED */,
-      "Conversation Message" /* TASK_CONVERSATION_MESSAGE */,
-      "Mode Switched" /* MODE_SWITCH */,
-      "Mode Selector Opened" /* MODE_SELECTOR_OPENED */,
-      "Tool Used" /* TOOL_USED */,
-      "Checkpoint Created" /* CHECKPOINT_CREATED */,
-      "Checkpoint Restored" /* CHECKPOINT_RESTORED */,
-      "Checkpoint Diffed" /* CHECKPOINT_DIFFED */,
-      "Code Action Used" /* CODE_ACTION_USED */,
-      "Prompt Enhanced" /* PROMPT_ENHANCED */,
-      "Title Button Clicked" /* TITLE_BUTTON_CLICKED */,
-      "Authentication Initiated" /* AUTHENTICATION_INITIATED */,
-      "Marketplace Item Installed" /* MARKETPLACE_ITEM_INSTALLED */,
-      "Marketplace Item Removed" /* MARKETPLACE_ITEM_REMOVED */,
-      "Marketplace Tab Viewed" /* MARKETPLACE_TAB_VIEWED */,
-      "Marketplace Install Button Clicked" /* MARKETPLACE_INSTALL_BUTTON_CLICKED */,
-      "Share Button Clicked" /* SHARE_BUTTON_CLICKED */,
-      "Share Organization Clicked" /* SHARE_ORGANIZATION_CLICKED */,
-      "Share Public Clicked" /* SHARE_PUBLIC_CLICKED */,
-      "Share Connect To Cloud Clicked" /* SHARE_CONNECT_TO_CLOUD_CLICKED */,
-      "Account Connect Clicked" /* ACCOUNT_CONNECT_CLICKED */,
-      "Account Connect Success" /* ACCOUNT_CONNECT_SUCCESS */,
-      "Account Logout Clicked" /* ACCOUNT_LOGOUT_CLICKED */,
-      "Account Logout Success" /* ACCOUNT_LOGOUT_SUCCESS */,
-      "Schema Validation Error" /* SCHEMA_VALIDATION_ERROR */,
-      "Diff Application Error" /* DIFF_APPLICATION_ERROR */,
-      "Shell Integration Error" /* SHELL_INTEGRATION_ERROR */,
-      "Consecutive Mistake Error" /* CONSECUTIVE_MISTAKE_ERROR */,
-      "Code Index Error" /* CODE_INDEX_ERROR */,
-      "Context Condensed" /* CONTEXT_CONDENSED */,
-      "Sliding Window Truncation" /* SLIDING_WINDOW_TRUNCATION */,
-      "Tab Shown" /* TAB_SHOWN */,
-      "Mode Setting Changed" /* MODE_SETTINGS_CHANGED */,
-      "Custom Mode Created" /* CUSTOM_MODE_CREATED */
-    ]),
-    properties: telemetryPropertiesSchema
-  }),
-  z8.object({
-    type: z8.literal("Task Message" /* TASK_MESSAGE */),
-    properties: z8.object({
-      ...telemetryPropertiesSchema.shape,
-      taskId: z8.string(),
-      message: clineMessageSchema
-    })
-  }),
-  z8.object({
-    type: z8.literal("LLM Completion" /* LLM_COMPLETION */),
-    properties: z8.object({
-      ...telemetryPropertiesSchema.shape,
-      inputTokens: z8.number(),
-      outputTokens: z8.number(),
-      cacheReadTokens: z8.number().optional(),
-      cacheWriteTokens: z8.number().optional(),
-      cost: z8.number().optional()
-    })
-  })
-]);
-
 // src/mode.ts
-import { z as z10 } from "zod";
+import { z as z5 } from "zod";
 
 // src/tool.ts
-import { z as z9 } from "zod";
+import { z as z4 } from "zod";
 var toolGroups = ["read", "edit", "browser", "command", "mcp", "modes"];
-var toolGroupsSchema = z9.enum(toolGroups);
+var toolGroupsSchema = z4.enum(toolGroups);
 var toolNames = [
   "execute_command",
   "read_file",
@@ -1139,18 +443,18 @@ var toolNames = [
   "codebase_search",
   "update_todo_list"
 ];
-var toolNamesSchema = z9.enum(toolNames);
-var toolUsageSchema = z9.record(
+var toolNamesSchema = z4.enum(toolNames);
+var toolUsageSchema = z4.record(
   toolNamesSchema,
-  z9.object({
-    attempts: z9.number(),
-    failures: z9.number()
+  z4.object({
+    attempts: z4.number(),
+    failures: z4.number()
   })
 );
 
 // src/mode.ts
-var groupOptionsSchema = z10.object({
-  fileRegex: z10.string().optional().refine(
+var groupOptionsSchema = z5.object({
+  fileRegex: z5.string().optional().refine(
     (pattern) => {
       if (!pattern) {
         return true;
@@ -1164,10 +468,10 @@ var groupOptionsSchema = z10.object({
     },
     { message: "Invalid regular expression pattern" }
   ),
-  description: z10.string().optional()
+  description: z5.string().optional()
 });
-var groupEntrySchema = z10.union([toolGroupsSchema, z10.tuple([toolGroupsSchema, groupOptionsSchema])]);
-var groupEntryArraySchema = z10.array(groupEntrySchema).refine(
+var groupEntrySchema = z5.union([toolGroupsSchema, z5.tuple([toolGroupsSchema, groupOptionsSchema])]);
+var groupEntryArraySchema = z5.array(groupEntrySchema).refine(
   (groups) => {
     const seen = /* @__PURE__ */ new Set();
     return groups.every((group) => {
@@ -1181,18 +485,18 @@ var groupEntryArraySchema = z10.array(groupEntrySchema).refine(
   },
   { message: "Duplicate groups are not allowed" }
 );
-var modeConfigSchema = z10.object({
-  slug: z10.string().regex(/^[a-zA-Z0-9-]+$/, "Slug must contain only letters numbers and dashes"),
-  name: z10.string().min(1, "Name is required"),
-  roleDefinition: z10.string().min(1, "Role definition is required"),
-  whenToUse: z10.string().optional(),
-  description: z10.string().optional(),
-  customInstructions: z10.string().optional(),
+var modeConfigSchema = z5.object({
+  slug: z5.string().regex(/^[a-zA-Z0-9-]+$/, "Slug must contain only letters numbers and dashes"),
+  name: z5.string().min(1, "Name is required"),
+  roleDefinition: z5.string().min(1, "Role definition is required"),
+  whenToUse: z5.string().optional(),
+  description: z5.string().optional(),
+  customInstructions: z5.string().optional(),
   groups: groupEntryArraySchema,
-  source: z10.enum(["global", "project"]).optional()
+  source: z5.enum(["global", "project"]).optional()
 });
-var customModesSettingsSchema = z10.object({
-  customModes: z10.array(modeConfigSchema).refine(
+var customModesSettingsSchema = z5.object({
+  customModes: z5.array(modeConfigSchema).refine(
     (modes) => {
       const slugs = /* @__PURE__ */ new Set();
       return modes.every((mode) => {
@@ -1208,14 +512,14 @@ var customModesSettingsSchema = z10.object({
     }
   )
 });
-var promptComponentSchema = z10.object({
-  roleDefinition: z10.string().optional(),
-  whenToUse: z10.string().optional(),
-  description: z10.string().optional(),
-  customInstructions: z10.string().optional()
+var promptComponentSchema = z5.object({
+  roleDefinition: z5.string().optional(),
+  whenToUse: z5.string().optional(),
+  description: z5.string().optional(),
+  customInstructions: z5.string().optional()
 });
-var customModePromptsSchema = z10.record(z10.string(), promptComponentSchema.optional());
-var customSupportPromptsSchema = z10.record(z10.string(), z10.string().optional());
+var customModePromptsSchema = z5.record(z5.string(), promptComponentSchema.optional());
+var customSupportPromptsSchema = z5.record(z5.string(), z5.string().optional());
 var DEFAULT_MODES = [
   {
     slug: "architect",
@@ -1262,6 +566,704 @@ var DEFAULT_MODES = [
     customInstructions: "Your role is to coordinate complex workflows by delegating tasks to specialized modes. As an orchestrator, you should:\n\n1. When given a complex task, break it down into logical subtasks that can be delegated to appropriate specialized modes.\n\n2. For each subtask, use the `new_task` tool to delegate. Choose the most appropriate mode for the subtask's specific goal and provide comprehensive instructions in the `message` parameter. These instructions must include:\n    *   All necessary context from the parent task or previous subtasks required to complete the work.\n    *   A clearly defined scope, specifying exactly what the subtask should accomplish.\n    *   An explicit statement that the subtask should *only* perform the work outlined in these instructions and not deviate.\n    *   An instruction for the subtask to signal completion by using the `attempt_completion` tool, providing a concise yet thorough summary of the outcome in the `result` parameter, keeping in mind that this summary will be the source of truth used to keep track of what was completed on this project.\n    *   A statement that these specific instructions supersede any conflicting general instructions the subtask's mode might have.\n\n3. Track and manage the progress of all subtasks. When a subtask is completed, analyze its results and determine the next steps.\n\n4. Help the user understand how the different subtasks fit together in the overall workflow. Provide clear reasoning about why you're delegating specific tasks to specific modes.\n\n5. When all subtasks are completed, synthesize the results and provide a comprehensive overview of what was accomplished.\n\n6. Ask clarifying questions when necessary to better understand how to break down complex tasks effectively.\n\n7. Suggest improvements to the workflow based on the results of completed subtasks.\n\nUse subtasks to maintain clarity. If a request significantly shifts focus or requires a different expertise (mode), consider creating a subtask rather than overloading the current one."
   }
 ];
+
+// src/agent.ts
+var agentToolConfigSchema = z6.object({
+  toolId: z6.string(),
+  enabled: z6.boolean(),
+  config: z6.record(z6.string(), z6.any()).optional()
+});
+var agentTodoSchema = z6.object({
+  id: z6.string(),
+  content: z6.string(),
+  status: z6.enum(["pending", "in_progress", "completed"]),
+  createdAt: z6.number(),
+  updatedAt: z6.number(),
+  priority: z6.enum(["low", "medium", "high"]).optional()
+});
+var agentTemplateSourceSchema = z6.object({
+  type: z6.enum(["manual", "task"]),
+  taskId: z6.string().optional(),
+  taskDescription: z6.string().optional(),
+  timestamp: z6.number()
+});
+var a2aAgentCardSchema = z6.object({
+  name: z6.string(),
+  description: z6.string(),
+  skills: z6.array(z6.string()),
+  url: z6.string().optional(),
+  // 公网可访问的 A2A 端点
+  capabilities: z6.object({
+    messageTypes: z6.array(z6.string()),
+    // 支持的消息类型
+    taskTypes: z6.array(z6.string()),
+    // 支持的任务类型
+    dataFormats: z6.array(z6.string()),
+    // 支持的数据格式
+    maxConcurrency: z6.number().optional()
+    // 最大并发数
+  }),
+  // 部署信息
+  deployment: z6.object({
+    type: z6.enum(["pc", "cloud", "docker"]),
+    platform: z6.string(),
+    region: z6.string().optional(),
+    networkReachable: z6.boolean().optional()
+    // 网络是否可达
+  }).optional(),
+  auth: z6.object({
+    apiKey: z6.string().optional(),
+    authType: z6.enum(["none", "apikey", "oauth"])
+  }).optional()
+});
+var agentPermissionSchema = z6.object({
+  action: z6.enum(["read", "execute", "modify", "admin"]),
+  resource: z6.string(),
+  // 资源路径或标识
+  conditions: z6.object({
+    timeRange: z6.tuple([z6.number(), z6.number()]).optional(),
+    // 时间范围限制
+    ipRange: z6.array(z6.string()).optional(),
+    // IP范围限制
+    userAgent: z6.string().optional(),
+    // User-Agent限制
+    maxUsage: z6.number().optional(),
+    // 最大使用次数限制
+    rateLimit: z6.number().optional()
+    // 速率限制（每分钟）
+  }).optional(),
+  description: z6.string().optional()
+  // 权限描述
+});
+var agentApiConfigSchema = providerSettingsSchema.extend({
+  originalId: z6.string().optional(),
+  // 原始配置ID（用于追踪来源）
+  originalName: z6.string().optional(),
+  // 原始配置名称
+  createdAt: z6.number().optional()
+  // 副本创建时间
+});
+var agentConfigSchema = z6.object({
+  id: z6.string(),
+  userId: z6.string(),
+  name: z6.string(),
+  avatar: z6.string(),
+  roleDescription: z6.string(),
+  welcomeMessage: z6.string().optional(),
+  // 欢迎语
+  apiConfigId: z6.string(),
+  // 保留向后兼容
+  apiConfig: agentApiConfigSchema.optional(),
+  // 新增：嵌入式API配置
+  mode: z6.string(),
+  modeConfig: modeConfigSchema.optional(),
+  // 🔥 新增：自定义模式的完整定义（如果使用自定义模式）
+  tools: z6.array(agentToolConfigSchema),
+  todos: z6.array(agentTodoSchema),
+  // 新增：A2A 和共享配置
+  isPrivate: z6.boolean().optional().default(true),
+  // 私有/共享标识，默认true
+  shareScope: z6.enum(["friends", "groups", "public"]).optional(),
+  // 共享范围：好友、群组、公开
+  shareLevel: z6.number().optional(),
+  // 共享级别：0=私有，1=好友，2=群组，3=公开
+  a2aAgentCard: a2aAgentCardSchema.optional(),
+  // A2A 协议智能体卡片
+  a2aEndpoint: z6.string().optional(),
+  // A2A 服务端点URL
+  permissions: z6.array(agentPermissionSchema).optional(),
+  // 访问权限列表
+  allowedUsers: z6.array(z6.string()).optional(),
+  // 好友级别：白名单用户ID
+  allowedGroups: z6.array(z6.string()).optional(),
+  // 群组级别：白名单群组ID
+  deniedUsers: z6.array(z6.string()).optional(),
+  // 用户黑名单
+  // 发布状态相关字段
+  isPublished: z6.boolean().optional().default(false),
+  // 是否已发布
+  publishInfo: z6.object({
+    // 发布信息
+    terminalType: z6.enum(["local", "cloud"]).optional(),
+    // 发布终端类型
+    serverPort: z6.number().optional(),
+    // A2A服务器端口
+    serverUrl: z6.string().optional(),
+    // A2A服务器URL
+    publishedAt: z6.string().optional(),
+    // 发布时间
+    serviceStatus: z6.enum(["online", "offline", "error"]).optional(),
+    // 服务状态
+    lastHeartbeat: z6.number().optional()
+    // 最后心跳时间
+  }).optional(),
+  templateSource: agentTemplateSourceSchema.optional(),
+  createdAt: z6.number(),
+  updatedAt: z6.number(),
+  lastUsedAt: z6.number().optional(),
+  isActive: z6.boolean(),
+  version: z6.number()
+});
+var agentListOptionsSchema = z6.object({
+  sortBy: z6.enum(["name", "createdAt", "updatedAt", "lastUsedAt"]).optional(),
+  sortOrder: z6.enum(["asc", "desc"]).optional(),
+  filterByMode: z6.string().optional(),
+  onlyActive: z6.boolean().optional(),
+  limit: z6.number().optional(),
+  offset: z6.number().optional()
+});
+var agentExportDataSchema = z6.object({
+  agent: agentConfigSchema,
+  metadata: z6.object({
+    exportedAt: z6.number(),
+    exportedBy: z6.string(),
+    version: z6.string()
+  })
+});
+var agentTemplateDataSchema = z6.object({
+  apiConfigId: z6.string().optional(),
+  mode: z6.string().optional(),
+  tools: z6.array(z6.string()).optional(),
+  templateSource: agentTemplateSourceSchema
+});
+var resourceQuotaSchema = z6.object({
+  maxMemory: z6.number(),
+  // 最大内存使用 (MB)
+  maxCpuTime: z6.number(),
+  // 最大CPU时间 (ms)
+  maxFileOperations: z6.number(),
+  // 最大文件操作次数
+  maxNetworkRequests: z6.number(),
+  // 最大网络请求次数
+  maxExecutionTime: z6.number(),
+  // 最大执行时间 (ms)
+  workspaceAccess: z6.object({
+    readOnly: z6.boolean(),
+    allowedPaths: z6.array(z6.string()),
+    deniedPaths: z6.array(z6.string()),
+    tempDirectory: z6.string()
+  })
+});
+var resourceUsageSchema = z6.object({
+  memory: z6.number(),
+  // 当前内存使用 (MB)
+  cpuTime: z6.number(),
+  // 当前CPU时间 (ms)
+  fileOperations: z6.number(),
+  // 当前文件操作次数
+  networkRequests: z6.number(),
+  // 当前网络请求次数
+  startTime: z6.number(),
+  // 启动时间戳
+  lastUpdate: z6.number()
+  // 最后更新时间戳
+});
+var agentInstanceSchema = z6.object({
+  agentId: z6.string(),
+  // 关联的智能体定义ID
+  instanceId: z6.string(),
+  // 实例唯一标识
+  userId: z6.string(),
+  // 实例所属用户
+  // 部署信息
+  deployment: z6.object({
+    type: z6.enum(["pc", "cloud", "docker", "k8s"]),
+    platform: z6.string(),
+    // 'vscode' | 'docker' | 'k8s'
+    location: z6.string().optional(),
+    // 部署位置描述
+    version: z6.string(),
+    // void版本
+    region: z6.string().optional()
+    // 地理区域
+  }),
+  // 网络端点
+  endpoint: z6.object({
+    type: z6.enum(["local_only", "network_reachable", "hybrid"]),
+    // 直连信息
+    direct: z6.object({
+      url: z6.string(),
+      // HTTP服务端点
+      protocol: z6.enum(["http", "https"]),
+      port: z6.number().optional(),
+      apiKey: z6.string().optional(),
+      // API密钥
+      healthCheckPath: z6.string()
+      // 健康检查路径
+    }).optional(),
+    // IM桥接信息
+    imBridge: z6.object({
+      proxyId: z6.string(),
+      // 代理标识
+      channelId: z6.string().optional(),
+      // 通道标识
+      priority: z6.number()
+      // 路由优先级
+    }),
+    networkReachable: z6.boolean().optional(),
+    // 是否网络可达
+    lastProbeTime: z6.number().optional()
+    // 最后探测时间
+  }),
+  // 实例状态
+  status: z6.object({
+    state: z6.enum(["starting", "online", "offline", "error", "maintenance"]),
+    startTime: z6.number(),
+    lastSeen: z6.number(),
+    currentLoad: z6.number(),
+    // 当前负载 0-1
+    errorCount: z6.number(),
+    // 错误计数
+    errorRate: z6.number(),
+    // 错误率 0-1
+    uptime: z6.number()
+    // 运行时间
+  }),
+  // 性能指标
+  metrics: z6.object({
+    avgResponseTime: z6.number(),
+    // 平均响应时间 (ms)
+    successRate: z6.number(),
+    // 成功率 0-1
+    throughput: z6.number(),
+    // 吞吐量 (req/s)
+    memoryUsage: z6.number().optional(),
+    // 内存使用率 0-1
+    cpuUsage: z6.number().optional(),
+    // CPU使用率 0-1
+    lastUpdate: z6.number()
+    // 最后更新时间
+  }),
+  // 资源配额
+  resourceQuota: resourceQuotaSchema.optional(),
+  // 元数据
+  metadata: z6.object({
+    createdAt: z6.number(),
+    updatedAt: z6.number(),
+    version: z6.number(),
+    tags: z6.array(z6.string()).optional()
+  })
+});
+var agentRequestSchema = z6.object({
+  method: z6.string(),
+  params: z6.any(),
+  timeout: z6.number().optional(),
+  priority: z6.enum(["low", "normal", "high"]).optional(),
+  retries: z6.number().optional(),
+  sourceAgentId: z6.string().optional(),
+  sourceUserId: z6.string().optional()
+});
+var agentResponseSchema = z6.object({
+  success: z6.boolean(),
+  data: z6.any().optional(),
+  error: z6.string().optional(),
+  agentId: z6.string(),
+  route: z6.enum(["direct", "im_bridge", "hybrid"]).optional(),
+  timestamp: z6.number(),
+  duration: z6.number().optional()
+});
+var agentEndpointSchema = z6.object({
+  agentId: z6.string(),
+  userId: z6.string(),
+  type: z6.enum(["local_only", "network_reachable", "hybrid"]),
+  directUrl: z6.string().optional(),
+  // 直连URL
+  apiKey: z6.string().optional(),
+  // API密钥
+  imProxyId: z6.string(),
+  // IM代理标识
+  networkReachable: z6.boolean().optional(),
+  // 网络可达性
+  lastProbeTime: z6.number().optional(),
+  // 最后探测时间
+  status: z6.object({
+    state: z6.enum(["online", "offline", "busy", "error"]),
+    lastSeen: z6.number(),
+    currentLoad: z6.number(),
+    errorRate: z6.number(),
+    avgResponseTime: z6.number()
+  }),
+  deploymentType: z6.enum(["pc", "cloud", "docker", "serverless"])
+});
+var agentDiscoveryQuerySchema = z6.object({
+  userId: z6.string(),
+  capabilities: z6.array(z6.string()).optional(),
+  categories: z6.array(z6.string()).optional(),
+  tags: z6.array(z6.string()).optional(),
+  deploymentTypes: z6.array(z6.string()).optional(),
+  regions: z6.array(z6.string()).optional(),
+  keywords: z6.string().optional(),
+  onlyOnline: z6.boolean().optional(),
+  visibility: z6.enum(["private", "friends", "groups", "public", "all"]).optional(),
+  shareScope: z6.enum(["friends", "groups", "public"]).optional(),
+  shareLevel: z6.number().optional(),
+  sortBy: z6.enum(["relevance", "performance", "popularity", "rating"]).optional(),
+  sortOrder: z6.enum(["asc", "desc"]).optional(),
+  offset: z6.number().optional(),
+  limit: z6.number().optional()
+});
+var agentDiscoveryResultSchema = z6.object({
+  agentId: z6.string(),
+  userId: z6.string(),
+  name: z6.string(),
+  description: z6.string(),
+  avatar: z6.string(),
+  // 匹配信息
+  matchedCapabilities: z6.array(z6.string()),
+  relevanceScore: z6.number(),
+  // 部署信息
+  deploymentType: z6.enum(["pc", "cloud", "docker", "serverless"]),
+  region: z6.string().optional(),
+  endpointType: z6.enum(["local_only", "network_reachable", "hybrid"]),
+  // 性能指标
+  currentLoad: z6.number(),
+  avgResponseTime: z6.number(),
+  errorRate: z6.number(),
+  availability: z6.number(),
+  // 使用统计
+  totalCalls: z6.number(),
+  successRate: z6.number(),
+  rating: z6.number().optional(),
+  // 权限信息
+  isPrivate: z6.boolean(),
+  hasAccess: z6.boolean(),
+  // 元数据
+  category: z6.string().optional(),
+  tags: z6.array(z6.string()),
+  createdAt: z6.number(),
+  lastUsed: z6.number().optional()
+});
+var unifiedAgentRegistrySchema = z6.object({
+  agentId: z6.string(),
+  userId: z6.string(),
+  name: z6.string(),
+  avatar: z6.string(),
+  description: z6.string(),
+  // 能力信息
+  capabilities: z6.object({
+    tools: z6.array(z6.string()),
+    skills: z6.array(z6.string()),
+    categories: z6.array(z6.string())
+  }),
+  // 部署信息
+  deployment: z6.object({
+    type: z6.enum(["pc", "cloud", "docker", "serverless"]),
+    region: z6.string().optional(),
+    endpointType: z6.enum(["local_only", "network_reachable", "hybrid"]),
+    directUrl: z6.string().optional(),
+    imProxyId: z6.string().optional()
+  }),
+  // 状态信息
+  status: z6.object({
+    state: z6.enum(["online", "offline", "busy", "maintenance"]),
+    lastSeen: z6.number(),
+    currentLoad: z6.number(),
+    errorRate: z6.number(),
+    avgResponseTime: z6.number()
+  }),
+  // 共享配置
+  sharing: z6.object({
+    isPrivate: z6.boolean(),
+    shareScope: z6.enum(["none", "friends", "groups", "public"]),
+    shareLevel: z6.number().min(0).max(3),
+    permissions: z6.array(z6.enum(["read", "execute", "modify"])),
+    allowedUsers: z6.array(z6.string()),
+    allowedGroups: z6.array(z6.string()),
+    deniedUsers: z6.array(z6.string())
+  }),
+  // 元数据
+  metadata: z6.object({
+    createdAt: z6.number(),
+    updatedAt: z6.number(),
+    version: z6.string(),
+    tags: z6.array(z6.string())
+  })
+});
+
+// src/cloud.ts
+import { z as z14 } from "zod";
+
+// src/global-settings.ts
+import { z as z12 } from "zod";
+
+// src/history.ts
+import { z as z8 } from "zod";
+
+// src/message.ts
+import { z as z7 } from "zod";
+var clineAsks = [
+  "followup",
+  "command",
+  "command_output",
+  "completion_result",
+  "tool",
+  "api_req_failed",
+  "resume_task",
+  "resume_completed_task",
+  "mistake_limit_reached",
+  "browser_action_launch",
+  "use_mcp_server",
+  "auto_approval_max_req_reached"
+];
+var clineAskSchema = z7.enum(clineAsks);
+var blockingAsks = [
+  "api_req_failed",
+  "mistake_limit_reached",
+  "completion_result",
+  "resume_task",
+  "resume_completed_task",
+  "command_output",
+  "auto_approval_max_req_reached"
+];
+function isBlockingAsk(ask) {
+  return blockingAsks.includes(ask);
+}
+var clineSays = [
+  "error",
+  "api_req_started",
+  "api_req_finished",
+  "api_req_retried",
+  "api_req_retry_delayed",
+  "api_req_deleted",
+  "text",
+  "reasoning",
+  "completion_result",
+  "user_feedback",
+  "user_feedback_diff",
+  "command_output",
+  "shell_integration_warning",
+  "browser_action",
+  "browser_action_result",
+  "mcp_server_request_started",
+  "mcp_server_response",
+  "subtask_result",
+  "checkpoint_saved",
+  "rooignore_error",
+  "diff_error",
+  "condense_context",
+  "condense_context_error",
+  "codebase_search_result",
+  "user_edit_todos"
+];
+var clineSaySchema = z7.enum(clineSays);
+var toolProgressStatusSchema = z7.object({
+  icon: z7.string().optional(),
+  text: z7.string().optional()
+});
+var contextCondenseSchema = z7.object({
+  cost: z7.number(),
+  prevContextTokens: z7.number(),
+  newContextTokens: z7.number(),
+  summary: z7.string()
+});
+var clineMessageSchema = z7.object({
+  ts: z7.number(),
+  type: z7.union([z7.literal("ask"), z7.literal("say")]),
+  ask: clineAskSchema.optional(),
+  say: clineSaySchema.optional(),
+  text: z7.string().optional(),
+  images: z7.array(z7.string()).optional(),
+  partial: z7.boolean().optional(),
+  reasoning: z7.string().optional(),
+  conversationHistoryIndex: z7.number().optional(),
+  checkpoint: z7.record(z7.string(), z7.unknown()).optional(),
+  progressStatus: toolProgressStatusSchema.optional(),
+  contextCondense: contextCondenseSchema.optional(),
+  isProtected: z7.boolean().optional(),
+  apiProtocol: z7.union([z7.literal("openai"), z7.literal("anthropic")]).optional(),
+  metadata: z7.object({
+    gpt5: z7.object({
+      previous_response_id: z7.string().optional(),
+      instructions: z7.string().optional(),
+      reasoning_summary: z7.string().optional()
+    }).optional(),
+    taskId: z7.string().optional()
+  }).optional()
+});
+var tokenUsageSchema = z7.object({
+  totalTokensIn: z7.number(),
+  totalTokensOut: z7.number(),
+  totalCacheWrites: z7.number().optional(),
+  totalCacheReads: z7.number().optional(),
+  totalCost: z7.number(),
+  contextTokens: z7.number()
+});
+
+// src/history.ts
+var historyItemSchema = z8.object({
+  id: z8.string(),
+  number: z8.number(),
+  ts: z8.number(),
+  task: z8.string(),
+  tokensIn: z8.number(),
+  tokensOut: z8.number(),
+  cacheWrites: z8.number().optional(),
+  cacheReads: z8.number().optional(),
+  totalCost: z8.number(),
+  size: z8.number().optional(),
+  workspace: z8.string().optional(),
+  mode: z8.string().optional(),
+  terminalNo: z8.number().optional(),
+  // 🔥 智能体任务标记
+  source: z8.enum(["user", "agent"]).optional(),
+  // 任务来源：用户或智能体
+  agentId: z8.string().optional(),
+  // 智能体ID（仅当 source === "agent" 时存在）
+  // 🔥 消息历史（用于查看已完成的智能体任务）
+  clineMessages: z8.array(clineMessageSchema).optional()
+});
+
+// src/experiment.ts
+import { z as z9 } from "zod";
+var experimentIds = ["powerSteering", "multiFileApplyDiff", "preventFocusDisruption", "assistantMessageParser"];
+var experimentIdsSchema = z9.enum(experimentIds);
+var experimentsSchema = z9.object({
+  powerSteering: z9.boolean().optional(),
+  multiFileApplyDiff: z9.boolean().optional(),
+  preventFocusDisruption: z9.boolean().optional(),
+  assistantMessageParser: z9.boolean().optional()
+});
+
+// src/telemetry.ts
+import { z as z10 } from "zod";
+var telemetrySettings = ["unset", "enabled", "disabled"];
+var telemetrySettingsSchema = z10.enum(telemetrySettings);
+var TelemetryEventName = /* @__PURE__ */ ((TelemetryEventName2) => {
+  TelemetryEventName2["TASK_CREATED"] = "Task Created";
+  TelemetryEventName2["TASK_RESTARTED"] = "Task Reopened";
+  TelemetryEventName2["TASK_COMPLETED"] = "Task Completed";
+  TelemetryEventName2["TASK_MESSAGE"] = "Task Message";
+  TelemetryEventName2["TASK_CONVERSATION_MESSAGE"] = "Conversation Message";
+  TelemetryEventName2["LLM_COMPLETION"] = "LLM Completion";
+  TelemetryEventName2["MODE_SWITCH"] = "Mode Switched";
+  TelemetryEventName2["MODE_SELECTOR_OPENED"] = "Mode Selector Opened";
+  TelemetryEventName2["TOOL_USED"] = "Tool Used";
+  TelemetryEventName2["CHECKPOINT_CREATED"] = "Checkpoint Created";
+  TelemetryEventName2["CHECKPOINT_RESTORED"] = "Checkpoint Restored";
+  TelemetryEventName2["CHECKPOINT_DIFFED"] = "Checkpoint Diffed";
+  TelemetryEventName2["TAB_SHOWN"] = "Tab Shown";
+  TelemetryEventName2["MODE_SETTINGS_CHANGED"] = "Mode Setting Changed";
+  TelemetryEventName2["CUSTOM_MODE_CREATED"] = "Custom Mode Created";
+  TelemetryEventName2["CONTEXT_CONDENSED"] = "Context Condensed";
+  TelemetryEventName2["SLIDING_WINDOW_TRUNCATION"] = "Sliding Window Truncation";
+  TelemetryEventName2["CODE_ACTION_USED"] = "Code Action Used";
+  TelemetryEventName2["PROMPT_ENHANCED"] = "Prompt Enhanced";
+  TelemetryEventName2["TITLE_BUTTON_CLICKED"] = "Title Button Clicked";
+  TelemetryEventName2["AUTHENTICATION_INITIATED"] = "Authentication Initiated";
+  TelemetryEventName2["MARKETPLACE_ITEM_INSTALLED"] = "Marketplace Item Installed";
+  TelemetryEventName2["MARKETPLACE_ITEM_REMOVED"] = "Marketplace Item Removed";
+  TelemetryEventName2["MARKETPLACE_TAB_VIEWED"] = "Marketplace Tab Viewed";
+  TelemetryEventName2["MARKETPLACE_INSTALL_BUTTON_CLICKED"] = "Marketplace Install Button Clicked";
+  TelemetryEventName2["SHARE_BUTTON_CLICKED"] = "Share Button Clicked";
+  TelemetryEventName2["SHARE_ORGANIZATION_CLICKED"] = "Share Organization Clicked";
+  TelemetryEventName2["SHARE_PUBLIC_CLICKED"] = "Share Public Clicked";
+  TelemetryEventName2["SHARE_CONNECT_TO_CLOUD_CLICKED"] = "Share Connect To Cloud Clicked";
+  TelemetryEventName2["ACCOUNT_CONNECT_CLICKED"] = "Account Connect Clicked";
+  TelemetryEventName2["ACCOUNT_CONNECT_SUCCESS"] = "Account Connect Success";
+  TelemetryEventName2["ACCOUNT_LOGOUT_CLICKED"] = "Account Logout Clicked";
+  TelemetryEventName2["ACCOUNT_LOGOUT_SUCCESS"] = "Account Logout Success";
+  TelemetryEventName2["SCHEMA_VALIDATION_ERROR"] = "Schema Validation Error";
+  TelemetryEventName2["DIFF_APPLICATION_ERROR"] = "Diff Application Error";
+  TelemetryEventName2["SHELL_INTEGRATION_ERROR"] = "Shell Integration Error";
+  TelemetryEventName2["CONSECUTIVE_MISTAKE_ERROR"] = "Consecutive Mistake Error";
+  TelemetryEventName2["CODE_INDEX_ERROR"] = "Code Index Error";
+  return TelemetryEventName2;
+})(TelemetryEventName || {});
+var appPropertiesSchema = z10.object({
+  appName: z10.string(),
+  appVersion: z10.string(),
+  vscodeVersion: z10.string(),
+  platform: z10.string(),
+  editorName: z10.string(),
+  language: z10.string(),
+  mode: z10.string(),
+  cloudIsAuthenticated: z10.boolean().optional()
+});
+var taskPropertiesSchema = z10.object({
+  taskId: z10.string().optional(),
+  apiProvider: z10.enum(providerNames).optional(),
+  modelId: z10.string().optional(),
+  diffStrategy: z10.string().optional(),
+  isSubtask: z10.boolean().optional(),
+  todos: z10.object({
+    total: z10.number(),
+    completed: z10.number(),
+    inProgress: z10.number(),
+    pending: z10.number()
+  }).optional()
+});
+var gitPropertiesSchema = z10.object({
+  repositoryUrl: z10.string().optional(),
+  repositoryName: z10.string().optional(),
+  defaultBranch: z10.string().optional()
+});
+var telemetryPropertiesSchema = z10.object({
+  ...appPropertiesSchema.shape,
+  ...taskPropertiesSchema.shape,
+  ...gitPropertiesSchema.shape
+});
+var rooCodeTelemetryEventSchema = z10.discriminatedUnion("type", [
+  z10.object({
+    type: z10.enum([
+      "Task Created" /* TASK_CREATED */,
+      "Task Reopened" /* TASK_RESTARTED */,
+      "Task Completed" /* TASK_COMPLETED */,
+      "Conversation Message" /* TASK_CONVERSATION_MESSAGE */,
+      "Mode Switched" /* MODE_SWITCH */,
+      "Mode Selector Opened" /* MODE_SELECTOR_OPENED */,
+      "Tool Used" /* TOOL_USED */,
+      "Checkpoint Created" /* CHECKPOINT_CREATED */,
+      "Checkpoint Restored" /* CHECKPOINT_RESTORED */,
+      "Checkpoint Diffed" /* CHECKPOINT_DIFFED */,
+      "Code Action Used" /* CODE_ACTION_USED */,
+      "Prompt Enhanced" /* PROMPT_ENHANCED */,
+      "Title Button Clicked" /* TITLE_BUTTON_CLICKED */,
+      "Authentication Initiated" /* AUTHENTICATION_INITIATED */,
+      "Marketplace Item Installed" /* MARKETPLACE_ITEM_INSTALLED */,
+      "Marketplace Item Removed" /* MARKETPLACE_ITEM_REMOVED */,
+      "Marketplace Tab Viewed" /* MARKETPLACE_TAB_VIEWED */,
+      "Marketplace Install Button Clicked" /* MARKETPLACE_INSTALL_BUTTON_CLICKED */,
+      "Share Button Clicked" /* SHARE_BUTTON_CLICKED */,
+      "Share Organization Clicked" /* SHARE_ORGANIZATION_CLICKED */,
+      "Share Public Clicked" /* SHARE_PUBLIC_CLICKED */,
+      "Share Connect To Cloud Clicked" /* SHARE_CONNECT_TO_CLOUD_CLICKED */,
+      "Account Connect Clicked" /* ACCOUNT_CONNECT_CLICKED */,
+      "Account Connect Success" /* ACCOUNT_CONNECT_SUCCESS */,
+      "Account Logout Clicked" /* ACCOUNT_LOGOUT_CLICKED */,
+      "Account Logout Success" /* ACCOUNT_LOGOUT_SUCCESS */,
+      "Schema Validation Error" /* SCHEMA_VALIDATION_ERROR */,
+      "Diff Application Error" /* DIFF_APPLICATION_ERROR */,
+      "Shell Integration Error" /* SHELL_INTEGRATION_ERROR */,
+      "Consecutive Mistake Error" /* CONSECUTIVE_MISTAKE_ERROR */,
+      "Code Index Error" /* CODE_INDEX_ERROR */,
+      "Context Condensed" /* CONTEXT_CONDENSED */,
+      "Sliding Window Truncation" /* SLIDING_WINDOW_TRUNCATION */,
+      "Tab Shown" /* TAB_SHOWN */,
+      "Mode Setting Changed" /* MODE_SETTINGS_CHANGED */,
+      "Custom Mode Created" /* CUSTOM_MODE_CREATED */
+    ]),
+    properties: telemetryPropertiesSchema
+  }),
+  z10.object({
+    type: z10.literal("Task Message" /* TASK_MESSAGE */),
+    properties: z10.object({
+      ...telemetryPropertiesSchema.shape,
+      taskId: z10.string(),
+      message: clineMessageSchema
+    })
+  }),
+  z10.object({
+    type: z10.literal("LLM Completion" /* LLM_COMPLETION */),
+    properties: z10.object({
+      ...telemetryPropertiesSchema.shape,
+      inputTokens: z10.number(),
+      outputTokens: z10.number(),
+      cacheReadTokens: z10.number().optional(),
+      cacheWriteTokens: z10.number().optional(),
+      cost: z10.number().optional()
+    })
+  })
+]);
 
 // src/vscode.ts
 import { z as z11 } from "zod";
@@ -1466,8 +1468,11 @@ var globalSettingsSchema = z12.object({
     agentName: z12.string(),
     serverUrl: z12.string(),
     serverPort: z12.number(),
-    isDebugMode: z12.boolean().optional()
+    isDebugMode: z12.boolean().optional(),
     // 标识是否为调试模式
+    // 🔥 关键新增：智能体专属配置，实现与用户global配置完全隔离
+    agentApiConfiguration: providerSettingsSchema.nullable().optional(),
+    agentMode: z12.string().optional()
   }).nullable().optional(),
   // Agent waiting for user input state
   waitingForAgentInput: z12.boolean().optional()
